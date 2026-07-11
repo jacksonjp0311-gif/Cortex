@@ -12,9 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from cortex.embeddings import HashingEmbedder
-from cortex.retrieval import query
-from cortex.store import Store
+from cortex.embeddings import HashingEmbedder  # noqa: E402
+from cortex.retrieval import query  # noqa: E402
+from cortex.store import Store  # noqa: E402
 
 
 def measure(store: Store, runs: int) -> float:
@@ -42,10 +42,12 @@ def main() -> None:
             store.commit()
             store.db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             legacy_bytes, legacy_ms = path.stat().st_size, measure(store, args.runs)
+            legacy_payload = store.db.execute("SELECT SUM(length(vector)) FROM memories").fetchone()[0]
             migration = store.migrate_vectors("Vectors")
             store.db.execute("VACUUM")
             blob_bytes, blob_ms = path.stat().st_size, measure(store, args.runs)
-            print(json.dumps({"vectors": args.vectors, "runs": args.runs, "legacy": {"database_bytes": legacy_bytes, "mean_query_ms": legacy_ms}, "versioned_blob": {"database_bytes": blob_bytes, "mean_query_ms": blob_ms}, "migration": migration, "storage_reduction_percent": round((1 - blob_bytes / legacy_bytes) * 100, 2)}, indent=2))
+            blob_payload = store.db.execute("SELECT SUM(length(vector)) FROM memories").fetchone()[0]
+            print(json.dumps({"vectors": args.vectors, "runs": args.runs, "legacy": {"database_bytes": legacy_bytes, "vector_payload_bytes": legacy_payload, "mean_query_ms": legacy_ms}, "versioned_blob": {"database_bytes": blob_bytes, "vector_payload_bytes": blob_payload, "mean_query_ms": blob_ms}, "migration": migration, "vector_payload_reduction_percent": round((1 - blob_payload / legacy_payload) * 100, 2)}, indent=2))
         finally:
             store.close()
 
