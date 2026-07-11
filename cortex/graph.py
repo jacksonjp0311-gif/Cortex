@@ -62,8 +62,6 @@ def resolve_graph(store: Any, repo: str) -> dict[str, Any]:
                     if module.endswith(clean) or clean.endswith(module):
                         resolved_target = path
                         break
-            if not resolved_target and target.startswith("."):
-                resolved_target = _resolve_relative(source, target, paths)
             if not resolved_target:
                 resolved_target = _resolve_relative(source, target, paths)
         else:
