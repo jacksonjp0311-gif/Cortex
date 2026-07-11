@@ -1,0 +1,394 @@
+{
+  "schema_version": "1.1",
+  "release": "Cortex Neural Interlink v1.1.0",
+  "generated_on": "2026-07-11",
+  "manifest_scope": "All release files except RELEASE_MANIFEST.json itself and generated caches/build outputs.",
+  "file_count": 64,
+  "total_bytes": 261946,
+  "files": [
+    {
+      "path": ".editorconfig",
+      "bytes": 249,
+      "mode": "0o644",
+      "sha256": "19152610a91929c46f25c7a1e9677a042f1e6d757f5743fa8d3c233dfd4f04cb"
+    },
+    {
+      "path": ".github/workflows/tests.yml",
+      "bytes": 999,
+      "mode": "0o644",
+      "sha256": "87cc7aa7aa7be5421a9383af38e00ef5083a00db8344570370f33653b453cbe4"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 128,
+      "mode": "0o644",
+      "sha256": "cb61e5ef4721ed2e91c962970fd0a3573318aff0de4f5edbf2f03713a85b6f8a"
+    },
+    {
+      "path": "BENCHMARK_REPORT.md",
+      "bytes": 1752,
+      "mode": "0o644",
+      "sha256": "73189b16db81a79dfe969bd781839b49e8a71a1b9571686e4a4c1f4062a440d0"
+    },
+    {
+      "path": "BUILD_REPORT.md",
+      "bytes": 2199,
+      "mode": "0o644",
+      "sha256": "0ed2f9626dca539c9290dd7803b81c61b6a6669e2d91c1078d028bee6bb8e0ca"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 2034,
+      "mode": "0o644",
+      "sha256": "9026c3e13fc1b625562c7343c1793ebde3b83ebf291ae82dbecfebd7e6f67a2b"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 719,
+      "mode": "0o644",
+      "sha256": "1a3a3ab563d3eb639b737fc973f4104cea3cc41bdeba4847a274e4ed559f316b"
+    },
+    {
+      "path": "Cortex-All-One.ps1",
+      "bytes": 625,
+      "mode": "0o644",
+      "sha256": "539d2e71cb2b408fdf5117943f47c1424aaa1889686f0fe5b2f19bf49149ec70"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1075,
+      "mode": "0o644",
+      "sha256": "fc5871619dbada8d41db760d9507c758cd1c0ba0030bc7b2c14b47c9bc3469d1"
+    },
+    {
+      "path": "README.md",
+      "bytes": 17990,
+      "mode": "0o644",
+      "sha256": "e6e7c6b257eecc30da53bc16945e4c667f341ee1f2b6b19276bd41518cd6d907"
+    },
+    {
+      "path": "TEST_REPORT.md",
+      "bytes": 3720,
+      "mode": "0o644",
+      "sha256": "f29552e290ba37f31f2f8bb5291f34f8df81d2056707b7f4762b805a8898c008"
+    },
+    {
+      "path": "benchmarks/sparse_activation_benchmark.py",
+      "bytes": 3279,
+      "mode": "0o644",
+      "sha256": "b87fad223d413fbc5ba509d283f19c6f3279b8cfa12876bd20ca316e21fb4b53"
+    },
+    {
+      "path": "config/AGENTS.md",
+      "bytes": 882,
+      "mode": "0o644",
+      "sha256": "afd8806300ca8b3f9899b855fc408f43db2b8e007d3e8975a35f2c414e2b6022"
+    },
+    {
+      "path": "cortex/__init__.py",
+      "bytes": 103,
+      "mode": "0o644",
+      "sha256": "e290e5cfb23e609db2d3f3e61fc20c0641a687f4d331010e955b4f484ef602c5"
+    },
+    {
+      "path": "cortex/__main__.py",
+      "bytes": 61,
+      "mode": "0o644",
+      "sha256": "3129adff95e0f38b87ab34cddfc27082c7892bcaec267ff5d40f160fdf55b44a"
+    },
+    {
+      "path": "cortex/activation.py",
+      "bytes": 3427,
+      "mode": "0o644",
+      "sha256": "c1098fa5d076bac90f1c6f91f054515353fb733e508f50a5a5222f250f0b71cc"
+    },
+    {
+      "path": "cortex/bootstrap.py",
+      "bytes": 3990,
+      "mode": "0o644",
+      "sha256": "2bfa29f89686cec7e96523dad0a0203cf0cb501c5bb8c95362430b1a951a92ee"
+    },
+    {
+      "path": "cortex/bridge.py",
+      "bytes": 3708,
+      "mode": "0o644",
+      "sha256": "56d0dd7cd915e366032b1b527aa6b681952074f1f997ce9a8935e6dd5a248521"
+    },
+    {
+      "path": "cortex/cli.py",
+      "bytes": 14081,
+      "mode": "0o644",
+      "sha256": "b341eb8c016d888e8a8fc45d80f5a8ae61852a115b2a6066b29420849e0cb047"
+    },
+    {
+      "path": "cortex/config.py",
+      "bytes": 6006,
+      "mode": "0o644",
+      "sha256": "4b9acc9baca283f29171493abcbcf55fed0156ae638be059fec3cac2c0860f6d"
+    },
+    {
+      "path": "cortex/context.py",
+      "bytes": 7693,
+      "mode": "0o644",
+      "sha256": "c73e8989be97589350ba01cf92298dabd0373f89ba14eecd85e44f674547d354"
+    },
+    {
+      "path": "cortex/embeddings.py",
+      "bytes": 2352,
+      "mode": "0o644",
+      "sha256": "ef87eb620cbc7793a5957cea340f52e1e61d718e1040e609d487770509ab08af"
+    },
+    {
+      "path": "cortex/environment.py",
+      "bytes": 11179,
+      "mode": "0o644",
+      "sha256": "1237ed22e7f3de233d6c86b167d05bd6a87e162aab66caee815d268db3a129ff"
+    },
+    {
+      "path": "cortex/governor.py",
+      "bytes": 3591,
+      "mode": "0o644",
+      "sha256": "396ad2742421ca56fcf9ec8cc2fde7a20a6b833ed84a23b1f0dd6ff211abcb05"
+    },
+    {
+      "path": "cortex/graph.py",
+      "bytes": 5848,
+      "mode": "0o644",
+      "sha256": "1aa8d535dee4a9b5dd53a34e4f1f498d9ca91b373099b059f85722ac760da9b8"
+    },
+    {
+      "path": "cortex/hippocampus.py",
+      "bytes": 2487,
+      "mode": "0o644",
+      "sha256": "6822915591bc651ec04ac2920255a9b7ffb9d4a1a7e2f0b860f28cb6e075efd7"
+    },
+    {
+      "path": "cortex/indexer.py",
+      "bytes": 10861,
+      "mode": "0o644",
+      "sha256": "26f7998895e822e43d94f261b6eb3660ae2a6110885d55f6b640027c13f7c2ca"
+    },
+    {
+      "path": "cortex/integration.py",
+      "bytes": 14834,
+      "mode": "0o644",
+      "sha256": "4c373a671bfa213409f9c0cc887936a6abe45afb257fb730ade5c6322746d9cc"
+    },
+    {
+      "path": "cortex/models.py",
+      "bytes": 982,
+      "mode": "0o644",
+      "sha256": "b7ee0b478768e5f52cc78133d46d670b2749b86645234a7acb9c05c3000e72b7"
+    },
+    {
+      "path": "cortex/neuron/__init__.py",
+      "bytes": 465,
+      "mode": "0o644",
+      "sha256": "2d27121150b96bac20f0e7827a431610ec69276e5b89190f2e54737da71f637d"
+    },
+    {
+      "path": "cortex/neuron/compiler.py",
+      "bytes": 6318,
+      "mode": "0o644",
+      "sha256": "c4fe625642d3c6ee18b26a0c2de993f6578bd6d27ce8054576201c80a3fad18b"
+    },
+    {
+      "path": "cortex/neuron/engine.py",
+      "bytes": 8126,
+      "mode": "0o644",
+      "sha256": "2d2c8d731dbc6b623d419a5eee1ebae9cb048fbc2e0b6b728af004d917c68e86"
+    },
+    {
+      "path": "cortex/neuron/models.py",
+      "bytes": 2099,
+      "mode": "0o644",
+      "sha256": "12e45f5479f7ba03f04c88b2798619d10420d5ac88024a176b9c8c63c9ccf2de"
+    },
+    {
+      "path": "cortex/neuron/plasticity.py",
+      "bytes": 1176,
+      "mode": "0o644",
+      "sha256": "4f2bbb83b3e40aee2995bce3325af83ada3b552198ef4a8e8aa9a639ba3968aa"
+    },
+    {
+      "path": "cortex/parsers.py",
+      "bytes": 8314,
+      "mode": "0o644",
+      "sha256": "e22d54747ea3799cf31756cc199b87425922d28a1a2ab4e30bf37f57d32090a0"
+    },
+    {
+      "path": "cortex/retrieval.py",
+      "bytes": 4582,
+      "mode": "0o644",
+      "sha256": "0bedbd3004a9dce16688e966677203ea6a95ed7aecf7699ef2c86364ae335025"
+    },
+    {
+      "path": "cortex/store.py",
+      "bytes": 36959,
+      "mode": "0o644",
+      "sha256": "c007d458ec67c4f8544b450db4be80795ad107d977fe2ee4ec9b4eb6ada0d6a3"
+    },
+    {
+      "path": "cortex/telemetry.py",
+      "bytes": 5647,
+      "mode": "0o644",
+      "sha256": "8ac4e38c4e14b18f3c4b89280eb3bb4f704e53364c517693ebe0e0a7ffe72893"
+    },
+    {
+      "path": "cortex/verify.py",
+      "bytes": 7670,
+      "mode": "0o644",
+      "sha256": "183c0dcdc32ef3dc943437ec1f15463a9f85ca34728bea20f7f738d382107a2e"
+    },
+    {
+      "path": "cortex-all-one.sh",
+      "bytes": 143,
+      "mode": "0o755",
+      "sha256": "b394ef35330d2810e756e34f28090a457d1125ea06230c51209db38663ae3d6e"
+    },
+    {
+      "path": "cortex.ps1",
+      "bytes": 752,
+      "mode": "0o644",
+      "sha256": "717cd80b0a23ff694875947c3d6d8a49cc6e6a2a2ff60694c3576722e94f6507"
+    },
+    {
+      "path": "cortex.sh",
+      "bytes": 565,
+      "mode": "0o755",
+      "sha256": "2a1d06f147f69417df0e2a3f2a89ac4629a6daa06bffab3252ec26041de0f4d8"
+    },
+    {
+      "path": "docs/AI_INTEGRATION.md",
+      "bytes": 2221,
+      "mode": "0o644",
+      "sha256": "1d849c36d0bb9f9d174836b2d72e3d1cb930c690f040838d36e7cf7739503129"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 4916,
+      "mode": "0o644",
+      "sha256": "64c5cd04b9131265d7c0fcab970491f13f4e918665ade8149e544f1e7c8f8a7a"
+    },
+    {
+      "path": "docs/BOOTSTRAP_PROTOCOL.md",
+      "bytes": 2879,
+      "mode": "0o644",
+      "sha256": "3063004d12eeea0e5fece0f46b353929aee43b874cc0649d74636d0394e7ae9e"
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "bytes": 1532,
+      "mode": "0o644",
+      "sha256": "11807421305d6013b74f009841e691d616b1d420f6d5a9efb0998dbaba0d876c"
+    },
+    {
+      "path": "docs/NEURAL_INTERLINK.md",
+      "bytes": 2068,
+      "mode": "0o644",
+      "sha256": "3da308a179743e9575ff9b2378db3889d081a62653ab4b54a85ccbd8de75fbd3"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "bytes": 1210,
+      "mode": "0o644",
+      "sha256": "84dd6926001b1159c8ca0d2203df69195051c9f25c2fd9abc98c56fc4ef4e8d3"
+    },
+    {
+      "path": "docs/TROUBLESHOOTING.md",
+      "bytes": 2030,
+      "mode": "0o644",
+      "sha256": "776efdadf02af105465a1622a15d990a48649727001964e22c630fba6e2c5150"
+    },
+    {
+      "path": "examples/AGENT_PROMPT.md",
+      "bytes": 592,
+      "mode": "0o644",
+      "sha256": "a17785397e7b177e8029b1949a3f8536bb1e004821b8a923a4bec7693bf9e5aa"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 1136,
+      "mode": "0o644",
+      "sha256": "e75ef1adf0e300d2e410f18440a0db350734c9752beb7c5d533b92cabd584247"
+    },
+    {
+      "path": "scripts/bash/bootstrap-cortex-repo.sh",
+      "bytes": 736,
+      "mode": "0o755",
+      "sha256": "0b97b0b2c402a610f5a6038ee523f11893e4ee43802ab11e90095abecc245131"
+    },
+    {
+      "path": "scripts/bash/cortex-all-in-one.sh",
+      "bytes": 2503,
+      "mode": "0o755",
+      "sha256": "3b649fc9c96664f4aab99e53e2ef500094a35988c11c3c9057a7903b2ba62454"
+    },
+    {
+      "path": "scripts/bash/cortex-session.sh",
+      "bytes": 407,
+      "mode": "0o755",
+      "sha256": "bc933f31c3c5c7e9a82f4895f4320eecf3fb79c88f6b4e085abd6141db167225"
+    },
+    {
+      "path": "scripts/bash/install-cortex.sh",
+      "bytes": 661,
+      "mode": "0o755",
+      "sha256": "6f51c71016aae0fda6ff2e3880eff16e88c242d56b9225c9a80071d1cd657541"
+    },
+    {
+      "path": "scripts/bash/run-tests.sh",
+      "bytes": 324,
+      "mode": "0o755",
+      "sha256": "cf9b8d6492e55eaa449b5335b862714d89ea5a7c5ef0390c3f48141ac65df866"
+    },
+    {
+      "path": "scripts/powershell/Bootstrap-CortexRepo.ps1",
+      "bytes": 1093,
+      "mode": "0o644",
+      "sha256": "35589e152b27fc2e6267a77d53098a7a30d69c7943f6fdc62af31ff8346d5bc3"
+    },
+    {
+      "path": "scripts/powershell/Cortex-All-One.ps1",
+      "bytes": 3778,
+      "mode": "0o644",
+      "sha256": "a37b5cbbdd10eb1782dee5c3f7fb4e5bc827e5e35e4d56bc826ba9e11ee92e7e"
+    },
+    {
+      "path": "scripts/powershell/Cortex-Session.ps1",
+      "bytes": 448,
+      "mode": "0o644",
+      "sha256": "b327cb0fb809aee29ac704861c06def0db2011da15823317a153e81c0c636984"
+    },
+    {
+      "path": "scripts/powershell/Install-Cortex.ps1",
+      "bytes": 853,
+      "mode": "0o644",
+      "sha256": "83cc0d6c82204ecb3bc781e132bcc04ba3c9e23750d86f66b9b07e7a373f75d5"
+    },
+    {
+      "path": "scripts/powershell/Run-Tests.ps1",
+      "bytes": 446,
+      "mode": "0o644",
+      "sha256": "6105f76886ea719c32896743b59960a5ea46b9f13520510e25030757a0a2aa38"
+    },
+    {
+      "path": "templates/cortex-config.example.json",
+      "bytes": 1080,
+      "mode": "0o644",
+      "sha256": "eef5a35848dc03f24df198dc725baeb66d717911dfceeea44753bb7d2dfbd35d"
+    },
+    {
+      "path": "tests/test_cortex.py",
+      "bytes": 13337,
+      "mode": "0o644",
+      "sha256": "a7572bb94af1b8d69ddb3469c14f5c9417fcedf99c755ceba47a4e192505c860"
+    },
+    {
+      "path": "tests/test_neural_interlink.py",
+      "bytes": 8026,
+      "mode": "0o644",
+      "sha256": "4cf2b2af0bff2892f11c4ab02fff139049466e7c13107d0fa8a97552627fbf92"
+    }
+  ]
+}
