@@ -38,6 +38,8 @@ Cortex is local-first, SQLite-backed, dependency-free in its core installation, 
 
 Every normal activation now passes through a local, deterministic Thalamus route plan before retrieval. The plan classifies the task, allocates attention across source, tests, structure, documentation, Git, runtime, and other memory lanes, and records numerical inhibition for generated, duplicate, or out-of-scope evidence. It is an engineering routing analogy—not a biological model—and it cannot grant mutation authority. Inspect a plan with `cortex thalamus --repo <name> --task "<task>" --json`.
 
+Run the reproducible before/after routing benchmark with `python benchmarks/thalamus_before_after.py --files 250 --runs 5`. Its committed chart and raw results are in [`benchmarks/results/`](benchmarks/results/).
+
 ## What changed in the neural edition
 
 The previous standalone `neuron` repository has been integrated as an internal Cortex organ rather than kept as a competing system.

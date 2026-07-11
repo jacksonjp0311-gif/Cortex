@@ -1,5 +1,28 @@
 # Sparse Activation Benchmark Report
 
+## Thalamus before/after routing benchmark (v1.2.0)
+
+The current release includes a reproducible, fixed-workload comparison between direct hybrid retrieval and the same retrieval routed through Thalamus. It measures retrieval latency, the first relevant file rank, top-three relevant-file recall, and the number of out-of-route candidates in the top eight results.
+
+Run it with:
+
+```bash
+python benchmarks/thalamus_before_after.py --files 250 --runs 5
+```
+
+The measured five-run result on this release was:
+
+| Metric | Direct hybrid | Thalamus-routed hybrid |
+|---|---:|---:|
+| Median retrieval time | 40.621 ms | 43.754 ms |
+| Median first relevant-file rank | 4 | 3 |
+| Top-3 relevant-file recall | 0% | 100% |
+| Out-of-route candidates in top 8 | 3 | 3 |
+
+![Measured before/after routing chart](benchmarks/results/thalamus_before_after.svg)
+
+The chart and raw sample data are committed in `benchmarks/results/`. This is a synthetic routing workload, not a universal quality or performance claim.
+
 **Release:** Cortex Neural Interlink v1.1.0  
 **Date:** July 11, 2026
 
