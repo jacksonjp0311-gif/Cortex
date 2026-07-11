@@ -1,3 +1,14 @@
+<p align="center">
+  <img src="assets/cortex-neural-brain.png" alt="Cortex neural interlink brain" width="100%" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
+  <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
+  <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
+  <img src="https://img.shields.io/badge/authority-recommend--only-f8fafc?style=for-the-badge&labelColor=111827" alt="Recommend only" />
+</p>
+
 # Cortex Neural Interlink
 
 **Verified repository assimilation, selective memory, environment learning, and sparse neural interlinking for AI agent systems.**
@@ -39,6 +50,8 @@ Cortex is local-first, SQLite-backed, dependency-free in its core installation, 
 Every normal activation now passes through a local, deterministic Thalamus route plan before retrieval. The plan classifies the task, allocates attention across source, tests, structure, documentation, Git, runtime, and other memory lanes, and records numerical inhibition for generated, duplicate, or out-of-scope evidence. It is an engineering routing analogy—not a biological model—and it cannot grant mutation authority. Inspect a plan with `cortex thalamus --repo <name> --task "<task>" --json`.
 
 Run the reproducible before/after routing benchmark with `python benchmarks/thalamus_before_after.py --files 250 --runs 5`. Its committed chart and raw results are in [`benchmarks/results/`](benchmarks/results/).
+
+Run `python -m cortex self-test --json` to clone Cortex as a host, place a second Cortex clone inside it as the active engine, and verify that the nested engine is excluded while the real outer Cortex repository bootstraps and activates.
 
 ## What changed in the neural edition
 

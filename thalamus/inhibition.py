@@ -8,13 +8,16 @@ HARD_EXCLUDED_PREFIXES = ("node_modules/", ".venv/", "venv/", "dist/", "build/",
 GENERATED_SUFFIXES = (".lock", ".min.js", ".map")
 
 
-def inhibit(hits: Iterable[Any], lane_weights: dict[str, float]) -> list[Any]:
+def inhibit(
+    hits: Iterable[Any], lane_weights: dict[str, float], *, min_lane_relevance: float = 0.0
+) -> list[Any]:
     """Apply deterministic reticular-style gating and retain an evidence audit on hits."""
 
     items = list(hits)
     duplicates = Counter((item.path, item.content_hash) for item in items)
     strongest_lane = max(lane_weights.values(), default=1.0)
     selected: list[Any] = []
+    suppressed: list[tuple[float, Any]] = []
     for hit in items:
         path = hit.path.replace("\\", "/").lower()
         hard = path.startswith(HARD_EXCLUDED_PREFIXES)
@@ -23,15 +26,27 @@ def inhibit(hits: Iterable[Any], lane_weights: dict[str, float]) -> list[Any]:
         lane = lane_for_hit(hit)
         lane_relevance = lane_weights.get(lane, 0.0) / strongest_lane
         out_of_scope = 1.0 - min(1.0, lane_relevance)
-        inhibition = 1.0 if hard else min(1.0, 0.20 * duplicate + 0.30 * out_of_scope + 0.10 * generated)
+        pruned = not hard and lane_relevance < min_lane_relevance
+        soft_inhibition = min(1.0, 0.20 * duplicate + 0.30 * out_of_scope + 0.10 * generated)
+        inhibition = 1.0 if hard or pruned else soft_inhibition
         hit.metadata["thalamus"] = {
             "lane": lane,
             "inhibition": round(inhibition, 6),
             "hard_excluded": hard,
+            "pruned": pruned,
             "gated_score": round(float(hit.score) * (1.0 - inhibition), 8),
         }
-        if not hard:
+        if pruned:
+            suppressed.append((float(hit.score) * (1.0 - soft_inhibition), hit))
+        elif not hard:
             hit.score = float(hit.metadata["thalamus"]["gated_score"])
+            selected.append(hit)
+    if not selected and suppressed:
+        # A route may be uncertain or partially indexed. Preserve a bounded fallback instead of
+        # silently emitting an empty context packet.
+        for score, hit in sorted(suppressed, key=lambda item: (-item[0], item[1].path))[:4]:
+            hit.score = score
+            hit.metadata["thalamus"]["fallback"] = True
             selected.append(hit)
     return sorted(selected, key=lambda hit: (-hit.score, hit.path, hit.start_line))
 

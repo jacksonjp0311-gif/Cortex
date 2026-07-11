@@ -19,6 +19,7 @@ from .indexer import index_repository
 from .neuron import activate_interlink, neural_graph_state
 from .retrieval import query
 from .store import Store
+from .selftest import run_self_test
 from .telemetry import ingest_git
 from thalamus import inhibit, make_request, route
 from .verify import verify_repository
@@ -140,6 +141,10 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument("--repo")
     doctor.add_argument("--json", action="store_true")
 
+    self_test = sub.add_parser("self-test", help="Clone Cortex inside a cloned Cortex host and verify self-hosted activation.")
+    self_test.add_argument("--skip-tests", action="store_true")
+    self_test.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -196,7 +201,9 @@ def main(argv: list[str] | None = None) -> None:
             config = load_repo_config(Path(repository["path"]))
             if config.thalamus_enabled:
                 plan = route(make_request(repository, args.query, config.context_budget))
-                hits = inhibit(hits, plan.lane_weights)
+                hits = inhibit(
+                    hits, plan.lane_weights, min_lane_relevance=config.thalamus_min_lane_relevance
+                )
             emit([hit.to_dict() for hit in hits], args.json)
 
         elif command in {"context", "nexus-packet"}:
@@ -219,7 +226,9 @@ def main(argv: list[str] | None = None) -> None:
             repository = store.repo(args.repo)
             if config.thalamus_enabled and repository:
                 plan = route(make_request(repository, args.task, config.context_budget))
-                hits = inhibit(hits, plan.lane_weights)
+                hits = inhibit(
+                    hits, plan.lane_weights, min_lane_relevance=config.thalamus_min_lane_relevance
+                )
             governance = governor.evaluate(args.repo)
             packet = activate_interlink(
                 store,
@@ -335,6 +344,9 @@ def main(argv: list[str] | None = None) -> None:
                 result["neural_interlink"] = neural_graph_state(store, args.repo) if repository else None
                 result["neural_ledger_integrity"] = store.verify_neural_ledger(args.repo) if repository else False
             emit(result, args.json)
+
+        elif command == "self-test":
+            emit(run_self_test(run_tests=not args.skip_tests), args.json)
 
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
         error = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}

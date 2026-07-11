@@ -79,6 +79,7 @@ class RepoConfig:
     semantic_scan_limit: int = 5000
     environment_learning_enabled: bool = True
     thalamus_enabled: bool = True
+    thalamus_min_lane_relevance: float = 0.25
     neural_interlink_enabled: bool = True
     neural_activation_depth: int = 2
     neural_max_nodes: int = 64
@@ -119,6 +120,7 @@ class RepoConfig:
             "semantic_scan_limit": self.semantic_scan_limit,
             "environment_learning_enabled": self.environment_learning_enabled,
             "thalamus_enabled": self.thalamus_enabled,
+            "thalamus_min_lane_relevance": self.thalamus_min_lane_relevance,
             "neural_interlink_enabled": self.neural_interlink_enabled,
             "neural_activation_depth": self.neural_activation_depth,
             "neural_max_nodes": self.neural_max_nodes,

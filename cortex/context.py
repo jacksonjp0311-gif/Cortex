@@ -79,7 +79,11 @@ def build_context(
     # Every standard context retrieval is planned by Thalamus before candidates are read.
     direct_hits = query(store, repo, task, limit=24)
     if route_plan:
-        direct_hits = inhibit(direct_hits, route_plan.lane_weights)
+        direct_hits = inhibit(
+            direct_hits,
+            route_plan.lane_weights,
+            min_lane_relevance=config.thalamus_min_lane_relevance,
+        )
     semantic_confidences = [
         hit.metadata.get("semantic_similarity", 0.0) for hit in direct_hits[:5]
     ]

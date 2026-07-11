@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- Added bounded self-host validation: Cortex can clone itself as an outer host, run a nested cloned engine, and verify the engine is excluded from host assimilation.
+- Added full lifecycle before/after benchmark support for host-engine and nested-engine bootstrapping and activation.
+- Added lane-relevance pruning with a bounded fallback, so uncertain routes cannot silently produce empty context packets.
+- Added a polished README hero and verification, routing, local-first, and authority badges.
+
 ## 1.2.0
 
 - Added the root-level deterministic Thalamus request-routing package, including intent classification, memory-lane budgeting, and auditable inhibitory evidence gating.

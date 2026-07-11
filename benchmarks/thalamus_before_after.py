@@ -141,7 +141,11 @@ def main() -> None:
 
                 started = time.perf_counter()
                 plan = route(make_request(repository, task, 1200), manifest_current=True)
-                routed_hits = inhibit(query(store, "RoutingBenchmark", task, limit=24), plan.lane_weights)
+                routed_hits = inhibit(
+                    query(store, "RoutingBenchmark", task, limit=24),
+                    plan.lane_weights,
+                    min_lane_relevance=0.25,
+                )
                 routed_seconds = time.perf_counter() - started
                 routed_samples.append({
                     "seconds": routed_seconds,
