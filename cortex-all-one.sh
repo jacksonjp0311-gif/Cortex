@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$ROOT/scripts/bash/cortex-all-in-one.sh" "$@"
+exec bash "$ROOT/scripts/bash/cortex-all-in-one.sh" "$@"

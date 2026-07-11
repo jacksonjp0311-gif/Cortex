@@ -53,7 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     activate.add_argument("--repo", required=True)
     activate.add_argument("--task", required=True)
     activate.add_argument("--budget", type=int, default=1200)
-    activate.add_argument("--refresh", choices=["auto", "always", "never"], default="auto")
+    activate.add_argument("--refresh", choices=["auto", "always", "never", "packet-fast", "packet-refresh", "bootstrap-full"], default="auto")
     activate.add_argument("--json", action="store_true")
 
     index = sub.add_parser("index", help="Incrementally index an attached repository.")
@@ -183,6 +183,7 @@ def main(argv: list[str] | None = None) -> None:
             emit(result, args.json)
 
         elif command == "activate":
+            refresh = {"packet-fast": "never", "packet-refresh": "auto", "bootstrap-full": "always"}.get(args.refresh, args.refresh)
             result = activate_repository(
                 home,
                 store,
@@ -190,8 +191,9 @@ def main(argv: list[str] | None = None) -> None:
                 args.repo,
                 args.task,
                 budget=args.budget,
-                refresh=args.refresh,
+                refresh=refresh,
             )
+            result["requested_mode"] = args.refresh
             emit(result, args.json)
 
         elif command == "index":

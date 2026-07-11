@@ -35,6 +35,12 @@ DEFAULT_EXCLUDES = [
     ".cortex/bootstrap_certificate.json",
     ".cortex/README.md",
     ".cortex/.gitignore",
+    "reports/*_latest.json",
+    "state/*_latest.json",
+    "ledger",
+    "ledgers",
+    "Tesseract Neural Network/memory",
+    "Tesseract Neural Network/state",
 ]
 
 DEFAULT_TEXT_EXTENSIONS = [
@@ -139,6 +145,9 @@ class RepoConfig:
         for key, value in data.items():
             if hasattr(base, key):
                 setattr(base, key, value)
+        # Configuration is additive across releases so older repositories receive
+        # newly introduced volatile-surface protections without losing custom rules.
+        base.exclude = list(dict.fromkeys([*base.exclude, *DEFAULT_EXCLUDES]))
         return base
 
 
