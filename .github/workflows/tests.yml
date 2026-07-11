@@ -26,7 +26,7 @@ jobs:
         run: bash -n cortex.sh cortex-all-one.sh scripts/bash/*.sh
       - name: Bash portable smoke
         if: runner.os != 'Windows'
-        run: ./cortex-all-one.sh --repository-path . --name CortexSelf --task "Inspect the portable engine" 
+        run: bash ./cortex-all-one.sh --repository-path . --name CortexSelf --task "Inspect the portable engine"
       - name: PowerShell launcher smoke
         if: runner.os == 'Windows'
         shell: powershell
