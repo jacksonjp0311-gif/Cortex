@@ -403,6 +403,15 @@ class Store:
               repo, path, chunk_index, start_line, end_line, kind, text, content_hash,
               vector, embedding_model, metadata, created_at, updated_at
             ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(repo, path, chunk_index, content_hash) DO UPDATE SET
+              start_line=excluded.start_line,
+              end_line=excluded.end_line,
+              kind=excluded.kind,
+              text=excluded.text,
+              vector=excluded.vector,
+              embedding_model=excluded.embedding_model,
+              metadata=excluded.metadata,
+              updated_at=excluded.updated_at
             """,
             (
                 memory["repo"], memory["path"], memory["chunk_index"],

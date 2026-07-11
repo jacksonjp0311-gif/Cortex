@@ -23,6 +23,7 @@ IMPORT_PATTERNS = {
     "go": [re.compile(r'^\s*import\s+(?:\([^)]*?"([^"]+)"|"([^"]+)")', re.MULTILINE | re.DOTALL)],
     "rust": [re.compile(r"^\s*(?:use|mod)\s+([A-Za-z0-9_:]+)", re.MULTILINE)],
     "java": [re.compile(r"^\s*import\s+([A-Za-z0-9_.*]+)", re.MULTILINE)],
+    "kotlin": [re.compile(r"^\s*import\s+([A-Za-z0-9_.]*)", re.MULTILINE)],
     "csharp": [re.compile(r"^\s*using\s+([A-Za-z0-9_.]+)", re.MULTILINE)],
 }
 
@@ -34,12 +35,13 @@ SYMBOL_PATTERNS = {
     "go": re.compile(r"^\s*(?:func|type)\s+(?:\([^)]*\)\s*)?([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE),
     "rust": re.compile(r"^\s*(?:pub\s+)?(?:async\s+)?(?:fn|struct|enum|trait)\s+([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE),
     "java": re.compile(r"^\s*(?:public|private|protected|static|final|abstract|\s)+\s*(?:class|interface|enum|[\w<>\[\]]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:\(|\{|extends|implements)", re.MULTILINE),
+    "kotlin": re.compile(r"^\s*(?:internal\s+|private\s+|public\s+|protected\s+|open\s+|abstract\s+|sealed\s+|data\s+|inline\s+|companion\s+)*?(?:class|object|interface|enum\s+class|fun|val|var)\s+([A-Za-z_][A-Za-z0-9_<>*]*)", re.MULTILINE),
     "csharp": re.compile(r"^\s*(?:public|private|protected|internal|static|sealed|abstract|partial|\s)+\s*(?:class|interface|enum|record|[\w<>\[\]]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:\(|\{|:)", re.MULTILINE),
 }
 
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)#]+)(?:#[^)]+)?\)")
 PATH_REFERENCE = re.compile(
-    r"(?<![A-Za-z0-9_])((?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+\.(?:py|js|ts|tsx|jsx|md|json|yaml|yml|toml|ps1|sh|rs|go|java|cs))(?![A-Za-z0-9_])"
+    r"(?<![A-Za-z0-9_])((?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+\.(?:py|js|ts|tsx|jsx|md|json|yaml|yml|toml|ps1|sh|rs|go|java|kt|kts|cs))(?![A-Za-z0-9_])"
 )
 
 
@@ -60,8 +62,10 @@ def language_for(path: Path) -> str:
         return "go"
     if suffix == ".rs":
         return "rust"
-    if suffix in {".java", ".kt", ".kts"}:
+    if suffix in {".java"}:
         return "java"
+    if suffix in {".kt", ".kts"}:
+        return "kotlin"
     if suffix in {".cs", ".fs", ".fsx"}:
         return "csharp"
     if suffix in {".md", ".mdx", ".rst", ".adoc", ".txt"}:
