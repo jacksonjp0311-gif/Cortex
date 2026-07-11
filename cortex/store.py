@@ -532,7 +532,19 @@ class Store:
             self.db.execute("UPDATE memories SET vector=?, updated_at=? WHERE id=?", (vector_to_bytes(vector), time.time(), row["id"]))
             migrated += 1
         self.db.commit()
-        return {"scanned": len(rows), "migrated": migrated, "already_current_or_invalid": skipped}
+        result = {"scanned": len(rows), "migrated": migrated, "already_current_or_invalid": skipped}
+        self.set_setting(f"vector_migration:{repo or 'all'}", {"completed_at": time.time(), **result})
+        return result
+
+    def vector_format_status(self, repo: str | None = None) -> dict[str, int]:
+        where = "WHERE vector IS NOT NULL"
+        args: list[Any] = []
+        if repo:
+            where += " AND repo=?"
+            args.append(repo)
+        rows = self.db.execute(f"SELECT vector FROM memories {where}", args).fetchall()
+        current = sum(isinstance(row["vector"], bytes) and row["vector"].startswith(VECTOR_MAGIC) for row in rows)
+        return {"total": len(rows), "current_versioned_blob": current, "legacy_or_invalid": len(rows) - current}
 
     def symbols(self, repo: str, path: str | None = None) -> list[sqlite3.Row]:
         if path:

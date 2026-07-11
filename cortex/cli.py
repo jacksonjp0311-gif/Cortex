@@ -367,6 +367,9 @@ def main(argv: list[str] | None = None) -> None:
                 result["environment"] = environment_summary(store.environment_profile(args.repo))
                 result["neural_interlink"] = neural_graph_state(store, args.repo) if repository else None
                 result["neural_ledger_integrity"] = store.verify_neural_ledger(args.repo) if repository else False
+                result["vector_format"] = store.vector_format_status(args.repo) if repository else None
+                if result["vector_format"] and result["vector_format"]["legacy_or_invalid"]:
+                    result["vector_migration_recommendation"] = f"cortex migrate-vectors --repo {args.repo} --json"
             emit(result, args.json)
 
         elif command == "self-test":

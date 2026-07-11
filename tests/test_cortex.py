@@ -227,6 +227,13 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertEqual(result["migrated"], 1)
         self.assertTrue(row["vector"].startswith(VECTOR_MAGIC))
         self.assertAlmostEqual(deserialize_vector(row["vector"])[0], 0.25, places=6)
+        self.assertEqual(self.store.vector_format_status("VectorProject")["legacy_or_invalid"], 0)
+
+    def test_repository_sensitive_exclusions_extend_defaults(self) -> None:
+        from cortex.config import RepoConfig
+        config = RepoConfig.from_dict({"sensitive_exclude_patterns": ["private/token.txt"]})
+        self.assertTrue(should_exclude("private/token.txt", config))
+        self.assertTrue(should_exclude("keys/client.key", config))
 
 
 class CortexGitTelemetryTests(unittest.TestCase):
