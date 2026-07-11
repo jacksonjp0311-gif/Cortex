@@ -12,7 +12,7 @@ from .graph import neighborhood
 from .hippocampus import active_session
 from .neuron import activate_interlink
 from .retrieval import query, support_hits
-from thalamus import inhibit, make_request, route
+from thalamus import apply_feedback, inhibit, make_request, route
 
 
 def estimate_tokens(text: str) -> int:
@@ -79,6 +79,7 @@ def build_context(
     # Every standard context retrieval is planned by Thalamus before candidates are read.
     direct_hits = query(store, repo, task, limit=24)
     if route_plan:
+        direct_hits = apply_feedback(store, repo, direct_hits)
         direct_hits = inhibit(
             direct_hits,
             route_plan.lane_weights,

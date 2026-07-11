@@ -1,6 +1,6 @@
 # Sparse Activation Benchmark Report
 
-## Thalamus before/after routing benchmark (v1.2.0)
+## Thalamus before/after routing benchmark (v1.3.0)
 
 The current release includes a reproducible, fixed-workload comparison between direct hybrid retrieval and the same retrieval routed through Thalamus. It measures retrieval latency, the first relevant file rank, top-three relevant-file recall, and the number of out-of-route candidates in the top eight results.
 
@@ -14,7 +14,7 @@ The measured five-run result on this release was:
 
 | Metric | Direct hybrid | Thalamus-routed hybrid |
 |---|---:|---:|
-| Median retrieval time | 40.621 ms | 43.754 ms |
+| Median retrieval time | 65.690 ms | 55.284 ms |
 | Median first relevant-file rank | 4 | 3 |
 | Top-3 relevant-file recall | 0% | 100% |
 | Out-of-route candidates in top 8 | 3 | 3 |
@@ -22,6 +22,27 @@ The measured five-run result on this release was:
 ![Measured before/after routing chart](benchmarks/results/thalamus_before_after.svg)
 
 The chart and raw sample data are committed in `benchmarks/results/`. This is a synthetic routing workload, not a universal quality or performance claim.
+
+## Full self-host lifecycle benchmark (v1.3.0)
+
+This benchmark clones Cortex as an outer host, then compares normal host-engine execution with a second cloned Cortex engine nested inside the host. The nested engine bootstraps and activates the actual outer Cortex repository, while `CortexEngine` is explicitly excluded from the host inventory.
+
+```bash
+python benchmarks/self_host_benchmark.py --runs 3
+python -m cortex self-test --json
+```
+
+| Metric | Host engine | Nested cloned engine |
+|---|---:|---:|
+| Median bootstrap time | 2.455 s | 3.223 s |
+| Median activation time | 0.780 s | 0.834 s |
+| Indexed Cortex files | 75 | 75 |
+| Verified certificate | yes | yes |
+| Nested engine excluded | n/a | yes |
+
+![Measured self-host lifecycle chart](benchmarks/results/self_host_before_after.svg)
+
+The nested-engine overhead is expected: this measures isolation and correctness, not a speed optimization. The self-test also ran the nested clone's test suite successfully.
 
 **Release:** Cortex Neural Interlink v1.1.0  
 **Date:** July 11, 2026

@@ -21,7 +21,7 @@ from .retrieval import query
 from .store import Store
 from .selftest import run_self_test
 from .telemetry import ingest_git
-from thalamus import inhibit, make_request, route
+from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
 from .verify import verify_repository
 
 
@@ -88,6 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
     thalamus.add_argument("--task", required=True)
     thalamus.add_argument("--budget", type=int, default=1200)
     thalamus.add_argument("--json", action="store_true")
+
+    feedback = sub.add_parser("thalamus-feedback", help="Record bounded evidence usefulness feedback.")
+    feedback.add_argument("--repo", required=True)
+    feedback.add_argument("--memory-id", type=int, required=True)
+    feedback.add_argument("--outcome", required=True)
+    feedback.add_argument("--json", action="store_true")
 
     interlink = sub.add_parser("interlink", help="Run sparse neural activation for a task.")
     interlink.add_argument("--repo", required=True)
@@ -201,6 +207,7 @@ def main(argv: list[str] | None = None) -> None:
             config = load_repo_config(Path(repository["path"]))
             if config.thalamus_enabled:
                 plan = route(make_request(repository, args.query, config.context_budget))
+                hits = apply_feedback(store, args.repo, hits)
                 hits = inhibit(
                     hits, plan.lane_weights, min_lane_relevance=config.thalamus_min_lane_relevance
                 )
@@ -219,6 +226,11 @@ def main(argv: list[str] | None = None) -> None:
                 raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
             emit(route(make_request(repository, args.task, args.budget)).to_dict(), args.json)
 
+        elif command == "thalamus-feedback":
+            if not store.repo(args.repo):
+                raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
+            emit(record_feedback(store, args.repo, args.memory_id, args.outcome), args.json)
+
         elif command == "interlink":
             root = _repo_root(store, args.repo)
             config = load_repo_config(root)
@@ -226,6 +238,7 @@ def main(argv: list[str] | None = None) -> None:
             repository = store.repo(args.repo)
             if config.thalamus_enabled and repository:
                 plan = route(make_request(repository, args.task, config.context_budget))
+                hits = apply_feedback(store, args.repo, hits)
                 hits = inhibit(
                     hits, plan.lane_weights, min_lane_relevance=config.thalamus_min_lane_relevance
                 )

@@ -3,6 +3,8 @@ from __future__ import annotations
 import unittest
 
 from cortex.models import Hit
+from cortex.store import Store
+from thalamus import apply_feedback, record_feedback
 from thalamus import inhibit, make_request, route
 
 
@@ -30,6 +32,20 @@ class ThalamusTests(unittest.TestCase):
     def test_generated_runtime_evidence_is_hard_excluded(self) -> None:
         hit = Hit(1, "Demo", ".cortex/runtime/context_latest.json", 1, 1, "{}", "runtime", 1.0, "hash")
         self.assertEqual(inhibit([hit], {"source": 1.0}), [])
+
+    def test_feedback_is_bounded_and_changes_only_routing_score(self) -> None:
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as temporary:
+            store = Store(Path(temporary) / "cortex.db")
+            try:
+                recorded = record_feedback(store, "Demo", 1, "helpful")
+                self.assertGreater(recorded["score"], 0.0)
+                hit = Hit(1, "Demo", "app.py", 1, 1, "x", "source", 1.0, "hash")
+                self.assertGreater(apply_feedback(store, "Demo", [hit])[0].score, 1.0)
+            finally:
+                store.close()
 
 
 if __name__ == "__main__":

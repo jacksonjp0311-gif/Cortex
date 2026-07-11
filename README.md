@@ -53,6 +53,8 @@ Run the reproducible before/after routing benchmark with `python benchmarks/thal
 
 Run `python -m cortex self-test --json` to clone Cortex as a host, place a second Cortex clone inside it as the active engine, and verify that the nested engine is excluded while the real outer Cortex repository bootstraps and activates.
 
+Use `cortex thalamus-feedback --repo <repository> --memory-id <id> --outcome helpful --json` to record bounded evidence feedback. Feedback adjusts only future routing priority; it never alters source truth or mutation authority.
+
 ## What changed in the neural edition
 
 The previous standalone `neuron` repository has been integrated as an internal Cortex organ rather than kept as a competing system.
