@@ -6,7 +6,7 @@ import math
 from collections import defaultdict
 from typing import Any
 
-from .embeddings import cosine, get_embedder
+from .embeddings import cosine, get_embedder, deserialize_vector
 from .models import Hit
 
 
@@ -30,9 +30,9 @@ def query(store: Any, repo: str, text: str, limit: int = 8) -> list[Hit]:
     seed = int.from_bytes(hashlib.blake2b(text.encode("utf-8"), digest_size=8).digest(), "big")
     for row in store.vector_candidates(repo, lexical_ids, limit=5000, seed=seed):
         try:
-            vector = json.loads(row["vector"])
+            vector = deserialize_vector(row["vector"])
             similarity = cosine(query_vector, vector)
-        except (TypeError, ValueError, json.JSONDecodeError):
+        except (TypeError, ValueError):
             continue
         semantic.append((similarity, row["id"]))
     semantic.sort(key=lambda item: item[0], reverse=True)
@@ -89,9 +89,9 @@ def support_hits(
         best: Hit | None = None
         for row in store.memories_for_path(repo, path):
             try:
-                vector = json.loads(row["vector"]) if row["vector"] else []
+                vector = deserialize_vector(row["vector"]) if row["vector"] else []
                 similarity = cosine(query_vector, vector)
-            except (TypeError, ValueError, json.JSONDecodeError):
+            except (TypeError, ValueError):
                 similarity = 0.0
             metadata = json.loads(row["metadata"] or "{}")
             metadata["semantic_similarity"] = round(similarity, 6)

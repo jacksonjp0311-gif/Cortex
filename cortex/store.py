@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 from typing import Any, Iterable
 
+from .embeddings import vector_to_bytes
+
 SCHEMA = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
@@ -417,7 +419,7 @@ class Store:
                 memory["repo"], memory["path"], memory["chunk_index"],
                 memory["start_line"], memory["end_line"], memory["kind"],
                 memory["text"], memory["content_hash"],
-                json.dumps(memory.get("vector")), memory.get("embedding_model"),
+                vector_to_bytes(memory.get("vector")), memory.get("embedding_model"),
                 json.dumps(memory.get("metadata", {}), sort_keys=True), now, now,
             ),
         )
