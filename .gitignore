@@ -11,3 +11,5 @@ dist/
 htmlcov/
 .cortex-dev/
 work/
+/.cortex/
+/AGENTS.md

@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Iterable
 
-from .embeddings import vector_to_bytes
+from .embeddings import VECTOR_MAGIC, deserialize_vector, vector_to_bytes
 
 SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -509,6 +509,30 @@ class Store:
                 json.dumps(symbol.get("metadata", {}), sort_keys=True),
             ),
         )
+
+    def migrate_vectors(self, repo: str | None = None) -> dict[str, int]:
+        """Upgrade legacy JSON or unversioned BLOB vectors without re-indexing source."""
+        where = "WHERE vector IS NOT NULL"
+        args: list[Any] = []
+        if repo:
+            where += " AND repo=?"
+            args.append(repo)
+        rows = self.db.execute(f"SELECT id, vector FROM memories {where}", args).fetchall()
+        migrated = 0
+        skipped = 0
+        for row in rows:
+            raw = row["vector"]
+            if isinstance(raw, bytes) and raw.startswith(VECTOR_MAGIC):
+                skipped += 1
+                continue
+            vector = deserialize_vector(raw)
+            if not vector:
+                skipped += 1
+                continue
+            self.db.execute("UPDATE memories SET vector=?, updated_at=? WHERE id=?", (vector_to_bytes(vector), time.time(), row["id"]))
+            migrated += 1
+        self.db.commit()
+        return {"scanned": len(rows), "migrated": migrated, "already_current_or_invalid": skipped}
 
     def symbols(self, repo: str, path: str | None = None) -> list[sqlite3.Row]:
         if path:

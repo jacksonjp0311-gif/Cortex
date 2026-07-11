@@ -61,6 +61,10 @@ def build_parser() -> argparse.ArgumentParser:
     index.add_argument("--force", action="store_true")
     index.add_argument("--json", action="store_true")
 
+    migrate = sub.add_parser("migrate-vectors", help="Upgrade stored legacy vectors to versioned float32 BLOBs.")
+    migrate.add_argument("--repo")
+    migrate.add_argument("--json", action="store_true")
+
     query_parser = sub.add_parser("query", help="Search repository memory.")
     query_parser.add_argument("query")
     query_parser.add_argument("--repo", required=True)
@@ -200,6 +204,11 @@ def main(argv: list[str] | None = None) -> None:
             root = _repo_root(store, args.repo)
             config = load_repo_config(root)
             emit(index_repository(store, args.repo, config, force=args.force), args.json)
+
+        elif command == "migrate-vectors":
+            if args.repo and not store.repo(args.repo):
+                raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
+            emit(store.migrate_vectors(args.repo), args.json)
 
         elif command == "query":
             repository = store.repo(args.repo)

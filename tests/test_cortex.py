@@ -12,6 +12,9 @@ from cortex.activation import activate_repository
 from cortex.bootstrap import bootstrap_repository
 from cortex.bridge import consolidate
 from cortex.config import ensure_home, load_repo_config
+from cortex.embeddings import VECTOR_MAGIC, deserialize_vector
+from cortex.indexer import should_exclude
+from cortex.parsers import language_for, parse_structure
 from cortex.governor import Governor
 from cortex.graph import neighborhood
 from cortex.hippocampus import remember
@@ -199,6 +202,31 @@ class CortexIntegrationTests(unittest.TestCase):
         unresolved = certificate["coverage"]["unresolved_files"]
         self.assertTrue(any(item["path"] == "archive.bin" for item in unresolved))
         self.assertEqual(certificate["status"], "verified")
+
+    def test_secret_exclusions_and_kotlin_parsing(self) -> None:
+        config = load_repo_config(self.repo) if (self.repo / ".cortex" / "config.json").exists() else None
+        if config is None:
+            from cortex.config import RepoConfig
+            config = RepoConfig()
+        self.assertTrue(should_exclude("services/.env.production", config))
+        self.assertTrue(should_exclude("keys/server.pem", config))
+        self.assertEqual(language_for(Path("Feature.kt")), "kotlin")
+        symbols, edges = parse_structure("import demo.core.Service\nclass Feature\nfun start() = 1\n", "Feature.kt", "kotlin")
+        self.assertEqual([edge.target for edge in edges], ["demo.core.Service"])
+        self.assertIn("Feature", {symbol["name"] for symbol in symbols})
+
+    def test_vector_migration_preserves_legacy_semantics(self) -> None:
+        self.store.attach("VectorProject", "vector-project", self.repo)
+        self.store.db.execute(
+            "INSERT INTO memories(repo,path,chunk_index,start_line,end_line,kind,text,content_hash,vector,embedding_model,metadata,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            ("VectorProject", "legacy.py", 0, 1, 1, "source", "x", "legacy", json.dumps([0.25, -0.5]), "legacy", "{}", 1.0, 1.0),
+        )
+        self.store.commit()
+        result = self.store.migrate_vectors("VectorProject")
+        row = self.store.db.execute("SELECT vector FROM memories WHERE repo=?", ("VectorProject",)).fetchone()
+        self.assertEqual(result["migrated"], 1)
+        self.assertTrue(row["vector"].startswith(VECTOR_MAGIC))
+        self.assertAlmostEqual(deserialize_vector(row["vector"])[0], 0.25, places=6)
 
 
 class CortexGitTelemetryTests(unittest.TestCase):
