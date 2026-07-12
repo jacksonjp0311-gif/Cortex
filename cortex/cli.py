@@ -224,8 +224,8 @@ def main(argv: list[str] | None = None) -> None:
             repository = store.repo(args.repo)
             if not repository:
                 raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
-            hits = query(store, args.repo, args.query, args.limit)
             config = load_repo_config(Path(repository["path"]))
+            hits = query(store, args.repo, args.query, args.limit, config.semantic_scan_limit)
             if config.thalamus_enabled:
                 plan = route(make_request(repository, args.query, config.context_budget))
                 hits = apply_feedback(store, args.repo, hits)
@@ -255,8 +255,8 @@ def main(argv: list[str] | None = None) -> None:
         elif command == "interlink":
             root = _repo_root(store, args.repo)
             config = load_repo_config(root)
-            hits = query(store, args.repo, args.task, args.limit)
             repository = store.repo(args.repo)
+            hits = query(store, args.repo, args.task, args.limit, config.semantic_scan_limit)
             if config.thalamus_enabled and repository:
                 plan = route(make_request(repository, args.task, config.context_budget))
                 hits = apply_feedback(store, args.repo, hits)

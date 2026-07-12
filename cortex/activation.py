@@ -63,7 +63,6 @@ def activate_repository(
             neural = {"available": False, "disabled": True}
         certificate = verify_repository(home, store, repo, config, write_certificate=False)
 
-    session = begin_session(home, store, repo, task)
     context = build_context(
         home,
         store,
@@ -72,7 +71,9 @@ def activate_repository(
         task,
         budget,
         manifest_current=manifest_current,
+        certificate=certificate,
     )
+    session = begin_session(home, store, repo, task)
     runtime_path = root / ".cortex" / "runtime" / "context_latest.json"
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(context, indent=2) + "\n", encoding="utf-8")

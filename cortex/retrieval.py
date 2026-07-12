@@ -21,14 +21,14 @@ def reciprocal_rank_fusion(
     return dict(scores)
 
 
-def query(store: Any, repo: str, text: str, limit: int = 8) -> list[Hit]:
+def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
     lexical_rows = store.lexical(repo, text, 60)
     lexical_ids = [row["id"] for row in lexical_rows]
 
     query_vector = get_embedder().encode_one(text)
     semantic: list[tuple[float, int]] = []
     seed = int.from_bytes(hashlib.blake2b(text.encode("utf-8"), digest_size=8).digest(), "big")
-    for row in store.vector_candidates(repo, lexical_ids, limit=5000, seed=seed):
+    for row in store.vector_candidates(repo, lexical_ids, limit=semantic_scan_limit, seed=seed):
         try:
             vector = deserialize_vector(row["vector"])
             similarity = cosine(query_vector, vector)

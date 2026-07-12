@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 — Trust-State Closure
+
+- Activation, context, Governor, and health now consume the same current certificate.
+- Current sessions are created after trust evaluation, preventing a new session from inflating continuity.
+- Semantic scan configuration now controls retrieval candidate limits.
+- Added an explicit Phoenix privacy-boundary policy; no Phoenix adapter is enabled.
+
 ## 1.3.0
 
 - Added bounded self-host validation: Cortex can clone itself as an outer host, run a nested cloned engine, and verify the engine is excluded from host assimilation.

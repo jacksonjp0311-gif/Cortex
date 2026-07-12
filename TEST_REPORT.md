@@ -1,9 +1,18 @@
-# Cortex Neural Interlink v1.1.0 Test Report
+# Cortex Neural Interlink v1.3.1 Test Report
 
 **Test date:** July 11, 2026  
 **Primary validation environment:** Linux, CPython 3.13, SQLite with FTS5
 
 ## Automated suite
+
+## Current release addendum (July 12, 2026)
+
+- Python compilation: passed
+- `python -m unittest discover -s tests -q`: 26 passed
+- Ruff: passed
+- `cortex benchmark --verify --json`: passed
+
+The historic v1.1.0 validation details below are retained as lineage, not as the current release claim.
 
 Commands:
 

@@ -21,6 +21,7 @@ class Governor:
         *,
         retrieval_confidence: float = 0.0,
         manifest_current: bool | None = None,
+        certificate: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         repository = self.store.repo(repo)
         if not repository:
@@ -32,8 +33,8 @@ class Governor:
             }
 
         certificate_row = self.store.latest_bootstrap(repo)
-        certificate: dict[str, Any] = {}
-        if certificate_row:
+        certificate = certificate or {}
+        if not certificate and certificate_row:
             try:
                 certificate = json.loads(certificate_row["certificate"] or "{}")
             except json.JSONDecodeError:

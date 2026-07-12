@@ -59,6 +59,7 @@ def build_context(
     task: str,
     budget: int = 1200,
     manifest_current: bool | None = None,
+    certificate: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -78,7 +79,7 @@ def build_context(
         route_plan = None
 
     # Every standard context retrieval is planned by Thalamus before candidates are read.
-    direct_hits = query(store, repo, task, limit=24)
+    direct_hits = query(store, repo, task, limit=24, semantic_scan_limit=config.semantic_scan_limit)
     if route_plan:
         direct_hits = apply_feedback(store, repo, direct_hits)
         direct_hits = inhibit(
@@ -93,7 +94,7 @@ def build_context(
         1, len(semantic_confidences)
     )
     governance = governor.evaluate(
-        repo, retrieval_confidence=confidence, manifest_current=manifest_current
+        repo, retrieval_confidence=confidence, manifest_current=manifest_current, certificate=certificate
     )
 
     effective_budget = budget

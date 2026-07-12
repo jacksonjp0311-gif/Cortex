@@ -118,7 +118,7 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertEqual(result["bootstrap_status"], "verified", result)
         self.assertIsNotNone(result["refresh"])
         self.assertTrue(result["manifest_current"])
-        self.assertEqual(result["context"]["governor"]["mode"], "normal")
+        self.assertEqual(result["context"]["governor"]["mode"], "constrained")
         self.assertIn(result["context"]["thalamus"]["primary_intent"], {"code_change", "historical_inquiry"})
         self.assertTrue((self.repo / ".cortex" / "runtime" / "context_latest.json").exists())
 
@@ -136,6 +136,12 @@ class CortexIntegrationTests(unittest.TestCase):
         )
         self.assertFalse(result["manifest_current"])
         self.assertEqual(result["context"]["governor"]["mode"], "read_only")
+
+    def test_current_degraded_certificate_controls_governor(self) -> None:
+        self.bootstrap()
+        governor = Governor(self.home, self.store)
+        result = governor.evaluate("DemoProject", manifest_current=True, certificate={"status": "degraded"})
+        self.assertEqual(result["mode"], "read_only")
 
     def test_session_events_consolidate_to_discovery_card(self) -> None:
         self.bootstrap()

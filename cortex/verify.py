@@ -173,4 +173,5 @@ def verify_repository(
         home_certificate = home / "certificates" / f"{repo}-latest.json".replace("/", "_")
         home_certificate.write_text(json.dumps(certificate, indent=2) + "\n", encoding="utf-8")
         store.update_repo_state(repo, bootstrap_status=status, bootstrapped=True)
+        store.set_setting(f"certificate:{repo}", certificate)
     return certificate
