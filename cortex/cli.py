@@ -13,6 +13,8 @@ from .config import ensure_home, load_repo_config
 from .context import build_context, nexus_packet
 from .environment import environment_summary
 from .governor import Governor
+from .health import health_report
+from .benchmark import verify_benchmarks
 from .graph import neighborhood, resolve_graph
 from .hippocampus import begin_session, remember
 from .indexer import index_repository
@@ -150,6 +152,14 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor", help="Check Python, SQLite, database, and integration readiness.")
     doctor.add_argument("--repo")
     doctor.add_argument("--json", action="store_true")
+
+    health = sub.add_parser("health", help="Emit a compact repository health and next-action packet.")
+    health.add_argument("--repo", required=True)
+    health.add_argument("--json", action="store_true")
+
+    benchmark = sub.add_parser("benchmark", help="Verify committed controlled-workload benchmark thresholds.")
+    benchmark.add_argument("--verify", action="store_true")
+    benchmark.add_argument("--json", action="store_true")
 
     self_test = sub.add_parser("self-test", help="Clone Cortex inside a cloned Cortex host and verify self-hosted activation.")
     self_test.add_argument("--skip-tests", action="store_true")
@@ -371,6 +381,15 @@ def main(argv: list[str] | None = None) -> None:
                 if result["vector_format"] and result["vector_format"]["legacy_or_invalid"]:
                     result["vector_migration_recommendation"] = f"cortex migrate-vectors --repo {args.repo} --json"
             emit(result, args.json)
+
+        elif command == "health":
+            emit(health_report(home, store, governor, args.repo), args.json)
+
+        elif command == "benchmark":
+            result = verify_benchmarks(Path(__file__).resolve().parents[1])
+            emit(result, args.json)
+            if args.verify and result["status"] != "pass":
+                raise RuntimeError("Cortex benchmark threshold regression")
 
         elif command == "self-test":
             emit(run_self_test(run_tests=not args.skip_tests), args.json)
