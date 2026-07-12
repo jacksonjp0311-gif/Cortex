@@ -156,6 +156,8 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         )
         self.assertTrue(context["environment"]["available"])
         self.assertIn("activation_id", context["neural_interlink"])
+        self.assertLessEqual(context["efficiency"]["node_scan_fraction"], 1.0)
+        self.assertLessEqual(context["efficiency"]["context_budget_fraction"], 1.0)
         self.assertTrue(context["evidence"])
         packet = nexus_packet(context)
         self.assertIn("neural_interlink", packet["context"])

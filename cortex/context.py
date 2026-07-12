@@ -8,6 +8,7 @@ from typing import Any
 
 from .config import load_repo_config
 from .environment import environment_summary
+from .efficiency import efficiency_telemetry
 from .graph import neighborhood
 from .hippocampus import active_session
 from .neuron import activate_interlink
@@ -193,6 +194,12 @@ def build_context(
             "Record durable decisions, discoveries, failures, and outcomes before consolidation.",
         ],
     }
+    payload["efficiency"] = efficiency_telemetry(
+        direct_candidates=len(direct_hits),
+        context_tokens=used_tokens,
+        context_budget=effective_budget,
+        neural=neural_payload,
+    )
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     payload["packet_hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     packet_path = home / "packets" / f"{repo}-context-latest.json".replace("/", "_")
