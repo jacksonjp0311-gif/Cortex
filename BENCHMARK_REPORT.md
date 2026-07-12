@@ -1,5 +1,18 @@
 # Sparse Activation Benchmark Report
 
+## Cortex evolution telemetry run (July 11, 2026)
+
+| Measure | Result |
+|---|---:|
+| Versioned vector payload reduction (1,000 vectors) | 34.71% |
+| Legacy / migrated mean retrieval | 148.34 ms / 118.77 ms |
+| Thalamus target rank | 4 → 3 |
+| Thalamus top-3 recall | 0% → 100% |
+| Self-host bootstrap / nested bootstrap | 1.876 s / 2.023 s |
+| Self-host activation / nested activation | 0.520 s / 0.537 s |
+
+These are local, controlled-workload measurements. They are engineering telemetry, not universal performance, physical-energy, or biological claims.
+
 ## Thalamus before/after routing benchmark (v1.3.0)
 
 The current release includes a reproducible, fixed-workload comparison between direct hybrid retrieval and the same retrieval routed through Thalamus. It measures retrieval latency, the first relevant file rank, top-three relevant-file recall, and the number of out-of-route candidates in the top eight results.
