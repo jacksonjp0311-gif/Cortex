@@ -195,6 +195,112 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         paths = {row["path"] for row in self.store.files("AgentRepo")}
         self.assertNotIn("CortexEngine/cortex/fake.py", paths)
 
+    def test_neural_synaptic_decay(self) -> None:
+        """Verify that synapses decay toward minimum_weight over time
+        when not co-activated, and that recent updates are exempt during grace period."""
+        from cortex.neuron.plasticity import bounded_decay, decay_stats
+
+        # Old synapse (40 days stale) should decay significantly
+        now = 1_000_000.0
+        old_proposal = bounded_decay(
+            synapse_id="syn_old",
+            weight=0.8,
+            minimum_weight=0.05,
+            maximum_weight=1.0,
+            last_updated=now - (40 * 86400),  # 40 days ago
+            now=now,
+            decay_rate=0.005,
+            grace_hours=24.0,
+        )
+        self.assertLess(old_proposal.proposed_weight, 0.8)
+        self.assertGreater(old_proposal.proposed_weight, 0.05)
+        self.assertIn("bounded_decay", old_proposal.reason)
+
+        # Fresh synapse (within grace period) should NOT decay
+        fresh_proposal = bounded_decay(
+            synapse_id="syn_fresh",
+            weight=0.7,
+            minimum_weight=0.05,
+            maximum_weight=1.0,
+            last_updated=now - 3600,  # 1 hour ago
+            now=now,
+        )
+        self.assertEqual(fresh_proposal.proposed_weight, 0.7)
+        self.assertEqual(fresh_proposal.delta, 0.0)
+        self.assertEqual(fresh_proposal.reason, "decay_grace_period")
+
+        # Stale synapse with no last_updated should still decay (treats as very old)
+        unknown_proposal = bounded_decay(
+            synapse_id="syn_unknown",
+            weight=0.5,
+            minimum_weight=0.1,
+            maximum_weight=1.0,
+            last_updated=None,
+            now=now,
+        )
+        self.assertLess(unknown_proposal.proposed_weight, 0.5)
+        self.assertGreater(unknown_proposal.proposed_weight, 0.1)
+
+    def test_decay_proposals_batch(self) -> None:
+        """Verify batch decay_proposals returns correct counts and ratios."""
+        from cortex.neuron.plasticity import decay_proposals, decay_stats
+
+        now = 1_000_000.0
+        synapses = [
+            {"synapse_id": "fresh_1", "weight": 0.7, "minimum_weight": 0.05, "maximum_weight": 1.0, "last_updated": now - 3600},
+            {"synapse_id": "fresh_2", "weight": 0.6, "minimum_weight": 0.05, "maximum_weight": 1.0, "last_updated": now - 7200},
+            {"synapse_id": "stale_1", "weight": 0.9, "minimum_weight": 0.05, "maximum_weight": 1.0, "last_updated": now - (10 * 86400)},
+            {"synapse_id": "stale_2", "weight": 0.4, "minimum_weight": 0.1, "maximum_weight": 1.0, "last_updated": now - (50 * 86400)},
+        ]
+
+        proposals = decay_proposals(synapses, now=now)
+        self.assertEqual(len(proposals), 4)
+
+        stats = decay_stats(synapses, now=now)
+        self.assertEqual(stats["total"], 4)
+        self.assertEqual(stats["in_grace_period"], 2)
+        self.assertEqual(stats["decayed"], 2)
+        self.assertLess(stats["weight_preservation_ratio"], 1.0)
+
+    def test_decay_neural_synapses_store(self) -> None:
+        """Verify decay_neural_synapses() updates the database correctly."""
+        import time as _time
+        from cortex.config import save_repo_config
+        from cortex.indexer import index_repository
+
+        config = load_repo_config(self.repo)
+        save_repo_config(self.repo, config)
+        index_repository(self.store, "AgentRepo", config, force=True)
+
+        # Manually create some synapses with backdated updated_at
+        for i, days_old in enumerate([0, 5, 30]):
+            self.store.db.execute(
+                """
+                INSERT INTO neural_synapses(
+                  repo, synapse_id, source_id, target_id, relation,
+                  base_weight, weight, minimum_weight, maximum_weight,
+                  plasticity_rule, update_count, evidence, metadata, updated_at
+                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "AgentRepo", f"test_syn_{i}", f"src_{i}", f"tgt_{i}", "related",
+                    0.5, 0.7, 0.05, 1.0, "hebbian", 0, "", "{}", _time.time() - (days_old * 86400),
+                ),
+            )
+        self.store.commit()
+
+        # Run decay with 1-day grace period
+        result = self.store.decay_neural_synapses("AgentRepo", grace_hours=24.0)
+        self.assertIn("applied", result)
+        self.assertIn("decayed", result)
+        # Stale synapses should have decayed, fresh one shouldn't
+        self.assertGreaterEqual(result["applied"], 1)
+
+        # Verify ledger entry was created for decayed synapses
+        events = self.store.neural_events("AgentRepo", limit=5)
+        decay_events = [e for e in events if e["event_type"] == "plasticity_decay"]
+        self.assertGreater(len(decay_events), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

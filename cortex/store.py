@@ -901,6 +901,82 @@ class Store:
                 conn, repo, event_type=event_type, entity_id=entity_id, payload=payload
             )
 
+    def decay_neural_synapses(
+        self,
+        repo: str,
+        *,
+        decay_rate: float = 0.005,
+        grace_hours: float = 24.0,
+        min_synapses: int = 1,
+    ) -> dict[str, Any]:
+        """Apply time-based decay to all synapses in a repo.
+
+        Synapses updated within grace_hours are exempt (they're fresh).
+        Result: stale synapses slowly fade toward their minimum_weight.
+        Returns summary stats for logging/auditing.
+
+        Companion to apply_neural_plasticity — that one strengthens via
+        co-activation, this one weakens via absence.
+        """
+        from .neuron.plasticity import decay_proposals, decay_stats
+
+        now = time.time()
+        rows = self.db.execute(
+            """
+            SELECT synapse_id, base_weight, weight, minimum_weight, maximum_weight,
+                   updated_at, update_count
+            FROM neural_synapses WHERE repo=?
+            """,
+            (repo,),
+        ).fetchall()
+
+        if len(rows) < min_synapses:
+            return {"decayed": 0, "total": len(rows), "skipped": True}
+
+        synapses = [
+            {
+                "synapse_id": row["synapse_id"],
+                "weight": row["weight"],
+                "minimum_weight": row["minimum_weight"],
+                "maximum_weight": row["maximum_weight"],
+                "last_updated": row["updated_at"],
+            }
+            for row in rows
+        ]
+
+        proposals = decay_proposals(
+            synapses, now=now, decay_rate=decay_rate, grace_hours=grace_hours
+        )
+
+        applied = 0
+        decayed_ids = []
+        with self.transaction() as conn:
+            for prop in proposals:
+                if abs(prop.delta) < 1e-6:
+                    continue
+                conn.execute(
+                    """
+                    UPDATE neural_synapses
+                    SET weight=?, updated_at=?
+                    WHERE repo=? AND synapse_id=?
+                    """,
+                    (prop.proposed_weight, now, repo, prop.synapse_id),
+                )
+                # Use the existing event-hash-chained appender for ledger integrity
+                self._append_neural_event_conn(
+                    conn,
+                    repo,
+                    event_type="plasticity_decay",
+                    entity_id=prop.synapse_id,
+                    payload=prop.to_dict(),
+                )
+                applied += 1
+                decayed_ids.append(prop.synapse_id)
+
+        stats = decay_stats(synapses, now=now)
+        stats["applied"] = applied
+        return stats
+
     def apply_neural_plasticity(
         self, repo: str, activation_id: str, updates: list[dict[str, Any]]
     ) -> str | None:
