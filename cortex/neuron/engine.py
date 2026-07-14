@@ -7,7 +7,6 @@ from math import tanh
 from typing import Any, Iterable
 
 from .models import NeuralActivationPacket, NeuralActivationRecord
-from .plasticity import bounded_hebbian
 
 
 def _task_hash(task: str) -> str:
@@ -138,33 +137,9 @@ def activate_interlink(
     ).hexdigest()
     activation_id = _activation_id(repo, state_material["task_hash"], state_hash)
 
+    # v2: activation is observational. Persistent graph adaptation happens only after
+    # a separately recorded, verification-backed outcome has passed replay gates.
     updates: list[dict[str, Any]] = []
-    fired_set = set(fired)
-    if plasticity_enabled and governance_mode in {"normal", "constrained"}:
-        candidate_rows = [
-            row
-            for row in synapses
-            if row["synapse_id"] in traversed
-            and row["source_id"] in fired_set
-            and row["target_id"] in fired_set
-        ]
-        candidate_rows.sort(key=lambda row: row["synapse_id"])
-        for row in candidate_rows[:32]:
-            proposal = bounded_hebbian(
-                synapse_id=row["synapse_id"],
-                weight=float(row["weight"]),
-                minimum_weight=float(row["minimum_weight"]),
-                maximum_weight=float(row["maximum_weight"]),
-                pre=potentials[row["source_id"]],
-                post=potentials[row["target_id"]],
-                learning_rate=learning_rate,
-            )
-            if proposal.delta <= 0.0:
-                continue
-            updates.append(proposal.to_dict())
-
-    if updates:
-        store.apply_neural_plasticity(repo, activation_id, updates)
 
     metrics = {
         "total_nodes": len(node_rows),
@@ -188,6 +163,7 @@ def activate_interlink(
         records=tuple(records),
         metrics=metrics,
         plasticity_updates=tuple(updates),
+        traversed_synapses=tuple(sorted(traversed)),
     )
     payload = packet.to_dict()
     store.record_neural_activation(repo, session_id, payload)
@@ -203,6 +179,7 @@ def activate_interlink(
             "support_paths": list(packet.support_paths),
             "metrics": metrics,
             "plasticity_updates": updates,
+            "traversed_synapses": sorted(traversed),
         },
     )
     return packet

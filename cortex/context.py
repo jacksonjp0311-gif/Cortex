@@ -239,3 +239,24 @@ def nexus_packet(context: dict[str, Any]) -> dict[str, Any]:
             "packet_hash": context["packet_hash"],
         },
     }
+
+
+def cortex_context_protocol(context: dict[str, Any]) -> dict[str, Any]:
+    """Stable, agent-neutral context contract; evidence remains subordinate to source truth."""
+    neural = context.get("neural_interlink", {})
+    return {
+        "protocol": "cortex-context/1.0",
+        "repository": context["repository"],
+        "task": {"text": context["task"], "packet_hash": context["packet_hash"]},
+        "governance": context["governor"],
+        "environment": context["environment"],
+        "direct_evidence": context["evidence"],
+        "support_evidence": [item for item in context["evidence"] if item.get("metadata", {}).get("selection_source") != "hybrid_retrieval"],
+        "structural_paths": {"neural_activation_id": neural.get("activation_id"), "support_paths": neural.get("support_paths", [])},
+        "discoveries": [],
+        "contradictions": [],
+        "unknowns": ["No inferred claim is mutation authority; inspect current source and tests."],
+        "recommended_commands": [],
+        "prohibited_actions": ["Treat learned associations as superior to current source, tests, governance, or human authority."],
+        "state_hashes": {"packet": context["packet_hash"], "neural": neural.get("state_hash"), "manifest": context["repository"].get("manifest_hash")},
+    }

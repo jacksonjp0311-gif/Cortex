@@ -245,6 +245,33 @@ CREATE TABLE IF NOT EXISTS neural_activations(
 );
 CREATE INDEX IF NOT EXISTS idx_neural_activations_repo_created ON neural_activations(repo, created_at);
 
+CREATE TABLE IF NOT EXISTS task_outcomes(
+    outcome_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    session_id TEXT,
+    activation_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    reward REAL NOT NULL,
+    verification_type TEXT NOT NULL,
+    verification_payload_json TEXT NOT NULL DEFAULT '{}',
+    created_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE,
+    FOREIGN KEY(activation_id) REFERENCES neural_activations(activation_id) ON DELETE RESTRICT
+);
+CREATE INDEX IF NOT EXISTS idx_task_outcomes_repo_created ON task_outcomes(repo, created_at);
+
+CREATE TABLE IF NOT EXISTS evidence_credit(
+    outcome_id TEXT NOT NULL,
+    memory_id INTEGER,
+    node_id TEXT,
+    synapse_id TEXT,
+    contribution REAL NOT NULL,
+    reward_share REAL NOT NULL,
+    reason TEXT NOT NULL,
+    PRIMARY KEY(outcome_id, node_id, synapse_id),
+    FOREIGN KEY(outcome_id) REFERENCES task_outcomes(outcome_id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS settings(
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -981,6 +1008,57 @@ class Store:
             (repo, limit),
         ).fetchall()
         return [json.loads(row["payload"]) for row in rows]
+
+    def neural_activation(self, repo: str, activation_id: str) -> dict[str, Any] | None:
+        row = self.db.execute(
+            "SELECT payload FROM neural_activations WHERE repo=? AND activation_id=?", (repo, activation_id)
+        ).fetchone()
+        return json.loads(row["payload"]) if row else None
+
+    def record_outcome(
+        self, repo: str, *, outcome_id: str, activation_id: str, status: str, reward: float,
+        verification_type: str, verification_payload: dict[str, Any], credits: list[dict[str, Any]],
+        updates: list[dict[str, Any]], apply_updates: bool,
+    ) -> None:
+        activation = self.db.execute(
+            "SELECT session_id FROM neural_activations WHERE repo=? AND activation_id=?", (repo, activation_id)
+        ).fetchone()
+        if not activation:
+            raise ValueError("Activation does not belong to this repository")
+        now = time.time()
+        with self.transaction() as conn:
+            conn.execute(
+                """INSERT INTO task_outcomes(outcome_id, repo, session_id, activation_id, status, reward,
+                   verification_type, verification_payload_json, created_at)
+                   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (outcome_id, repo, activation["session_id"], activation_id, status, reward,
+                 verification_type, json.dumps(verification_payload, sort_keys=True), now),
+            )
+            for credit in credits:
+                conn.execute(
+                    """INSERT INTO evidence_credit(outcome_id, memory_id, node_id, synapse_id, contribution,
+                       reward_share, reason) VALUES(?, ?, ?, ?, ?, ?, ?)""",
+                    (outcome_id, credit.get("memory_id"), credit.get("node_id"), credit.get("synapse_id"),
+                     credit["contribution"], credit["reward_share"], credit["reason"]),
+                )
+            if apply_updates:
+                for update in updates:
+                    conn.execute(
+                        """UPDATE neural_synapses SET weight=MIN(maximum_weight, MAX(minimum_weight, ?)),
+                           update_count=update_count+1, updated_at=? WHERE repo=? AND synapse_id=?""",
+                        (float(update["proposed_weight"]), now, repo, update["synapse_id"]),
+                    )
+            self._append_neural_event_conn(
+                conn, repo, event_type="verified_outcome", entity_id=outcome_id,
+                payload={"activation_id": activation_id, "status": status, "reward": reward,
+                         "verification_type": verification_type, "credits": len(credits),
+                         "updates": updates, "applied": apply_updates},
+            )
+
+    def outcomes(self, repo: str, limit: int = 100) -> list[sqlite3.Row]:
+        return self.db.execute(
+            "SELECT * FROM task_outcomes WHERE repo=? ORDER BY created_at DESC LIMIT ?", (repo, limit)
+        ).fetchall()
 
     def set_setting(self, key: str, value: Any) -> None:
         self.db.execute(

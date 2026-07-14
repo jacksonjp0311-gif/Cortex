@@ -11,6 +11,7 @@ from cortex.context import build_context, nexus_packet
 from cortex.governor import Governor
 from cortex.models import Hit
 from cortex.neuron import activate_interlink
+from cortex.learning import record_outcome
 from cortex.retrieval import query
 from cortex.store import Store
 
@@ -120,7 +121,7 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertIn("memory_bridge.py", packet.support_paths)
         self.assertIn("memory_bridge.py", packet.fired_paths)
 
-    def test_plasticity_is_bounded_and_ledgered(self) -> None:
+    def test_verified_outcome_is_bounded_replay_gated_and_ledgered(self) -> None:
         hits = query(self.store, "AgentRepo", "planner retrieve memory", limit=12)
         before = {
             row["synapse_id"]: float(row["weight"])
@@ -135,9 +136,17 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
             governance_mode="normal",
             learning_rate=0.25,
         )
+        # Activation itself is observational in v2: learning requires verified outcome.
+        self.assertEqual(before, {row["synapse_id"]: float(row["weight"]) for row in self.store.neural_synapses("AgentRepo")})
+        result = record_outcome(
+            self.store, "AgentRepo", packet.activation_id, status="verified",
+            verification_type="pytest", governance_mode="normal",
+        )
         after_rows = self.store.neural_synapses("AgentRepo")
         self.assertTrue(self.store.verify_neural_ledger("AgentRepo"))
-        self.assertTrue(packet.plasticity_updates)
+        self.assertGreater(result["credited_synapses"], 0)
+        self.assertTrue(result["replay"]["accepted"])
+        self.assertGreater(result["accepted_updates"], 0)
         for row in after_rows:
             self.assertGreaterEqual(float(row["weight"]), float(row["minimum_weight"]))
             self.assertLessEqual(float(row["weight"]), float(row["maximum_weight"]))
@@ -163,6 +172,10 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertIn("neural_interlink", packet["context"])
         self.assertFalse(packet["authority"]["cortex_may_mutate"])
         self.assertTrue(packet["authority"]["human_authorized_only"])
+        from cortex.context import cortex_context_protocol
+        protocol = cortex_context_protocol(context)
+        self.assertEqual("cortex-context/1.0", protocol["protocol"])
+        self.assertTrue(protocol["prohibited_actions"])
 
     def test_neural_ledger_detects_tampering(self) -> None:
         row = self.store.db.execute(

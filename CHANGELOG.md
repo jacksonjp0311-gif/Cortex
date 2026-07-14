@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 — Outcome-Grounded Repository Intelligence
+
+- Made neural activation observational: association weights no longer change merely because paths co-activate.
+- Added `cortex outcome` for explicit verified, helpful, irrelevant, failed, and unsafe outcome recording.
+- Added bounded verification-weighted credit assignment, replay gates, immutable outcome ledger events, and before/after graph hashes.
+- Added outcome and evidence-credit records to Cortex's single SQLite substrate.
+- Added the agent-neutral `cortex-context/1.0` protocol via `cortex protocol`.
+- Preserved the authority boundary: current source, tests, governance, and human authorization outrank learned associations.
+
 ## 1.3.1 — Trust-State Closure
 
 - Activation, context, Governor, and health now consume the same current certificate.

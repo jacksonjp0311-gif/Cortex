@@ -1,3 +1,17 @@
+# Cortex v2.0.0 Test Report
+
+**Release validation date:** July 14, 2026
+
+## v2.0 release validation
+
+- `python -m pytest`: 26 passed
+- Python compilation: passed
+- `ruff check cortex tests`: passed
+- Outcome learning: activation is observational; a verified outcome receives bounded credit, passes the replay gate, updates only in an allowed Governor mode, and appends to the hash-chained ledger.
+- Context protocol: `cortex protocol` exposes `cortex-context/1.0` with an explicit authority boundary.
+
+The v1.3.1 report below is retained as release lineage.
+
 # Cortex Neural Interlink v1.3.1 Test Report
 
 **Test date:** July 11, 2026  

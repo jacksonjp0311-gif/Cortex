@@ -64,6 +64,7 @@ class NeuralActivationPacket:
     records: tuple[NeuralActivationRecord, ...]
     metrics: dict[str, Any]
     plasticity_updates: tuple[dict[str, Any], ...] = ()
+    traversed_synapses: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,4 +79,5 @@ class NeuralActivationPacket:
             "records": [record.to_dict() for record in self.records],
             "metrics": self.metrics,
             "plasticity_updates": list(self.plasticity_updates),
+            "traversed_synapses": list(self.traversed_synapses),
         }

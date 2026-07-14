@@ -10,7 +10,8 @@ from .activation import activate_repository
 from .bootstrap import bootstrap_repository
 from .bridge import consolidate
 from .config import ensure_home, load_repo_config
-from .context import build_context, nexus_packet
+from .context import build_context, cortex_context_protocol, nexus_packet
+from .learning import record_outcome
 from .environment import environment_summary
 from .governor import Governor
 from .health import health_report
@@ -84,6 +85,20 @@ def build_parser() -> argparse.ArgumentParser:
     nexus.add_argument("--task", required=True)
     nexus.add_argument("--budget", type=int, default=1200)
     nexus.add_argument("--json", action="store_true")
+
+    protocol = sub.add_parser("protocol", help="Emit the stable Cortex Context Protocol packet.")
+    protocol.add_argument("--repo", required=True)
+    protocol.add_argument("--task", required=True)
+    protocol.add_argument("--budget", type=int, default=1200)
+    protocol.add_argument("--json", action="store_true")
+
+    outcome = sub.add_parser("outcome", help="Record a verification outcome and replay-gate bounded learning.")
+    outcome.add_argument("--repo", required=True)
+    outcome.add_argument("--activation-id", required=True)
+    outcome.add_argument("--status", choices=["verified", "diagnosed", "helpful", "unknown", "irrelevant", "failed", "unsafe"], required=True)
+    outcome.add_argument("--verification", required=True)
+    outcome.add_argument("--reward", type=float)
+    outcome.add_argument("--json", action="store_true")
 
     environment = sub.add_parser("environment", help="Show the learned repository environment profile.")
     environment.add_argument("--repo", required=True)
@@ -234,9 +249,20 @@ def main(argv: list[str] | None = None) -> None:
                 )
             emit([hit.to_dict() for hit in hits], args.json)
 
-        elif command in {"context", "nexus-packet"}:
+        elif command in {"context", "nexus-packet", "protocol"}:
             packet = build_context(home, store, governor, args.repo, args.task, args.budget)
-            emit(nexus_packet(packet) if command == "nexus-packet" else packet, args.json)
+            value = nexus_packet(packet) if command == "nexus-packet" else cortex_context_protocol(packet) if command == "protocol" else packet
+            emit(value, args.json)
+
+        elif command == "outcome":
+            if not store.repo(args.repo):
+                raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
+            governance = governor.evaluate(args.repo)
+            emit(record_outcome(
+                store, args.repo, args.activation_id, status=args.status,
+                verification_type=args.verification, reward=args.reward,
+                governance_mode=governance["mode"],
+            ), args.json)
 
         elif command == "environment":
             emit(environment_summary(store.environment_profile(args.repo)), args.json)
