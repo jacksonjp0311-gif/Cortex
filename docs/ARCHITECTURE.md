@@ -89,6 +89,16 @@ receipts, rollback, expiry, and re-anchoring conditions into
 `cortex-continuation/1.0`. It also enforces the separate promotion gate for
 Cortex-owned canonical memory.
 
+### Optional ARIA meta-language
+
+`cortex.meta_language` derives a bounded descriptor from `ARIA-RUNTIME.json`,
+`ARIA-CONNECT.json`, and indexed `.aria` plans. It exposes semantic intent,
+planning, governance, continuation, and coordination capabilities through the
+learned environment and context protocols. Cortex's implementation and
+execution language remains Python. ARIA plans are advisory evidence: Cortex
+does not execute them automatically, translate them into core code, or treat
+them as authority.
+
 ### Lifecycle
 
 `cortex.lifecycle` selectively retires learned synapse-weight deviation toward

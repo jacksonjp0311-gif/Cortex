@@ -3,8 +3,8 @@
     "release":  "Cortex v3.0.0",
     "generated_on":  "2026-07-28",
     "manifest_scope":  "Git-tracked and intended release files except RELEASE_MANIFEST.json itself.",
-    "file_count":  99,
-    "total_bytes":  2037876,
+    "file_count":  101,
+    "total_bytes":  2051645,
     "files":  [
                   {
                       "path":  ".editorconfig",
@@ -32,9 +32,9 @@
                   },
                   {
                       "path":  "BENCHMARK_REPORT.md",
-                      "bytes":  6503,
+                      "bytes":  7404,
                       "mode":  "0o666",
-                      "sha256":  "ff8fe74a906d4f1751f47a613664079ec46f69c17ff3f4b369c24beed8dad2de"
+                      "sha256":  "f81133e428fe6d1689302f4af2aeb01eeb65495d38a175a09618ba070e3dd776"
                   },
                   {
                       "path":  "benchmarks/corpora/aria_language.json",
@@ -98,9 +98,9 @@
                   },
                   {
                       "path":  "BUILD_REPORT.md",
-                      "bytes":  3241,
+                      "bytes":  3424,
                       "mode":  "0o666",
-                      "sha256":  "20206dc7ae3297b26429b37eb92b274eccd6b7087cef9a403f8d56fcc05d9eae"
+                      "sha256":  "cc9ec9adee0747208290ea196cb322627aa4409b5369d436800411e9417eedcf"
                   },
                   {
                       "path":  "CHANGELOG.md",
@@ -170,15 +170,15 @@
                   },
                   {
                       "path":  "cortex/cli.py",
-                      "bytes":  30541,
+                      "bytes":  31493,
                       "mode":  "0o666",
-                      "sha256":  "4a51e8dbca5ae4a2bfd939378fa5ab2de035328a20bc768797ea62493e6229f8"
+                      "sha256":  "4e874e38216a7e48c2f1f5d2f7fb73ddb642586279d3c2b0dfd978defcb89906"
                   },
                   {
                       "path":  "cortex/config.py",
-                      "bytes":  9397,
+                      "bytes":  9408,
                       "mode":  "0o666",
-                      "sha256":  "6d119fa31cf9f8ba1de5f1ad439386b94ec5b4b5ec0f5a8725ba488bdb2cc7a4"
+                      "sha256":  "4a1d55c5346d905b921b5ea2b3e1fd0ae2333b3fd23f4787710a8f5a4e8c35e2"
                   },
                   {
                       "path":  "cortex/context.py",
@@ -188,9 +188,9 @@
                   },
                   {
                       "path":  "cortex/continuation.py",
-                      "bytes":  10021,
+                      "bytes":  10103,
                       "mode":  "0o666",
-                      "sha256":  "313357edafd3c871d42fdd685a203047c2b7c1ca553369e258dd27c40c90a1c7"
+                      "sha256":  "190db6b98bfa391d042def94e298f75311effb87e08af831283b8096bac6ace2"
                   },
                   {
                       "path":  "cortex/efficiency.py",
@@ -206,9 +206,9 @@
                   },
                   {
                       "path":  "cortex/environment.py",
-                      "bytes":  11255,
+                      "bytes":  11620,
                       "mode":  "0o666",
-                      "sha256":  "317f82507fda4cdac0dec42f610df149f86a1f28109d5c9b81d7e1aab3568b66"
+                      "sha256":  "e4ed272fb36fc944fab112a16ca4af07edbe43d0d26c2cf0f7b0c72ca9d1513a"
                   },
                   {
                       "path":  "cortex/evaluation.py",
@@ -254,9 +254,9 @@
                   },
                   {
                       "path":  "cortex/integration.py",
-                      "bytes":  19402,
+                      "bytes":  19534,
                       "mode":  "0o666",
-                      "sha256":  "e2b6d2b2b0a343d75b4b697761f95e1054fb9f9213544bac5f9b6981e7d9b785"
+                      "sha256":  "a41e738a4636a1b120eafda6793f59b13f9dc726ca7d841eea380c2b8032a28b"
                   },
                   {
                       "path":  "cortex/learning/__init__.py",
@@ -281,6 +281,12 @@
                       "bytes":  10069,
                       "mode":  "0o666",
                       "sha256":  "be20d1896e35545b45ad24623348dabd414d5cf97e255ba5b5a19e6e8b22ef19"
+                  },
+                  {
+                      "path":  "cortex/meta_language.py",
+                      "bytes":  4356,
+                      "mode":  "0o666",
+                      "sha256":  "b675b129a4d2a4c740c6a4d66768c21f54cacc93567b70e63ac2ffc851d7f4e8"
                   },
                   {
                       "path":  "cortex/models.py",
@@ -374,9 +380,15 @@
                   },
                   {
                       "path":  "docs/ARCHITECTURE.md",
-                      "bytes":  6470,
+                      "bytes":  6979,
                       "mode":  "0o666",
-                      "sha256":  "bc4871f6927ddfcd8d37d7c5d923611a17b484aac828f0eb0e19eb70b08e33ee"
+                      "sha256":  "0eaa676047598f533935d6382672712de07ebc8a0d2a6047d1534af15c8e128b"
+                  },
+                  {
+                      "path":  "docs/ARIA_META_LANGUAGE.md",
+                      "bytes":  2372,
+                      "mode":  "0o666",
+                      "sha256":  "84c29949ffbcd44544100a5be54486d506dae13b8b205f9c73ec7957456dfc83"
                   },
                   {
                       "path":  "docs/BOOTSTRAP_PROTOCOL.md",
@@ -464,9 +476,9 @@
                   },
                   {
                       "path":  "README.md",
-                      "bytes":  22892,
+                      "bytes":  23681,
                       "mode":  "0o666",
-                      "sha256":  "9ceab6e31947c2ddf872f624325a8eb5daf149915e439d8cc0a237a76ee9b53f"
+                      "sha256":  "271abfc122225737b785f7f6a30be65d45a08120e645d5a8b64444c51b4e9387"
                   },
                   {
                       "path":  "scripts/bash/bootstrap-cortex-repo.sh",
@@ -536,27 +548,27 @@
                   },
                   {
                       "path":  "TEST_REPORT.md",
-                      "bytes":  6312,
+                      "bytes":  6509,
                       "mode":  "0o666",
-                      "sha256":  "26d456c30bc927a618bf6aa00aba82a403de95edb9364e9b910b202d8ae2681b"
+                      "sha256":  "294629c3ad6567b6923dd74ed271cdfbf757d335b7aba506278c60e3c11dec91"
                   },
                   {
                       "path":  "tests/test_cortex.py",
-                      "bytes":  20340,
+                      "bytes":  20425,
                       "mode":  "0o666",
-                      "sha256":  "ef51df7fc3c9a506bb3ae63289855ff1899c783540d58315d03fd472bbd5b5bd"
+                      "sha256":  "36c3ab058242a0145df115be5645d4450cfa938ee136430aa34971f85e5c0461"
                   },
                   {
                       "path":  "tests/test_gcmt.py",
-                      "bytes":  9164,
+                      "bytes":  9344,
                       "mode":  "0o666",
-                      "sha256":  "382575e9f712aae71494c418b7840e65f9c10563b361f72fab707fb49f41aa3d"
+                      "sha256":  "940cd12fc66b980d6133883e4dd5df3fd0c21f4510a2beaf22cb12e78504a972"
                   },
                   {
                       "path":  "tests/test_neural_interlink.py",
-                      "bytes":  8978,
+                      "bytes":  11633,
                       "mode":  "0o666",
-                      "sha256":  "6ea28a0b304efd9c755332abbfaf6dc435eb9035fd54adff7384370cd1b53d52"
+                      "sha256":  "c9726e7251f54987b2537fc9f10814454b00ad55121a401d3d4c63a36ab96edc"
                   },
                   {
                       "path":  "tests/test_thalamus.py",

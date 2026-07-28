@@ -168,6 +168,13 @@ def build_parser() -> argparse.ArgumentParser:
     environment.add_argument("--repo", required=True)
     environment.add_argument("--json", action="store_true")
 
+    meta_language = sub.add_parser(
+        "meta-language",
+        help="Show the optional repository meta-language boundary and capabilities.",
+    )
+    meta_language.add_argument("--repo", required=True)
+    meta_language.add_argument("--json", action="store_true")
+
     thalamus = sub.add_parser("thalamus", help="Inspect the deterministic retrieval route for a task.")
     thalamus.add_argument("--repo", required=True)
     thalamus.add_argument("--task", required=True)
@@ -442,6 +449,25 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "environment":
             emit(environment_summary(store.environment_profile(args.repo)), args.json)
+
+        elif command == "meta-language":
+            repository = store.repo(args.repo)
+            if not repository:
+                raise ValueError(
+                    f"Unknown repository: {args.repo}. Run cortex bootstrap first."
+                )
+            profile = store.environment_profile(args.repo) or {}
+            emit(
+                profile.get(
+                    "meta_language",
+                    {
+                        "available": False,
+                        "cortex_implementation_language": "python",
+                        "role": "optional_meta_language",
+                    },
+                ),
+                args.json,
+            )
 
         elif command == "thalamus":
             repository = store.repo(args.repo)

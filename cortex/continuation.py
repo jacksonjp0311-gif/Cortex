@@ -92,6 +92,7 @@ def build_continuation_packet(
             "support_paths": neural.get("support_paths", []),
             "estimated_tokens": context.get("estimated_tokens", 0),
             "capacity": context.get("context_budget", 0),
+            "meta_language": context.get("environment", {}).get("meta_language"),
         },
         "evidence_state": {
             "references": evidence,

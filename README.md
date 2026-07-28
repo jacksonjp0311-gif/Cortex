@@ -76,6 +76,23 @@ and promotion authority. Canonical memory is Cortex-owned metadata; these
 commands do not authorize or perform repository source mutation. See
 [`docs/GCMT.md`](docs/GCMT.md).
 
+## Optional ARIA meta-language
+
+Cortex stays Python. When a repository contains `ARIA-RUNTIME.json`,
+`ARIA-CONNECT.json`, or supported `.aria` plans, Cortex identifies ARIA as an
+optional `meta_language` for intent, planning, governance, continuation, and
+agent coordination.
+
+```bash
+cortex meta-language --repo MyProject --json
+```
+
+ARIA artifacts are never executed automatically, translated into Cortex core,
+or treated as mutation authority. Hidden `.aria/` runtime/backups are excluded
+while declared `*.aria` source plans remain indexed. The descriptor is carried
+through environment, context, and GCMT continuation packets. See
+[`docs/ARIA_META_LANGUAGE.md`](docs/ARIA_META_LANGUAGE.md).
+
 ## Thalamus routing
 
 Every normal activation now passes through a local, deterministic Thalamus route plan before retrieval. The plan classifies the task, allocates attention across source, tests, structure, documentation, Git, runtime, and other memory lanes, and records numerical inhibition for generated, duplicate, or out-of-scope evidence. It is an engineering routing analogy—not a biological model—and it cannot grant mutation authority. Inspect a plan with `cortex thalamus --repo <name> --task "<task>" --json`.
@@ -672,6 +689,7 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/NEURAL_INTERLINK.md` — sparse activation and bounded plasticity
 
 - `docs/GCMT.md` - governed continuation, lifecycle, federation, replay evaluation, and MCP
+- `docs/ARIA_META_LANGUAGE.md` - optional ARIA intent/governance layer over the Python core
 
 ## License
 

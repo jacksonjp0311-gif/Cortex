@@ -9,6 +9,7 @@ import platform
 import re
 from typing import Any
 
+from .meta_language import detect_meta_language
 
 KNOWN_MANIFESTS: dict[str, str] = {
     "pyproject.toml": "python",
@@ -272,6 +273,7 @@ def learn_environment(
             "powershell_launcher": True,
             "bash_launcher": True,
         },
+        "meta_language": detect_meta_language(root, file_rows),
     }
     canonical = json.dumps(profile, sort_keys=True, separators=(",", ":"))
     profile["profile_hash"] = sha256(canonical.encode("utf-8")).hexdigest()
@@ -297,4 +299,12 @@ def environment_summary(profile: dict[str, Any] | None) -> dict[str, Any]:
         "commands": profile.get("commands", {}),
         "entrypoint_candidates": profile.get("entrypoint_candidates", [])[:12],
         "runtime": profile.get("runtime", {}),
+        "meta_language": profile.get(
+            "meta_language",
+            {
+                "available": False,
+                "cortex_implementation_language": "python",
+                "role": "optional_meta_language",
+            },
+        ),
     }

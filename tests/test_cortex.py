@@ -280,6 +280,7 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertTrue(should_exclude("services/.env.production", config))
         self.assertTrue(should_exclude("keys/server.pem", config))
         self.assertTrue(should_exclude("work/benchmark-clone/README.md", config))
+        self.assertTrue(should_exclude(".aria/backups/old/src/module.psm1", config))
         self.assertEqual(language_for(Path("Feature.kt")), "kotlin")
         symbols, edges = parse_structure("import demo.core.Service\nclass Feature\nfun start() = 1\n", "Feature.kt", "kotlin")
         self.assertEqual([edge.target for edge in edges], ["demo.core.Service"])

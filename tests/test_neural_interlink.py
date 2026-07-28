@@ -72,6 +72,69 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertTrue(neural["ledger_valid"])
         self.assertTrue((self.repo / ".cortex" / "runtime" / "environment_latest.json").exists())
         self.assertFalse((self.home / "neuron.db").exists())
+        self.assertFalse(environment["meta_language"]["available"])
+        self.assertEqual(
+            environment["meta_language"]["cortex_implementation_language"], "python"
+        )
+
+    def test_aria_is_detected_as_meta_language_without_replacing_python(self) -> None:
+        (self.repo / "ARIA-RUNTIME.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aria.runtime/1",
+                    "release": "0.1.0-alpha.14",
+                    "languageEvolution": "cooperative-agent-mesh-alpha.17",
+                    "status": "experimental",
+                    "repository": {"canonicalCli": "aria.cmd"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (self.repo / "ARIA-CONNECT.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aria.agent-connection/1",
+                    "protocol": "semantic-sync/1",
+                    "commands": {
+                        "handshake": "./aria.cmd handshake --json",
+                        "health": "./aria.cmd doctor -Strict",
+                    },
+                    "continuity": [
+                        {
+                            "artifact": "aria.cooperative-mesh/1",
+                            "boundary": "Evidence may compose; authority may not.",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        plans = self.repo / "plans"
+        plans.mkdir()
+        (plans / "coordination.aria").write_text(
+            'aria 0.4.0\nemit "Evidence may compose; authority may not."\n',
+            encoding="utf-8",
+        )
+        refreshed = bootstrap_repository(
+            self.home, self.store, self.repo, "AgentRepo", force=True
+        )
+        meta = refreshed["environment"]["meta_language"]
+        self.assertTrue(meta["available"])
+        self.assertEqual(meta["name"], "ARIA")
+        self.assertEqual(meta["role"], "meta_language")
+        self.assertEqual(meta["cortex_implementation_language"], "python")
+        self.assertEqual(meta["cortex_execution_language"], "python")
+        self.assertFalse(meta["execution_policy"]["automatic_execution"])
+        self.assertFalse(meta["authority"]["grants_mutation_authority"])
+        self.assertIn("plans/coordination.aria", meta["artifact_paths"])
+        context = build_context(
+            self.home,
+            self.store,
+            Governor(self.home, self.store),
+            "AgentRepo",
+            "Coordinate a verified plan",
+        )
+        self.assertEqual(context["environment"]["meta_language"]["name"], "ARIA")
 
     def test_sparse_activation_is_deterministic_without_plasticity(self) -> None:
         hits = query(self.store, "AgentRepo", "planner memory bridge", limit=12)

@@ -28,6 +28,31 @@ external-certification question reached semantic confidence 0.246 rather than
 falling below 0.20. The corpus and claim boundary are in
 `benchmarks/corpora/aria_language.json`.
 
+### ARIA meta-language validation
+
+The original, non-cloned Aria repository was attached externally after adding
+the explicit meta-language boundary.
+
+| Measure | Result |
+|---|---:|
+| Host writes / Git changes | 0 / clean |
+| Certificate / activation | verified / ready |
+| Indexed files | 292 |
+| Retrieval probes | 7/8 (87.5%) |
+| Declared ARIA artifacts | 52 |
+| Hidden `.aria/` runtime/backups | excluded |
+| Cortex implementation / execution language | Python / Python |
+| ARIA role | `meta_language` |
+| Automatic ARIA execution | false |
+| ARIA mutation authority | false |
+| Context descriptor | present |
+| GCMT continuation descriptor | present |
+
+ARIA handshake and baseline commands returned ready against a valid 297/297
+native manifest. Cortex uses these artifacts as semantic and governance
+evidence; it does not replace its Python implementation or execute ARIA plans
+automatically.
+
 ## Verified internal Cortex self-host (July 28, 2026)
 
 | Measure | Host engine | INTERNAL CORTEX ENGINE |

@@ -53,7 +53,7 @@ Cortex provides memory, relationships, telemetry, sparse activation, and evidenc
 
 POWERSHELL_WRAPPER = r'''param(
     [Parameter(Position=0)]
-    [ValidateSet("activate", "bootstrap", "query", "remember", "consolidate", "verify", "status", "graph", "telemetry", "environment", "thalamus", "interlink", "neural-replay", "doctor")]
+    [ValidateSet("activate", "bootstrap", "query", "remember", "consolidate", "verify", "status", "graph", "telemetry", "environment", "meta-language", "thalamus", "interlink", "neural-replay", "doctor")]
     [string]$Command = "activate",
     [string]$Task = "",
     [string]$Query = "",
@@ -127,6 +127,7 @@ if ($Command -eq "status") { $ArgsList += @("status", "--repo", $RepoName, "--js
 if ($Command -eq "graph") { $ArgsList += @("graph", "--repo", $RepoName, "--json") }
 if ($Command -eq "telemetry") { $ArgsList += @("telemetry", "--repo", $RepoName, "--json") }
 if ($Command -eq "environment") { $ArgsList += @("environment", "--repo", $RepoName, "--json") }
+if ($Command -eq "meta-language") { $ArgsList += @("meta-language", "--repo", $RepoName, "--json") }
 if ($Command -eq "thalamus") {
     if ([string]::IsNullOrWhiteSpace($Task)) { throw "-Task is required for thalamus." }
     $ArgsList += @("thalamus", "--repo", $RepoName, "--task", $Task, "--budget", "$Budget", "--json")
@@ -244,7 +245,7 @@ case "$COMMAND" in
     [[ -n "$TASK" ]] || { echo "--task is required" >&2; exit 2; }
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" thalamus --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --json
     ;;
-  consolidate|verify|status|graph|telemetry|environment|neural-replay|doctor)
+  consolidate|verify|status|graph|telemetry|environment|meta-language|neural-replay|doctor)
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" "$COMMAND" --repo "$REPO_NAME" --json
     ;;
   *) echo "Unknown command: $COMMAND" >&2; exit 2 ;;

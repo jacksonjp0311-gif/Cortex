@@ -31,6 +31,7 @@ DEFAULT_EXCLUDES = [
     ".nuxt",
     ".turbo",
     ".cache",
+    ".aria",
     ".cortex/bin",
     ".cortex/runtime",
     ".cortex/config.json",
