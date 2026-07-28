@@ -4,7 +4,7 @@
   "generated_on": "2026-07-28",
   "manifest_scope": "Git-tracked and intended release files except RELEASE_MANIFEST.json itself.",
   "file_count": 403,
-  "total_bytes": 3707403,
+  "total_bytes": 3708918,
   "files": [
     {
       "path": ".editorconfig",
@@ -38,9 +38,9 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 5135,
+      "bytes": 5698,
       "mode": "0o666",
-      "sha256": "753c1265f61c9c88940e38ac38c86331bbb9dc9c08b43dd67c17de6dcadf3170"
+      "sha256": "69a3c045c02cfca8cabd41aa5e3d9a9d5fb4bc25ed00e697d0c61ca40c4c7fcb"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -68,9 +68,9 @@
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 7262,
+      "bytes": 7410,
       "mode": "0o666",
-      "sha256": "098fd3c73902a51897ddb3462bf61a6e4cc5c8d334d8f86071c900cfde4c9e21"
+      "sha256": "3db9fd8f5a40a80bf3be242f1bec75bde1eb865f401302fd18d00642c18f42ad"
     },
     {
       "path": "assets/cortex-neural-brain.png",
@@ -2198,9 +2198,9 @@
     },
     {
       "path": "cortex/verify.py",
-      "bytes": 7894,
+      "bytes": 8698,
       "mode": "0o666",
-      "sha256": "f3303a8e3e9e48332f42902f0c776d94e0eca5fb17c9270de760fff9cb056a25"
+      "sha256": "c66f2f4131d93f4130acb5b4a1611e9973580ee1006888392dcf1e60733fa9bc"
     },
     {
       "path": "docs/AI_INTEGRATION.md",

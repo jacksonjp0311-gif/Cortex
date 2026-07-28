@@ -16,6 +16,16 @@
   a compact dashboard.
 - Preserved the authority boundary: no learning, continuation, federation, or
   agent-access surface authorizes repository mutation.
+- Internalized the complete Apache-2.0 ARIA snapshot as Cortex's
+  manifest-verified native semantic language with no external repository
+  dependency.
+- Added the `internal_aria_substrate` neural region: always known,
+  dormant-by-default for unrelated work, and deterministically activated by
+  ARIA semantic, continuity, coordination, consent, capability, and governance
+  signals.
+- Hardened bootstrap retrieval probes against ambiguous duplicate symbol names
+  and accepted exact heading evidence when a specialized document correctly
+  outranks the README.
 
 ## 2.0.0 — Outcome-Grounded Repository Intelligence
 
