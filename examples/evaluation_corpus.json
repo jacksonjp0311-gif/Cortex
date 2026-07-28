@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "name": "cortex-gcmt-smoke",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "outcome-learning-source",
+      "category": "source_recall",
+      "task": "Where is verification-backed outcome learning implemented?",
+      "expected_paths": [
+        "cortex/learning/outcomes.py",
+        "docs/V2_OUTCOME_LEARNING.md"
+      ]
+    },
+    {
+      "id": "continuation-boundary",
+      "category": "boundary_separation",
+      "task": "How are operational evidence and canonical state separated?",
+      "expected_paths": [
+        "cortex/continuation.py",
+        "docs/GCMT.md"
+      ],
+      "forbidden_paths": [
+        "assets/cortex-neural-brain.png"
+      ]
+    },
+    {
+      "id": "insufficient-evidence",
+      "category": "abstention",
+      "task": "Which production deployment was independently certified by an external auditor?",
+      "expected_paths": [],
+      "should_abstain": true,
+      "abstain_below": 0.2
+    }
+  ]
+}

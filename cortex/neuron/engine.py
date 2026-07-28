@@ -44,8 +44,12 @@ def activate_interlink(
     plasticity_enabled: bool = True,
     governance_mode: str = "read_only",
     session_id: str | None = None,
+    weight_mode: str = "learned",
+    record: bool = True,
 ) -> NeuralActivationPacket:
     """Run deterministic sparse spreading activation over Cortex's compiled graph."""
+    if weight_mode not in {"base", "learned"}:
+        raise ValueError("weight_mode must be 'base' or 'learned'")
 
     node_rows = store.neural_nodes(repo)
     node_map = {row["node_id"]: row for row in node_rows}
@@ -81,7 +85,12 @@ def activate_interlink(
                 target = synapse["target_id"]
                 if target not in node_map:
                     continue
-                contribution = source_potential * float(synapse["weight"]) * (0.84 ** (depth + 1))
+                edge_weight = (
+                    float(synapse["base_weight"])
+                    if weight_mode == "base"
+                    else float(synapse["weight"])
+                )
+                contribution = source_potential * edge_weight * (0.84 ** (depth + 1))
                 if contribution <= 0.01:
                     continue
                 traversed.add(synapse["synapse_id"])
@@ -131,6 +140,7 @@ def activate_interlink(
         "graph_hash": graph_hash,
         "seeds": [(path, round(seeds[path], 8)) for path in seed_paths],
         "records": [record.to_dict() for record in records],
+        "weight_mode": weight_mode,
     }
     state_hash = sha256(
         json.dumps(state_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -166,20 +176,22 @@ def activate_interlink(
         traversed_synapses=tuple(sorted(traversed)),
     )
     payload = packet.to_dict()
-    store.record_neural_activation(repo, session_id, payload)
-    store.append_neural_event(
-        repo,
-        event_type="sparse_activation",
-        entity_id=activation_id,
-        payload={
-            "session_id": session_id,
-            "task_hash": packet.task_hash,
-            "state_hash": state_hash,
-            "fired_paths": list(packet.fired_paths),
-            "support_paths": list(packet.support_paths),
-            "metrics": metrics,
-            "plasticity_updates": updates,
-            "traversed_synapses": sorted(traversed),
-        },
-    )
+    if record:
+        store.record_neural_activation(repo, session_id, payload)
+        store.append_neural_event(
+            repo,
+            event_type="sparse_activation",
+            entity_id=activation_id,
+            payload={
+                "session_id": session_id,
+                "task_hash": packet.task_hash,
+                "state_hash": state_hash,
+                "fired_paths": list(packet.fired_paths),
+                "support_paths": list(packet.support_paths),
+                "metrics": metrics,
+                "plasticity_updates": updates,
+                "traversed_synapses": sorted(traversed),
+                "weight_mode": weight_mode,
+            },
+        )
     return packet

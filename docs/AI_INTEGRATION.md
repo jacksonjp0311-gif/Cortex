@@ -79,3 +79,13 @@ Cortex contributes evidence and context. NexusGate remains responsible for inten
 ## Authority boundary
 
 Cortex may index, retrieve, activate, remember, consolidate, and adjust bounded internal association weights. It may not authorize durable source changes. The host repository and explicit human authorization control mutation.
+
+## MCP
+
+Run `cortex-mcp` to expose the read-oriented stdio server. It provides status,
+single-repository retrieval, boundary-preserving federation, context packets,
+verified continuation packets, lifecycle dry runs, and replay evaluation.
+Promotion and lifecycle application remain CLI-only explicit authority
+surfaces. The server supports the stable MCP `2025-11-25` initialization
+handshake and the `2026-07-28` discovery flow over newline-delimited stdio
+JSON-RPC.
