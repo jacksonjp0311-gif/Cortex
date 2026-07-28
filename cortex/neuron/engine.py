@@ -6,7 +6,13 @@ import json
 from math import tanh
 from typing import Any, Iterable
 
-from ..aria_meta.substrate import classify_aria_task, is_internal_aria_path
+from ..aria_meta.substrate import (
+    aria_path_supports,
+    aria_routing_purposes,
+    classify_aria_task,
+    is_internal_aria_path,
+    load_aria_cue_profile,
+)
 from .models import NeuralActivationPacket, NeuralActivationRecord
 
 
@@ -53,15 +59,21 @@ def activate_interlink(
         raise ValueError("weight_mode must be 'base' or 'learned'")
 
     all_node_rows = store.neural_nodes(repo)
-    aria_activation = classify_aria_task(task)
+    aria_profile = load_aria_cue_profile(store, repo)
+    aria_activation = classify_aria_task(task, aria_profile["cues"])
     substrate_active = aria_activation["mode"] == "active"
+    routing_purposes = aria_routing_purposes(aria_activation)
     substrate_node_count = sum(
         is_internal_aria_path(row["path"]) for row in all_node_rows
     )
     node_rows = [
         row
         for row in all_node_rows
-        if substrate_active or not is_internal_aria_path(row["path"])
+        if not is_internal_aria_path(row["path"])
+        or (
+            substrate_active
+            and aria_path_supports(row["path"], routing_purposes)
+        )
     ]
     node_map = {row["node_id"]: row for row in node_rows}
     graph_hash = store.neural_graph_hash(repo)
@@ -152,7 +164,7 @@ def activate_interlink(
         "seeds": [(path, round(seeds[path], 8)) for path in seed_paths],
         "records": [record.to_dict() for record in records],
         "weight_mode": weight_mode,
-        "aria_substrate_mode": aria_activation["mode"],
+        "aria_substrate": aria_activation,
     }
     state_hash = sha256(
         json.dumps(state_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -176,7 +188,10 @@ def activate_interlink(
         "aria_substrate": {
             **aria_activation,
             "total_nodes": substrate_node_count,
-            "eligible_nodes": substrate_node_count if substrate_active else 0,
+            "eligible_nodes": sum(
+                is_internal_aria_path(row["path"]) for row in node_rows
+            ),
+            "routing_purposes": list(routing_purposes),
             "considered_nodes": sum(
                 is_internal_aria_path(record.path) for record in records
             ),

@@ -1,71 +1,374 @@
-"""Task gating for Cortex's native ARIA semantic substrate."""
+"""Typed, bounded routing for Cortex's native ARIA semantic substrate."""
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Iterable
 
 
 INTERNAL_ARIA_PREFIX = "cortex/aria_meta/vendor/"
 INTERNAL_ARIA_REGION = "internal_aria_substrate"
 REPOSITORY_REGION = "repository"
-
-_ARIA_SIGNALS = (
-    "aria",
-    "meta-language",
-    "meta language",
-    "semantic plan",
-    "semantic planning",
-    "semantic replay",
-    "semantic handoff",
-    "session handoff",
-    "provider bridge",
-    "cooperative mesh",
-    "agent mesh",
-    "glyph",
-    "intent verification",
-    "intent proof",
-    "consent admission",
-    "admission receipt",
-    "capability authority",
-    "governed evolution",
-    "governance contract",
+ARIA_CUE_THRESHOLD = 0.65
+ARIA_MAX_LEARNED_CUES = 32
+ARIA_PURPOSES = (
+    "language",
+    "intent",
+    "continuity",
+    "consent",
+    "governance",
+    "coordination",
+    "symbolic",
 )
+
+CORE_CUES: tuple[dict[str, str], ...] = (
+    {"phrase": "aria", "purpose": "language"},
+    {"phrase": "meta-language", "purpose": "language"},
+    {"phrase": "meta language", "purpose": "language"},
+    {"phrase": "semantic plan", "purpose": "intent"},
+    {"phrase": "semantic planning", "purpose": "intent"},
+    {"phrase": "intent verification", "purpose": "intent"},
+    {"phrase": "intent proof", "purpose": "intent"},
+    {"phrase": "semantic replay", "purpose": "continuity"},
+    {"phrase": "semantic handoff", "purpose": "continuity"},
+    {"phrase": "session handoff", "purpose": "continuity"},
+    {"phrase": "consent admission", "purpose": "consent"},
+    {"phrase": "admission receipt", "purpose": "consent"},
+    {"phrase": "capability authority", "purpose": "governance"},
+    {"phrase": "governed evolution", "purpose": "governance"},
+    {"phrase": "governance contract", "purpose": "governance"},
+    {"phrase": "provider bridge", "purpose": "coordination"},
+    {"phrase": "cooperative mesh", "purpose": "coordination"},
+    {"phrase": "agent mesh", "purpose": "coordination"},
+    {"phrase": "glyph", "purpose": "symbolic"},
+)
+
+
+def _normalize(value: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9_-]+", value.casefold()))
+
+
+def _setting_key(repo: str) -> str:
+    return f"aria_cue_profile:{repo}"
 
 
 def is_internal_aria_path(path: str) -> bool:
     return path.replace("\\", "/").startswith(INTERNAL_ARIA_PREFIX)
 
 
-def classify_aria_task(task: str) -> dict[str, Any]:
-    """Decide whether a task should wake the always-known ARIA region."""
-
-    normalized = " ".join(re.findall(r"[a-z0-9_-]+", task.casefold()))
-    padded = f" {normalized} "
-    matched = tuple(
-        signal for signal in _ARIA_SIGNALS if f" {signal} " in padded
+def aria_purposes_for_path(path: str) -> tuple[str, ...]:
+    normalized = path.replace("\\", "/").casefold()
+    purposes: set[str] = set()
+    keyword_map = {
+        "intent": ("intent", "proposal"),
+        "continuity": ("replay", "handoff", "semanticcontinuity"),
+        "consent": ("consent", "admission", "receipt"),
+        "governance": (
+            "authority",
+            "evolution",
+            "policy",
+            "capability",
+            "gate",
+            "execution-evidence",
+        ),
+        "coordination": (
+            "bridge",
+            "mesh",
+            "handshake",
+            "connection",
+            "transmission",
+        ),
+        "symbolic": ("glyph", "alchemy", "semantic-cues"),
+    }
+    for purpose, keywords in keyword_map.items():
+        if any(keyword in normalized for keyword in keywords):
+            purposes.add(purpose)
+    if not purposes:
+        purposes.add("language")
+    return tuple(
+        purpose for purpose in ARIA_PURPOSES if purpose in purposes
     )
-    active = bool(matched)
+
+
+def aria_routing_purposes(classification: dict[str, Any]) -> tuple[str, ...]:
+    purposes = tuple(classification.get("purposes", []))
+    specialized = tuple(purpose for purpose in purposes if purpose != "language")
+    return specialized or purposes
+
+
+def aria_path_supports(path: str, purposes: Iterable[str]) -> bool:
+    normalized = path.replace("\\", "/")
+    if normalized.endswith(
+        ("ARIA-CONNECT.json", "ARIA-RUNTIME.json", "AGENTS.md")
+    ):
+        return True
+    requested = set(purposes)
+    return bool(requested.intersection(aria_purposes_for_path(path)))
+
+
+def native_semantic_registry() -> dict[str, Any]:
+    path = Path(__file__).resolve().parent / "vendor" / "grammar" / "semantic-cues.json"
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
     return {
-        "schema_version": "cortex-aria-activation/1.0",
+        "path": "bundled://grammar/semantic-cues.json",
+        "format": payload.get("format"),
+        "version": payload.get("version"),
+        "digest": payload.get("digest"),
+        "cue_count": len(payload.get("cues", [])),
+        "cue_ids": [cue.get("id") for cue in payload.get("cues", [])],
+        "engagement_contract": payload.get("engagementContract", {}),
+        "routing_boundary": (
+            "ARIA display semantics inform typed runtime meaning; "
+            "they do not independently wake Cortex or grant authority."
+        ),
+    }
+
+
+def load_aria_cue_profile(store: Any, repo: str) -> dict[str, Any]:
+    profile = store.get_setting(
+        _setting_key(repo),
+        {
+            "schema_version": "cortex-aria-cue-profile/1.0",
+            "repo": repo,
+            "threshold": ARIA_CUE_THRESHOLD,
+            "max_learned_cues": ARIA_MAX_LEARNED_CUES,
+            "cues": [],
+        },
+    )
+    cues = [
+        cue
+        for cue in profile.get("cues", [])
+        if cue.get("purpose") in ARIA_PURPOSES
+        and isinstance(cue.get("phrase"), str)
+        and isinstance(cue.get("confidence"), (int, float))
+    ][:ARIA_MAX_LEARNED_CUES]
+    return {
+        "schema_version": "cortex-aria-cue-profile/1.0",
+        "repo": repo,
+        "threshold": ARIA_CUE_THRESHOLD,
+        "max_learned_cues": ARIA_MAX_LEARNED_CUES,
+        "cues": cues,
+        "authority": "verification_tunes_relevance_only",
+    }
+
+
+def classify_aria_task(
+    task: str, learned_cues: Iterable[dict[str, Any]] = ()
+) -> dict[str, Any]:
+    """Decide which typed ARIA purposes a task should wake."""
+
+    normalized = _normalize(task)
+    padded = f" {normalized} "
+    evidence: list[dict[str, Any]] = []
+    for cue in CORE_CUES:
+        if f" {cue['phrase']} " in padded:
+            evidence.append(
+                {
+                    **cue,
+                    "source": "core",
+                    "confidence": 1.0,
+                    "immutable": True,
+                }
+            )
+    for cue in learned_cues:
+        phrase = _normalize(str(cue.get("phrase", "")))
+        confidence = max(0.0, min(1.0, float(cue.get("confidence", 0.0))))
+        purpose = str(cue.get("purpose", ""))
+        if (
+            phrase
+            and purpose in ARIA_PURPOSES
+            and confidence >= ARIA_CUE_THRESHOLD
+            and f" {phrase} " in padded
+        ):
+            evidence.append(
+                {
+                    "phrase": phrase,
+                    "purpose": purpose,
+                    "source": "learned",
+                    "confidence": round(confidence, 6),
+                    "immutable": False,
+                }
+            )
+    active = bool(evidence)
+    purposes = [
+        purpose
+        for purpose in ARIA_PURPOSES
+        if any(item["purpose"] == purpose for item in evidence)
+    ]
+    confidence = max(
+        (float(item["confidence"]) for item in evidence), default=0.0
+    )
+    return {
+        "schema_version": "cortex-aria-activation/2.0",
         "known": True,
         "namespace": INTERNAL_ARIA_REGION,
         "mode": "active" if active else "dormant",
-        "matched_signals": list(matched),
-        "reason": (
-            "task requests ARIA semantic, continuity, coordination, or governance knowledge"
+        "purposes": purposes,
+        "confidence": round(confidence, 6),
+        "cue_evidence": evidence,
+        "matched_signals": [item["phrase"] for item in evidence],
+        "decision_rule": (
+            "immutable_core_match"
+            if any(item["source"] == "core" for item in evidence)
+            else "verified_learned_cue_at_or_above_threshold"
             if active
-            else "native ARIA knowledge remains available but outside this task's evidence path"
+            else "deterministic_dormant_fallback"
+        ),
+        "reason": (
+            f"task requests typed ARIA purposes: {', '.join(purposes)}"
+            if active
+            else "native ARIA remains known but no admitted cue crossed the wake threshold"
         ),
         "automatic_execution": False,
         "grants_mutation_authority": False,
     }
 
 
+def adapt_aria_cues(
+    store: Any,
+    repo: str,
+    activation: dict[str, Any],
+    *,
+    status: str,
+    reward: float,
+    verification_type: str,
+    verification_payload: dict[str, Any],
+    governance_mode: str,
+) -> dict[str, Any]:
+    """Tune learned cue relevance after explicit verification; never authority."""
+
+    profile = load_aria_cue_profile(store, repo)
+    cues = [dict(cue) for cue in profile["cues"]]
+    aria = activation.get("metrics", {}).get("aria_substrate", {})
+    admitted = governance_mode in {"normal", "constrained"}
+    verified = bool(verification_type.strip()) and status in {
+        "verified",
+        "irrelevant",
+        "failed",
+        "unsafe",
+    }
+    updates: list[dict[str, Any]] = []
+    if admitted and verified:
+        matched_learned = {
+            item["phrase"]
+            for item in aria.get("cue_evidence", [])
+            if item.get("source") == "learned"
+        }
+        for cue in cues:
+            if cue["phrase"] not in matched_learned:
+                continue
+            old = float(cue["confidence"])
+            directional_reward = (
+                max(0.0, reward)
+                if status == "verified"
+                else min(0.0, reward)
+            )
+            delta = 0.05 * directional_reward
+            cue["confidence"] = round(max(0.35, min(0.90, old + delta)), 6)
+            cue["reviewed_outcomes"] = int(cue.get("reviewed_outcomes", 0)) + 1
+            cue["last_verification"] = verification_type
+            updates.append(
+                {
+                    "action": "confidence_adjusted",
+                    "phrase": cue["phrase"],
+                    "purpose": cue["purpose"],
+                    "old_confidence": old,
+                    "new_confidence": cue["confidence"],
+                }
+            )
+
+        proposals = (
+            verification_payload.get("aria_cue_proposals", [])
+            if status == "verified"
+            and reward > 0
+            and verification_payload.get("aria_cue_reviewed") is True
+            else []
+        )
+        core_phrases = {cue["phrase"] for cue in CORE_CUES}
+        existing = {cue["phrase"] for cue in cues}
+        for proposal in proposals:
+            phrase = _normalize(str(proposal.get("phrase", "")))
+            purpose = str(proposal.get("purpose", ""))
+            token_count = len(phrase.split())
+            if (
+                phrase in core_phrases
+                or phrase in existing
+                or purpose not in ARIA_PURPOSES
+                or not 2 <= token_count <= 6
+                or len(cues) >= ARIA_MAX_LEARNED_CUES
+            ):
+                continue
+            cue = {
+                "phrase": phrase,
+                "purpose": purpose,
+                "confidence": ARIA_CUE_THRESHOLD,
+                "reviewed_outcomes": 1,
+                "last_verification": verification_type,
+                "source": "human_reviewed_verified_outcome",
+            }
+            cues.append(cue)
+            existing.add(phrase)
+            updates.append({"action": "cue_admitted", **cue})
+
+    updated_profile = {**profile, "cues": cues[:ARIA_MAX_LEARNED_CUES]}
+    if updates:
+        store.set_setting(_setting_key(repo), updated_profile)
+        store.append_neural_event(
+            repo,
+            event_type="aria_cue_adapted",
+            entity_id=activation["activation_id"],
+            payload={
+                "verification_type": verification_type,
+                "status": status,
+                "updates": updates,
+                "authority_changed": False,
+            },
+        )
+    return {
+        "admitted": admitted and verified,
+        "updates": updates,
+        "profile": updated_profile,
+        "authority_changed": False,
+    }
+
+
+def aria_runtime_status(
+    store: Any, repo: str, task: str = ""
+) -> dict[str, Any]:
+    profile = load_aria_cue_profile(store, repo)
+    return {
+        "schema_version": "cortex-aria-runtime/1.0",
+        "native": True,
+        "core_cues": len(CORE_CUES),
+        "native_semantic_registry": native_semantic_registry(),
+        "purposes": list(ARIA_PURPOSES),
+        "learned_profile": profile,
+        "classification": (
+            classify_aria_task(task, profile["cues"]) if task else None
+        ),
+        "fallback": "deterministic_dormant",
+        "automatic_execution": False,
+        "grants_mutation_authority": False,
+    }
+
+
 __all__ = [
+    "ARIA_CUE_THRESHOLD",
+    "ARIA_MAX_LEARNED_CUES",
+    "ARIA_PURPOSES",
+    "CORE_CUES",
     "INTERNAL_ARIA_PREFIX",
     "INTERNAL_ARIA_REGION",
     "REPOSITORY_REGION",
+    "adapt_aria_cues",
+    "aria_path_supports",
+    "aria_purposes_for_path",
+    "aria_routing_purposes",
+    "aria_runtime_status",
     "classify_aria_task",
     "is_internal_aria_path",
+    "load_aria_cue_profile",
+    "native_semantic_registry",
 ]

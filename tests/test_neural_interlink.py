@@ -10,8 +10,10 @@ from cortex.aria_meta import (
     bundle_identity,
     bundle_root,
     classify_aria_task,
+    load_aria_cue_profile,
     verify_bundle,
 )
+from cortex.aria_meta.evaluation import evaluate_aria_corpus, load_aria_corpus
 from cortex.config import ensure_home, load_repo_config
 from cortex.context import build_context, nexus_packet
 from cortex.governor import Governor
@@ -117,20 +119,111 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertEqual(false_friend["mode"], "dormant")
         self.assertEqual(active["mode"], "active")
         self.assertIn("aria", active["matched_signals"])
+        self.assertEqual(
+            active["purposes"], ["language", "continuity"]
+        )
+        self.assertEqual(active["decision_rule"], "immutable_core_match")
         self.assertFalse(active["automatic_execution"])
+
+    def test_aria_fluency_corpus_has_no_false_or_missed_wakes(self) -> None:
+        corpus = (
+            Path(__file__).resolve().parents[1]
+            / "benchmarks"
+            / "corpora"
+            / "aria_fluency.json"
+        )
+        result = evaluate_aria_corpus(load_aria_corpus(corpus))
+        self.assertEqual(result["cases"], 20)
+        self.assertEqual(result["false_wakes"], 0)
+        self.assertEqual(result["missed_wakes"], 0)
+        self.assertEqual(result["purpose_misses"], 0)
+
+    def test_verified_outcome_admits_and_tunes_bounded_aria_cue(self) -> None:
+        task = "Use ARIA to define a mother tongue continuity boundary"
+        packet = activate_interlink(
+            self.store,
+            "AgentRepo",
+            task,
+            query(self.store, "AgentRepo", task, limit=12),
+            plasticity_enabled=False,
+            governance_mode="normal",
+        )
+        admitted = record_outcome(
+            self.store,
+            "AgentRepo",
+            packet.activation_id,
+            status="verified",
+            verification_type="human-review",
+            verification_payload={
+                "aria_cue_reviewed": True,
+                "aria_cue_proposals": [
+                    {"phrase": "mother tongue", "purpose": "language"}
+                ],
+            },
+            governance_mode="normal",
+        )
+        cue_learning = admitted["aria_cue_learning"]
+        self.assertFalse(cue_learning["authority_changed"])
+        self.assertEqual(cue_learning["updates"][0]["action"], "cue_admitted")
+        profile = load_aria_cue_profile(self.store, "AgentRepo")
+        learned = classify_aria_task(
+            "Use the mother tongue boundary", profile["cues"]
+        )
+        self.assertEqual(learned["mode"], "active")
+        self.assertEqual(learned["purposes"], ["language"])
+        self.assertEqual(
+            learned["decision_rule"],
+            "verified_learned_cue_at_or_above_threshold",
+        )
+
+        second_task = "Use the mother tongue boundary"
+        second = activate_interlink(
+            self.store,
+            "AgentRepo",
+            second_task,
+            query(self.store, "AgentRepo", second_task, limit=12),
+            plasticity_enabled=False,
+            governance_mode="normal",
+        )
+        tuned = record_outcome(
+            self.store,
+            "AgentRepo",
+            second.activation_id,
+            status="irrelevant",
+            verification_type="human-review",
+            governance_mode="normal",
+        )
+        self.assertEqual(
+            tuned["aria_cue_learning"]["updates"][0]["action"],
+            "confidence_adjusted",
+        )
+        profile = load_aria_cue_profile(self.store, "AgentRepo")
+        self.assertLess(
+            profile["cues"][0]["confidence"], profile["threshold"]
+        )
+        self.assertEqual(
+            classify_aria_task(
+                "Use the mother tongue boundary", profile["cues"]
+            )["mode"],
+            "dormant",
+        )
 
     def test_internal_aria_evidence_is_dormant_until_semantically_requested(self) -> None:
         native = self.repo / "cortex" / "aria_meta" / "vendor" / "docs"
         native.mkdir(parents=True)
-        native_path = native / "maternal-language.md"
+        native_path = native / "semantic-replay-handoff.md"
         native_path.write_text(
             "# ARIA\n\nSemantic replay and cooperative mesh govern session handoff.\n",
+            encoding="utf-8",
+        )
+        (native / "glyph-memory.md").write_text(
+            "# Glyph memory\n\nSymbolic rendering semantics.\n",
             encoding="utf-8",
         )
         bootstrap_repository(
             self.home, self.store, self.repo, "AgentRepo", force=True
         )
-        relative = "cortex/aria_meta/vendor/docs/maternal-language.md"
+        relative = "cortex/aria_meta/vendor/docs/semantic-replay-handoff.md"
         node = next(
             row
             for row in self.store.neural_nodes("AgentRepo")
@@ -174,6 +267,9 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         awakened_aria = awakened.metrics["aria_substrate"]
         self.assertEqual(awakened_aria["mode"], "active")
         self.assertGreaterEqual(awakened_aria["eligible_nodes"], 1)
+        self.assertLess(
+            awakened_aria["eligible_nodes"], awakened_aria["total_nodes"]
+        )
         self.assertGreaterEqual(awakened_aria["considered_nodes"], 1)
 
     def test_aria_is_detected_as_meta_language_without_replacing_python(self) -> None:

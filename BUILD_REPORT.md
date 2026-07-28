@@ -9,7 +9,7 @@
 - Wheel: `cortex_memory-3.0.0-py3-none-any.whl`
 - Clean-wheel install: passed
 - Installed `cortex` and `cortex-mcp` entrypoints: passed
-- Automated tests: 41 passed
+- Automated tests: 43 passed
 - Ruff and Python compilation: passed
 - Controlled benchmark gates: passed
 - Nested-clone self-host lifecycle: passed
@@ -19,11 +19,16 @@
 - Bundled ARIA handshake, strict doctor, and conformance suite: passed
 - Clean-wheel INTERNAL ARIA verification: passed with no external repository dependency
 - ARIA meta-language descriptor/context/continuation integration: passed
-- Native ARIA neural-region compilation: 292 internal / 107 repository nodes
+- Native ARIA neural-region compilation: 292 internal / 110 repository nodes
 - Generic Python task: ARIA dormant, 0 eligible / considered / fired nodes
-- ARIA continuity task: ARIA active, 45 considered / 15 fired nodes
+- ARIA continuity/coordination task: 40 of 292 ARIA nodes eligible, 15
+  considered, and 10 fired
 - Dormant-region exclusion occurs in lexical and vector candidate SQL, before
   embedding comparison or neural propagation
+- Native ARIA runtime: 7 typed purposes, 19 immutable core cues, maximum 32
+  learned cues, 0.65 wake threshold, bounded confidence-only adaptation
+- ARIA fluency evaluation: 20/20 passed; zero false wakes, missed wakes, or
+  purpose misses
 
 New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
 `cortex.federation`, `cortex.evaluation`, and `cortex.mcp`. GCMT is integrated
@@ -39,8 +44,8 @@ in Python; ARIA is not automatically executed and grants no mutation authority.
 
 The release artifacts include the internal snapshot:
 
-- wheel: 607,296 bytes;
-- source distribution: 468,752 bytes;
+- wheel: 612,077 bytes;
+- source distribution: 473,594 bytes;
 - clean-wheel verification: 297 manifest entries checked, zero failures.
 
 The original neural-edition report follows as release lineage.

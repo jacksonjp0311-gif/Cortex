@@ -4,6 +4,13 @@
   "role": "native_semantic_language",
   "neural_region": "internal_aria_substrate",
   "activation_policy": "task_gated_dormant_by_default",
+  "runtime_fluency": {
+    "typed_purposes": 7,
+    "immutable_core_cues": 19,
+    "learned_cue_limit": 32,
+    "wake_threshold": 0.65,
+    "adaptation": "verified_relevance_only"
+  },
   "ownership": "Cortex",
   "source_repository": "ARIA",
   "source_commit": "0b9860bd4610d24d13a483763f74a95699616193",

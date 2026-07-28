@@ -8,8 +8,11 @@ from typing import Any
 
 from .aria_meta.substrate import (
     INTERNAL_ARIA_PREFIX,
+    aria_path_supports,
+    aria_routing_purposes,
     classify_aria_task,
     is_internal_aria_path,
+    load_aria_cue_profile,
 )
 from .embeddings import cosine, get_embedder, deserialize_vector
 from .models import Hit
@@ -27,11 +30,21 @@ def reciprocal_rank_fusion(
 
 
 def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
-    aria_active = classify_aria_task(text)["mode"] == "active"
+    aria_profile = load_aria_cue_profile(store, repo)
+    aria_classification = classify_aria_task(text, aria_profile["cues"])
+    aria_active = aria_classification["mode"] == "active"
+    aria_purposes = aria_routing_purposes(aria_classification)
     excluded_prefixes = () if aria_active else (INTERNAL_ARIA_PREFIX,)
     lexical_rows = store.lexical(
         repo, text, 60, excluded_prefixes=excluded_prefixes
     )
+    if aria_active:
+        lexical_rows = [
+            row
+            for row in lexical_rows
+            if not is_internal_aria_path(row["path"])
+            or aria_path_supports(row["path"], aria_purposes)
+        ]
     lexical_ids = [row["id"] for row in lexical_rows]
 
     query_vector = get_embedder().encode_one(text)
@@ -46,6 +59,12 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
         query_vector=query_vector,
         excluded_prefixes=excluded_prefixes,
     ):
+        if (
+            aria_active
+            and is_internal_aria_path(row["path"])
+            and not aria_path_supports(row["path"], aria_purposes)
+        ):
+            continue
         try:
             vector = deserialize_vector(row["vector"])
             similarity = cosine(query_vector, vector)

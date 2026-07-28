@@ -44,6 +44,44 @@ that region for ordinary implementation tasks.
   `neural_interlink.metrics.aria_substrate`;
 - activation exposes evidence only—it never executes ARIA or grants authority.
 
+## Runtime fluency and adaptation
+
+Cortex maps admitted cues into typed purposes:
+
+- `language`;
+- `intent`;
+- `continuity`;
+- `consent`;
+- `governance`;
+- `coordination`;
+- `symbolic`.
+
+The 19 core cues are immutable. Learned cues are repository-scoped, inspectable
+through `cortex meta-language`, limited to 32, and admitted at confidence 0.65
+only when a verified outcome carries an explicit human-reviewed proposal.
+Verification-backed outcomes may adjust a matched learned cue between 0.35 and
+0.90. Falling below 0.65 makes that cue dormant. Core cues, Python execution,
+and authority are never modified.
+
+```bash
+cortex outcome --repo MyProject --activation-id act_... \
+  --status verified --verification human-review \
+  --aria-cue "continuity=portable memory bridge" \
+  --aria-cue-reviewed --json
+```
+
+The runtime also exposes ARIA's bundled `grammar/semantic-cues.json` identity,
+cue IDs, digest, and engagement contract. Those display semantics inform
+runtime meaning but cannot independently wake Cortex.
+
+Evaluate false wakes, missed wakes, and purpose assignment:
+
+```bash
+cortex meta-language --repo MyProject \
+  --corpus benchmarks/corpora/aria_fluency.json --json
+python benchmarks/aria_fluency_evaluation.py
+```
+
 The hidden `.aria/` runtime and backup directory is excluded from
 assimilation. The `.aria` file extension remains supported, so declared plans
 under paths such as `plans/*.aria` and `examples/*.aria` are indexed.

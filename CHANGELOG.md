@@ -26,6 +26,11 @@
 - Hardened bootstrap retrieval probes against ambiguous duplicate symbol names
   and accepted exact heading evidence when a specialized document correctly
   outranks the README.
+- Added typed native-ARIA runtime purposes, an inspectable bounded cue profile,
+  human-reviewed cue admission through verified outcomes, confidence-only
+  adaptation, and deterministic dormant fallback.
+- Added a 20-case ARIA fluency corpus measuring false wakes, missed wakes, and
+  typed-purpose assignment.
 
 ## 2.0.0 — Outcome-Grounded Repository Intelligence
 

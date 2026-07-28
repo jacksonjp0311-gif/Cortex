@@ -108,6 +108,17 @@ it for ARIA semantics, planning, continuity, coordination, consent, capability,
 or governance work. Activation packets report the region's known/active state
 and eligible, considered, and fired node counts.
 
+`cortex.aria_meta.substrate` connects ARIA's bundled semantic-cue registry to a
+typed Cortex routing layer. Nineteen immutable wake cues map tasks into seven
+purposes. A repository may hold at most 32 learned cues; each must be explicitly
+human-reviewed and admitted through a verified outcome. Confidence remains
+between 0.35 and 0.90, the wake threshold is 0.65, and learned state changes
+relevance only. No cue can alter execution or authority.
+Typed purposes also constrain the awake graph: for example, continuity and
+coordination tasks admit replay/handoff and bridge/mesh/handshake artifacts
+plus ARIA's connection foundation, while unrelated language regions remain
+dormant.
+
 ### Lifecycle
 
 `cortex.lifecycle` selectively retires learned synapse-weight deviation toward

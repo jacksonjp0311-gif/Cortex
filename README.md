@@ -92,8 +92,17 @@ handoff, provider-bridge, glyph, and cooperative-mesh tasks. Dormancy removes
 the region from a task's eligible evidence path; it does not unload or forget
 the language.
 
+Runtime fluency is typed as `language`, `intent`, `continuity`, `consent`,
+`governance`, `coordination`, or `symbolic`. Immutable core cues provide the
+deterministic baseline. Human-reviewed cue proposals may enter a bounded
+per-repository profile only through verified outcomes; subsequent verified
+outcomes tune relevance confidence, never execution or authority.
+
 ```bash
 cortex meta-language --repo MyProject --json
+cortex meta-language --repo MyProject --task "Prepare a semantic replay" --json
+cortex meta-language --repo MyProject \
+  --corpus benchmarks/corpora/aria_fluency.json --json
 ```
 
 Bundled or host ARIA artifacts are never executed automatically, translated

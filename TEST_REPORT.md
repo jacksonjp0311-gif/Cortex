@@ -4,7 +4,7 @@
 
 ## v3.0 release validation
 
-- `python -m unittest discover -s tests -q`: 41 passed
+- `python -m unittest discover -s tests -q`: 43 passed
 - `python -m ruff check cortex thalamus tests`: passed
 - Python compilation: passed
 - Source distribution and wheel build: passed
@@ -31,6 +31,12 @@
   the region deterministically
 - Dormant-region retrieval: internal ARIA paths are excluded at lexical and
   vector candidate selection rather than discarded after scoring
+- Typed fluency: 7 purposes and 19 immutable core cues; reviewed verified
+  outcome admits a bounded learned cue, and negative verified evidence can
+  lower it below the deterministic 0.65 wake threshold without changing
+  authority
+- Fluency corpus: 20/20 passed with zero false wakes, missed wakes, or purpose
+  misses
 - Bootstrap probe hardening: ambiguous duplicate symbols excluded and exact
   heading evidence accepted when a specialized document outranks README
 - Real Cortex repository smoke: manifest current, database integrity true,

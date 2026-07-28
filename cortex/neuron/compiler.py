@@ -8,6 +8,7 @@ from typing import Any
 from ..aria_meta.substrate import (
     INTERNAL_ARIA_REGION,
     REPOSITORY_REGION,
+    aria_purposes_for_path,
     is_internal_aria_path,
 )
 from .models import NeuralNode, NeuralSynapse
@@ -96,6 +97,11 @@ def compile_interlink(store: Any, repo: str) -> dict[str, Any]:
                 "content_hash": row["content_hash"],
                 "neural_region": neural_region,
                 "dormant_by_default": internal_aria,
+                "aria_purposes": (
+                    list(aria_purposes_for_path(row["path"]))
+                    if internal_aria
+                    else []
+                ),
                 **metadata,
             },
         )

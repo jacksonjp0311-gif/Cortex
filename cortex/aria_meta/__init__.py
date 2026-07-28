@@ -7,7 +7,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .substrate import classify_aria_task, is_internal_aria_path
+from .substrate import (
+    adapt_aria_cues,
+    aria_runtime_status,
+    classify_aria_task,
+    is_internal_aria_path,
+    load_aria_cue_profile,
+    native_semantic_registry,
+)
 
 
 def bundle_root() -> Path:
@@ -61,9 +68,13 @@ def verify_bundle() -> dict[str, Any]:
 
 
 __all__ = [
+    "adapt_aria_cues",
+    "aria_runtime_status",
     "bundle_identity",
     "bundle_root",
     "classify_aria_task",
     "is_internal_aria_path",
+    "load_aria_cue_profile",
+    "native_semantic_registry",
     "verify_bundle",
 ]

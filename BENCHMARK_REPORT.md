@@ -18,9 +18,9 @@ host-local ARIA surface when one is actually present.
 | Bundled handshake | ready |
 | Bundled strict doctor | pass |
 | Bundled full conformance suite | pass (148.827 s) |
-| Cortex tests | 39 passed |
+| Cortex tests | 43 passed |
 | Clean-wheel bundle verification | 297 checked; 0 failures |
-| Wheel / source distribution | 607,296 / 468,752 bytes |
+| Wheel / source distribution | 612,077 / 473,594 bytes |
 | External ARIA repository dependency | false |
 | Cortex implementation / execution | Python / Python |
 | Automatic ARIA execution / mutation authority | false / false |
@@ -38,19 +38,41 @@ treated as ambient host evidence.
 |---|---:|---:|
 | ARIA mode | dormant | active |
 | Total ARIA nodes | 292 | 292 |
-| Eligible ARIA nodes | 0 | 292 |
-| Considered ARIA nodes | 0 | 45 |
-| Fired ARIA nodes | 0 | 15 |
-| Total eligible graph nodes | 107 | 399 |
-| Total considered nodes | 54 | 64 |
-| Retrieval time | 0.051048 s | 0.149909 s |
-| Activation time | 0.025636 s | 0.031859 s |
+| Eligible ARIA nodes | 0 | 40 |
+| Considered ARIA nodes | 0 | 15 |
+| Fired ARIA nodes | 0 | 10 |
+| Total eligible graph nodes | 110 | 150 |
+| Total considered nodes | 57 | 64 |
+| Retrieval time | 0.050659 s | 0.063255 s |
+| Activation time | 0.020443 s | 0.022094 s |
 
 The ARIA task was `ARIA semantic replay cooperative mesh session handoff`; the
 generic control was `Fix Python retrieval ranking and run unit tests`. Both
 used the same compiled graph and a 64-node activation ceiling. Reproduce this
 with `python benchmarks/aria_substrate_benchmark.py`. This verifies selective
 availability for these declared tasks, not universal intent classification.
+The typed router selected `continuity` and `coordination`, reducing the awake
+ARIA surface from 292 nodes to 40.
+
+### Native ARIA fluency evaluation
+
+`python benchmarks/aria_fluency_evaluation.py` evaluates the immutable core
+router independently of repository retrieval.
+
+| Measure | Result |
+|---|---:|
+| Declared cases | 20 |
+| Passed | 20 (1.0) |
+| False wakes | 0 |
+| Missed wakes | 0 |
+| Typed-purpose misses | 0 |
+| Core cues / typed purposes | 19 / 7 |
+| Learned cue ceiling / wake threshold | 32 / 0.65 |
+
+The corpus includes ambiguous controls such as `variable`, generic test replay,
+and UI hand-off alongside language, intent, continuity, consent, governance,
+coordination, symbolic, and combined ARIA tasks. It is a declared regression
+corpus, not proof of general language understanding.
 
 The workload used a clean clone sourced from
 `C:\Users\jacks\OneDrive\Desktop\aria-language`. Cortex was attached with

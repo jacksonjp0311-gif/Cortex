@@ -5,6 +5,8 @@ from __future__ import annotations
 from hashlib import sha256
 from typing import Any
 
+from ..aria_meta import adapt_aria_cues
+
 
 REWARDS = {
     "verified": 1.0,
@@ -73,10 +75,21 @@ def record_outcome(
               "authoritative_recall_regression": False, "accepted": integrity and bounded}
     apply_updates = bool(updates and final_reward != 0 and governance_mode in {"normal", "constrained"} and replay["accepted"])
     outcome_id = _outcome_id(repo, activation_id, status, verification_type)
+    verified_payload = verification_payload or {}
     store.record_outcome(
         repo, outcome_id=outcome_id, activation_id=activation_id, status=status, reward=final_reward,
-        verification_type=verification_type, verification_payload=verification_payload or {},
+        verification_type=verification_type, verification_payload=verified_payload,
         credits=credits, updates=updates, apply_updates=apply_updates,
+    )
+    aria_cue_learning = adapt_aria_cues(
+        store,
+        repo,
+        activation,
+        status=status,
+        reward=final_reward,
+        verification_type=verification_type,
+        verification_payload=verified_payload,
+        governance_mode=governance_mode,
     )
     graph_after = store.neural_graph_hash(repo)
     return {"outcome_id": outcome_id, "activation_id": activation_id, "status": status, "reward": final_reward,
@@ -85,4 +98,5 @@ def record_outcome(
             "accepted_updates": len(updates) if apply_updates else 0,
             "rejected_updates": 0 if apply_updates else len(updates), "replay": replay,
             "graph_hash_before": graph_before, "graph_hash_after": graph_after,
-            "governance_mode": governance_mode}
+            "governance_mode": governance_mode,
+            "aria_cue_learning": aria_cue_learning}
