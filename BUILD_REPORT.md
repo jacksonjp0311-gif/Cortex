@@ -9,15 +9,19 @@
 - Wheel: `cortex_memory-3.0.0-py3-none-any.whl`
 - Clean-wheel install: passed
 - Installed `cortex` and `cortex-mcp` entrypoints: passed
-- Automated tests: 33 passed
+- Automated tests: 37 passed
 - Ruff and Python compilation: passed
 - Controlled benchmark gates: passed
 - Nested-clone self-host lifecycle: passed
+- External sealed-host bootstrap/activation: passed without host writes
+- Aria strict manifest/doctor after external attachment: passed
 
 New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
 `cortex.federation`, `cortex.evaluation`, and `cortex.mcp`. GCMT is integrated
 within Cortex's existing single-substrate and authority boundaries rather than
-as a competing memory service.
+as a competing memory service. The internal self-host engine is explicitly
+labeled and commit-verified. `--external` supports sealed repositories by
+placing all configuration and runtime artifacts under Cortex home.
 
 The original neural-edition report follows as release lineage.
 

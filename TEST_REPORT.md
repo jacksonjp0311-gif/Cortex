@@ -4,13 +4,18 @@
 
 ## v3.0 release validation
 
-- `python -m pytest`: 33 passed
+- `python -m unittest discover -s tests -q`: 37 passed
 - `python -m ruff check cortex thalamus tests`: passed
 - Python compilation: passed
 - Source distribution and wheel build: passed
 - Existing controlled-workload benchmark thresholds: passed
 - Nested-clone self-host lifecycle: verified certificate, ready activation,
-  nested engine excluded, nested tests passed
+  explicitly labeled internal engine excluded, source/engine commit parity
+  verified, nested tests passed
+- Sealed-host external attachment: zero host writes, Aria Git tree clean,
+  Aria strict doctor passed, Cortex certificate verified
+- Aria native surfaces: `.aria` and `.cmd` indexed; supported inventory
+  increased from 238 to 292 files
 - Real Cortex repository smoke: manifest current, database integrity true,
   dashboard version 3.0.0, replay corpus non-regression true, boundary gate true,
   persisted continuation packet valid
@@ -19,7 +24,9 @@ The new suite covers GCMT state-plane separation, continuation packet integrity
 and expiry, evidence/verification/authority promotion gates, hash-chained
 receipts, rollback fidelity, selective learned-association decay, neural ledger
 integrity, cross-repository boundary preservation, vector-bucket migration,
-base-versus-learned replay evaluation, and MCP initialization/tool discovery.
+base-versus-learned replay evaluation, external sealed-host attachment,
+internal-engine identity/freshness, native `.aria`/batch indexing, fused
+reranking, and MCP initialization/tool discovery.
 
 These checks establish implementation and repository-local benchmark evidence.
 They do not establish universal answer-quality improvement, biological

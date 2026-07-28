@@ -1,5 +1,60 @@
 # Sparse Activation Benchmark Report
 
+## Cortex v3 / Aria real-repository validation (July 28, 2026)
+
+The workload used a clean clone sourced from
+`C:\Users\jacks\OneDrive\Desktop\aria-language`. Cortex was attached with
+`--external`, so the benchmark wrote no files into the host and Aria's strict
+manifest gate remained authoritative.
+
+| Measure | Result |
+|---|---:|
+| Aria native baseline | strict doctor pass; 500/500 conformance gates |
+| Initial Cortex certificate | degraded; retrieval probes 5/8 (62.5%) |
+| Tightened Cortex certificate | verified; retrieval probes 7/8 (87.5%) |
+| Supported/indexed files | 238 before; 292 after |
+| `.aria` / `.cmd` unresolved | 0 / 0 |
+| External bootstrap | 10.185 s |
+| External activation | 2.965 s |
+| Representative CLI query median | 0.369 s |
+| Replay answerable-case recall | 5/5 (1.0) |
+| Replay mean reciprocal rank | 0.441667 |
+| Boundary separation | 1.0 |
+| Learned-routing regressions | 0 |
+| Unsupported-question abstention | 0/1 at 0.20 threshold |
+
+The remaining abstention miss is retained as a known weakness: an unsupported
+external-certification question reached semantic confidence 0.246 rather than
+falling below 0.20. The corpus and claim boundary are in
+`benchmarks/corpora/aria_language.json`.
+
+## Verified internal Cortex self-host (July 28, 2026)
+
+| Measure | Host engine | INTERNAL CORTEX ENGINE |
+|---|---:|---:|
+| Median bootstrap (3 runs) | 3.117 s | 3.314 s |
+| Median activation (3 runs) | 0.774 s | 0.764 s |
+| Certificate / activation | verified / ready | verified / ready |
+
+The internal engine reported version 3.0.0, matched source commit
+`7524ebc9910679c62e3eb115f0892f0736ec50f0`, was excluded from the host
+inventory, and passed its nested test run.
+
+## Current controlled workloads (July 28, 2026)
+
+| Measure | Result |
+|---|---:|
+| Thalamus baseline / routed median | 0.034166 s / 0.033921 s |
+| Target rank | 4 -> 3 |
+| Top-3 target recall | 0% -> 100% |
+| Sparse nodes considered / total | 42 / 262 |
+| Sparse nodes fired | 24 |
+| Sparse activation ratio | 0.091603 |
+| Sparse activation time | 0.005788 s |
+
+These local measurements are benchmark evidence for the declared workloads,
+not universal correctness, answer quality, or production-performance claims.
+
 ## Cortex evolution telemetry run (July 11, 2026)
 
 | Measure | Result |
