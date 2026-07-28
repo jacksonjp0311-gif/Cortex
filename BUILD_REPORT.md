@@ -39,8 +39,8 @@ in Python; ARIA is not automatically executed and grants no mutation authority.
 
 The release artifacts include the internal snapshot:
 
-- wheel: 606,780 bytes;
-- source distribution: 468,223 bytes;
+- wheel: 607,296 bytes;
+- source distribution: 468,752 bytes;
 - clean-wheel verification: 297 manifest entries checked, zero failures.
 
 The original neural-edition report follows as release lineage.

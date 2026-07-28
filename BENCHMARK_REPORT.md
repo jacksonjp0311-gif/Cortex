@@ -20,7 +20,7 @@ host-local ARIA surface when one is actually present.
 | Bundled full conformance suite | pass (148.827 s) |
 | Cortex tests | 39 passed |
 | Clean-wheel bundle verification | 297 checked; 0 failures |
-| Wheel / source distribution | 606,780 / 468,223 bytes |
+| Wheel / source distribution | 607,296 / 468,752 bytes |
 | External ARIA repository dependency | false |
 | Cortex implementation / execution | Python / Python |
 | Automatic ARIA execution / mutation authority | false / false |
