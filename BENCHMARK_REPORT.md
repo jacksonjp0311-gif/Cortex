@@ -68,6 +68,7 @@ router independently of repository retrieval.
 | Typed-purpose misses | 0 |
 | Core cues / typed purposes | 19 / 7 |
 | Learned cue ceiling / wake threshold | 32 / 0.65 |
+| Exact nested self-host activation | 1.413182 s; verified / ready |
 
 The corpus includes ambiguous controls such as `variable`, generic test replay,
 and UI hand-off alongside language, intent, continuity, consent, governance,

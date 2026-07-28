@@ -37,6 +37,8 @@
   authority
 - Fluency corpus: 20/20 passed with zero false wakes, missed wakes, or purpose
   misses
+- Fluent-runtime nested self-host: verified certificate, ready activation,
+  commit-current internal engine, nested tests passed
 - Bootstrap probe hardening: ambiguous duplicate symbols excluded and exact
   heading evidence accepted when a specialized document outranks README
 - Real Cortex repository smoke: manifest current, database integrity true,

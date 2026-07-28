@@ -4,7 +4,7 @@
   "generated_on": "2026-07-28",
   "manifest_scope": "Git-tracked and intended release files except RELEASE_MANIFEST.json itself.",
   "file_count": 406,
-  "total_bytes": 3738841,
+  "total_bytes": 3739181,
   "files": [
     {
       "path": ".editorconfig",
@@ -26,15 +26,15 @@
     },
     {
       "path": "BENCHMARK_REPORT.md",
-      "bytes": 10338,
+      "bytes": 10407,
       "mode": "0o666",
-      "sha256": "a4d3327c7d135dee4348ac1924d01c30cb441eb024492f90a2b4619461443946"
+      "sha256": "2028d2012d04fce5d17b6c45d21fcef926e3ea4a0e69b874b610c03f4ce50d4c"
     },
     {
       "path": "BUILD_REPORT.md",
-      "bytes": 4710,
+      "bytes": 4852,
       "mode": "0o666",
-      "sha256": "7073eeeea3da291101ecb004e8755b4836da55dcb35223803befeb49be13c603"
+      "sha256": "fa71a182260bf4d1cf3535c3719725698b65966965daa26e6d07d04ab2d36f75"
     },
     {
       "path": "CHANGELOG.md",
@@ -68,9 +68,9 @@
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 7872,
+      "bytes": 8001,
       "mode": "0o666",
-      "sha256": "79b555d048e29d2c6bf5552948a1886230c46cdeac9fc7b8ae1969736a0e4298"
+      "sha256": "4c1b4734e4a16d098fc26fd16147837c3fca9e8b02221b4ee77bf16a9b6c328d"
     },
     {
       "path": "assets/cortex-neural-brain.png",

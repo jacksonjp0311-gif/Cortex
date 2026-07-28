@@ -29,6 +29,8 @@
   learned cues, 0.65 wake threshold, bounded confidence-only adaptation
 - ARIA fluency evaluation: 20/20 passed; zero false wakes, missed wakes, or
   purpose misses
+- Exact nested self-host after runtime fluency integration: verified
+  certificate, ready activation, commit parity, tests passed, 1.413182 s
 
 New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
 `cortex.federation`, `cortex.evaluation`, and `cortex.mcp`. GCMT is integrated
