@@ -1,0 +1,29 @@
+{
+  "schema_version": "cortex-internal-aria/1.0",
+  "label": "INTERNAL ARIA META-LANGUAGE",
+  "role": "native_semantic_language",
+  "neural_region": "internal_aria_substrate",
+  "activation_policy": "task_gated_dormant_by_default",
+  "runtime_fluency": {
+    "typed_purposes": 7,
+    "immutable_core_cues": 19,
+    "learned_cue_limit": 32,
+    "wake_threshold": 0.65,
+    "adaptation": "verified_relevance_only"
+  },
+  "ownership": "Cortex",
+  "source_repository": "ARIA",
+  "source_commit": "0b9860bd4610d24d13a483763f74a95699616193",
+  "source_release": "0.1.0-alpha.14",
+  "source_language_evolution": "cooperative-agent-mesh-alpha.17",
+  "vendoring": "git-subtree-squash",
+  "external_runtime_dependency": false,
+  "cortex_implementation_language": "python",
+  "cortex_execution_language": "python",
+  "automatic_execution": false,
+  "grants_mutation_authority": false,
+  "license": {
+    "name": "Apache-2.0",
+    "path": "vendor/LICENSE"
+  }
+}

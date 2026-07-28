@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ DEFAULT_EXCLUDES = [
     "build",
     "target",
     "coverage",
+    "work",
     ".coverage",
     ".pytest_cache",
     ".mypy_cache",
@@ -29,6 +31,7 @@ DEFAULT_EXCLUDES = [
     ".nuxt",
     ".turbo",
     ".cache",
+    ".aria",
     ".cortex/bin",
     ".cortex/runtime",
     ".cortex/config.json",
@@ -78,7 +81,8 @@ DEFAULT_TEXT_EXTENSIONS = [
     ".py", ".pyi", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
     ".java", ".kt", ".kts", ".go", ".rs", ".c", ".h", ".cpp", ".hpp",
     ".cs", ".fs", ".fsx", ".rb", ".php", ".swift", ".scala", ".lua",
-    ".ps1", ".psm1", ".psd1", ".sh", ".bash", ".zsh", ".fish",
+    ".ps1", ".psm1", ".psd1", ".cmd", ".bat", ".sh", ".bash", ".zsh", ".fish",
+    ".aria",
     ".md", ".mdx", ".rst", ".txt", ".adoc", ".tex",
     ".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
     ".xml", ".html", ".css", ".scss", ".sass", ".less", ".sql", ".graphql",
@@ -88,6 +92,7 @@ DEFAULT_TEXT_EXTENSIONS = [
 SPECIAL_TEXT_FILES = {
     "Dockerfile", "Makefile", "Rakefile", "Gemfile", "Procfile", "Justfile",
     "AGENTS.md", "CODEOWNERS", "LICENSE", "NOTICE", "README", "CHANGELOG",
+    "VERSION", "MANIFEST.sha256",
 }
 
 RUNTIME_EVIDENCE_HINTS = {
@@ -99,6 +104,11 @@ RUNTIME_EVIDENCE_HINTS = {
 @dataclass
 class RepoConfig:
     schema_version: str = "1.0"
+    integration_role: str = "internal_repository_cortex"
+    integration_label: str = "INTERNAL CORTEX"
+    agent_protocol_mode: str = "managed"
+    integration_mode: str = "internal"
+    attachment_root: str = ""
     repository_name: str = ""
     repository_id: str = ""
     repository_root: str = "."
@@ -141,6 +151,11 @@ class RepoConfig:
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": self.schema_version,
+            "integration_role": self.integration_role,
+            "integration_label": self.integration_label,
+            "agent_protocol_mode": self.agent_protocol_mode,
+            "integration_mode": self.integration_mode,
+            "attachment_root": self.attachment_root,
             "repository_name": self.repository_name,
             "repository_id": self.repository_id,
             "repository_root": self.repository_root,
@@ -182,6 +197,9 @@ class RepoConfig:
         # newly introduced volatile-surface protections without losing custom rules.
         base.exclude = list(dict.fromkeys([*base.exclude, *DEFAULT_EXCLUDES]))
         base.exclude = list(dict.fromkeys([*base.exclude, *base.sensitive_exclude_patterns]))
+        base.include_extensions = list(
+            dict.fromkeys([*base.include_extensions, *DEFAULT_TEXT_EXTENSIONS])
+        )
         return base
 
 
@@ -201,15 +219,38 @@ def repo_config_path(root: Path) -> Path:
     return root / ".cortex" / "config.json"
 
 
-def load_repo_config(root: Path) -> RepoConfig:
+def external_repo_config_path(root: Path, home: Path) -> Path:
+    normalized = str(root.resolve()).replace("\\", "/").lower()
+    repository_key = hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:24]
+    return home / "attachments" / repository_key / "config.json"
+
+
+def load_repo_config(root: Path, home: Path | None = None) -> RepoConfig:
     path = repo_config_path(root)
+    active_home = home or (
+        Path(os.environ["CORTEX_ACTIVE_HOME"]).expanduser().resolve()
+        if os.environ.get("CORTEX_ACTIVE_HOME")
+        else None
+    )
+    if not path.exists() and active_home is not None:
+        path = external_repo_config_path(root, active_home)
     if not path.exists():
         raise FileNotFoundError(f"Cortex repository config not found: {path}")
     return RepoConfig.from_dict(json.loads(path.read_text(encoding="utf-8")))
 
 
 def save_repo_config(root: Path, config: RepoConfig) -> Path:
-    path = repo_config_path(root)
+    path = (
+        Path(config.attachment_root) / "config.json"
+        if config.integration_mode == "external" and config.attachment_root
+        else repo_config_path(root)
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(config.to_dict(), indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def runtime_directory(root: Path, config: RepoConfig) -> Path:
+    if config.integration_mode == "external" and config.attachment_root:
+        return Path(config.attachment_root) / "runtime"
+    return root / ".cortex" / "runtime"

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/graph-transition.schema.json",
+  "title": "ARIA Graph Transition 0.4",
+  "type": "object",
+  "required": [
+    "schema",
+    "sequence",
+    "parent",
+    "rule",
+    "grantedCapabilities",
+    "beforeDigest",
+    "afterDigest",
+    "semanticDiff",
+    "id"
+  ],
+  "properties": {
+    "schema": { "const": "aria.graph-transition/0.4" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "parent": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "rule": { "type": "object" },
+    "grantedCapabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "beforeDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "afterDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "semanticDiff": { "type": "object" },
+    "id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

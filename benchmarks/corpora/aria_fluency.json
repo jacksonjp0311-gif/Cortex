@@ -1,0 +1,25 @@
+{
+  "schema_version": "cortex-aria-fluency-corpus/1.0",
+  "cases": [
+    {"id": "dormant-variable", "task": "Rename a Python variable", "expected_mode": "dormant"},
+    {"id": "dormant-tests", "task": "Replay the failing unit test", "expected_mode": "dormant"},
+    {"id": "dormant-ui", "task": "Hand off UI control to the next component", "expected_mode": "dormant"},
+    {"id": "dormant-config", "task": "Update the package configuration", "expected_mode": "dormant"},
+    {"id": "dormant-docs", "task": "Document the repository architecture", "expected_mode": "dormant"},
+    {"id": "language-aria", "task": "Explain ARIA syntax", "expected_mode": "active", "expected_purposes": ["language"]},
+    {"id": "language-meta", "task": "Inspect the meta language boundary", "expected_mode": "active", "expected_purposes": ["language"]},
+    {"id": "intent-plan", "task": "Draft a semantic plan for the release", "expected_mode": "active", "expected_purposes": ["intent"]},
+    {"id": "intent-proof", "task": "Verify the intent proof", "expected_mode": "active", "expected_purposes": ["intent"]},
+    {"id": "continuity-replay", "task": "Create a semantic replay record", "expected_mode": "active", "expected_purposes": ["continuity"]},
+    {"id": "continuity-handoff", "task": "Prepare a portable session handoff", "expected_mode": "active", "expected_purposes": ["continuity"]},
+    {"id": "consent-admission", "task": "Verify consent admission", "expected_mode": "active", "expected_purposes": ["consent"]},
+    {"id": "consent-receipt", "task": "Inspect the admission receipt", "expected_mode": "active", "expected_purposes": ["consent"]},
+    {"id": "governance-capability", "task": "Evaluate capability authority", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "governance-evolution", "task": "Plan governed evolution", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "governance-contract", "task": "Review the governance contract", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "coordination-provider", "task": "Build a provider bridge envelope", "expected_mode": "active", "expected_purposes": ["coordination"]},
+    {"id": "coordination-mesh", "task": "Coordinate a cooperative mesh", "expected_mode": "active", "expected_purposes": ["coordination"]},
+    {"id": "symbolic-glyph", "task": "Render the verified glyph", "expected_mode": "active", "expected_purposes": ["symbolic"]},
+    {"id": "combined", "task": "Use ARIA semantic replay with a cooperative mesh", "expected_mode": "active", "expected_purposes": ["language", "continuity", "coordination"]}
+  ]
+}

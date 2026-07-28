@@ -1,0 +1,23 @@
+aria 0.4.0
+module Arithmetic version 0.1.0
+program FunctionDemo version 0.1.0
+entry Main
+
+function Add(left: Number, right: Number) -> Number {
+  return left + right
+}
+
+function Label(value: Number) -> Text {
+  if value >= 5 {
+    return "high"
+  } else {
+    return "low"
+  }
+}
+
+flow Main {
+  let total: Number = Add(2, 3)
+  emit total
+  emit Label(total)
+  halt
+}

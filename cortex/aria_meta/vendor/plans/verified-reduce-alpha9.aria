@@ -1,0 +1,21 @@
+aria 0.4.0
+module VerifiedReduceEvolution version 0.9.0
+program VerifiedReduceEvolution version 0.9.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanVerifiedReduce {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanVerifiedReduce
+  intent HumanVerifiedReduce <- "Complete ARIA's first verified sequence vocabulary so humans and AI can deterministically aggregate bounded immutable data while observing the same truthful reduction history."
+  propose HumanVerifiedReduce <- "Admit the exact surface Σ(sequence, Reducer, initial); require a compile-time binary pure reducer with exact accumulator-element-accumulator continuity; reduce strictly left to right; return the explicit initial value for empty input; add one REDUCE bytecode contract with no capability or policy expansion; preserve existing sequence, call-depth, value, and byte bounds; emit value-free start, completed-iteration, completion, and fracture evidence; benchmark maximum event behavior before admission; verify algorithm.reduce only after a dedicated lattice and full Map-Filter-Reduce composition."
+  consent HumanVerifiedReduce <- true
+  disconnect HumanVerifiedReduce
+}

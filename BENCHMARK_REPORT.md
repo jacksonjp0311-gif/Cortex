@@ -1,5 +1,158 @@
 # Sparse Activation Benchmark Report
 
+## Cortex v3 / Aria real-repository validation (July 28, 2026)
+
+### INTERNAL ARIA phase change
+
+ARIA is now a self-contained Cortex component at
+`cortex/aria_meta/vendor`, imported as a squashed Git subtree rather than a
+submodule. The separate ARIA checkout is no longer a runtime or packaging
+dependency. Cortex uses the internal snapshot by default and only integrates a
+host-local ARIA surface when one is actually present.
+
+| Measure | Result |
+|---|---:|
+| Vendored source files | 298 |
+| Vendored source size | 1,633,385 bytes |
+| Native manifest verification | 297/297 |
+| Bundled handshake | ready |
+| Bundled strict doctor | pass |
+| Bundled full conformance suite | pass (148.827 s) |
+| Cortex tests | 43 passed |
+| Clean-wheel bundle verification | 297 checked; 0 failures |
+| Wheel / source distribution | 612,077 / 473,594 bytes |
+| External ARIA repository dependency | false |
+| Cortex implementation / execution | Python / Python |
+| Automatic ARIA execution / mutation authority | false / false |
+
+The vendored snapshot retains its Apache-2.0 license and notice. These results
+establish reproducibility and boundary integrity for this snapshot; they do not
+grant ARIA plans automatic execution or source-mutation authority.
+
+### Native-language selective activation
+
+The internal snapshot is compiled as a separate neural region rather than
+treated as ambient host evidence.
+
+| Measure | Generic Python task | ARIA continuity task |
+|---|---:|---:|
+| ARIA mode | dormant | active |
+| Total ARIA nodes | 292 | 292 |
+| Eligible ARIA nodes | 0 | 40 |
+| Considered ARIA nodes | 0 | 15 |
+| Fired ARIA nodes | 0 | 10 |
+| Total eligible graph nodes | 110 | 150 |
+| Total considered nodes | 57 | 64 |
+| Retrieval time | 0.050659 s | 0.063255 s |
+| Activation time | 0.020443 s | 0.022094 s |
+
+The ARIA task was `ARIA semantic replay cooperative mesh session handoff`; the
+generic control was `Fix Python retrieval ranking and run unit tests`. Both
+used the same compiled graph and a 64-node activation ceiling. Reproduce this
+with `python benchmarks/aria_substrate_benchmark.py`. This verifies selective
+availability for these declared tasks, not universal intent classification.
+The typed router selected `continuity` and `coordination`, reducing the awake
+ARIA surface from 292 nodes to 40.
+
+### Native ARIA fluency evaluation
+
+`python benchmarks/aria_fluency_evaluation.py` evaluates the immutable core
+router independently of repository retrieval.
+
+| Measure | Result |
+|---|---:|
+| Declared cases | 20 |
+| Passed | 20 (1.0) |
+| False wakes | 0 |
+| Missed wakes | 0 |
+| Typed-purpose misses | 0 |
+| Core cues / typed purposes | 19 / 7 |
+| Learned cue ceiling / wake threshold | 32 / 0.65 |
+| Exact nested self-host activation | 1.413182 s; verified / ready |
+
+The corpus includes ambiguous controls such as `variable`, generic test replay,
+and UI hand-off alongside language, intent, continuity, consent, governance,
+coordination, symbolic, and combined ARIA tasks. It is a declared regression
+corpus, not proof of general language understanding.
+
+The workload used a clean clone sourced from
+`C:\Users\jacks\OneDrive\Desktop\aria-language`. Cortex was attached with
+`--external`, so the benchmark wrote no files into the host and Aria's strict
+manifest gate remained authoritative.
+
+| Measure | Result |
+|---|---:|
+| Aria native baseline | strict doctor pass; 500/500 conformance gates |
+| Initial Cortex certificate | degraded; retrieval probes 5/8 (62.5%) |
+| Tightened Cortex certificate | verified; retrieval probes 7/8 (87.5%) |
+| Supported/indexed files | 238 before; 292 after |
+| `.aria` / `.cmd` unresolved | 0 / 0 |
+| External bootstrap | 10.185 s |
+| External activation | 2.965 s |
+| Representative CLI query median | 0.369 s |
+| Replay answerable-case recall | 5/5 (1.0) |
+| Replay mean reciprocal rank | 0.441667 |
+| Boundary separation | 1.0 |
+| Learned-routing regressions | 0 |
+| Unsupported-question abstention | 0/1 at 0.20 threshold |
+
+The remaining abstention miss is retained as a known weakness: an unsupported
+external-certification question reached semantic confidence 0.246 rather than
+falling below 0.20. The corpus and claim boundary are in
+`benchmarks/corpora/aria_language.json`.
+
+### ARIA meta-language validation
+
+The original, non-cloned Aria repository was attached externally after adding
+the explicit meta-language boundary.
+
+| Measure | Result |
+|---|---:|
+| Host writes / Git changes | 0 / clean |
+| Certificate / activation | verified / ready |
+| Indexed files | 292 |
+| Retrieval probes | 7/8 (87.5%) |
+| Declared ARIA artifacts | 52 |
+| Hidden `.aria/` runtime/backups | excluded |
+| Cortex implementation / execution language | Python / Python |
+| ARIA role | `host_meta_language` |
+| Automatic ARIA execution | false |
+| ARIA mutation authority | false |
+| Context descriptor | present |
+| GCMT continuation descriptor | present |
+
+ARIA handshake and baseline commands returned ready against a valid 297/297
+native manifest. Cortex uses these artifacts as semantic and governance
+evidence; it does not replace its Python implementation or execute ARIA plans
+automatically.
+
+## Verified internal Cortex self-host (July 28, 2026)
+
+| Measure | Host engine | INTERNAL CORTEX ENGINE |
+|---|---:|---:|
+| Median bootstrap (3 runs) | 3.117 s | 3.314 s |
+| Median activation (3 runs) | 0.774 s | 0.764 s |
+| Certificate / activation | verified / ready | verified / ready |
+
+The internal engine reported version 3.0.0, matched source commit
+`7524ebc9910679c62e3eb115f0892f0736ec50f0`, was excluded from the host
+inventory, and passed its nested test run.
+
+## Current controlled workloads (July 28, 2026)
+
+| Measure | Result |
+|---|---:|
+| Thalamus baseline / routed median | 0.034166 s / 0.033921 s |
+| Target rank | 4 -> 3 |
+| Top-3 target recall | 0% -> 100% |
+| Sparse nodes considered / total | 42 / 262 |
+| Sparse nodes fired | 24 |
+| Sparse activation ratio | 0.091603 |
+| Sparse activation time | 0.005788 s |
+
+These local measurements are benchmark evidence for the declared workloads,
+not universal correctness, answer quality, or production-performance claims.
+
 ## Cortex evolution telemetry run (July 11, 2026)
 
 | Measure | Result |

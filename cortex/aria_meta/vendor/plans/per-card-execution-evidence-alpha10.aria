@@ -1,0 +1,21 @@
+aria 0.4.0
+module PerCardExecutionEvidenceEvolution version 0.10.0
+program PerCardExecutionEvidenceEvolution version 0.10.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanExecutionEvidence {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanExecutionEvidence
+  intent HumanExecutionEvidence <- "Make each verified semantic-card exercise understandable to humans and exact for machines by deriving one bounded receipt from the same execution event."
+  propose HumanExecutionEvidence <- "Add aria.card-execution-evidence/1 for verified Map, Filter, and Reduce completion or fracture; bind the exact card, toolchain, source, semantic IR, artifact, effect graph, policy, admission-test contract, terminal Event Spine identity, and aggregate counts; embed a privacy-filtered SignalSubset; emit one evidence.card.execution event; reject tampering and outcome disagreement; grant no capability, policy permission, or execution authority."
+  consent HumanExecutionEvidence <- true
+  disconnect HumanExecutionEvidence
+}

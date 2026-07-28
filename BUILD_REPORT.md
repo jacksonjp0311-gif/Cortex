@@ -9,15 +9,46 @@
 - Wheel: `cortex_memory-3.0.0-py3-none-any.whl`
 - Clean-wheel install: passed
 - Installed `cortex` and `cortex-mcp` entrypoints: passed
-- Automated tests: 33 passed
+- Automated tests: 43 passed
 - Ruff and Python compilation: passed
 - Controlled benchmark gates: passed
 - Nested-clone self-host lifecycle: passed
+- External sealed-host bootstrap/activation: passed without host writes
+- Self-contained INTERNAL ARIA subtree: packaged (298 tracked files)
+- ARIA native manifest: 297/297 verified
+- Bundled ARIA handshake, strict doctor, and conformance suite: passed
+- Clean-wheel INTERNAL ARIA verification: passed with no external repository dependency
+- ARIA meta-language descriptor/context/continuation integration: passed
+- Native ARIA neural-region compilation: 292 internal / 110 repository nodes
+- Generic Python task: ARIA dormant, 0 eligible / considered / fired nodes
+- ARIA continuity/coordination task: 40 of 292 ARIA nodes eligible, 15
+  considered, and 10 fired
+- Dormant-region exclusion occurs in lexical and vector candidate SQL, before
+  embedding comparison or neural propagation
+- Native ARIA runtime: 7 typed purposes, 19 immutable core cues, maximum 32
+  learned cues, 0.65 wake threshold, bounded confidence-only adaptation
+- ARIA fluency evaluation: 20/20 passed; zero false wakes, missed wakes, or
+  purpose misses
+- Exact nested self-host after runtime fluency integration: verified
+  certificate, ready activation, commit parity, tests passed, 1.413182 s
 
 New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
 `cortex.federation`, `cortex.evaluation`, and `cortex.mcp`. GCMT is integrated
 within Cortex's existing single-substrate and authority boundaries rather than
-as a competing memory service.
+as a competing memory service. The internal self-host engine is explicitly
+labeled and commit-verified. `--external` supports sealed repositories by
+placing all configuration and runtime artifacts under Cortex home.
+`cortex.aria_meta` contains the complete ARIA source snapshot as a squashed Git
+subtree, including its Apache-2.0 license and notice. `cortex.meta_language`
+uses this internal bundle by default and can integrate a host-local ARIA
+repository when one is present. Cortex core remains implemented and executed
+in Python; ARIA is not automatically executed and grants no mutation authority.
+
+The release artifacts include the internal snapshot:
+
+- wheel: 612,077 bytes;
+- source distribution: 473,594 bytes;
+- clean-wheel verification: 297 manifest entries checked, zero failures.
 
 The original neural-edition report follows as release lineage.
 

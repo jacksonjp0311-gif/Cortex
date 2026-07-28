@@ -1,0 +1,13 @@
+aria 0.4.0
+program DeniedWrite version 0.1.0
+entry Main
+
+capability RepoWrite {
+  effect = "fs.write"
+  scope = "."
+}
+
+flow Main {
+  require RepoWrite
+  write ".aria/denied.txt" <- "This must not compile under the default policy."
+}

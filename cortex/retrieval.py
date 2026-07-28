@@ -6,6 +6,14 @@ import math
 from collections import defaultdict
 from typing import Any
 
+from .aria_meta.substrate import (
+    INTERNAL_ARIA_PREFIX,
+    aria_path_supports,
+    aria_routing_purposes,
+    classify_aria_task,
+    is_internal_aria_path,
+    load_aria_cue_profile,
+)
 from .embeddings import cosine, get_embedder, deserialize_vector
 from .models import Hit
 
@@ -22,7 +30,21 @@ def reciprocal_rank_fusion(
 
 
 def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
-    lexical_rows = store.lexical(repo, text, 60)
+    aria_profile = load_aria_cue_profile(store, repo)
+    aria_classification = classify_aria_task(text, aria_profile["cues"])
+    aria_active = aria_classification["mode"] == "active"
+    aria_purposes = aria_routing_purposes(aria_classification)
+    excluded_prefixes = () if aria_active else (INTERNAL_ARIA_PREFIX,)
+    lexical_rows = store.lexical(
+        repo, text, 60, excluded_prefixes=excluded_prefixes
+    )
+    if aria_active:
+        lexical_rows = [
+            row
+            for row in lexical_rows
+            if not is_internal_aria_path(row["path"])
+            or aria_path_supports(row["path"], aria_purposes)
+        ]
     lexical_ids = [row["id"] for row in lexical_rows]
 
     query_vector = get_embedder().encode_one(text)
@@ -35,7 +57,14 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
         limit=semantic_scan_limit,
         seed=seed,
         query_vector=query_vector,
+        excluded_prefixes=excluded_prefixes,
     ):
+        if (
+            aria_active
+            and is_internal_aria_path(row["path"])
+            and not aria_path_supports(row["path"], aria_purposes)
+        ):
+            continue
         try:
             vector = deserialize_vector(row["vector"])
             similarity = cosine(query_vector, vector)
@@ -48,14 +77,20 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
     fused = reciprocal_rank_fusion([lexical_ids, semantic_ids], [1.0, 1.25])
     semantic_lookup = {memory_id: similarity for similarity, memory_id in semantic[:100]}
     output: list[Hit] = []
+    normalized_query = " ".join(text.casefold().split())
     for memory_id, base_score in sorted(fused.items(), key=lambda item: item[1], reverse=True):
         row = store.memory(memory_id)
         if not row:
             continue
+        if is_internal_aria_path(row["path"]) and not aria_active:
+            continue
         metadata = json.loads(row["metadata"] or "{}")
         quality = 1.0
         if metadata.get("authoritative"):
-            quality *= 1.10
+            quality *= 1.25
+        normalized_chunk = " ".join(row["text"].casefold().split())
+        if normalized_query and normalized_query in normalized_chunk:
+            quality *= 1.35
         if row["kind"] in {"discovery_card", "telemetry", "runtime_evidence"}:
             quality *= 1.04
         telemetry = store.file_telemetry(repo, row["path"])
@@ -76,9 +111,8 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
             content_hash=row["content_hash"],
             metadata=metadata,
         ))
-        if len(output) >= limit:
-            break
-    return output
+    output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
+    return output[:limit]
 
 
 def support_hits(

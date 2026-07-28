@@ -1,0 +1,21 @@
+aria 0.4.0
+module ContextflowPlanning version 0.1.0
+program ImproveARIA version 0.1.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanAI {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanAI
+  intent HumanAI <- "Use ARIA itself to improve ARIA while preserving deterministic execution, explicit consent, capability security, and the operator-first CLI."
+  propose HumanAI <- "Build Contextflow alpha.6 with typed context, evidence, confidence, provenance, and proposal schemas before external AI provider integration."
+  consent HumanAI <- true
+  disconnect HumanAI
+}

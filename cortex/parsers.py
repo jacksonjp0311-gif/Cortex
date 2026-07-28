@@ -56,6 +56,10 @@ def language_for(path: Path) -> str:
         return "typescript"
     if suffix in {".ps1", ".psm1", ".psd1"}:
         return "powershell"
+    if suffix in {".cmd", ".bat"}:
+        return "batch"
+    if suffix == ".aria":
+        return "aria"
     if suffix in {".sh", ".bash", ".zsh", ".fish"}:
         return "shell"
     if suffix == ".go":

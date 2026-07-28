@@ -89,6 +89,36 @@ receipts, rollback, expiry, and re-anchoring conditions into
 `cortex-continuation/1.0`. It also enforces the separate promotion gate for
 Cortex-owned canonical memory.
 
+### Native ARIA semantic language
+
+`cortex.aria_meta` carries a manifest-verified, self-contained ARIA subtree.
+`cortex.meta_language` derives a bounded descriptor from the bundled snapshot
+or a host's `ARIA-RUNTIME.json`, `ARIA-CONNECT.json`, and indexed `.aria`
+plans. Host-local evidence takes precedence. The descriptor exposes semantic intent,
+planning, governance, continuation, and coordination capabilities through the
+learned environment and context protocols. Cortex's implementation and
+execution language remains Python. ARIA plans are advisory evidence: Cortex
+does not execute them automatically, translate them into core code, or treat
+them as authority.
+
+The compiler labels bundled ARIA nodes as the
+`internal_aria_substrate` region. Retrieval and neural propagation keep that
+region dormant for unrelated tasks, while deterministic language signals wake
+it for ARIA semantics, planning, continuity, coordination, consent, capability,
+or governance work. Activation packets report the region's known/active state
+and eligible, considered, and fired node counts.
+
+`cortex.aria_meta.substrate` connects ARIA's bundled semantic-cue registry to a
+typed Cortex routing layer. Nineteen immutable wake cues map tasks into seven
+purposes. A repository may hold at most 32 learned cues; each must be explicitly
+human-reviewed and admitted through a verified outcome. Confidence remains
+between 0.35 and 0.90, the wake threshold is 0.65, and learned state changes
+relevance only. No cue can alter execution or authority.
+Typed purposes also constrain the awake graph: for example, continuity and
+coordination tasks admit replay/handoff and bridge/mesh/handshake artifacts
+plus ARIA's connection foundation, while unrelated language regions remain
+dormant.
+
 ### Lifecycle
 
 `cortex.lifecycle` selectively retires learned synapse-weight deviation toward

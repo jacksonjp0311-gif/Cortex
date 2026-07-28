@@ -7,11 +7,17 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .config import RepoConfig, load_repo_config, repo_config_path
+from .config import (
+    RepoConfig,
+    external_repo_config_path,
+    load_repo_config,
+    repo_config_path,
+    runtime_directory,
+)
 from .environment import learn_environment
 from .graph import resolve_graph
 from .indexer import index_repository
-from .integration import install_integration
+from .integration import install_external_attachment, install_integration
 from .neuron import compile_interlink
 from .telemetry import ingest_git
 from .verify import verify_repository
@@ -29,14 +35,16 @@ def bootstrap_repository(
     name: str | None = None,
     *,
     force: bool = False,
+    preserve_agents: bool = False,
+    external: bool = False,
 ) -> dict[str, Any]:
     root = root.expanduser().resolve()
     if not root.exists() or not root.is_dir():
         raise FileNotFoundError(f"Repository directory not found: {root}")
     repository_name = name or root.name
     repository_id = stable_repository_id(root)
-    if repo_config_path(root).exists():
-        config = load_repo_config(root)
+    if repo_config_path(root).exists() or external_repo_config_path(root, home).exists():
+        config = load_repo_config(root, home)
         config.repository_name = repository_name
         config.repository_id = repository_id
     else:
@@ -44,6 +52,10 @@ def bootstrap_repository(
             repository_name=repository_name,
             repository_id=repository_id,
         )
+    if preserve_agents:
+        config.agent_protocol_mode = "preserve"
+    if external:
+        config.integration_mode = "external"
 
     config.engine_python = str(Path(sys.executable))
     engine_root = Path(__file__).resolve().parent.parent
@@ -60,12 +72,21 @@ def bootstrap_repository(
     store.begin_bootstrap(run_id, repository_name)
 
     try:
-        integration = install_integration(root, config)
+        integration = (
+            install_external_attachment(home, root, config)
+            if config.integration_mode == "external"
+            else install_integration(root, config)
+        )
         index = index_repository(store, repository_name, config, force=force)
         graph = resolve_graph(store, repository_name)
         telemetry = ingest_git(store, repository_name, root, config.git_commit_limit)
         environment = (
-            learn_environment(root, store, repository_name)
+            learn_environment(
+                root,
+                store,
+                repository_name,
+                runtime_directory(root, config),
+            )
             if config.environment_learning_enabled
             else {"available": False, "disabled": True}
         )
@@ -89,8 +110,18 @@ def bootstrap_repository(
             "neural_interlink": neural,
             "certificate": certificate,
             "next_command": {
-                "powershell": '.cortex\\bin\\cortex.ps1 activate -Task "<current task>"',
-                "bash": './.cortex/bin/cortex.sh activate --task "<current task>"',
+                "powershell": (
+                    f'python -m cortex --home "{home}" activate --repo "{repository_name}" '
+                    '--task "<current task>" --json'
+                    if config.integration_mode == "external"
+                    else '.cortex\\bin\\cortex.ps1 activate -Task "<current task>"'
+                ),
+                "bash": (
+                    f'python -m cortex --home "{home}" activate --repo "{repository_name}" '
+                    '--task "<current task>" --json'
+                    if config.integration_mode == "external"
+                    else './.cortex/bin/cortex.sh activate --task "<current task>"'
+                ),
             },
         }
     except Exception as exc:

@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://aria.local/schemas/cooperative-mesh.schema.json",
+  "title":"ARIA cooperative multi-agent mesh",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema","protocol","sharedStateDigest","members","bridgeDigests","coordination","consensus","authority","digest"],
+  "properties":{
+    "schema":{"const":"aria.cooperative-mesh/1"},
+    "protocol":{"const":"cooperative-mesh/1"},
+    "sharedStateDigest":{"$ref":"#/$defs/digest"},
+    "members":{"type":"array","minItems":3,"items":{"type":"object","additionalProperties":false,"required":["id","role","artifactDigest"],"properties":{"id":{"type":"string","minLength":1},"role":{"enum":["producer","critic","observer","human"]},"artifactDigest":{"$ref":"#/$defs/digest"}}}},
+    "bridgeDigests":{"type":"array","minItems":2,"uniqueItems":true,"items":{"$ref":"#/$defs/digest"}},
+    "coordination":{"type":"object","additionalProperties":false,"required":["mode","conflictResolution","sharedAuthority","selfApprovalAllowed"],"properties":{"mode":{"const":"challenge-and-reconcile"},"conflictResolution":{"const":"human-required"},"sharedAuthority":{"const":false},"selfApprovalAllowed":{"const":false}}},
+    "consensus":{"type":"object","additionalProperties":false,"required":["claimed","materialDisagreementBlocks"],"properties":{"claimed":{"const":false},"materialDisagreementBlocks":{"const":true}}},
+    "authority":{"type":"object","additionalProperties":false,"required":["aggregationAllowed","grantsAuthority","capabilities"],"properties":{"aggregationAllowed":{"const":false},"grantsAuthority":{"const":false},"capabilities":{"type":"array","maxItems":0}}},
+    "digest":{"$ref":"#/$defs/digest"}
+  },
+  "$defs":{"digest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"}}
+}

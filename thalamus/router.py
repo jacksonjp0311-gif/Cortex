@@ -21,7 +21,15 @@ INTENT_LANES: dict[str, tuple[str, ...]] = {
     "configuration": ("configuration", "source", "documentation", "tests"),
     "security_review": ("security", "source", "configuration", "tests"),
     "historical_inquiry": ("git", "episodes", "decisions", "runtime", "source"),
-    "repository_orientation": ("documentation", "structure", "symbols", "configuration"),
+    # "Where is X implemented?" must retain source as a dominant lane; otherwise
+    # repository orientation can incorrectly prune the implementation it seeks.
+    "repository_orientation": (
+        "documentation",
+        "source",
+        "structure",
+        "symbols",
+        "configuration",
+    ),
     "memory_maintenance": ("episodes", "decisions", "runtime", "git"),
     "unknown": ("source", "documentation", "structure"),
 }

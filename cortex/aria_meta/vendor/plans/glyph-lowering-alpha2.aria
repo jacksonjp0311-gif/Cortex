@@ -1,0 +1,21 @@
+aria 0.4.0
+module GlyphLoweringEvolution version 0.2.0
+program GlyphLoweringEvolution version 0.2.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanMeta {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+∿ Main {
+  ↔ HumanMeta
+  🜁 HumanMeta ← "Make ARIA's verified invoke and return glyph cards executable without changing their semantic identity or authority."
+  🜂 HumanMeta ← "Lower ▷ and ↩ into the existing call and return AST, preserve diagnostics and typed behavior, add no VM opcode, and admit the result directly to main only after complete local verification."
+  ⛨ HumanMeta ← true
+  ◆ HumanMeta
+}

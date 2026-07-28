@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/typed-authority-ir.schema.json",
+  "title": "ARIA Typed Authority IR 0.2",
+  "type": "object",
+  "required": ["schema", "entry", "functions"],
+  "properties": {
+    "schema": { "const": "aria.typed-ir/0.2" },
+    "entry": { "type": "string", "minLength": 1 },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "functions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "parameters", "returnType", "effects", "capabilities", "instructions"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "parameters": { "type": "array" },
+          "returnType": { "type": "string", "minLength": 1 },
+          "effects": { "type": "array", "items": { "type": "string" } },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["op"],
+              "properties": {
+                "op": {
+                  "enum": [
+                    "const", "load", "store", "call", "branch", "jump", "return",
+                    "make.option", "make.result", "match", "emit.event"
+                  ]
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

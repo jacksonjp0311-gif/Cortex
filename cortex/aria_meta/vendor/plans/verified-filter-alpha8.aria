@@ -1,0 +1,21 @@
+aria 0.4.0
+module VerifiedFilterEvolution version 0.8.0
+program VerifiedFilterEvolution version 0.8.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanVerifiedFilter {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanVerifiedFilter
+  intent HumanVerifiedFilter <- "Activate ARIA's second bounded sequence algorithm so humans and AI can select values through one deterministic typed predicate while observing the same truthful selection history."
+  propose HumanVerifiedFilter <- "Admit the exact surface ⫰(sequence, Predicate); require a compile-time unary pure predicate whose parameter exactly matches the sequence element type and whose return type is exactly Bool; add one FILTER bytecode contract with no capability or policy expansion; preserve source order without mutating input; enforce existing sequence, call-depth, element, and byte bounds; emit value-free start, measured iteration, completion, and fracture evidence containing input, completed, and selected counts; verify the algorithm.filter card only after a dedicated admission lattice; keep reduce inactive."
+  consent HumanVerifiedFilter <- true
+  disconnect HumanVerifiedFilter
+}

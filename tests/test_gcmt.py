@@ -81,6 +81,12 @@ class GovernedContinuationTests(unittest.TestCase):
             ttl_seconds=60,
         )
         self.assertEqual(packet["protocol"], "cortex-continuation/1.0")
+        self.assertEqual(
+            packet["operational_state"]["meta_language"][
+                "cortex_implementation_language"
+            ],
+            "python",
+        )
         self.assertIn("operational_state", packet)
         self.assertIn("evidence_state", packet)
         self.assertIn("canonical_state", packet)

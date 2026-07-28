@@ -1,0 +1,19 @@
+aria 0.4.0
+program MemoryPulse version 0.1.0
+entry Main
+
+memory Session {
+  message = "first contact"
+}
+
+graph MemoryMap {
+  node ◉ operator human
+  node ⊙ memory session
+  link human -> session as remembers
+}
+
+flow Main {
+  recall Session.message -> previous
+  emit previous
+  remember Session.message = "ARIA remembered this across runs."
+}

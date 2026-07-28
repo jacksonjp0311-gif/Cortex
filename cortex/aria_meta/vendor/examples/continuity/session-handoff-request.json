@@ -1,0 +1,16 @@
+{
+  "replayDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "fromAgent": "agent:producer",
+  "toAgent": "agent:successor",
+  "contextRefs": [
+    {
+      "kind": "replay",
+      "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    {
+      "kind": "evidence",
+      "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+    }
+  ],
+  "continuationBoundary": "align.intent"
+}

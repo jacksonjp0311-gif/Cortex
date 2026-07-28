@@ -1,0 +1,24 @@
+{
+  "sharedStateDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+  "members": [
+    {
+      "id": "agent:producer",
+      "role": "producer",
+      "artifactDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    },
+    {
+      "id": "agent:critic",
+      "role": "critic",
+      "artifactDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "human:operator",
+      "role": "human",
+      "artifactDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "bridgeDigests": [
+    "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  ]
+}

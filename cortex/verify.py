@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import time
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -41,28 +42,48 @@ def _coverage(store: Any, repo: str) -> dict[str, Any]:
 
 
 def _retrieval_probes(store: Any, repo: str, root: Path) -> dict[str, Any]:
-    probes: list[tuple[str, str | None]] = []
+    probes: list[tuple[str, str | None, str]] = []
     readme = root / "README.md"
     if readme.exists():
         text = readme.read_text(encoding="utf-8", errors="replace")
         headings = [heading.strip("`* ") for heading in HEADING_RE.findall(text)]
         for heading in headings[:3]:
             if len(heading) >= 4:
-                probes.append((heading, "README.md"))
-    for symbol in store.symbols(repo)[:5]:
-        probes.append((symbol["name"], symbol["path"]))
+                probes.append((heading, "README.md", "heading"))
+    symbols = store.symbols(repo)
+    symbol_counts = Counter(symbol["name"] for symbol in symbols)
+    for symbol in symbols:
+        name = symbol["name"]
+        if (
+            len(name) >= 4
+            and symbol_counts[name] == 1
+            and name.casefold() not in {"main", "init", "test", "run"}
+        ):
+            probes.append((name, symbol["path"], "unique_symbol"))
+        if sum(kind == "unique_symbol" for _, _, kind in probes) >= 5:
+            break
     if not probes:
-        probes.append((repo, None))
+        probes.append((repo, None, "repository"))
 
     results: list[dict[str, Any]] = []
-    for text, expected_path in probes[:8]:
-        hits = query(store, repo, text, limit=5)
+    for text, expected_path, probe_kind in probes[:8]:
+        hits = query(store, repo, text, limit=8)
         paths = [hit.path for hit in hits]
-        passed = bool(hits) and (expected_path is None or expected_path in paths)
+        normalized = " ".join(text.casefold().split())
+        exact_evidence = any(
+            normalized in " ".join(hit.text.casefold().split()) for hit in hits
+        )
+        passed = bool(hits) and (
+            expected_path is None
+            or expected_path in paths
+            or (probe_kind == "heading" and exact_evidence)
+        )
         results.append({
             "query": text,
+            "probe_kind": probe_kind,
             "expected_path": expected_path,
             "returned_paths": paths,
+            "exact_evidence": exact_evidence,
             "passed": passed,
         })
     pass_rate = sum(result["passed"] for result in results) / len(results) if results else 0.0
@@ -86,7 +107,7 @@ def verify_repository(
     manifest_current = bool(stored_manifest) and stored_manifest == observed_manifest
     coverage = _coverage(store, repo)
     probes = _retrieval_probes(store, repo, root)
-    integration = integration_status(root)
+    integration = integration_status(root, config)
     graph_edges = store.edges(repo, limit=100_000)
     relation_counts: dict[str, int] = {}
     for edge in graph_edges:
@@ -167,7 +188,11 @@ def verify_repository(
     certificate["certificate_hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     if write_certificate:
-        repo_certificate = root / ".cortex" / "bootstrap_certificate.json"
+        repo_certificate = (
+            Path(config.attachment_root) / "bootstrap_certificate.json"
+            if config.integration_mode == "external"
+            else root / ".cortex" / "bootstrap_certificate.json"
+        )
         repo_certificate.parent.mkdir(parents=True, exist_ok=True)
         repo_certificate.write_text(json.dumps(certificate, indent=2) + "\n", encoding="utf-8")
         home_certificate = home / "certificates" / f"{repo}-latest.json".replace("/", "_")

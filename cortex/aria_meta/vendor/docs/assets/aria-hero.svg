@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">ARIA — verified computation between human and machine</title>
+  <desc id="desc">A magenta signal travels through intent, meaning, verification, authority, execution, and evidence stages.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#090812"/>
+      <stop offset="0.52" stop-color="#151025"/>
+      <stop offset="1" stop-color="#080b16"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff4fc8"/>
+      <stop offset="0.5" stop-color="#b86cff"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="420" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#grid)"/>
+  <circle cx="1040" cy="54" r="180" fill="#ff3fb4" opacity=".055"/>
+  <circle cx="1120" cy="350" r="220" fill="#3dd9ff" opacity=".04"/>
+
+  <g transform="translate(74 58)">
+    <text x="0" y="92" fill="#fff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="112" font-weight="800" letter-spacing="18">ARIA</text>
+    <rect x="3" y="116" width="450" height="4" rx="2" fill="url(#signal)" filter="url(#glow)"/>
+    <text x="3" y="158" fill="#d9cfe8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="25" font-weight="500">A verified language between human and machine.</text>
+    <text x="3" y="196" fill="#958aa8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17">Meaning is shared. Authority is explicit. Evidence is reconstructable.</text>
+  </g>
+
+  <g transform="translate(77 307)" font-family="Inter,Segoe UI,Arial,sans-serif">
+    <path d="M18 22H1025" stroke="url(#signal)" stroke-width="3" opacity=".65"/>
+    <g fill="#0e0c18" stroke-width="2">
+      <circle cx="18" cy="22" r="12" stroke="#ff4fc8"/>
+      <circle cx="220" cy="22" r="12" stroke="#ec5fd4"/>
+      <circle cx="420" cy="22" r="12" stroke="#ca68ed"/>
+      <circle cx="622" cy="22" r="12" stroke="#9b75ff"/>
+      <circle cx="824" cy="22" r="12" stroke="#778eea"/>
+      <circle cx="1025" cy="22" r="12" stroke="#67e8f9"/>
+    </g>
+    <g fill="#cfc4db" font-size="14" font-weight="600" text-anchor="middle">
+      <text x="18" y="58">INTENT</text>
+      <text x="220" y="58">MEANING</text>
+      <text x="420" y="58">VERIFY</text>
+      <text x="622" y="58">AUTHORITY</text>
+      <text x="824" y="58">EXECUTE</text>
+      <text x="1025" y="58">EVIDENCE</text>
+    </g>
+  </g>
+
+  <g transform="translate(822 73)" font-family="Inter,Segoe UI,Arial,sans-serif">
+    <rect width="300" height="165" rx="20" fill="#ffffff" fill-opacity=".035" stroke="#ffffff" stroke-opacity=".11"/>
+    <text x="24" y="38" fill="#ff66cf" font-size="13" font-weight="700" letter-spacing="2">CURRENT FRONTIER</text>
+    <text x="24" y="78" fill="#fff" font-size="24" font-weight="700">alpha.17</text>
+    <text x="24" y="108" fill="#c7bdd3" font-size="15">Cooperative Mesh</text>
+    <path d="M24 130H276" stroke="#fff" stroke-opacity=".1"/>
+    <text x="24" y="151" fill="#79e7d0" font-size="13" font-weight="600">500 / 500 local gates</text>
+  </g>
+</svg>

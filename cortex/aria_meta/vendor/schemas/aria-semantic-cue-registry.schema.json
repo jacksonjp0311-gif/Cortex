@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria-lang.local/schemas/aria-semantic-cue-registry.schema.json",
+  "title": "ARIA Semantic Cue Registry",
+  "type": "object",
+  "required": ["format", "version", "cues", "engagementContract", "digest"],
+  "properties": {
+    "format": { "const": "aria.semantic-cue-registry" },
+    "version": { "const": 1 },
+    "cues": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "states", "domains", "phases", "glyph", "label", "colorRole", "motion", "rhythm", "meaning", "nonMeaning", "staticFallback", "contexts", "prohibitedInterpretations", "digest"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]+$" },
+          "states": { "type": "array", "minItems": 1, "items": { "enum": ["ACTIVE", "PASS", "REJECT", "WARN", "FAIL", "INFO"] } },
+          "domains": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "phases": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "glyph": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "colorRole": { "enum": ["signal.active", "signal.pass", "signal.warning", "signal.failure", "signal.information", "signal.closure"] },
+          "meaning": { "type": "string", "minLength": 1 },
+          "nonMeaning": { "type": "string", "minLength": 1 },
+          "staticFallback": { "type": "string", "minLength": 1 },
+          "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

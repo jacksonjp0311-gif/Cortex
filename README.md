@@ -76,13 +76,52 @@ and promotion authority. Canonical memory is Cortex-owned metadata; these
 commands do not authorize or perform repository source mutation. See
 [`docs/GCMT.md`](docs/GCMT.md).
 
+## Native ARIA semantic language
+
+Cortex stays Python and now carries a self-contained
+`INTERNAL ARIA META-LANGUAGE` snapshot. It is a squashed subtree rather than a
+submodule, so Cortex has no runtime dependency on another repository. A host's
+own `ARIA-RUNTIME.json`, `ARIA-CONNECT.json`, and `.aria` plans take precedence
+when present.
+
+ARIA is the semantic language Cortex always knows. Its internal files occupy a
+separate `internal_aria_substrate` neural region: verified and addressable at
+all times, dormant for unrelated implementation work, and activated for ARIA,
+semantic replay/planning, governed evolution, consent, capability authority,
+handoff, provider-bridge, glyph, and cooperative-mesh tasks. Dormancy removes
+the region from a task's eligible evidence path; it does not unload or forget
+the language.
+
+Runtime fluency is typed as `language`, `intent`, `continuity`, `consent`,
+`governance`, `coordination`, or `symbolic`. Immutable core cues provide the
+deterministic baseline. Human-reviewed cue proposals may enter a bounded
+per-repository profile only through verified outcomes; subsequent verified
+outcomes tune relevance confidence, never execution or authority.
+
+```bash
+cortex meta-language --repo MyProject --json
+cortex meta-language --repo MyProject --task "Prepare a semantic replay" --json
+cortex meta-language --repo MyProject \
+  --corpus benchmarks/corpora/aria_fluency.json --json
+```
+
+Bundled or host ARIA artifacts are never executed automatically, translated
+into Cortex core, or treated as mutation authority. Hidden `.aria/`
+runtime/backups are excluded
+while declared `*.aria` source plans remain indexed. The descriptor is carried
+through environment, context, and GCMT continuation packets. See
+[`docs/ARIA_META_LANGUAGE.md`](docs/ARIA_META_LANGUAGE.md).
+
 ## Thalamus routing
 
 Every normal activation now passes through a local, deterministic Thalamus route plan before retrieval. The plan classifies the task, allocates attention across source, tests, structure, documentation, Git, runtime, and other memory lanes, and records numerical inhibition for generated, duplicate, or out-of-scope evidence. It is an engineering routing analogy—not a biological model—and it cannot grant mutation authority. Inspect a plan with `cortex thalamus --repo <name> --task "<task>" --json`.
 
 Run the reproducible before/after routing benchmark with `python benchmarks/thalamus_before_after.py --files 250 --runs 5`. Its committed chart and raw results are in [`benchmarks/results/`](benchmarks/results/).
 
-Run `python -m cortex self-test --json` to clone Cortex as a host, place a second Cortex clone inside it as the active engine, and verify that the nested engine is excluded while the real outer Cortex repository bootstraps and activates.
+Run `python -m cortex self-test --json` to clone Cortex as a host, place an
+explicitly labeled `InternalCortexEngine` clone inside it, and verify that the
+internal engine is excluded, matches the source commit/version, and can
+bootstrap and activate the outer Cortex repository.
 
 See [cross-domain analysis](docs/CROSS_DOMAIN_ANALYSIS.md) for the evidence-informed attention/inhibition analogy and the computational-work telemetry reported with every context packet.
 
@@ -287,6 +326,22 @@ Direct Python form:
 python -m cortex bootstrap /path/to/repository --name MyProject --json
 ```
 
+For a sealed or manifest-governed repository, keep every Cortex artifact
+outside the host:
+
+```bash
+python -m cortex --home /path/to/cortex-home bootstrap /path/to/repository \
+  --name MyProject --external --json
+python -m cortex --home /path/to/cortex-home activate \
+  --repo MyProject --task "Map the release gates" --json
+```
+
+External attachment writes configuration, certificates, and runtime packets
+under `CORTEX_HOME/attachments/`. It does not create `.cortex/`, change
+`AGENTS.md`, or otherwise mutate the host. Use the same `--home` on later CLI
+commands. `--preserve-agents` is a narrower internal-sidecar option: it leaves
+the host protocol unchanged but still installs `.cortex/`.
+
 ## What bootstrap learns
 
 Bootstrap builds a bounded environment profile that includes:
@@ -308,9 +363,14 @@ The latest profile is written to:
 TargetRepository/.cortex/runtime/environment_latest.json
 ```
 
-It is also stored in the shared Cortex database for later activation.
+For external attachments it is written under
+`CORTEX_HOME/attachments/<repository-id>/runtime/`. In both modes the profile
+is also stored in the shared Cortex database for later activation.
 
 ## What bootstrap installs into the target
+
+The default internal integration identifies itself in `.cortex/config.json` as
+`INTERNAL CORTEX`. External attachment installs nothing into the target.
 
 ```text
 TargetRepository/
@@ -648,6 +708,7 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/NEURAL_INTERLINK.md` — sparse activation and bounded plasticity
 
 - `docs/GCMT.md` - governed continuation, lifecycle, federation, replay evaluation, and MCP
+- `docs/ARIA_META_LANGUAGE.md` - optional ARIA intent/governance layer over the Python core
 
 ## License
 

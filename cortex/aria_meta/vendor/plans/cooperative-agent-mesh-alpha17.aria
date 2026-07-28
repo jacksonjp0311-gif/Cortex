@@ -1,0 +1,19 @@
+aria 0.4.0
+module CooperativeAgentMesh version 1.0.0
+program CooperativeAgentMesh version 1.0.0
+entry Main
+agent MeshVerifier {
+}
+connection HumanMesh {
+  operator = "human"
+  agent = "MeshVerifier"
+  protocol = "intent-proposal-consent"
+}
+flow Main {
+  connect HumanMesh
+  intent HumanMesh <- "Let multiple AI participants connect around one verified semantic state while preserving independent challenge and human authority."
+  propose HumanMesh <- "Create a content-addressed cooperative mesh requiring distinct producer, critic, and human roles; unique provider bridges; material-disagreement blocking; human conflict resolution; no consensus assertion; and no authority aggregation."
+  consent HumanMesh <- true
+  disconnect HumanMesh
+  emit "Coordination may compose evidence; it cannot compose authority."
+}

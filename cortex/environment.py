@@ -9,6 +9,7 @@ import platform
 import re
 from typing import Any
 
+from .meta_language import detect_meta_language
 
 KNOWN_MANIFESTS: dict[str, str] = {
     "pyproject.toml": "python",
@@ -189,7 +190,12 @@ def _commands(root: Path, ecosystems: set[str]) -> dict[str, list[str]]:
     }
 
 
-def learn_environment(root: Path, store: Any, repo: str) -> dict[str, Any]:
+def learn_environment(
+    root: Path,
+    store: Any,
+    repo: str,
+    runtime_root: Path | None = None,
+) -> dict[str, Any]:
     """Learn a bounded, deterministic repository/runtime profile during bootstrap."""
 
     file_rows = store.files(repo)
@@ -267,11 +273,14 @@ def learn_environment(root: Path, store: Any, repo: str) -> dict[str, Any]:
             "powershell_launcher": True,
             "bash_launcher": True,
         },
+        "meta_language": detect_meta_language(root, file_rows),
     }
     canonical = json.dumps(profile, sort_keys=True, separators=(",", ":"))
     profile["profile_hash"] = sha256(canonical.encode("utf-8")).hexdigest()
     store.set_environment_profile(repo, profile)
-    runtime_path = root / ".cortex" / "runtime" / "environment_latest.json"
+    runtime_path = (
+        runtime_root or (root / ".cortex" / "runtime")
+    ) / "environment_latest.json"
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
     profile["runtime_path"] = str(runtime_path)
@@ -290,4 +299,12 @@ def environment_summary(profile: dict[str, Any] | None) -> dict[str, Any]:
         "commands": profile.get("commands", {}),
         "entrypoint_candidates": profile.get("entrypoint_candidates", [])[:12],
         "runtime": profile.get("runtime", {}),
+        "meta_language": profile.get(
+            "meta_language",
+            {
+                "available": False,
+                "cortex_implementation_language": "python",
+                "role": "optional_meta_language",
+            },
+        ),
     }

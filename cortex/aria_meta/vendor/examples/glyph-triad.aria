@@ -1,0 +1,30 @@
+aria 0.4.0
+program GlyphTriad version 0.1.0
+entry Main
+
+memory Project {
+  status = "booting"
+}
+
+graph AlchemicalSurface {
+  node ◉ operator human
+  node ⟁ agent architect
+  node ▧ repository workspace
+  node ◆ artifact glyphBuild
+  link human -> architect as authorizes
+  link architect -> workspace as shapes
+  link workspace -> glyphBuild as produces
+}
+
+flow Main {
+  signal pulse "glyph triad awakening"
+  🜂 "ARIA glyph syntax is online."
+  🜄 Project.status = "active"
+  🜁 Project.status -> state: Text
+  🜁 answer: Number = 40 + 2
+  🜂 state
+  🜂 answer
+  assert state == "active"
+  assert answer == 42
+  signal pass "air · fire · water aligned"
+}

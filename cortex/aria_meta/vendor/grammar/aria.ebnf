@@ -1,0 +1,95 @@
+(* ARIA 0.4 bootstrap grammar. UTF-8 source; comments begin with #. *)
+program          = header, [ module-decl ], program-decl, { top-level }, entry-decl, { top-level } ;
+header           = "aria", whitespace, semver, newline ;
+module-decl      = "module", whitespace, identifier, whitespace, "version", whitespace, semver, newline ;
+program-decl     = "program", whitespace, identifier, whitespace, "version", whitespace, semver, newline ;
+entry-decl       = "entry", whitespace, identifier, newline ;
+top-level        = memory-block | capability-block | agent-block | connection-block | graph-block | function-block | flow-block | newline ;
+
+memory-block     = "memory", whitespace, identifier, whitespace?, "{", newline,
+                   { typed-assignment }, "}", newline ;
+capability-block = "capability", whitespace, identifier, whitespace?, "{", newline,
+                   capability-effect, capability-scope, "}", newline ;
+agent-block      = "agent", whitespace, identifier, whitespace?, "{", newline,
+                   { grant }, "}", newline ;
+connection-block = "connection", whitespace, identifier, whitespace?, "{", newline,
+                   connection-operator, connection-agent, connection-protocol, "}", newline ;
+graph-block      = "graph", whitespace, identifier, whitespace?, "{", newline,
+                   { node | link }, "}", newline ;
+function-block   = "function", whitespace, identifier, "(", [ parameters ], ")", whitespace,
+                   "->", whitespace, type, whitespace?, "{", newline, { statement }, "}", newline ;
+flow-block       = "flow", whitespace, identifier, whitespace?, "{", newline,
+                   { statement }, "}", newline ;
+
+parameters       = parameter, { whitespace?, ",", whitespace?, parameter } ;
+parameter        = identifier, whitespace?, ":", whitespace?, type ;
+type             = "Any" | "Text" | "Number" | "Bool" | "Null" | sequence-type ;
+sequence-type    = "Sequence<", sequence-element-type, ">" ;
+sequence-element-type = "Text" | "Number" | "Bool" | "Null" ;
+typed-assignment = identifier, [ whitespace?, ":", whitespace?, type ], whitespace?, "=", whitespace?, expression, newline ;
+capability-effect= "effect", whitespace?, "=", whitespace?, string, newline ;
+capability-scope = "scope", whitespace?, "=", whitespace?, string, newline ;
+grant            = "grant", whitespace, identifier, newline ;
+connection-operator = "operator", whitespace?, "=", whitespace?, string, newline ;
+connection-agent    = "agent", whitespace?, "=", whitespace?, string, newline ;
+connection-protocol = "protocol", whitespace?, "=", whitespace?, string, newline ;
+node             = "node", whitespace, glyph, whitespace, node-kind, whitespace, identifier, newline ;
+link             = "link", whitespace, identifier, whitespace?, "->", whitespace?, identifier,
+                   whitespace, "as", whitespace, identifier, newline ;
+
+statement        = emit | signal | let | set | remember | recall | require | assert | read | write |
+                   dispatch | connect | intent | propose | consent | disconnect | if-block | repeat-block | return | halt ;
+emit             = "emit", whitespace, expression, newline ;
+signal           = "signal", whitespace, signal-state, whitespace, expression, newline ;
+let              = "let", whitespace, identifier, [ whitespace?, ":", whitespace?, type ], whitespace?, "=", whitespace?, expression, newline ;
+set              = "set", whitespace, identifier, whitespace?, "=", whitespace?, expression, newline ;
+remember         = "remember", whitespace, identifier, ".", identifier, whitespace?, "=", whitespace?, expression, newline ;
+recall           = "recall", whitespace, identifier, ".", identifier, whitespace, "->", whitespace, identifier,
+                   [ whitespace?, ":", whitespace?, type ], newline ;
+require          = "require", whitespace, identifier, newline ;
+assert           = "assert", whitespace, expression, newline ;
+read             = "read", whitespace, expression, whitespace, "->", whitespace, identifier, newline ;
+write            = "write", whitespace, expression, whitespace, "<-", whitespace, expression, newline ;
+dispatch         = "dispatch", whitespace, identifier, whitespace?, "<-", whitespace?, expression, newline ;
+connect          = "connect", whitespace, identifier, newline ;
+intent           = "intent", whitespace, identifier, whitespace?, "<-", whitespace?, expression, newline ;
+propose          = "propose", whitespace, identifier, whitespace?, "<-", whitespace?, expression, newline ;
+consent          = "consent", whitespace, identifier, whitespace?, "<-", whitespace?, expression, newline ;
+disconnect       = "disconnect", whitespace, identifier, newline ;
+if-block         = "if", whitespace, expression, whitespace?, "{", newline, { statement }, "}",
+                   [ whitespace, "else", whitespace?, "{", newline, { statement }, "}" ], newline ;
+repeat-block     = "repeat", whitespace, expression, [ whitespace, "as", whitespace, identifier ], whitespace?, "{", newline,
+                   { statement }, "}", newline ;
+return           = ( "return" | "↩" ), [ whitespace, expression ], newline ;
+halt             = "halt", newline ;
+signal-state     = "pulse" | "pass" | "warn" | "fail" | "info" ;
+
+expression       = pipeline ;
+pipeline         = logical-or, { whitespace?, "≫", whitespace?, identifier } ;
+logical-or       = logical-and, { whitespace, "or", whitespace, logical-and } ;
+logical-and      = equality, { whitespace, "and", whitespace, equality } ;
+equality         = comparison, { whitespace?, ( "==" | "!=" ), whitespace?, comparison } ;
+comparison       = additive, { whitespace?, ( "<" | "<=" | ">" | ">=" ), whitespace?, additive } ;
+additive         = multiplicative, { whitespace?, ( "+" | "-" ), whitespace?, multiplicative } ;
+multiplicative   = unary, { whitespace?, ( "*" | "/" ), whitespace?, unary } ;
+unary            = [ "not" | "-" ], primary ;
+primary          = string | number | boolean | null | sequence-literal | identifier | call | glyph-call | map-call | filter-call | reduce-call | "(", expression, ")" ;
+sequence-literal = "[", [ expression, { whitespace?, ",", whitespace?, expression } ], "]" ;
+call             = identifier, "(", [ expression, { ",", expression } ], ")" ;
+glyph-call       = "▷", whitespace?, identifier, "(", [ expression, { ",", expression } ], ")" ;
+map-call         = "⨯", whitespace?, "(", expression, ",", whitespace?, identifier, ")" ;
+filter-call      = "⫰", whitespace?, "(", expression, ",", whitespace?, identifier, ")" ;
+reduce-call      = "Σ", whitespace?, "(", expression, ",", whitespace?, identifier, ",", whitespace?, expression, ")" ;
+node-kind        = "operator" | "agent" | "repository" | "service" | "surface" |
+                   "memory" | "artifact" | "policy" | "stream" | "system" ;
+glyph            = ? one non-whitespace Unicode grapheme ? ;
+identifier       = letter, { letter | digit | "_" | "-" | "." } ;
+semver           = digit, { digit | "." | "-" | "+" | letter } ;
+string           = '"', { ? JSON string character ? }, '"' ;
+number           = [ "-" ], digit, { digit }, [ ".", digit, { digit } ] ;
+boolean          = "true" | "false" ;
+null             = "null" ;
+whitespace       = " " | "\t" ;
+newline          = "\n" ;
+letter           = "A".."Z" | "a".."z" ;
+digit            = "0".."9" ;

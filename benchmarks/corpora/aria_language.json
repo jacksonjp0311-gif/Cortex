@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "name": "aria-language-real-repository",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "manifest-enforcement",
+      "category": "source_recall",
+      "task": "Where is strict repository manifest enforcement implemented?",
+      "expected_paths": [
+        "aria.ps1"
+      ]
+    },
+    {
+      "id": "cooperative-agent-mesh",
+      "category": "native_language_recall",
+      "task": "Where is cooperative agent mesh continuity specified?",
+      "expected_paths": [
+        "plans/cooperative-agent-mesh-alpha17.aria",
+        "docs/57-cooperative-agent-mesh-alpha17.md"
+      ]
+    },
+    {
+      "id": "verified-reduce",
+      "category": "feature_recall",
+      "task": "Where is verified reduce compiled and tested?",
+      "expected_paths": [
+        "plans/verified-reduce-alpha9.aria",
+        "docs/49-verified-reduce-alpha9.md",
+        "tests/Run-VerifiedReduceTests.ps1"
+      ]
+    },
+    {
+      "id": "semantic-admission",
+      "category": "source_recall",
+      "task": "Where is Get-AriaSemanticScopeDigest implemented?",
+      "expected_paths": [
+        "src/Aria.Admission.psm1"
+      ]
+    },
+    {
+      "id": "sealed-host-boundary",
+      "category": "boundary_separation",
+      "task": "Which ARIA files define the native strict manifest boundary?",
+      "expected_paths": [
+        "aria.ps1",
+        "src/Aria.Common.psm1"
+      ],
+      "forbidden_paths": [
+        ".cortex/config.json",
+        ".cortex/README.md"
+      ]
+    },
+    {
+      "id": "unsupported-external-certification",
+      "category": "abstention",
+      "task": "Which independent external auditor certified ARIA for production use?",
+      "expected_paths": [],
+      "should_abstain": true,
+      "abstain_below": 0.2
+    }
+  ]
+}

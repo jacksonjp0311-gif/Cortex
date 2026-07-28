@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 from . import __version__
 from .activation import activate_repository
+from .aria_meta import aria_runtime_status
+from .aria_meta.evaluation import evaluate_aria_corpus, load_aria_corpus
 from .bootstrap import bootstrap_repository
 from .bridge import consolidate
 from .config import ensure_home, load_repo_config
@@ -60,6 +63,16 @@ def build_parser() -> argparse.ArgumentParser:
     bootstrap.add_argument("path", nargs="?", default=".")
     bootstrap.add_argument("--name")
     bootstrap.add_argument("--force", action="store_true")
+    bootstrap.add_argument(
+        "--preserve-agents",
+        action="store_true",
+        help="Install the internal sidecar without modifying the host AGENTS.md.",
+    )
+    bootstrap.add_argument(
+        "--external",
+        action="store_true",
+        help="Keep all Cortex attachment files outside the host repository.",
+    )
     bootstrap.add_argument("--json", action="store_true")
 
     activate = sub.add_parser("activate", help="Refresh memory as needed and emit task context.")
@@ -151,11 +164,28 @@ def build_parser() -> argparse.ArgumentParser:
     outcome.add_argument("--status", choices=["verified", "diagnosed", "helpful", "unknown", "irrelevant", "failed", "unsafe"], required=True)
     outcome.add_argument("--verification", required=True)
     outcome.add_argument("--reward", type=float)
+    outcome.add_argument(
+        "--aria-cue",
+        action="append",
+        default=[],
+        metavar="PURPOSE=PHRASE",
+        help="Propose a reviewed ARIA cue for verified outcome learning.",
+    )
+    outcome.add_argument("--aria-cue-reviewed", action="store_true")
     outcome.add_argument("--json", action="store_true")
 
     environment = sub.add_parser("environment", help="Show the learned repository environment profile.")
     environment.add_argument("--repo", required=True)
     environment.add_argument("--json", action="store_true")
+
+    meta_language = sub.add_parser(
+        "meta-language",
+        help="Show Cortex's native or host-integrated ARIA language boundary.",
+    )
+    meta_language.add_argument("--repo", required=True)
+    meta_language.add_argument("--task", default="")
+    meta_language.add_argument("--corpus", type=Path)
+    meta_language.add_argument("--json", action="store_true")
 
     thalamus = sub.add_parser("thalamus", help="Inspect the deterministic retrieval route for a task.")
     thalamus.add_argument("--repo", required=True)
@@ -268,6 +298,7 @@ def _repo_root(store: Store, repo: str) -> Path:
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     home = ensure_home(Path(args.home).expanduser().resolve() if args.home else None)
+    os.environ["CORTEX_ACTIVE_HOME"] = str(home)
     store = Store(home / "cortex.db")
     governor = Governor(home, store)
     try:
@@ -282,7 +313,13 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "bootstrap":
             result = bootstrap_repository(
-                home, store, Path(args.path), args.name, force=args.force
+                home,
+                store,
+                Path(args.path),
+                args.name,
+                force=args.force,
+                preserve_agents=args.preserve_agents,
+                external=args.external,
             )
             emit(result, args.json)
 
@@ -416,14 +453,55 @@ def main(argv: list[str] | None = None) -> None:
             if not store.repo(args.repo):
                 raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
             governance = governor.evaluate(args.repo)
+            cue_proposals = []
+            for raw_cue in args.aria_cue:
+                if "=" not in raw_cue:
+                    raise ValueError("--aria-cue must use PURPOSE=PHRASE")
+                purpose, phrase = raw_cue.split("=", 1)
+                cue_proposals.append(
+                    {"purpose": purpose.strip(), "phrase": phrase.strip()}
+                )
             emit(record_outcome(
                 store, args.repo, args.activation_id, status=args.status,
                 verification_type=args.verification, reward=args.reward,
+                verification_payload={
+                    "aria_cue_reviewed": args.aria_cue_reviewed,
+                    "aria_cue_proposals": cue_proposals,
+                },
                 governance_mode=governance["mode"],
             ), args.json)
 
         elif command == "environment":
             emit(environment_summary(store.environment_profile(args.repo)), args.json)
+
+        elif command == "meta-language":
+            repository = store.repo(args.repo)
+            if not repository:
+                raise ValueError(
+                    f"Unknown repository: {args.repo}. Run cortex bootstrap first."
+                )
+            profile = store.environment_profile(args.repo) or {}
+            descriptor = profile.get(
+                    "meta_language",
+                    {
+                        "available": False,
+                        "cortex_implementation_language": "python",
+                        "role": "optional_meta_language",
+                    },
+                )
+            runtime_fluency = aria_runtime_status(store, args.repo, args.task)
+            if args.corpus:
+                runtime_fluency["evaluation"] = evaluate_aria_corpus(
+                    load_aria_corpus(args.corpus),
+                    runtime_fluency["learned_profile"]["cues"],
+                )
+            emit(
+                {
+                    **descriptor,
+                    "runtime_fluency": runtime_fluency,
+                },
+                args.json,
+            )
 
         elif command == "thalamus":
             repository = store.repo(args.repo)

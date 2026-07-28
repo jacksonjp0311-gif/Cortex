@@ -1,0 +1,21 @@
+aria 0.4.0
+module SemanticProposalBundlesEvolution version 0.11.0
+program SemanticProposalBundlesEvolution version 0.11.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanSemanticProposal {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanSemanticProposal
+  intent HumanSemanticProposal <- "Make a language evolution understandable to humans and exact for machines before repository mutation or approval."
+  propose HumanSemanticProposal <- "Add aria.semantic-proposal/1 with canonical intent, producer, baseline, subject, semantic deltas, path scope, obligations, tests, compatibility, rollback, and execution-evidence references; reject hidden scope, implicit authority, self-approval, and tampering; grant no authority and perform no mutation."
+  consent HumanSemanticProposal <- true
+  disconnect HumanSemanticProposal
+}

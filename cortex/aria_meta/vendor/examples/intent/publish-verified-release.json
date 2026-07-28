@@ -1,0 +1,99 @@
+{
+  "schema": "aria.intent-verification-bundle/0.9",
+  "intent": {
+    "schema": "aria.intent/0.9",
+    "name": "PublishVerifiedRelease",
+    "objective": "Publish a release without changing runtime behavior.",
+    "assumptions": ["main is the release branch"],
+    "requiredOutcomes": [
+      { "id": "rollback.available", "expected": true },
+      { "id": "semantic_diff.none", "expected": true },
+      { "id": "tests.pass", "expected": true }
+    ],
+    "forbiddenOutcomes": ["history.rewrite", "secret.read", "source.delete"],
+    "allowedEffects": ["network.send", "repository.write"],
+    "acceptanceCriteria": [
+      { "id": "semantic-diff-report", "evidenceKind": "semantic-diff" },
+      { "id": "test-report", "evidenceKind": "test-report" }
+    ],
+    "ambiguities": [
+      {
+        "id": "publish-target",
+        "question": "Does publish mean public release or internal registry?",
+        "severity": "material"
+      }
+    ],
+    "requireIndependentChallenge": true,
+    "id": "sha256:484bd4509e4bb7a4d6640bf79829836d39fc9e6b5504dd5324240ceff7b11bd9"
+  },
+  "interpretation": {
+    "schema": "aria.intent-interpretation/0.9",
+    "intentId": "sha256:484bd4509e4bb7a4d6640bf79829836d39fc9e6b5504dd5324240ceff7b11bd9",
+    "interpreter": "agent:producer",
+    "understoodObjective": "Publish a public GitHub release only if tests pass, semantic behavior is unchanged, and rollback is available.",
+    "assumptions": ["main is the release branch"],
+    "expectedEffects": ["network.send", "repository.write"],
+    "claimedObligations": ["rollback.available", "semantic_diff.none", "semantic-diff-report", "test-report", "tests.pass"],
+    "unresolvedAmbiguities": ["publish-target"],
+    "implementationRef": "sha256:program",
+    "id": "sha256:bc5dd81f76ea0c94ef1fd67875a2e379328feb8f339cdf86388ebb74ca584311"
+  },
+  "approval": {
+    "schema": "aria.intent-approval/0.9",
+    "intentId": "sha256:484bd4509e4bb7a4d6640bf79829836d39fc9e6b5504dd5324240ceff7b11bd9",
+    "interpretationId": "sha256:bc5dd81f76ea0c94ef1fd67875a2e379328feb8f339cdf86388ebb74ca584311",
+    "approver": "human:operator",
+    "decision": "approved",
+    "decidedAt": "2026-07-23T12:00:00.0000000Z",
+    "ambiguityResolutions": [{ "id": "publish-target", "resolution": "public GitHub release" }],
+    "challengeResolutions": [{ "id": "alternate-publish-target", "resolution": "public GitHub release confirmed" }],
+    "nonce": "release-2026-07-23",
+    "id": "sha256:e8830bc3903d3437d0dc28e9d8c69f0e17ad29580ae9f0c4dd23c6cf12d81264"
+  },
+  "challenges": [
+    {
+      "schema": "aria.intent-challenge/0.9",
+      "intentId": "sha256:484bd4509e4bb7a4d6640bf79829836d39fc9e6b5504dd5324240ceff7b11bd9",
+      "interpretationId": "sha256:bc5dd81f76ea0c94ef1fd67875a2e379328feb8f339cdf86388ebb74ca584311",
+      "challenger": "agent:critic",
+      "issues": [{ "id": "alternate-publish-target", "severity": "material", "message": "Internal registry is also a plausible publication target." }],
+      "id": "sha256:506b3094ae748387451b2ec9a47b00febca787454e032918c33196912afe9c74"
+    }
+  ],
+  "program": {
+    "schema": "aria.intent-program-summary/0.9",
+    "artifactId": "sha256:program",
+    "requestedEffects": ["network.send", "repository.write"],
+    "outcomes": [
+      { "id": "rollback.available", "actual": true },
+      { "id": "semantic_diff.none", "actual": true },
+      { "id": "tests.pass", "actual": true }
+    ],
+    "observedForbiddenOutcomes": [],
+    "id": "sha256:a6d969b107f72bc8bd10229f523a54a178261511136890fd5584d718d225aba1"
+  },
+  "evidence": [
+    {
+      "schema": "aria.intent-evidence/0.9",
+      "criterionId": "test-report",
+      "kind": "test-report",
+      "subjectId": "sha256:program",
+      "digest": "sha256:test-report",
+      "passed": true,
+      "id": "sha256:3b57b370e0992522d766d12b98937f8c5acdfb056e1a84745a5426f1fe7e525a"
+    },
+    {
+      "schema": "aria.intent-evidence/0.9",
+      "criterionId": "semantic-diff-report",
+      "kind": "semantic-diff",
+      "subjectId": "sha256:program",
+      "digest": "sha256:semantic-diff",
+      "passed": true,
+      "id": "sha256:30b0c2eba8edcb4fc3afaa79463664d09ddb1cd8cecbbab16303410431c7dc94"
+    }
+  ],
+  "verificationPolicy": {
+    "schema": "aria.intent-verification-policy/0.9",
+    "trustedApprovers": ["human:operator"]
+  }
+}

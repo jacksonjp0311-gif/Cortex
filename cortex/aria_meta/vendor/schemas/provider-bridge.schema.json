@@ -1,0 +1,23 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://aria.local/schemas/provider-bridge.schema.json",
+  "title":"ARIA provider-neutral bridge membrane",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema","protocol","handoffDigest","provider","operation","requestedCapabilities","capabilityCeiling","consentDigest","decision","transport","authority","digest"],
+  "properties":{
+    "schema":{"const":"aria.provider-bridge/1"},
+    "protocol":{"const":"provider-membrane/1"},
+    "handoffDigest":{"$ref":"#/$defs/digest"},
+    "provider":{"type":"object","additionalProperties":false,"required":["id","model"],"properties":{"id":{"type":"string","minLength":1},"model":{"type":"string","minLength":1}}},
+    "operation":{"type":"string","minLength":1},
+    "requestedCapabilities":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
+    "capabilityCeiling":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
+    "consentDigest":{"$ref":"#/$defs/digest"},
+    "decision":{"enum":["eligible","rejected"]},
+    "transport":{"type":"object","additionalProperties":false,"required":["networkExecution","providerCalled","payloadIncluded","nextBoundary"],"properties":{"networkExecution":{"const":false},"providerCalled":{"const":false},"payloadIncluded":{"const":false},"nextBoundary":{"const":"capability-gated transport adapter"}}},
+    "authority":{"type":"object","additionalProperties":false,"required":["grantsAuthority","capabilitiesActivated"],"properties":{"grantsAuthority":{"const":false},"capabilitiesActivated":{"type":"array","maxItems":0}}},
+    "digest":{"$ref":"#/$defs/digest"}
+  },
+  "$defs":{"digest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"}}
+}

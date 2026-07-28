@@ -1,0 +1,33 @@
+aria 0.4.0
+module EffectPurity version 0.5.0
+program EffectPurity version 0.5.0
+entry Main
+
+capability RepoRead {
+  effect = "fs.read"
+  scope = "."
+}
+
+function Increment(value: Number) -> Number {
+  ↩ value + 1
+}
+
+function Double(value: Number) -> Number {
+  ↩ value * 2
+}
+
+function ReadText(path: Text) -> Text {
+  require RepoRead
+  read path -> content
+  ↩ content
+}
+
+function ReadThrough(path: Text) -> Text {
+  ↩ ReadText(path)
+}
+
+flow Main {
+  let result: Number = 10 ≫ Increment ≫ Double
+  emit result
+  halt
+}

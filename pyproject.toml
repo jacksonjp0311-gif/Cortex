@@ -32,6 +32,22 @@ cortex-mcp = "cortex.mcp:main"
 [tool.setuptools.packages.find]
 include = ["cortex*", "thalamus*"]
 
+[tool.setuptools.package-data]
+"cortex.aria_meta" = [
+  "INTERNAL_ARIA.json",
+  "vendor/**/*",
+  "vendor/**/.*",
+  "vendor/.github/workflows/*.yml",
+]
+
+[tool.setuptools.exclude-package-data]
+"cortex.aria_meta" = [
+  "vendor/.aria/*",
+  "vendor/.aria/**/*",
+  "vendor/**/__pycache__/*",
+  "vendor/**/*.pyc",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

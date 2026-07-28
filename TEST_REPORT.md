@@ -4,13 +4,43 @@
 
 ## v3.0 release validation
 
-- `python -m pytest`: 33 passed
+- `python -m unittest discover -s tests -q`: 43 passed
 - `python -m ruff check cortex thalamus tests`: passed
 - Python compilation: passed
 - Source distribution and wheel build: passed
 - Existing controlled-workload benchmark thresholds: passed
 - Nested-clone self-host lifecycle: verified certificate, ready activation,
-  nested engine excluded, nested tests passed
+  explicitly labeled internal engine excluded, source/engine commit parity
+  verified, nested tests passed
+- Sealed-host external attachment: zero host writes, Aria Git tree clean,
+  Aria strict doctor passed, Cortex certificate verified
+- Aria native surfaces: `.aria` and `.cmd` indexed; supported inventory
+  increased from 238 to 292 files
+- ARIA meta-language boundary: Python implementation/execution retained,
+  automatic ARIA execution disabled, context and continuation propagation
+  verified
+- INTERNAL ARIA snapshot: 298 tracked files vendored as a squashed subtree;
+  no submodule or external runtime repository dependency
+- Bundled ARIA native manifest: 297/297 verified
+- Bundled ARIA handshake, strict doctor, and full conformance suite: passed
+- Clean-wheel bundle verification: 297 entries checked, zero failures
+- Host-local ARIA integration remains available and takes precedence when
+  Cortex is explicitly operating on such a repository
+- Native-region routing: INTERNAL ARIA remains known but contributes zero
+  eligible nodes to unrelated tasks; semantic and continuity signals activate
+  the region deterministically
+- Dormant-region retrieval: internal ARIA paths are excluded at lexical and
+  vector candidate selection rather than discarded after scoring
+- Typed fluency: 7 purposes and 19 immutable core cues; reviewed verified
+  outcome admits a bounded learned cue, and negative verified evidence can
+  lower it below the deterministic 0.65 wake threshold without changing
+  authority
+- Fluency corpus: 20/20 passed with zero false wakes, missed wakes, or purpose
+  misses
+- Fluent-runtime nested self-host: verified certificate, ready activation,
+  commit-current internal engine, nested tests passed
+- Bootstrap probe hardening: ambiguous duplicate symbols excluded and exact
+  heading evidence accepted when a specialized document outranks README
 - Real Cortex repository smoke: manifest current, database integrity true,
   dashboard version 3.0.0, replay corpus non-regression true, boundary gate true,
   persisted continuation packet valid
@@ -19,7 +49,12 @@ The new suite covers GCMT state-plane separation, continuation packet integrity
 and expiry, evidence/verification/authority promotion gates, hash-chained
 receipts, rollback fidelity, selective learned-association decay, neural ledger
 integrity, cross-repository boundary preservation, vector-bucket migration,
-base-versus-learned replay evaluation, and MCP initialization/tool discovery.
+base-versus-learned replay evaluation, external sealed-host attachment,
+internal-engine identity/freshness, native `.aria`/batch indexing, fused
+reranking, bundled and host-local ARIA language discovery, INTERNAL ARIA
+identity, manifest verification, namespace compilation, dormant routing,
+semantic wake-up, and MCP
+initialization/tool discovery.
 
 These checks establish implementation and repository-local benchmark evidence.
 They do not establish universal answer-quality improvement, biological

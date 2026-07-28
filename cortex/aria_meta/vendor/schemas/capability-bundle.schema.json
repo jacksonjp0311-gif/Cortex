@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/capability-bundle.schema.json",
+  "title": "ARIA Capability Bundle 0.8",
+  "type": "object",
+  "required": ["schema", "token", "knownTokens"],
+  "properties": {
+    "schema": { "const": "aria.capability-bundle/0.8" },
+    "token": { "type": "object" },
+    "knownTokens": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "additionalProperties": false
+}

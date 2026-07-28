@@ -1,0 +1,1226 @@
+{
+    "schema":  "aria.conformance-lanes",
+    "version":  1,
+    "laneOrder":  [
+                      "syntax",
+                      "authority",
+                      "artifact",
+                      "state",
+                      "evolution",
+                      "transmission"
+                  ],
+    "tests":  [
+                  {
+                      "ordinal":  1,
+                      "name":  "opcode registry is machine-readable and complete",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  2,
+                      "name":  "glyph registry is machine-readable and unique",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  3,
+                      "name":  "parser recognizes program and glyph graph",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  4,
+                      "name":  "compiler output is deterministic",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  5,
+                      "name":  "container round-trip verifies digest",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  6,
+                      "name":  "VM executes output and memory",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  7,
+                      "name":  "bytecode verifier accepts compiler output",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  8,
+                      "name":  "bytecode verifier rejects stack underflow",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  9,
+                      "name":  "container corruption is detected",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  10,
+                      "name":  "locked spec rejects incompatible source",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  11,
+                      "name":  "default policy rejects filesystem writes",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  12,
+                      "name":  "path confinement rejects traversal",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  13,
+                      "name":  "repository manifest verifies",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  14,
+                      "name":  "strict repository manifest gate accepts tracked tree",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  15,
+                      "name":  "VM rejects structurally invalid but checksummed bytecode",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  16,
+                      "name":  "container rejects header length mismatch",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  17,
+                      "name":  "custom workspace receives build and memory state",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  18,
+                      "name":  "glyph mismatch is rejected semantically",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  19,
+                      "name":  "runtime rechecks capability policy",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  20,
+                      "name":  "read-only execution does not persist memory state",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  21,
+                      "name":  "parser recognizes structured signals",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  22,
+                      "name":  "VM emits structured traceflow events",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  23,
+                      "name":  "canonical JSON is stable and preserves glyphs",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  24,
+                      "name":  "parser recognizes module functions and typed expressions",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  25,
+                      "name":  "functions execute with typed returns",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  26,
+                      "name":  "bounded repeat and lexical set execute",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  27,
+                      "name":  "agent dispatch emits deterministic event",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  28,
+                      "name":  "typed binding rejects incompatible value",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  29,
+                      "name":  "repeat rejects unsafe literal bound",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  30,
+                      "name":  "module identity survives bytecode container",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  31,
+                      "name":  "persisted memory type is revalidated",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  32,
+                      "name":  "bytecode verifier rejects arithmetic type confusion",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  33,
+                      "name":  "bytecode verifier rejects non-text agent task",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  34,
+                      "name":  "Null-returning function remains a typed expression",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  35,
+                      "name":  "parser recognizes connection ontology and lifecycle",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  36,
+                      "name":  "connection ontology survives bytecode container",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  37,
+                      "name":  "VM emits deterministic connection lifecycle",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  38,
+                      "name":  "withheld consent closes without authority",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  39,
+                      "name":  "semantics rejects unknown connection",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  40,
+                      "name":  "connection rejects unknown agent identity",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  41,
+                      "name":  "bytecode verifier rejects non-text connection intent",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  42,
+                      "name":  "VM rejects connection message before open",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  43,
+                      "name":  "runtime profile resolves CI deterministically",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  44,
+                      "name":  "signal subset emits allowlisted fields only",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  45,
+                      "name":  "signal subset enforces limit",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  46,
+                      "name":  "signal subset digest is deterministic",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  47,
+                      "name":  "signal subset rejects tampering",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  48,
+                      "name":  "signal subset survives transmission round trip",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  49,
+                      "name":  "transmission canonical digest is deterministic",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  50,
+                      "name":  "compressed transmission round-trip verifies",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  51,
+                      "name":  "transmission container rejects tampering",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  52,
+                      "name":  "event digest is deterministic for fixed time",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  53,
+                      "name":  "event spine publishes to subscriber and buffer",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  54,
+                      "name":  "event verifier rejects tampering",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  55,
+                      "name":  "event ledger persists and replays verified events",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  56,
+                      "name":  "runtime spine maps compiler event to Etherflow",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  57,
+                      "name":  "runtime spine preserves verifier authority boundary",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  58,
+                      "name":  "runtime spine records VM activation and halt order",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  59,
+                      "name":  "runtime spine connection lifecycle is ordered",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  60,
+                      "name":  "event digest survives JSON date materialization",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  61,
+                      "name":  "gitflow process captures native output",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  62,
+                      "name":  "gitflow resolves local head deterministically",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  63,
+                      "name":  "gitflow clean-tree verifier uses isolated repository",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  64,
+                      "name":  "gitflow verification event is single-frame capable",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  65,
+                      "name":  "gitflow process rejects function shadowing",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  66,
+                      "name":  "oscillator frame preserves rectangular width",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  67,
+                      "name":  "oscillator reverses at both boundaries",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  68,
+                      "name":  "oscillator suppresses animation in CI",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  69,
+                      "name":  "bufferflow never invents internal process phases",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  70,
+                      "name":  "bufferflow heartbeat moves only while pending",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  71,
+                      "name":  "bufferflow frame states pending without false progress",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  72,
+                      "name":  "bufferflow process returns one typed result",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  73,
+                      "name":  "signal receipt reports duration bytes and coherence",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  74,
+                      "name":  "signal receipt formats as a subordinate line",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  75,
+                      "name":  "buffered sequence activates every item",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  76,
+                      "name":  "buffered process carries transmission receipt",
+                      "lane":  "transmission",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  77,
+                      "name":  "typed core canonicalizes generic and record types",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  78,
+                      "name":  "typed core rejects immutable reassignment",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  79,
+                      "name":  "typed core rejects wrong function argument types",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  80,
+                      "name":  "typed core rejects missing function capabilities",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  81,
+                      "name":  "typed core detects non-exhaustive branches",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  82,
+                      "name":  "typed core validates effect authority",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  83,
+                      "name":  "typed IR accepts valid golden fixture",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  84,
+                      "name":  "typed IR rejects missing capability fixture",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  85,
+                      "name":  "typed IR digest is deterministic",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  86,
+                      "name":  "typed IR rejects unknown opcode",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  87,
+                      "name":  "graph core accepts valid typed graph",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  88,
+                      "name":  "graph core rejects dangling edge",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  89,
+                      "name":  "graph core rejects duplicate node identity",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  90,
+                      "name":  "graph core rejects endpoint type mismatch",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  91,
+                      "name":  "graph pattern returns typed bindings",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  92,
+                      "name":  "graph guard rejects unsupported kind",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  93,
+                      "name":  "graph rule rejects missing capability",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  94,
+                      "name":  "graph rewrite commits valid transaction",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  95,
+                      "name":  "graph rewrite removes matched edge",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  96,
+                      "name":  "graph rewrite rejects false guard without mutation",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  97,
+                      "name":  "graph rewrite rolls back invalid candidate",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  98,
+                      "name":  "graph rewrite event is content addressed",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  99,
+                      "name":  "semantic diff reports removed and added edges",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  100,
+                      "name":  "semantic diff is stable for identical graphs",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  101,
+                      "name":  "graph transition is content addressed",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  102,
+                      "name":  "graph transition records capability authority",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  103,
+                      "name":  "graph transition rejects tampered identity",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  104,
+                      "name":  "transition chain accepts coherent history",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  105,
+                      "name":  "transition chain rejects parent fracture",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  106,
+                      "name":  "transition chain rejects sequence fracture",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  107,
+                      "name":  "graph replay reproduces recorded digest",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  108,
+                      "name":  "graph replay rejects digest divergence",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  109,
+                      "name":  "historical graph state reconstructs sequence zero",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  110,
+                      "name":  "historical graph state reconstructs committed transition",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  111,
+                      "name":  "capability identity is deterministic",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  112,
+                      "name":  "capability rejects tampered identity",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  113,
+                      "name":  "capability rejects unknown root issuer",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  114,
+                      "name":  "capability rejects subject mismatch",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  115,
+                      "name":  "capability rejects resource mismatch",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  116,
+                      "name":  "capability rejects missing effect",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  117,
+                      "name":  "capability rejects not-yet-active authority",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  118,
+                      "name":  "capability rejects expired authority",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  119,
+                      "name":  "capability accepts attenuated delegation",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  120,
+                      "name":  "capability rejects delegated authority broadening",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  121,
+                      "name":  "capability rejects excessive delegation depth",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  122,
+                      "name":  "capability rejects unknown parent",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  123,
+                      "name":  "capability rejects reused single-use nonce",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  124,
+                      "name":  "capability preserves historical revocation semantics",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  125,
+                      "name":  "graph rewrite requires verified capability authority",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  126,
+                      "name":  "evolution proposal identity is deterministic",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  127,
+                      "name":  "evolution proposal rejects tampered identity",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  128,
+                      "name":  "evolution proposal rejects unsafe repository path",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  129,
+                      "name":  "evolution proposal rejects duplicate change path",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  130,
+                      "name":  "evolution proposal requires all core gates",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  131,
+                      "name":  "evolution proposal rejects incomplete rollback plan",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  132,
+                      "name":  "evolution authority approves matching proposer scope",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  133,
+                      "name":  "evolution authority rejects proposer subject mismatch",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  134,
+                      "name":  "evolution plan requires human authorization",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  135,
+                      "name":  "evolution authorization rejects tampered identity",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  136,
+                      "name":  "evolution plan rejects base commit mismatch",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  137,
+                      "name":  "evolution candidate applies expected content digest",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  138,
+                      "name":  "evolution candidate rejects stale before digest",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  139,
+                      "name":  "evolution rollback reproduces original snapshot",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  140,
+                      "name":  "governed evolution emits content-addressed decision event",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  141,
+                      "name":  "evolution request accepts a narrow write plan",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  142,
+                      "name":  "evolution request rejects path traversal",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  143,
+                      "name":  "evolution request rejects duplicate paths",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  144,
+                      "name":  "evolution request requires capability identity",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  145,
+                      "name":  "evolution planner binds current bytes and commit",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  146,
+                      "name":  "evolution planner proves rollback for added file",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  147,
+                      "name":  "evolution planner represents deletion semantically",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  148,
+                      "name":  "evolution planning identity is deterministic",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  149,
+                      "name":  "evolution planner persists five canonical records",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  150,
+                      "name":  "evolution record persistence is idempotent",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  151,
+                      "name":  "evolution verification policy requires explicit authorizers",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  152,
+                      "name":  "evolution plan record verifies deterministic identity",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  153,
+                      "name":  "evolution verification authorizes matching artifacts",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  154,
+                      "name":  "evolution verification rejects wrong authorization",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  155,
+                      "name":  "evolution verification rejects capability subject mismatch",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  156,
+                      "name":  "persisted evolution plan reloads against stable workspace",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  157,
+                      "name":  "persisted evolution plan rejects workspace drift",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  158,
+                      "name":  "persisted evolution plan rejects base commit drift",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  159,
+                      "name":  "evolution verification persists append-only decision records",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  160,
+                      "name":  "evolution verification persistence is idempotent",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  161,
+                      "name":  "stable JSON permits shared custom object without false cycle",
+                      "lane":  "evolution",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  162,
+                      "name":  "source lexer recognizes ordinary tokens",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  163,
+                      "name":  "source parser builds immutable binding",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  164,
+                      "name":  "source checker accepts typed arithmetic",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  165,
+                      "name":  "source checker rejects binding type mismatch",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  166,
+                      "name":  "source checker rejects unknown binding",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  167,
+                      "name":  "source checker validates function argument types",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  168,
+                      "name":  "source evaluator runs pure function",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  169,
+                      "name":  "source conditional requires Bool condition",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  170,
+                      "name":  "source conditional requires matching branch types",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  171,
+                      "name":  "source text concatenation is deterministic",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  172,
+                      "name":  "source integer division rejects zero",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  173,
+                      "name":  "source IR identity is deterministic",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  174,
+                      "name":  "source examples all execute",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  175,
+                      "name":  "source rejects duplicate names",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  176,
+                      "name":  "source has no effects in alpha22",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  177,
+                      "name":  "source rejects unknown declared types",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  178,
+                      "name":  "source rejects direct recursion",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  179,
+                      "name":  "source rejects mutual recursion",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  180,
+                      "name":  "source rejects integer addition overflow",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  181,
+                      "name":  "source rejects integer multiplication overflow",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  182,
+                      "name":  "source rejects integer division overflow",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  183,
+                      "name":  "source runtime failures have structured codes",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  184,
+                      "name":  "source diagnostics retain line and column",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  185,
+                      "name":  "intent identities are canonical and deterministic",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  186,
+                      "name":  "intent verifier derives a satisfied verdict",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  187,
+                      "name":  "intent verifier rejects tampered identities",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  188,
+                      "name":  "intent verifier rejects excess program authority",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  189,
+                      "name":  "intent verifier rejects mismatched required outcomes",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  190,
+                      "name":  "intent verifier rejects observed forbidden outcomes",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  191,
+                      "name":  "intent verifier requires criterion evidence",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  192,
+                      "name":  "intent verifier gates material ambiguity",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  193,
+                      "name":  "intent verifier requires an independent challenge",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  194,
+                      "name":  "intent verifier rejects self-challenge",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  195,
+                      "name":  "intent verifier gates material critic disagreement",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  196,
+                      "name":  "intent verifier catches interpretation omission",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  197,
+                      "name":  "intent proofs are deterministic and contain derived obligations",
+                      "lane":  "authority",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  198,
+                      "name":  "alchemical glyph registry is machine-readable and triadic",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  199,
+                      "name":  "parser lowers executable glyph statements",
+                      "lane":  "syntax",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  200,
+                      "name":  "glyph syntax survives compilation and bytecode verification",
+                      "lane":  "artifact",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  201,
+                      "name":  "glyph triad executes through the existing VM",
+                      "lane":  "state",
+                      "weight":  1
+                  },
+                  {
+                      "ordinal":  202,
+                      "name":  "glyph syntax and word syntax lower to equivalent operations",
+                      "lane":  "syntax",
+                      "weight":  1
+                  }
+              ]
+}

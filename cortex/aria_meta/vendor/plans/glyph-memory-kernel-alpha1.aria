@@ -1,0 +1,21 @@
+aria 0.4.0
+module GlyphMemoryEvolution version 0.1.0
+program GlyphMemoryEvolution version 0.1.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanMeta {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+∿ Main {
+  ↔ HumanMeta
+  🜁 HumanMeta ← "Establish verified glyph memory cards as ARIA's bounded meta-composition substrate."
+  🜂 HumanMeta ← "Add collision-free card identities, activation evidence, local memory, CLI reflection, and CI gates without expanding VM authority."
+  ⛨ HumanMeta ← true
+  ◆ HumanMeta
+}

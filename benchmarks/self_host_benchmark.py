@@ -45,7 +45,7 @@ def main() -> None:
         "workload": "Cortex cloned as host; a second Cortex clone bootstraps and activates the host.",
         "runs": args.runs,
         "host_engine": {"bootstrap_seconds": median(baseline, "bootstrap_seconds"), "activation_seconds": median(baseline, "activation_seconds"), "indexed_files": median(baseline, "indexed_files"), "certificate_verified": all(sample["certificate"] == "verified" for sample in baseline)},
-        "nested_cloned_engine": {"bootstrap_seconds": median(nested, "bootstrap_seconds"), "activation_seconds": median(nested, "activation_seconds"), "indexed_files": median(nested, "indexed_files"), "certificate_verified": all(sample["certificate"] == "verified" for sample in nested), "nested_engine_excluded": all(bool(sample["nested_engine_excluded"]) for sample in nested)},
+        "nested_cloned_engine": {"label": "INTERNAL CORTEX ENGINE", "role": "internal_self_host_engine", "bootstrap_seconds": median(nested, "bootstrap_seconds"), "activation_seconds": median(nested, "activation_seconds"), "indexed_files": median(nested, "indexed_files"), "certificate_verified": all(sample["certificate"] == "verified" for sample in nested), "nested_engine_excluded": all(bool(sample["nested_engine_excluded"]) for sample in nested), "engine_commit_current": all(bool(sample["engine_commit_current"]) for sample in nested)},
         "samples": {"host_engine": baseline, "nested_cloned_engine": nested},
     }
     json_path = args.output_dir / "self_host_before_after.json"

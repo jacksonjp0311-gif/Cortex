@@ -533,21 +533,36 @@ class Store:
             (repo, path),
         ).fetchall()
 
-    def all_vectors(self, repo: str) -> list[sqlite3.Row]:
+    def all_vectors(
+        self, repo: str, excluded_prefixes: tuple[str, ...] = ()
+    ) -> list[sqlite3.Row]:
+        exclusions = " ".join("AND path NOT LIKE ?" for _ in excluded_prefixes)
         return self.db.execute(
-            "SELECT * FROM memories WHERE repo=? AND vector IS NOT NULL", (repo,)
+            f"""SELECT * FROM memories
+                WHERE repo=? AND vector IS NOT NULL {exclusions}""",
+            [repo, *(f"{prefix}%" for prefix in excluded_prefixes)],
         ).fetchall()
 
     def vector_candidates(
         self, repo: str, preferred_ids: list[int], limit: int, seed: int,
         query_vector: list[float] | None = None,
+        excluded_prefixes: tuple[str, ...] = (),
     ) -> list[sqlite3.Row]:
         output: dict[int, sqlite3.Row] = {}
+        memory_exclusions = " ".join(
+            "AND path NOT LIKE ?" for _ in excluded_prefixes
+        )
+        aliased_exclusions = " ".join(
+            "AND m.path NOT LIKE ?" for _ in excluded_prefixes
+        )
+        exclusion_args = [f"{prefix}%" for prefix in excluded_prefixes]
         if preferred_ids:
             marks = ",".join("?" for _ in preferred_ids)
             rows = self.db.execute(
-                f"SELECT * FROM memories WHERE repo=? AND id IN ({marks}) AND vector IS NOT NULL",
-                [repo, *preferred_ids],
+                f"""SELECT * FROM memories
+                    WHERE repo=? AND id IN ({marks}) AND vector IS NOT NULL
+                    {memory_exclusions}""",
+                [repo, *preferred_ids, *exclusion_args],
             ).fetchall()
             output.update({row["id"]: row for row in rows})
         remaining = max(0, limit - len(output))
@@ -561,34 +576,40 @@ class Store:
                 f"""SELECT m.* FROM memory_vector_buckets b
                     JOIN memories m ON m.id=b.memory_id
                     WHERE b.repo=? AND b.bucket IN ({marks}) AND m.vector IS NOT NULL
+                    {aliased_exclusions}
                     ORDER BY CASE WHEN b.bucket=? THEN 0 ELSE 1 END, m.id
                     LIMIT ?""",
-                [repo, *nearby, bucket, remaining],
+                [repo, *nearby, *exclusion_args, bucket, remaining],
             ).fetchall()
             output.update({row["id"]: row for row in rows})
             remaining = max(0, limit - len(output))
             if remaining == 0:
                 return list(output.values())
         bounds = self.db.execute(
-            "SELECT MIN(id), MAX(id), COUNT(*) FROM memories WHERE repo=? AND vector IS NOT NULL",
-            (repo,),
+            f"""SELECT MIN(id), MAX(id), COUNT(*) FROM memories
+                WHERE repo=? AND vector IS NOT NULL {memory_exclusions}""",
+            [repo, *exclusion_args],
         ).fetchone()
         if not bounds or not bounds[2]:
             return list(output.values())
         minimum, maximum, count = int(bounds[0]), int(bounds[1]), int(bounds[2])
         if count <= remaining:
-            rows = self.all_vectors(repo)
+            rows = self.all_vectors(repo, excluded_prefixes)
         else:
             span = max(1, maximum - minimum + 1)
             pivot = minimum + (seed % span)
             rows = self.db.execute(
-                "SELECT * FROM memories WHERE repo=? AND vector IS NOT NULL AND id>=? ORDER BY id LIMIT ?",
-                (repo, pivot, remaining),
+                f"""SELECT * FROM memories
+                    WHERE repo=? AND vector IS NOT NULL AND id>=?
+                    {memory_exclusions} ORDER BY id LIMIT ?""",
+                [repo, pivot, *exclusion_args, remaining],
             ).fetchall()
             if len(rows) < remaining:
                 rows += self.db.execute(
-                    "SELECT * FROM memories WHERE repo=? AND vector IS NOT NULL AND id<? ORDER BY id LIMIT ?",
-                    (repo, pivot, remaining - len(rows)),
+                    f"""SELECT * FROM memories
+                        WHERE repo=? AND vector IS NOT NULL AND id<?
+                        {memory_exclusions} ORDER BY id LIMIT ?""",
+                    [repo, pivot, *exclusion_args, remaining - len(rows)],
                 ).fetchall()
         output.update({row["id"]: row for row in rows})
         return list(output.values())
@@ -617,21 +638,36 @@ class Store:
             self.db.commit()
         return len(rows)
 
-    def lexical(self, repo: str, query: str, limit: int = 40) -> list[sqlite3.Row]:
+    def lexical(
+        self,
+        repo: str,
+        query: str,
+        limit: int = 40,
+        excluded_prefixes: tuple[str, ...] = (),
+    ) -> list[sqlite3.Row]:
         tokens = [token for token in query.replace('"', " ").split() if token]
         if not tokens:
             return []
         safe = " OR ".join(f'"{token}"' for token in tokens[:24])
+        exclusions = " ".join(
+            "AND m.path NOT LIKE ?" for _ in excluded_prefixes
+        )
         try:
             return self.db.execute(
-                """
+                f"""
                 SELECT m.*, bm25(memories_fts) AS bm
                 FROM memories_fts
                 JOIN memories m ON m.id=memories_fts.rowid
                 WHERE m.repo=? AND memories_fts MATCH ?
+                {exclusions}
                 ORDER BY bm LIMIT ?
                 """,
-                (repo, safe, limit),
+                [
+                    repo,
+                    safe,
+                    *(f"{prefix}%" for prefix in excluded_prefixes),
+                    limit,
+                ],
             ).fetchall()
         except sqlite3.OperationalError:
             return []
@@ -969,7 +1005,15 @@ class Store:
     def neural_graph_hash(self, repo: str) -> str:
         material = {
             "nodes": [
-                [row["node_id"], row["path"], row["kind"], row["threshold"]]
+                [
+                    row["node_id"],
+                    row["path"],
+                    row["kind"],
+                    row["threshold"],
+                    json.loads(row["metadata"] or "{}").get(
+                        "neural_region", "repository"
+                    ),
+                ]
                 for row in self.neural_nodes(repo)
             ],
             "synapses": [

@@ -1,0 +1,3 @@
+let radius: Int = 7;
+let diameter: Int = radius * 2;
+emit diameter;

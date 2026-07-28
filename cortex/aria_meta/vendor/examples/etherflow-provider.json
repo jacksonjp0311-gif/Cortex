@@ -1,0 +1,10 @@
+﻿{
+  "provider": "github",
+  "artifact": "workflow-run-operatorflow",
+  "digest": "sha256:4e6f7c617269612d65746865722d666c6f772d64656d6f",
+  "state": "PASS",
+  "meta": {
+    "source": "actions",
+    "channel": "pull-request"
+  }
+}

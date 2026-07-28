@@ -1,0 +1,21 @@
+aria 0.4.0
+module ReadmeSystemMakeover version 1.0.0
+program ReadmeSystemMakeover version 1.0.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanProjectSurface {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanProjectSurface
+  intent HumanProjectSurface <- "Make ARIA immediately understandable, credible, navigable, and visually coherent without overstating verification or authority."
+  propose HumanProjectSurface <- "Rebuild README hierarchy; add deterministic accessible SVGs and GitHub-native charts; preserve exact alpha.12 claims, trust boundaries, commands, documentation routes, accessibility, and truthful non-meaning; change no compiler, runtime, policy, opcode, or capability."
+  consent HumanProjectSurface <- true
+  disconnect HumanProjectSurface
+}

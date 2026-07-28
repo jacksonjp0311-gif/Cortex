@@ -1,0 +1,12 @@
+aria 0.4.0
+program AgentDispatch version 0.1.0
+entry Main
+
+agent Architect {
+}
+
+flow Main {
+  dispatch Architect <- "analyze repository graph"
+  signal pass "dispatch recorded"
+  halt
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "aria.typed-ir/0.2",
+  "entry": "main",
+  "functions": [
+    {
+      "name": "main",
+      "parameters": [],
+      "returnType": "Unit",
+      "effects": ["network.send"],
+      "capabilities": [],
+      "instructions": [
+        { "op": "emit.event" },
+        { "op": "return" }
+      ]
+    }
+  ]
+}
