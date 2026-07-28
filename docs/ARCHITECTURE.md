@@ -89,7 +89,7 @@ receipts, rollback, expiry, and re-anchoring conditions into
 `cortex-continuation/1.0`. It also enforces the separate promotion gate for
 Cortex-owned canonical memory.
 
-### Optional ARIA meta-language
+### Native ARIA semantic language
 
 `cortex.aria_meta` carries a manifest-verified, self-contained ARIA subtree.
 `cortex.meta_language` derives a bounded descriptor from the bundled snapshot
@@ -100,6 +100,13 @@ learned environment and context protocols. Cortex's implementation and
 execution language remains Python. ARIA plans are advisory evidence: Cortex
 does not execute them automatically, translate them into core code, or treat
 them as authority.
+
+The compiler labels bundled ARIA nodes as the
+`internal_aria_substrate` region. Retrieval and neural propagation keep that
+region dormant for unrelated tasks, while deterministic language signals wake
+it for ARIA semantics, planning, continuity, coordination, consent, capability,
+or governance work. Activation packets report the region's known/active state
+and eligible, considered, and fired node counts.
 
 ### Lifecycle
 

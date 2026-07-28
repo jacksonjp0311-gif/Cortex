@@ -6,6 +6,7 @@ import json
 from math import tanh
 from typing import Any, Iterable
 
+from ..aria_meta.substrate import classify_aria_task, is_internal_aria_path
 from .models import NeuralActivationPacket, NeuralActivationRecord
 
 
@@ -51,7 +52,17 @@ def activate_interlink(
     if weight_mode not in {"base", "learned"}:
         raise ValueError("weight_mode must be 'base' or 'learned'")
 
-    node_rows = store.neural_nodes(repo)
+    all_node_rows = store.neural_nodes(repo)
+    aria_activation = classify_aria_task(task)
+    substrate_active = aria_activation["mode"] == "active"
+    substrate_node_count = sum(
+        is_internal_aria_path(row["path"]) for row in all_node_rows
+    )
+    node_rows = [
+        row
+        for row in all_node_rows
+        if substrate_active or not is_internal_aria_path(row["path"])
+    ]
     node_map = {row["node_id"]: row for row in node_rows}
     graph_hash = store.neural_graph_hash(repo)
     seeds = {path: value for path, value in _seed_strengths(hits).items() if path in node_map}
@@ -141,6 +152,7 @@ def activate_interlink(
         "seeds": [(path, round(seeds[path], 8)) for path in seed_paths],
         "records": [record.to_dict() for record in records],
         "weight_mode": weight_mode,
+        "aria_substrate_mode": aria_activation["mode"],
     }
     state_hash = sha256(
         json.dumps(state_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -152,14 +164,24 @@ def activate_interlink(
     updates: list[dict[str, Any]] = []
 
     metrics = {
-        "total_nodes": len(node_rows),
+        "total_nodes": len(all_node_rows),
+        "eligible_nodes": len(node_rows),
         "nodes_considered": len(records),
         "nodes_fired": len(fired),
         "support_nodes": len(support_paths),
         "propagation_steps": steps,
-        "sparse_activation_ratio": round(len(fired) / max(1, len(node_rows)), 8),
-        "considered_fraction": round(len(records) / max(1, len(node_rows)), 8),
+        "sparse_activation_ratio": round(len(fired) / max(1, len(all_node_rows)), 8),
+        "considered_fraction": round(len(records) / max(1, len(all_node_rows)), 8),
         "max_depth": max((record.depth for record in records), default=0),
+        "aria_substrate": {
+            **aria_activation,
+            "total_nodes": substrate_node_count,
+            "eligible_nodes": substrate_node_count if substrate_active else 0,
+            "considered_nodes": sum(
+                is_internal_aria_path(record.path) for record in records
+            ),
+            "fired_nodes": sum(is_internal_aria_path(path) for path in fired),
+        },
     }
     packet = NeuralActivationPacket(
         activation_id=activation_id,

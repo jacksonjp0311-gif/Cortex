@@ -6,6 +6,7 @@ import math
 from collections import defaultdict
 from typing import Any
 
+from .aria_meta.substrate import classify_aria_task, is_internal_aria_path
 from .embeddings import cosine, get_embedder, deserialize_vector
 from .models import Hit
 
@@ -22,6 +23,7 @@ def reciprocal_rank_fusion(
 
 
 def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
+    aria_active = classify_aria_task(text)["mode"] == "active"
     lexical_rows = store.lexical(repo, text, 60)
     lexical_ids = [row["id"] for row in lexical_rows]
 
@@ -52,6 +54,8 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
     for memory_id, base_score in sorted(fused.items(), key=lambda item: item[1], reverse=True):
         row = store.memory(memory_id)
         if not row:
+            continue
+        if is_internal_aria_path(row["path"]) and not aria_active:
             continue
         metadata = json.loads(row["metadata"] or "{}")
         quality = 1.0

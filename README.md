@@ -76,7 +76,7 @@ and promotion authority. Canonical memory is Cortex-owned metadata; these
 commands do not authorize or perform repository source mutation. See
 [`docs/GCMT.md`](docs/GCMT.md).
 
-## Optional ARIA meta-language
+## Native ARIA semantic language
 
 Cortex stays Python and now carries a self-contained
 `INTERNAL ARIA META-LANGUAGE` snapshot. It is a squashed subtree rather than a
@@ -84,12 +84,21 @@ submodule, so Cortex has no runtime dependency on another repository. A host's
 own `ARIA-RUNTIME.json`, `ARIA-CONNECT.json`, and `.aria` plans take precedence
 when present.
 
+ARIA is the semantic language Cortex always knows. Its internal files occupy a
+separate `internal_aria_substrate` neural region: verified and addressable at
+all times, dormant for unrelated implementation work, and activated for ARIA,
+semantic replay/planning, governed evolution, consent, capability authority,
+handoff, provider-bridge, glyph, and cooperative-mesh tasks. Dormancy removes
+the region from a task's eligible evidence path; it does not unload or forget
+the language.
+
 ```bash
 cortex meta-language --repo MyProject --json
 ```
 
-Bundled or host ARIA artifacts are never executed automatically, translated into Cortex core,
-or treated as mutation authority. Hidden `.aria/` runtime/backups are excluded
+Bundled or host ARIA artifacts are never executed automatically, translated
+into Cortex core, or treated as mutation authority. Hidden `.aria/`
+runtime/backups are excluded
 while declared `*.aria` source plans remain indexed. The descriptor is carried
 through environment, context, and GCMT continuation packets. See
 [`docs/ARIA_META_LANGUAGE.md`](docs/ARIA_META_LANGUAGE.md).

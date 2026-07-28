@@ -1,7 +1,9 @@
 {
   "schema_version": "cortex-internal-aria/1.0",
   "label": "INTERNAL ARIA META-LANGUAGE",
-  "role": "internal_optional_meta_language",
+  "role": "native_semantic_language",
+  "neural_region": "internal_aria_substrate",
+  "activation_policy": "task_gated_dormant_by_default",
   "ownership": "Cortex",
   "source_repository": "ARIA",
   "source_commit": "0b9860bd4610d24d13a483763f74a95699616193",

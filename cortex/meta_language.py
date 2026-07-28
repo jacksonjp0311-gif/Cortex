@@ -1,4 +1,4 @@
-"""Optional repository meta-language discovery.
+"""Native and host-integrated ARIA semantic-language discovery.
 
 Cortex remains implemented and executed in Python. Meta-languages may describe
 intent, plans, governance, continuation, and coordination, but they never
@@ -69,7 +69,7 @@ def detect_meta_language(root: Path, file_rows: list[Any]) -> dict[str, Any]:
         "role": (
             "host_meta_language"
             if host_local
-            else "internal_optional_meta_language"
+            else "native_semantic_language"
             if detected
             else "optional_meta_language"
         ),
@@ -107,6 +107,9 @@ def detect_meta_language(root: Path, file_rows: list[Any]) -> dict[str, Any]:
             else bundle_identity()["label"]
         ),
         "source_kind": "host_repository" if host_local else "bundled_internal",
+        "knowledge_relationship": (
+            "integrated_host_language" if host_local else "native_internal_language"
+        ),
         "purpose": contract.get(
             "purpose",
             "Represent verified intent, governance, continuity, and coordination.",

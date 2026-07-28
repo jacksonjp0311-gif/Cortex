@@ -170,7 +170,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     meta_language = sub.add_parser(
         "meta-language",
-        help="Show the optional repository meta-language boundary and capabilities.",
+        help="Show Cortex's native or host-integrated ARIA language boundary.",
     )
     meta_language.add_argument("--repo", required=True)
     meta_language.add_argument("--json", action="store_true")

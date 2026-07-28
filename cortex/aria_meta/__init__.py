@@ -1,4 +1,4 @@
-"""Cortex-owned, optional ARIA meta-language substrate."""
+"""Cortex-owned native ARIA semantic-language substrate."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Any
+
+from .substrate import classify_aria_task, is_internal_aria_path
 
 
 def bundle_root() -> Path:
@@ -58,4 +60,10 @@ def verify_bundle() -> dict[str, Any]:
     }
 
 
-__all__ = ["bundle_identity", "bundle_root", "verify_bundle"]
+__all__ = [
+    "bundle_identity",
+    "bundle_root",
+    "classify_aria_task",
+    "is_internal_aria_path",
+    "verify_bundle",
+]

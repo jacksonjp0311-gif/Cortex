@@ -1,9 +1,9 @@
-# ARIA as an Optional Cortex Meta-Language
+# ARIA as Cortex's Native Semantic Language
 
 Cortex remains implemented and executed in Python. It ships a self-contained,
 Apache-2.0-licensed ARIA snapshot labeled `INTERNAL ARIA META-LANGUAGE`.
-ARIA is used optionally to represent intent, semantic plans, governance
-contracts, verified continuation, and cooperative agent coordination.
+ARIA represents intent, semantic plans, governance contracts, verified
+continuation, and cooperative agent coordination.
 
 ## Boundary
 
@@ -32,6 +32,18 @@ its bundled snapshot under `cortex/aria_meta/vendor/`. The bundle is a squashed
 Git subtree, not a submodule, and has no runtime dependency on another
 repository. Its native `MANIFEST.sha256` is verified by Cortex.
 
+## Native-region activation
+
+Bundled ARIA occupies the `internal_aria_substrate` neural namespace. Cortex
+always knows the region's identity and verified manifest, but it does not scan
+that region for ordinary implementation tasks.
+
+- unrelated tasks: `mode: dormant`, zero eligible ARIA nodes;
+- ARIA/semantic/governance/continuity tasks: `mode: active`;
+- activation is deterministic and reported in
+  `neural_interlink.metrics.aria_substrate`;
+- activation exposes evidence only—it never executes ARIA or grants authority.
+
 The hidden `.aria/` runtime and backup directory is excluded from
 assimilation. The `.aria` file extension remains supported, so declared plans
 under paths such as `plans/*.aria` and `examples/*.aria` are indexed.
@@ -46,7 +58,9 @@ The descriptor states:
 
 - `cortex_implementation_language: python`;
 - `cortex_execution_language: python`;
-- `role: host_meta_language` or `internal_optional_meta_language`;
+- `role: host_meta_language` or `native_semantic_language`;
+- `knowledge_relationship: integrated_host_language` or
+  `native_internal_language`;
 - `automatic_execution: false`;
 - `automatic_translation_to_core: false`;
 - `grants_mutation_authority: false`.

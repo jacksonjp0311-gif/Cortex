@@ -6,7 +6,12 @@ import unittest
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
-from cortex.aria_meta import bundle_identity, bundle_root, verify_bundle
+from cortex.aria_meta import (
+    bundle_identity,
+    bundle_root,
+    classify_aria_task,
+    verify_bundle,
+)
 from cortex.config import ensure_home, load_repo_config
 from cortex.context import build_context, nexus_packet
 from cortex.governor import Governor
@@ -81,7 +86,11 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
             environment["meta_language"]["source_kind"], "bundled_internal"
         )
         self.assertEqual(
-            environment["meta_language"]["role"], "internal_optional_meta_language"
+            environment["meta_language"]["role"], "native_semantic_language"
+        )
+        self.assertEqual(
+            environment["meta_language"]["knowledge_relationship"],
+            "native_internal_language",
         )
         self.assertTrue(environment["meta_language"]["bundle"]["valid"])
 
@@ -89,11 +98,83 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         identity = bundle_identity()
         verification = verify_bundle()
         self.assertEqual(identity["label"], "INTERNAL ARIA META-LANGUAGE")
+        self.assertEqual(identity["role"], "native_semantic_language")
+        self.assertEqual(identity["neural_region"], "internal_aria_substrate")
         self.assertFalse(identity["external_runtime_dependency"])
         self.assertTrue((bundle_root() / "ARIA-RUNTIME.json").is_file())
         self.assertTrue((bundle_root() / "ARIA-CONNECT.json").is_file())
         self.assertTrue(verification["valid"], verification)
         self.assertEqual(verification["checked_files"], 297)
+
+    def test_native_aria_region_is_known_but_task_gated(self) -> None:
+        dormant = classify_aria_task("Fix the Python retrieval implementation")
+        false_friend = classify_aria_task("Rename a Python variable")
+        active = classify_aria_task(
+            "Use ARIA semantic replay for a governed session handoff"
+        )
+        self.assertTrue(dormant["known"])
+        self.assertEqual(dormant["mode"], "dormant")
+        self.assertEqual(false_friend["mode"], "dormant")
+        self.assertEqual(active["mode"], "active")
+        self.assertIn("aria", active["matched_signals"])
+        self.assertFalse(active["automatic_execution"])
+
+    def test_internal_aria_evidence_is_dormant_until_semantically_requested(self) -> None:
+        native = self.repo / "cortex" / "aria_meta" / "vendor" / "docs"
+        native.mkdir(parents=True)
+        native_path = native / "maternal-language.md"
+        native_path.write_text(
+            "# ARIA\n\nSemantic replay and cooperative mesh govern session handoff.\n",
+            encoding="utf-8",
+        )
+        bootstrap_repository(
+            self.home, self.store, self.repo, "AgentRepo", force=True
+        )
+        relative = "cortex/aria_meta/vendor/docs/maternal-language.md"
+        node = next(
+            row
+            for row in self.store.neural_nodes("AgentRepo")
+            if row["path"] == relative
+        )
+        metadata = json.loads(node["metadata"])
+        self.assertEqual(metadata["neural_region"], "internal_aria_substrate")
+        self.assertTrue(metadata["dormant_by_default"])
+
+        generic_hits = query(
+            self.store, "AgentRepo", "Fix the Python planner bridge", limit=24
+        )
+        self.assertNotIn(relative, {hit.path for hit in generic_hits})
+        generic = activate_interlink(
+            self.store,
+            "AgentRepo",
+            "Fix the Python planner bridge",
+            generic_hits,
+            plasticity_enabled=False,
+        )
+        generic_aria = generic.metrics["aria_substrate"]
+        self.assertEqual(generic_aria["mode"], "dormant")
+        self.assertGreaterEqual(generic_aria["total_nodes"], 1)
+        self.assertEqual(generic_aria["eligible_nodes"], 0)
+        self.assertEqual(generic_aria["considered_nodes"], 0)
+
+        aria_hits = query(
+            self.store,
+            "AgentRepo",
+            "Use ARIA semantic replay for cooperative mesh session handoff",
+            limit=24,
+        )
+        self.assertIn(relative, {hit.path for hit in aria_hits})
+        awakened = activate_interlink(
+            self.store,
+            "AgentRepo",
+            "Use ARIA semantic replay for cooperative mesh session handoff",
+            aria_hits,
+            plasticity_enabled=False,
+        )
+        awakened_aria = awakened.metrics["aria_substrate"]
+        self.assertEqual(awakened_aria["mode"], "active")
+        self.assertGreaterEqual(awakened_aria["eligible_nodes"], 1)
+        self.assertGreaterEqual(awakened_aria["considered_nodes"], 1)
 
     def test_aria_is_detected_as_meta_language_without_replacing_python(self) -> None:
         (self.repo / "ARIA-RUNTIME.json").write_text(

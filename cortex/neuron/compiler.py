@@ -5,6 +5,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ..aria_meta.substrate import (
+    INTERNAL_ARIA_REGION,
+    REPOSITORY_REGION,
+    is_internal_aria_path,
+)
 from .models import NeuralNode, NeuralSynapse
 
 
@@ -68,21 +73,29 @@ def compile_interlink(store: Any, repo: str) -> dict[str, Any]:
     nodes: list[NeuralNode] = []
     for row in file_rows:
         metadata = json.loads(row["metadata"] or "{}")
+        internal_aria = is_internal_aria_path(row["path"])
+        neural_region = INTERNAL_ARIA_REGION if internal_aria else REPOSITORY_REGION
         node = NeuralNode(
             node_id=row["path"],
             path=row["path"],
             kind=row["kind"],
             threshold=_node_threshold(row["kind"], bool(row["authoritative"])),
-            tags=_node_tags(
+            tags=tuple(sorted({
+                *_node_tags(
                 row["path"],
                 row["kind"],
                 row["language"],
                 bool(row["authoritative"]),
-            ),
+                ),
+                neural_region,
+                *(("native_semantic_language",) if internal_aria else ()),
+            })),
             metadata={
                 "language": row["language"],
                 "authoritative": bool(row["authoritative"]),
                 "content_hash": row["content_hash"],
+                "neural_region": neural_region,
+                "dormant_by_default": internal_aria,
                 **metadata,
             },
         )
@@ -152,6 +165,9 @@ def neural_graph_state(store: Any, repo: str) -> dict[str, Any]:
                 "path": row["path"],
                 "threshold": row["threshold"],
                 "kind": row["kind"],
+                "neural_region": json.loads(row["metadata"] or "{}").get(
+                    "neural_region", REPOSITORY_REGION
+                ),
             }
             for row in nodes
         ],
@@ -172,11 +188,17 @@ def neural_graph_state(store: Any, repo: str) -> dict[str, Any]:
     graph_hash = sha256(canonical.encode("utf-8")).hexdigest()
     indexed_count = sum(row["status"] == "indexed" for row in store.files(repo))
     coverage = len(nodes) / indexed_count if indexed_count else 1.0
+    regions: dict[str, int] = {}
+    for row in nodes:
+        metadata = json.loads(row["metadata"] or "{}")
+        region = metadata.get("neural_region", REPOSITORY_REGION)
+        regions[region] = regions.get(region, 0) + 1
     return {
         "repo": repo,
         "nodes": len(nodes),
         "synapses": len(synapses),
         "node_coverage": round(coverage, 6),
+        "regions": dict(sorted(regions.items())),
         "graph_hash": graph_hash,
         "ledger_valid": store.verify_neural_ledger(repo),
     }

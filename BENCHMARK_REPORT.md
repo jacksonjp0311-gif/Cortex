@@ -20,7 +20,7 @@ host-local ARIA surface when one is actually present.
 | Bundled full conformance suite | pass (148.827 s) |
 | Cortex tests | 39 passed |
 | Clean-wheel bundle verification | 297 checked; 0 failures |
-| Wheel / source distribution | 604,784 / 465,906 bytes |
+| Wheel / source distribution | 606,780 / 468,223 bytes |
 | External ARIA repository dependency | false |
 | Cortex implementation / execution | Python / Python |
 | Automatic ARIA execution / mutation authority | false / false |
@@ -28,6 +28,28 @@ host-local ARIA surface when one is actually present.
 The vendored snapshot retains its Apache-2.0 license and notice. These results
 establish reproducibility and boundary integrity for this snapshot; they do not
 grant ARIA plans automatic execution or source-mutation authority.
+
+### Native-language selective activation
+
+The internal snapshot is compiled as a separate neural region rather than
+treated as ambient host evidence.
+
+| Measure | Generic Python task | ARIA continuity task |
+|---|---:|---:|
+| ARIA mode | dormant | active |
+| Total ARIA nodes | 292 | 292 |
+| Eligible ARIA nodes | 0 | 292 |
+| Considered ARIA nodes | 0 | 45 |
+| Fired ARIA nodes | 0 | 15 |
+| Total eligible graph nodes | 107 | 399 |
+| Total considered nodes | 54 | 64 |
+| Activation time | 0.021131 s | 0.033676 s |
+
+The ARIA task was `ARIA semantic replay cooperative mesh session handoff`; the
+generic control was `Fix Python retrieval ranking and run unit tests`. Both
+used the same compiled graph and a 64-node activation ceiling. Reproduce this
+with `python benchmarks/aria_substrate_benchmark.py`. This verifies selective
+availability for these declared tasks, not universal intent classification.
 
 The workload used a clean clone sourced from
 `C:\Users\jacks\OneDrive\Desktop\aria-language`. Cortex was attached with

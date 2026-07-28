@@ -969,7 +969,15 @@ class Store:
     def neural_graph_hash(self, repo: str) -> str:
         material = {
             "nodes": [
-                [row["node_id"], row["path"], row["kind"], row["threshold"]]
+                [
+                    row["node_id"],
+                    row["path"],
+                    row["kind"],
+                    row["threshold"],
+                    json.loads(row["metadata"] or "{}").get(
+                        "neural_region", "repository"
+                    ),
+                ]
                 for row in self.neural_nodes(repo)
             ],
             "synapses": [

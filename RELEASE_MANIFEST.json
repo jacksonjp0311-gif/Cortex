@@ -3,8 +3,8 @@
   "release": "Cortex v3.0.0",
   "generated_on": "2026-07-28",
   "manifest_scope": "Git-tracked and intended release files except RELEASE_MANIFEST.json itself.",
-  "file_count": 401,
-  "total_bytes": 3693628,
+  "file_count": 403,
+  "total_bytes": 3707403,
   "files": [
     {
       "path": ".editorconfig",
@@ -26,15 +26,15 @@
     },
     {
       "path": "BENCHMARK_REPORT.md",
-      "bytes": 8588,
+      "bytes": 9492,
       "mode": "0o666",
-      "sha256": "9a398f96561f1cf048a6fc72888e5377d0c8ee2b883921296d5a649902a5ae1a"
+      "sha256": "20a7cdd92533c617f7498160b1b96b418922abde19ce804c1cfa1baf39e370ad"
     },
     {
       "path": "BUILD_REPORT.md",
-      "bytes": 4096,
+      "bytes": 4316,
       "mode": "0o666",
-      "sha256": "d9dba94647e68a089473bebcfdd952a7e361d727727bdd784ad48c59bebfe6f7"
+      "sha256": "5ea8fcbc65a074303691fac9b14c884758a93bf7274f8b2453e19ae37384c8e5"
     },
     {
       "path": "CHANGELOG.md",
@@ -62,21 +62,27 @@
     },
     {
       "path": "README.md",
-      "bytes": 23758,
+      "bytes": 24243,
       "mode": "0o666",
-      "sha256": "46a86ce35472a9e6a8f8ce13d29e874776cd8cfb65e565a9026f35dc132d4352"
+      "sha256": "709f4c4c63d9815ee932d4cdc5ad1ebe1ac1a4eae89cd3685b3f97ab540c9d95"
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 7029,
+      "bytes": 7262,
       "mode": "0o666",
-      "sha256": "e91dcd583298ba5fdced22a953b30d895a1ca4befddabfe21f70f0bcff3a006e"
+      "sha256": "098fd3c73902a51897ddb3462bf61a6e4cc5c8d334d8f86071c900cfde4c9e21"
     },
     {
       "path": "assets/cortex-neural-brain.png",
       "bytes": 1579243,
       "mode": "0o666",
       "sha256": "96075884d94c2fd677b65bd08813209daa747ba688b7b6e62ac30d1b49c52bec"
+    },
+    {
+      "path": "benchmarks/aria_substrate_benchmark.py",
+      "bytes": 2982,
+      "mode": "0o666",
+      "sha256": "27914e774b3ad7a89533c0dd9cf9df74978b7253ba29ea9b582e7519ae72407f"
     },
     {
       "path": "benchmarks/corpora/aria_language.json",
@@ -182,15 +188,21 @@
     },
     {
       "path": "cortex/aria_meta/INTERNAL_ARIA.json",
-      "bytes": 670,
+      "bytes": 765,
       "mode": "0o666",
-      "sha256": "582c8a5178b123cebe2e33729098f3eaa529d068f78b92201e4b72fa6d514a82"
+      "sha256": "93c8e18c8ba5852bcf8e4b273a7434777c749847e2efb140bf40eb23ec9bf729"
     },
     {
       "path": "cortex/aria_meta/__init__.py",
-      "bytes": 1868,
+      "bytes": 2005,
       "mode": "0o666",
-      "sha256": "2227c0ce8a6037e0c0cb28a6cc624705ad72965fb4d3fa37dedfd8c27c6de976"
+      "sha256": "9e2093a2a94989a74f7b18c631225422a2e50f90246ff00ab1f268294af62d73"
+    },
+    {
+      "path": "cortex/aria_meta/substrate.py",
+      "bytes": 1897,
+      "mode": "0o666",
+      "sha256": "e1552375d18b18e64d9673c580f2f28b7a1ea25efb96bc989257ac165acd037d"
     },
     {
       "path": "cortex/aria_meta/vendor/.editorconfig",
@@ -2000,9 +2012,9 @@
     },
     {
       "path": "cortex/cli.py",
-      "bytes": 31493,
+      "bytes": 31487,
       "mode": "0o666",
-      "sha256": "4e874e38216a7e48c2f1f5d2f7fb73ddb642586279d3c2b0dfd978defcb89906"
+      "sha256": "c9c4a847e8c35ecef1bc60787818161a6bf3ce6df0774b9d7598708157a72ad7"
     },
     {
       "path": "cortex/config.py",
@@ -2114,9 +2126,9 @@
     },
     {
       "path": "cortex/meta_language.py",
-      "bytes": 6012,
+      "bytes": 6153,
       "mode": "0o666",
-      "sha256": "28e167af5f32d52c64719a91f215d565fcbdf9a7a9d21f0e69693c469083db15"
+      "sha256": "4272292b3d497d9cfa3c4f74a2f7086e8bbb50fb63a7a1ad9c71bbbe16c10b4e"
     },
     {
       "path": "cortex/models.py",
@@ -2132,15 +2144,15 @@
     },
     {
       "path": "cortex/neuron/compiler.py",
-      "bytes": 6318,
+      "bytes": 7263,
       "mode": "0o666",
-      "sha256": "c4fe625642d3c6ee18b26a0c2de993f6578bd6d27ce8054576201c80a3fad18b"
+      "sha256": "15c70afc23dc13cda399752873fe7a152508db46df4376cafce86451a431d850"
     },
     {
       "path": "cortex/neuron/engine.py",
-      "bytes": 7838,
+      "bytes": 8781,
       "mode": "0o666",
-      "sha256": "4f2e214884e3ff7825ac313de3fc7bff8ed4c85b34f7c5a0cae74bdced4fc4b4"
+      "sha256": "ad6b86236977a44dee2cd11d756619a91da0679cd04dc69d6317cc984959fdab"
     },
     {
       "path": "cortex/neuron/models.py",
@@ -2162,9 +2174,9 @@
     },
     {
       "path": "cortex/retrieval.py",
-      "bytes": 5091,
+      "bytes": 5311,
       "mode": "0o666",
-      "sha256": "0d0c88507b49c2d3fbd0ec053c0fd9edb387660a84daee5c98690fe1e7746853"
+      "sha256": "f4e684c10af8f5ad77bc77b2a9b794ce27c5c637240564e746db100c197ffe32"
     },
     {
       "path": "cortex/selftest.py",
@@ -2174,9 +2186,9 @@
     },
     {
       "path": "cortex/store.py",
-      "bytes": 58972,
+      "bytes": 59205,
       "mode": "0o666",
-      "sha256": "1d8924d327a6e0bcef4fa196e46fa44b28581ff9ed525ee8b098904171972bfd"
+      "sha256": "1338baacedded08ba8b4288e02afa5c61e5e0d3fe2b5cf0735980c807a03cca7"
     },
     {
       "path": "cortex/telemetry.py",
@@ -2198,15 +2210,15 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "bytes": 7139,
+      "bytes": 7550,
       "mode": "0o666",
-      "sha256": "00f88bc1bbe3933a6570b58cc74173dba57b2f7eede6d803a352058d89360797"
+      "sha256": "dcade7f9585ea357379644717de97d62febbd57514891f3348acbf0a5bbf887a"
     },
     {
       "path": "docs/ARIA_META_LANGUAGE.md",
-      "bytes": 2792,
+      "bytes": 3380,
       "mode": "0o666",
-      "sha256": "a22f197e07d02169a8989d5978fdcd9bc920971fe3259be0e43ad702a0510ce1"
+      "sha256": "943554b54e8f077e6ff93efc0e98932ad053d3ae2fa1f4f36965d92164661d6d"
     },
     {
       "path": "docs/BOOTSTRAP_PROTOCOL.md",
@@ -2366,9 +2378,9 @@
     },
     {
       "path": "tests/test_neural_interlink.py",
-      "bytes": 12694,
+      "bytes": 16041,
       "mode": "0o666",
-      "sha256": "d5f22b89f96fda57ec9c10acaa6cb56e105b88595bdd295bcf4c7c8f451a42e6"
+      "sha256": "e356d709eb204dfdd39c39c469ff6e21255c4dc5e908c919cac5d47a27e97242"
     },
     {
       "path": "tests/test_thalamus.py",

@@ -4,7 +4,7 @@
 
 ## v3.0 release validation
 
-- `python -m unittest discover -s tests -q`: 39 passed
+- `python -m unittest discover -s tests -q`: 41 passed
 - `python -m ruff check cortex thalamus tests`: passed
 - Python compilation: passed
 - Source distribution and wheel build: passed
@@ -26,6 +26,9 @@
 - Clean-wheel bundle verification: 297 entries checked, zero failures
 - Host-local ARIA integration remains available and takes precedence when
   Cortex is explicitly operating on such a repository
+- Native-region routing: INTERNAL ARIA remains known but contributes zero
+  eligible nodes to unrelated tasks; semantic and continuity signals activate
+  the region deterministically
 - Real Cortex repository smoke: manifest current, database integrity true,
   dashboard version 3.0.0, replay corpus non-regression true, boundary gate true,
   persisted continuation packet valid
@@ -36,8 +39,9 @@ receipts, rollback fidelity, selective learned-association decay, neural ledger
 integrity, cross-repository boundary preservation, vector-bucket migration,
 base-versus-learned replay evaluation, external sealed-host attachment,
 internal-engine identity/freshness, native `.aria`/batch indexing, fused
-reranking, bundled and host-local ARIA meta-language discovery, INTERNAL ARIA
-identity and manifest verification, and MCP
+reranking, bundled and host-local ARIA language discovery, INTERNAL ARIA
+identity, manifest verification, namespace compilation, dormant routing,
+semantic wake-up, and MCP
 initialization/tool discovery.
 
 These checks establish implementation and repository-local benchmark evidence.
