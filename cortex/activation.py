@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .config import load_repo_config
+from .config import load_repo_config, runtime_directory
 from .context import build_context
 from .environment import learn_environment
 from .graph import resolve_graph
@@ -38,7 +38,7 @@ def activate_repository(
         resolve_graph(store, repo)
         ingest_git(store, repo, root, config.git_commit_limit)
         environment = (
-            learn_environment(root, store, repo)
+            learn_environment(root, store, repo, runtime_directory(root, config))
             if config.environment_learning_enabled
             else {"available": False, "disabled": True}
         )
@@ -52,7 +52,9 @@ def activate_repository(
     else:
         environment = store.environment_profile(repo)
         if config.environment_learning_enabled and not environment:
-            environment = learn_environment(root, store, repo)
+            environment = learn_environment(
+                root, store, repo, runtime_directory(root, config)
+            )
         if not config.environment_learning_enabled:
             environment = {"available": False, "disabled": True}
         if config.neural_interlink_enabled and not store.neural_nodes(repo):
@@ -74,7 +76,7 @@ def activate_repository(
         certificate=certificate,
     )
     session = begin_session(home, store, repo, task)
-    runtime_path = root / ".cortex" / "runtime" / "context_latest.json"
+    runtime_path = runtime_directory(root, config) / "context_latest.json"
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(context, indent=2) + "\n", encoding="utf-8")
 

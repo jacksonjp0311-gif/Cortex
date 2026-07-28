@@ -189,7 +189,12 @@ def _commands(root: Path, ecosystems: set[str]) -> dict[str, list[str]]:
     }
 
 
-def learn_environment(root: Path, store: Any, repo: str) -> dict[str, Any]:
+def learn_environment(
+    root: Path,
+    store: Any,
+    repo: str,
+    runtime_root: Path | None = None,
+) -> dict[str, Any]:
     """Learn a bounded, deterministic repository/runtime profile during bootstrap."""
 
     file_rows = store.files(repo)
@@ -271,7 +276,9 @@ def learn_environment(root: Path, store: Any, repo: str) -> dict[str, Any]:
     canonical = json.dumps(profile, sort_keys=True, separators=(",", ":"))
     profile["profile_hash"] = sha256(canonical.encode("utf-8")).hexdigest()
     store.set_environment_profile(repo, profile)
-    runtime_path = root / ".cortex" / "runtime" / "environment_latest.json"
+    runtime_path = (
+        runtime_root or (root / ".cortex" / "runtime")
+    ) / "environment_latest.json"
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
     profile["runtime_path"] = str(runtime_path)

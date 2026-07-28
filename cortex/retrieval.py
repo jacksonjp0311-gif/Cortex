@@ -48,6 +48,7 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
     fused = reciprocal_rank_fusion([lexical_ids, semantic_ids], [1.0, 1.25])
     semantic_lookup = {memory_id: similarity for similarity, memory_id in semantic[:100]}
     output: list[Hit] = []
+    normalized_query = " ".join(text.casefold().split())
     for memory_id, base_score in sorted(fused.items(), key=lambda item: item[1], reverse=True):
         row = store.memory(memory_id)
         if not row:
@@ -55,7 +56,10 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
         metadata = json.loads(row["metadata"] or "{}")
         quality = 1.0
         if metadata.get("authoritative"):
-            quality *= 1.10
+            quality *= 1.25
+        normalized_chunk = " ".join(row["text"].casefold().split())
+        if normalized_query and normalized_query in normalized_chunk:
+            quality *= 1.35
         if row["kind"] in {"discovery_card", "telemetry", "runtime_evidence"}:
             quality *= 1.04
         telemetry = store.file_telemetry(repo, row["path"])
@@ -76,9 +80,8 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
             content_hash=row["content_hash"],
             metadata=metadata,
         ))
-        if len(output) >= limit:
-            break
-    return output
+    output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
+    return output[:limit]
 
 
 def support_hits(

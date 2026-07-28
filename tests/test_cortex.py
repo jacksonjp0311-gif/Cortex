@@ -73,7 +73,12 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertTrue((self.repo / ".cortex" / "bootstrap_certificate.json").exists())
         self.assertTrue((self.repo / ".cortex" / "bin" / "cortex.ps1").exists())
         self.assertTrue((self.repo / ".cortex" / "bin" / "cortex.sh").exists())
+        self.assertGreater((self.repo / ".cortex" / "runtime" / ".gitkeep").stat().st_size, 0)
         config = json.loads((self.repo / ".cortex" / "config.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["integration_role"], "internal_repository_cortex")
+        self.assertEqual(config["integration_label"], "INTERNAL CORTEX")
+        integration_readme = (self.repo / ".cortex" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("# INTERNAL CORTEX", integration_readme)
         self.assertEqual(Path(config["engine_python"]).resolve(), Path(sys.executable).resolve())
         self.assertTrue(Path(config["engine_module_root"]).exists())
         self.assertEqual(config["cortex_home"], str(self.home.resolve()))
@@ -87,6 +92,52 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertIn("CORTEX:MANAGED:BEGIN", agents)
         self.assertIn(r".\.cortex\bin\cortex.ps1 activate -Task", agents)
 
+    def test_bootstrap_can_preserve_host_agent_protocol(self) -> None:
+        host_agents = "# Host protocol\n\nDo not rewrite this file.\n"
+        (self.repo / "AGENTS.md").write_text(host_agents, encoding="utf-8")
+        result = bootstrap_repository(
+            self.home,
+            self.store,
+            self.repo,
+            "DemoProject",
+            preserve_agents=True,
+        )
+        self.assertEqual((self.repo / "AGENTS.md").read_text(encoding="utf-8"), host_agents)
+        self.assertFalse(result["integration"]["agents_modified"])
+        self.assertEqual(result["integration"]["agent_protocol_mode"], "preserve")
+        config = json.loads((self.repo / ".cortex" / "config.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["agent_protocol_mode"], "preserve")
+
+    def test_external_bootstrap_writes_nothing_to_sealed_host(self) -> None:
+        sealed = self.base / "sealed-repo"
+        sealed.mkdir()
+        (sealed / "README.md").write_text(
+            "# Sealed\n\n## Quick start\n\nRead-only host.\n", encoding="utf-8"
+        )
+        before = {
+            path.relative_to(sealed).as_posix(): path.read_bytes()
+            for path in sealed.rglob("*")
+            if path.is_file()
+        }
+        result = bootstrap_repository(
+            self.home,
+            self.store,
+            sealed,
+            "SealedProject",
+            external=True,
+        )
+        after = {
+            path.relative_to(sealed).as_posix(): path.read_bytes()
+            for path in sealed.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(before, after)
+        self.assertEqual(result["certificate"]["status"], "verified")
+        self.assertFalse(result["integration"]["host_files_modified"])
+        self.assertEqual(result["integration"]["integration_mode"], "external")
+        self.assertTrue(Path(result["integration"]["config"]).exists())
+        self.assertFalse((sealed / ".cortex").exists())
+
     def test_query_returns_provenance_and_structural_neighbors(self) -> None:
         self.bootstrap()
         hits = query(self.store, "DemoProject", "format greeting name", limit=5)
@@ -97,6 +148,18 @@ class CortexIntegrationTests(unittest.TestCase):
         relations = {edge["relation"] for edge in graph}
         self.assertIn("resolves_to", relations)
         self.assertIn("tested_by", relations)
+
+    def test_exact_authoritative_heading_survives_fused_reranking(self) -> None:
+        (self.repo / "notes.md").write_text(
+            "# Notes\n\nQuick experiments can start after architecture review.\n",
+            encoding="utf-8",
+        )
+        with (self.repo / "README.md").open("a", encoding="utf-8") as stream:
+            stream.write("\n## Quick start\n\nRun app.py.\n")
+        self.bootstrap()
+        hits = query(self.store, "DemoProject", "Quick start", limit=5)
+        self.assertTrue(hits)
+        self.assertEqual(hits[0].path, "README.md")
 
     def test_activation_refreshes_repository_drift(self) -> None:
         self.bootstrap()
@@ -216,10 +279,19 @@ class CortexIntegrationTests(unittest.TestCase):
             config = RepoConfig()
         self.assertTrue(should_exclude("services/.env.production", config))
         self.assertTrue(should_exclude("keys/server.pem", config))
+        self.assertTrue(should_exclude("work/benchmark-clone/README.md", config))
         self.assertEqual(language_for(Path("Feature.kt")), "kotlin")
         symbols, edges = parse_structure("import demo.core.Service\nclass Feature\nfun start() = 1\n", "Feature.kt", "kotlin")
         self.assertEqual([edge.target for edge in edges], ["demo.core.Service"])
         self.assertIn("Feature", {symbol["name"] for symbol in symbols})
+
+    def test_older_config_receives_new_language_extensions(self) -> None:
+        from cortex.config import RepoConfig
+
+        config = RepoConfig.from_dict({"include_extensions": [".py"]})
+        self.assertIn(".py", config.include_extensions)
+        self.assertIn(".aria", config.include_extensions)
+        self.assertIn(".cmd", config.include_extensions)
 
     def test_vector_migration_preserves_legacy_semantics(self) -> None:
         self.store.attach("VectorProject", "vector-project", self.repo)

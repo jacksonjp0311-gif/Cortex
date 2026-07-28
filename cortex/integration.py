@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shlex
 import stat
 import sys
@@ -250,11 +251,11 @@ case "$COMMAND" in
 esac
 '''
 
-REPO_CORTEX_README = """# Repository Cortex Integration
+REPO_CORTEX_README = """# INTERNAL CORTEX - Repository Integration
 
-This directory is the repository-local integration surface for the installed Cortex engine.
+This directory is the explicitly labeled, repository-local integration surface for the installed Cortex engine. It is not a second source of truth and it is not the host repository's application code.
 
-- `config.json` identifies this repository, records the Cortex Python interpreter/module location, and controls assimilation.
+- `config.json` identifies this surface as `internal_repository_cortex`, identifies the host repository, records the Cortex Python interpreter/module location, and controls assimilation.
 - `bootstrap_certificate.json` records the latest verified inventory and coverage state.
 - `bin/cortex.ps1` and `bin/cortex.sh` are stable entry points for Codex and other agents.
 - `runtime/` contains generated context and learned-environment packets and is intentionally ignored by Git.
@@ -266,6 +267,43 @@ GITIGNORE = """runtime/
 *.tmp
 *.lock
 """
+
+EXTERNAL_ATTACHMENT_README = """# EXTERNAL CORTEX ATTACHMENT
+
+This attachment keeps Cortex configuration, certificates, and runtime packets
+outside a sealed host repository. The host source and governance files are not
+modified. Use the global Cortex CLI with the same `--home` value.
+"""
+
+
+def install_external_attachment(
+    home: Path, root: Path, config: RepoConfig
+) -> dict[str, Any]:
+    from .config import external_repo_config_path
+
+    config_path = external_repo_config_path(root, home)
+    attachment_root = config_path.parent
+    config.integration_mode = "external"
+    config.integration_role = "external_repository_attachment"
+    config.integration_label = "EXTERNAL CORTEX ATTACHMENT"
+    config.agent_protocol_mode = "preserve"
+    config.attachment_root = str(attachment_root)
+    save_repo_config(root, config)
+    (attachment_root / "runtime").mkdir(parents=True, exist_ok=True)
+    (attachment_root / "README.md").write_text(
+        EXTERNAL_ATTACHMENT_README, encoding="utf-8"
+    )
+    return {
+        "config": str(config_path),
+        "attachment_root": str(attachment_root),
+        "host_files_modified": False,
+        "agents_modified": False,
+        "integration_mode": config.integration_mode,
+        "integration_role": config.integration_role,
+        "integration_label": config.integration_label,
+        "agent_protocol_mode": config.agent_protocol_mode,
+        "cortex_home": str(home),
+    }
 
 
 def install_integration(root: Path, config: RepoConfig) -> dict[str, Any]:
@@ -285,7 +323,9 @@ def install_integration(root: Path, config: RepoConfig) -> dict[str, Any]:
 
     (cortex_dir / "README.md").write_text(REPO_CORTEX_README, encoding="utf-8")
     (cortex_dir / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
-    (runtime_dir / ".gitkeep").write_text("", encoding="utf-8")
+    # A newline keeps strict host hashers that reject zero-byte inputs from
+    # failing while this directory remains semantically empty.
+    (runtime_dir / ".gitkeep").write_text("\n", encoding="utf-8")
 
     ps_path = bin_dir / "cortex.ps1"
     sh_path = bin_dir / "cortex.sh"
@@ -307,18 +347,21 @@ def install_integration(root: Path, config: RepoConfig) -> dict[str, Any]:
     sh_path.chmod(sh_path.stat().st_mode | stat.S_IEXEC)
 
     agents_path = root / "AGENTS.md"
-    existing = (
-        agents_path.read_text(encoding="utf-8", errors="replace")
-        if agents_path.exists()
-        else "# AGENTS.md\n\n"
-    )
-    if MANAGED_BEGIN in existing and MANAGED_END in existing:
-        before, rest = existing.split(MANAGED_BEGIN, 1)
-        _, after = rest.split(MANAGED_END, 1)
-        updated = before.rstrip() + "\n\n" + AGENT_BLOCK + after
-    else:
-        updated = existing.rstrip() + "\n\n" + AGENT_BLOCK + "\n"
-    agents_path.write_text(updated, encoding="utf-8")
+    agents_modified = False
+    if config.agent_protocol_mode == "managed":
+        existing = (
+            agents_path.read_text(encoding="utf-8", errors="replace")
+            if agents_path.exists()
+            else "# AGENTS.md\n\n"
+        )
+        if MANAGED_BEGIN in existing and MANAGED_END in existing:
+            before, rest = existing.split(MANAGED_BEGIN, 1)
+            _, after = rest.split(MANAGED_END, 1)
+            updated = before.rstrip() + "\n\n" + AGENT_BLOCK + after
+        else:
+            updated = existing.rstrip() + "\n\n" + AGENT_BLOCK + "\n"
+        agents_path.write_text(updated, encoding="utf-8")
+        agents_modified = True
 
     return {
         "config": str(cortex_dir / "config.json"),
@@ -329,10 +372,32 @@ def install_integration(root: Path, config: RepoConfig) -> dict[str, Any]:
         "engine_python": engine_python,
         "engine_module_root": engine_module_root,
         "cortex_home": cortex_home,
+        "integration_role": config.integration_role,
+        "integration_label": config.integration_label,
+        "agent_protocol_mode": config.agent_protocol_mode,
+        "agents_modified": agents_modified,
     }
 
 
-def integration_status(root: Path) -> dict[str, Any]:
+def integration_status(root: Path, config: RepoConfig | None = None) -> dict[str, Any]:
+    if config is not None and config.integration_mode == "external":
+        attachment = Path(config.attachment_root)
+        required = [
+            attachment / "config.json",
+            attachment / "README.md",
+            attachment / "runtime",
+        ]
+        return {
+            "required_files": {str(path): path.exists() for path in required},
+            "agents_managed_block": False,
+            "integration_mode": "external",
+            "integration_role": config.integration_role,
+            "integration_label": config.integration_label,
+            "labeled_internal": False,
+            "agent_protocol_mode": "preserve",
+            "host_files_modified": False,
+            "complete": all(path.exists() for path in required),
+        }
     required = [
         root / ".cortex" / "config.json",
         root / ".cortex" / "README.md",
@@ -346,8 +411,23 @@ def integration_status(root: Path) -> dict[str, Any]:
         else ""
     )
     managed = MANAGED_BEGIN in agents_text and MANAGED_END in agents_text
+    config_path = root / ".cortex" / "config.json"
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        config = {}
+    labeled_internal = (
+        config.get("integration_role") == "internal_repository_cortex"
+        and config.get("integration_label") == "INTERNAL CORTEX"
+    )
+    protocol_mode = config.get("agent_protocol_mode", "managed")
+    protocol_ready = managed if protocol_mode == "managed" else protocol_mode == "preserve"
     return {
         "required_files": {str(path.relative_to(root)): path.exists() for path in required},
         "agents_managed_block": managed,
-        "complete": all(path.exists() for path in required) and managed,
+        "integration_role": config.get("integration_role"),
+        "integration_label": config.get("integration_label"),
+        "labeled_internal": labeled_internal,
+        "agent_protocol_mode": protocol_mode,
+        "complete": all(path.exists() for path in required[:-1]) and protocol_ready and labeled_internal,
     }

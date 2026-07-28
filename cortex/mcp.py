@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -274,6 +275,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--home")
     args = parser.parse_args(argv)
     home = Path(args.home).expanduser().resolve() if args.home else Path.home() / ".cortex"
+    os.environ["CORTEX_ACTIVE_HOME"] = str(home)
     serve_stdio(home)
 
 

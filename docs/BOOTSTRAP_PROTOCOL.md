@@ -28,7 +28,8 @@ When Cortex is dropped inside a host repository and no path is supplied, the all
 4. Initialize the shared Cortex home and database.
 5. Assign a stable repository ID derived from the resolved target path.
 6. Preserve existing `.cortex/config.json` policy when re-bootstrapping.
-7. Install repository-local launchers and the managed `AGENTS.md` block.
+7. Install repository-local launchers and the managed `AGENTS.md` block, or
+   create an external attachment without host writes when `--external` is set.
 8. Inventory every non-excluded file.
 9. Record unsupported, binary, oversized, and unreadable surfaces.
 10. Index supported text with line ranges and content hashes.
@@ -67,3 +68,11 @@ At activation, Cortex compares the current manifest with the stored manifest.
 ## Idempotence
 
 Re-bootstrap preserves explicit repository configuration, refreshes managed integration files, removes stale indexed records, and recompiles the neural graph from current evidence. Existing neural weights survive when the same synapse remains valid and are clamped to current bounds.
+
+## Sealed host mode
+
+`cortex bootstrap <path> --external` stores configuration, certificates, and
+runtime packets below `CORTEX_HOME/attachments/`. It writes no host files, so a
+strict repository manifest can remain valid while Cortex indexes and activates
+the repository. Later commands must use the same Cortex home. This mode is the
+appropriate boundary for repositories that reject untracked integration files.

@@ -86,7 +86,7 @@ def verify_repository(
     manifest_current = bool(stored_manifest) and stored_manifest == observed_manifest
     coverage = _coverage(store, repo)
     probes = _retrieval_probes(store, repo, root)
-    integration = integration_status(root)
+    integration = integration_status(root, config)
     graph_edges = store.edges(repo, limit=100_000)
     relation_counts: dict[str, int] = {}
     for edge in graph_edges:
@@ -167,7 +167,11 @@ def verify_repository(
     certificate["certificate_hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     if write_certificate:
-        repo_certificate = root / ".cortex" / "bootstrap_certificate.json"
+        repo_certificate = (
+            Path(config.attachment_root) / "bootstrap_certificate.json"
+            if config.integration_mode == "external"
+            else root / ".cortex" / "bootstrap_certificate.json"
+        )
         repo_certificate.parent.mkdir(parents=True, exist_ok=True)
         repo_certificate.write_text(json.dumps(certificate, indent=2) + "\n", encoding="utf-8")
         home_certificate = home / "certificates" / f"{repo}-latest.json".replace("/", "_")

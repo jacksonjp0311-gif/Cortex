@@ -82,7 +82,10 @@ Every normal activation now passes through a local, deterministic Thalamus route
 
 Run the reproducible before/after routing benchmark with `python benchmarks/thalamus_before_after.py --files 250 --runs 5`. Its committed chart and raw results are in [`benchmarks/results/`](benchmarks/results/).
 
-Run `python -m cortex self-test --json` to clone Cortex as a host, place a second Cortex clone inside it as the active engine, and verify that the nested engine is excluded while the real outer Cortex repository bootstraps and activates.
+Run `python -m cortex self-test --json` to clone Cortex as a host, place an
+explicitly labeled `InternalCortexEngine` clone inside it, and verify that the
+internal engine is excluded, matches the source commit/version, and can
+bootstrap and activate the outer Cortex repository.
 
 See [cross-domain analysis](docs/CROSS_DOMAIN_ANALYSIS.md) for the evidence-informed attention/inhibition analogy and the computational-work telemetry reported with every context packet.
 
@@ -287,6 +290,22 @@ Direct Python form:
 python -m cortex bootstrap /path/to/repository --name MyProject --json
 ```
 
+For a sealed or manifest-governed repository, keep every Cortex artifact
+outside the host:
+
+```bash
+python -m cortex --home /path/to/cortex-home bootstrap /path/to/repository \
+  --name MyProject --external --json
+python -m cortex --home /path/to/cortex-home activate \
+  --repo MyProject --task "Map the release gates" --json
+```
+
+External attachment writes configuration, certificates, and runtime packets
+under `CORTEX_HOME/attachments/`. It does not create `.cortex/`, change
+`AGENTS.md`, or otherwise mutate the host. Use the same `--home` on later CLI
+commands. `--preserve-agents` is a narrower internal-sidecar option: it leaves
+the host protocol unchanged but still installs `.cortex/`.
+
 ## What bootstrap learns
 
 Bootstrap builds a bounded environment profile that includes:
@@ -308,9 +327,14 @@ The latest profile is written to:
 TargetRepository/.cortex/runtime/environment_latest.json
 ```
 
-It is also stored in the shared Cortex database for later activation.
+For external attachments it is written under
+`CORTEX_HOME/attachments/<repository-id>/runtime/`. In both modes the profile
+is also stored in the shared Cortex database for later activation.
 
 ## What bootstrap installs into the target
+
+The default internal integration identifies itself in `.cortex/config.json` as
+`INTERNAL CORTEX`. External attachment installs nothing into the target.
 
 ```text
 TargetRepository/

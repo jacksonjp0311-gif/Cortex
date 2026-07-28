@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -60,6 +61,16 @@ def build_parser() -> argparse.ArgumentParser:
     bootstrap.add_argument("path", nargs="?", default=".")
     bootstrap.add_argument("--name")
     bootstrap.add_argument("--force", action="store_true")
+    bootstrap.add_argument(
+        "--preserve-agents",
+        action="store_true",
+        help="Install the internal sidecar without modifying the host AGENTS.md.",
+    )
+    bootstrap.add_argument(
+        "--external",
+        action="store_true",
+        help="Keep all Cortex attachment files outside the host repository.",
+    )
     bootstrap.add_argument("--json", action="store_true")
 
     activate = sub.add_parser("activate", help="Refresh memory as needed and emit task context.")
@@ -268,6 +279,7 @@ def _repo_root(store: Store, repo: str) -> Path:
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     home = ensure_home(Path(args.home).expanduser().resolve() if args.home else None)
+    os.environ["CORTEX_ACTIVE_HOME"] = str(home)
     store = Store(home / "cortex.db")
     governor = Governor(home, store)
     try:
@@ -282,7 +294,13 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "bootstrap":
             result = bootstrap_repository(
-                home, store, Path(args.path), args.name, force=args.force
+                home,
+                store,
+                Path(args.path),
+                args.name,
+                force=args.force,
+                preserve_agents=args.preserve_agents,
+                external=args.external,
             )
             emit(result, args.json)
 
