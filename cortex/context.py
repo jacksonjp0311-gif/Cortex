@@ -175,6 +175,7 @@ def build_context(
             "repository_id": repository["repository_id"],
             "path": repository["path"],
             "manifest_hash": repository["manifest_hash"],
+            "manifest_current": manifest_current,
             "bootstrap_status": repository["bootstrap_status"],
         },
         "task": task,
@@ -259,4 +260,18 @@ def cortex_context_protocol(context: dict[str, Any]) -> dict[str, Any]:
         "recommended_commands": [],
         "prohibited_actions": ["Treat learned associations as superior to current source, tests, governance, or human authority."],
         "state_hashes": {"packet": context["packet_hash"], "neural": neural.get("state_hash"), "manifest": context["repository"].get("manifest_hash")},
+        "state_planes": {
+            "operational": "this bounded task packet",
+            "evidence": "addressable repository memories with provenance",
+            "canonical": "verified Cortex canonical memory with promotion receipts",
+        },
+        "continuation": {
+            "available_protocol": "cortex-continuation/1.0",
+            "reanchor_on": [
+                "manifest drift",
+                "low retrieval confidence",
+                "active contradiction",
+                "expired continuation packet",
+            ],
+        },
     }

@@ -6,15 +6,25 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from . import __version__
 from .activation import activate_repository
 from .bootstrap import bootstrap_repository
 from .bridge import consolidate
 from .config import ensure_home, load_repo_config
 from .context import build_context, cortex_context_protocol, nexus_packet
+from .continuation import (
+    build_continuation_packet,
+    promote,
+    rollback,
+    verify_continuation_packet,
+)
+from .evaluation import evaluate_corpus, load_corpus
+from .federation import federated_query
 from .learning import record_outcome
 from .environment import environment_summary
 from .governor import Governor
 from .health import health_report
+from .lifecycle import apply_lifecycle, lifecycle_plan
 from .benchmark import verify_benchmarks
 from .graph import neighborhood, resolve_graph
 from .hippocampus import begin_session, remember
@@ -74,6 +84,14 @@ def build_parser() -> argparse.ArgumentParser:
     query_parser.add_argument("--limit", type=int, default=8)
     query_parser.add_argument("--json", action="store_true")
 
+    federated = sub.add_parser(
+        "federated-query", help="Search multiple repositories with explicit boundary preservation."
+    )
+    federated.add_argument("query")
+    federated.add_argument("--repos", nargs="*")
+    federated.add_argument("--limit", type=int, default=12)
+    federated.add_argument("--json", action="store_true")
+
     context = sub.add_parser("context", help="Emit a bounded context packet without starting a session.")
     context.add_argument("--repo", required=True)
     context.add_argument("--task", required=True)
@@ -91,6 +109,41 @@ def build_parser() -> argparse.ArgumentParser:
     protocol.add_argument("--task", required=True)
     protocol.add_argument("--budget", type=int, default=1200)
     protocol.add_argument("--json", action="store_true")
+
+    continuation = sub.add_parser(
+        "continuation", help="Emit and persist a GCMT verified continuation packet."
+    )
+    continuation.add_argument("--repo", required=True)
+    continuation.add_argument("--task", required=True)
+    continuation.add_argument("--budget", type=int, default=1200)
+    continuation.add_argument("--ttl", type=int, default=86_400)
+    continuation.add_argument("--json", action="store_true")
+
+    continuation_verify = sub.add_parser(
+        "continuation-verify", help="Verify a stored GCMT continuation packet."
+    )
+    continuation_verify.add_argument("--repo", required=True)
+    continuation_verify.add_argument("--packet-id", required=True)
+    continuation_verify.add_argument("--json", action="store_true")
+
+    promote_parser = sub.add_parser(
+        "promote", help="Promote a verified candidate into Cortex canonical memory."
+    )
+    promote_parser.add_argument("--repo", required=True)
+    promote_parser.add_argument("--key", required=True)
+    promote_parser.add_argument("--value", required=True, help="JSON value or plain string.")
+    promote_parser.add_argument("--evidence-memory", type=int, action="append", default=[])
+    promote_parser.add_argument("--verification", action="append", default=[])
+    promote_parser.add_argument("--authorize", action="store_true")
+    promote_parser.add_argument("--json", action="store_true")
+
+    rollback_parser = sub.add_parser(
+        "rollback", help="Rollback a Cortex canonical-memory promotion receipt."
+    )
+    rollback_parser.add_argument("--repo", required=True)
+    rollback_parser.add_argument("--receipt-id", required=True)
+    rollback_parser.add_argument("--authorize", action="store_true")
+    rollback_parser.add_argument("--json", action="store_true")
 
     outcome = sub.add_parser("outcome", help="Record a verification outcome and replay-gate bounded learning.")
     outcome.add_argument("--repo", required=True)
@@ -172,6 +225,28 @@ def build_parser() -> argparse.ArgumentParser:
     health.add_argument("--repo", required=True)
     health.add_argument("--json", action="store_true")
 
+    lifecycle = sub.add_parser(
+        "lifecycle", help="Plan or apply selective decay of learned association deviation."
+    )
+    lifecycle.add_argument("--repo", required=True)
+    lifecycle.add_argument("--grace-hours", type=float, default=24.0)
+    lifecycle.add_argument("--decay-per-day", type=float, default=0.05)
+    lifecycle.add_argument("--apply", action="store_true")
+    lifecycle.add_argument("--json", action="store_true")
+
+    evaluate = sub.add_parser(
+        "evaluate", help="Run a repository-native replay corpus against base and learned routing."
+    )
+    evaluate.add_argument("corpus")
+    evaluate.add_argument("--repo")
+    evaluate.add_argument("--json", action="store_true")
+
+    dashboard = sub.add_parser(
+        "dashboard", help="Show compact GCMT, learning, lifecycle, and repository readiness."
+    )
+    dashboard.add_argument("--repo", required=True)
+    dashboard.add_argument("--json", action="store_true")
+
     benchmark = sub.add_parser("benchmark", help="Verify committed controlled-workload benchmark thresholds.")
     benchmark.add_argument("--verify", action="store_true")
     benchmark.add_argument("--json", action="store_true")
@@ -249,10 +324,93 @@ def main(argv: list[str] | None = None) -> None:
                 )
             emit([hit.to_dict() for hit in hits], args.json)
 
+        elif command == "federated-query":
+            emit(
+                federated_query(
+                    store,
+                    args.query,
+                    repositories=args.repos,
+                    limit=args.limit,
+                ),
+                args.json,
+            )
+
         elif command in {"context", "nexus-packet", "protocol"}:
             packet = build_context(home, store, governor, args.repo, args.task, args.budget)
             value = nexus_packet(packet) if command == "nexus-packet" else cortex_context_protocol(packet) if command == "protocol" else packet
             emit(value, args.json)
+
+        elif command == "continuation":
+            packet = build_context(home, store, governor, args.repo, args.task, args.budget)
+            emit(
+                build_continuation_packet(
+                    store,
+                    packet,
+                    origin_version=__version__,
+                    ttl_seconds=args.ttl,
+                ),
+                args.json,
+            )
+
+        elif command == "continuation-verify":
+            packet = store.continuation_packet(args.repo, args.packet_id)
+            if not packet:
+                raise ValueError("Continuation packet does not exist")
+            emit(verify_continuation_packet(packet), args.json)
+
+        elif command == "promote":
+            if not store.repo(args.repo):
+                raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
+            try:
+                candidate = json.loads(args.value)
+            except json.JSONDecodeError:
+                candidate = args.value
+            evidence = []
+            for memory_id in args.evidence_memory:
+                row = store.memory(memory_id)
+                if not row or row["repo"] != args.repo:
+                    raise ValueError(f"Evidence memory {memory_id} is not in {args.repo}")
+                evidence.append(
+                    {
+                        "memory_id": memory_id,
+                        "path": row["path"],
+                        "content_hash": row["content_hash"],
+                    }
+                )
+            verification: dict[str, bool] = {}
+            for item in args.verification:
+                key, separator, value = item.partition("=")
+                verification[key] = (
+                    value.lower() not in {"false", "0", "no", "failed"}
+                    if separator
+                    else True
+                )
+            emit(
+                promote(
+                    store,
+                    args.repo,
+                    state_key=args.key,
+                    candidate=candidate,
+                    evidence=evidence,
+                    verification=verification,
+                    authority={
+                        "promotion_authorized": args.authorize,
+                        "human_authorized": args.authorize,
+                    },
+                ),
+                args.json,
+            )
+
+        elif command == "rollback":
+            emit(
+                rollback(
+                    store,
+                    args.repo,
+                    args.receipt_id,
+                    authorized=args.authorize,
+                ),
+                args.json,
+            )
 
         elif command == "outcome":
             if not store.repo(args.repo):
@@ -410,6 +568,82 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "health":
             emit(health_report(home, store, governor, args.repo), args.json)
+
+        elif command == "lifecycle":
+            governance = governor.evaluate(args.repo)
+            if args.apply:
+                result = apply_lifecycle(
+                    store,
+                    args.repo,
+                    governance_mode=governance["mode"],
+                    authorized=True,
+                    grace_hours=args.grace_hours,
+                    decay_per_day=args.decay_per_day,
+                )
+            else:
+                result = lifecycle_plan(
+                    store,
+                    args.repo,
+                    grace_hours=args.grace_hours,
+                    decay_per_day=args.decay_per_day,
+                )
+                result["applied"] = False
+            emit(result, args.json)
+
+        elif command == "evaluate":
+            corpus_path = Path(args.corpus).expanduser().resolve()
+            emit(
+                evaluate_corpus(
+                    store,
+                    load_corpus(corpus_path),
+                    default_repo=args.repo,
+                ),
+                args.json,
+            )
+
+        elif command == "dashboard":
+            repository = store.repo(args.repo)
+            if not repository:
+                raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
+            lifecycle = lifecycle_plan(store, args.repo)
+            emit(
+                {
+                    "schema_version": "cortex-dashboard/1.0",
+                    "version": __version__,
+                    "repository": dict(repository),
+                    "database_integrity": store.integrity_check(),
+                    "governor": governor.evaluate(args.repo),
+                    "inventory": {
+                        "files": len(store.files(args.repo)),
+                        "memories": store.db.execute(
+                            "SELECT COUNT(*) FROM memories WHERE repo=?", (args.repo,)
+                        ).fetchone()[0],
+                        "nodes": len(store.neural_nodes(args.repo)),
+                        "synapses": len(store.neural_synapses(args.repo)),
+                    },
+                    "learning": {
+                        "activations": len(store.neural_activations(args.repo, 10_000)),
+                        "outcomes": len(store.outcomes(args.repo, 10_000)),
+                        "ledger_valid": store.verify_neural_ledger(args.repo),
+                    },
+                    "continuation": {
+                        "packets": len(store.continuation_packets(args.repo, 10_000)),
+                        "canonical_states": len(store.canonical_states(args.repo)),
+                        "receipts": len(store.continuation_receipts(args.repo, 10_000)),
+                        "receipt_ledger_valid": store.verify_continuation_receipts(args.repo),
+                    },
+                    "lifecycle": {
+                        key: value for key, value in lifecycle.items() if key != "proposals"
+                    },
+                    "agent_access": {
+                        "context_protocol": "cortex-context/1.0",
+                        "continuation_protocol": "cortex-continuation/1.0",
+                        "federation_protocol": "cortex-federation/1.0",
+                        "mcp_command": "cortex-mcp",
+                    },
+                },
+                args.json,
+            )
 
         elif command == "benchmark":
             result = verify_benchmarks(Path(__file__).resolve().parents[1])

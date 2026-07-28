@@ -13,6 +13,7 @@ one episodic event path
 one consolidation path
 one Governor
 one authority boundary
+one governed canonical-memory plane
 ```
 
 The neural layer may strengthen bounded internal associations. It may not authorize or perform source mutation.
@@ -79,6 +80,32 @@ The neural layer may strengthen bounded internal associations. It may not author
 ### Activation
 
 `cortex.activation` checks drift, refreshes changed surfaces, refreshes the environment and neural graph when needed, verifies the repository, starts a session, and emits a bounded packet.
+
+### Governed continuation
+
+`cortex.continuation` compiles bounded activation state, addressable evidence,
+canonical-memory references, drift, ambiguity, authority, verification,
+receipts, rollback, expiry, and re-anchoring conditions into
+`cortex-continuation/1.0`. It also enforces the separate promotion gate for
+Cortex-owned canonical memory.
+
+### Lifecycle
+
+`cortex.lifecycle` selectively retires learned synapse-weight deviation toward
+the compiled structural prior. It never removes source evidence or topology and
+requires explicit invocation plus an allowed Governor mode before application.
+
+### Federation and evaluation
+
+`cortex.federation` retrieves across attached repositories without merging
+repository identity. `cortex.evaluation` replays declared cases over structural
+baseline and learned weights without recording or adapting evaluation runs.
+
+### Agent access
+
+`cortex.mcp` exposes read-oriented context, continuation, federation, lifecycle
+planning, evaluation, and status tools over MCP stdio. Mutation-capable
+promotion and lifecycle application are not exposed through MCP.
 
 ## Bootstrap data flow
 

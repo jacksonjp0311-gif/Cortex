@@ -8,6 +8,7 @@ Cortex uses one SQLite database, normally `~/.cortex/cortex.db`.
 - `files`: complete visible inventory and status.
 - `memories`: indexed chunks with line ranges, hashes, vectors, and metadata.
 - `memories_fts`: FTS5 lexical index.
+- `memory_vector_buckets`: deterministic locality-sensitive semantic candidate sketches.
 - `symbols`: extracted symbols and signatures.
 - `edges`: structural and temporal relationships.
 - `git_commits`: bounded commit summaries.
@@ -29,6 +30,12 @@ Cortex uses one SQLite database, normally `~/.cortex/cortex.db`.
 - `neural_synapses`: bounded relationships compiled from existing graph edges.
 - `neural_activations`: replayable activation packets and state hashes.
 - `neural_ledger`: monotonic hash-chained interlink events.
+
+## Governed continuation
+
+- `continuation_packets`: evidence-carrying operational-state transfer packets.
+- `canonical_states`: explicitly promoted Cortex-owned canonical memory.
+- `continuation_receipts`: hash-chained promotion and rollback receipts.
 
 ## Bootstrap and configuration
 

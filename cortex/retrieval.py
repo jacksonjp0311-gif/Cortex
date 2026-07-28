@@ -26,9 +26,16 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
     lexical_ids = [row["id"] for row in lexical_rows]
 
     query_vector = get_embedder().encode_one(text)
+    store.ensure_vector_buckets(repo)
     semantic: list[tuple[float, int]] = []
     seed = int.from_bytes(hashlib.blake2b(text.encode("utf-8"), digest_size=8).digest(), "big")
-    for row in store.vector_candidates(repo, lexical_ids, limit=semantic_scan_limit, seed=seed):
+    for row in store.vector_candidates(
+        repo,
+        lexical_ids,
+        limit=semantic_scan_limit,
+        seed=seed,
+        query_vector=query_vector,
+    ):
         try:
             vector = deserialize_vector(row["vector"])
             similarity = cosine(query_vector, vector)

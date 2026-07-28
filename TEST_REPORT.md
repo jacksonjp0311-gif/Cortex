@@ -1,3 +1,32 @@
+# Cortex v3.0.0 Test Report
+
+**Release validation date:** July 28, 2026
+
+## v3.0 release validation
+
+- `python -m pytest`: 33 passed
+- `python -m ruff check cortex thalamus tests`: passed
+- Python compilation: passed
+- Source distribution and wheel build: passed
+- Existing controlled-workload benchmark thresholds: passed
+- Nested-clone self-host lifecycle: verified certificate, ready activation,
+  nested engine excluded, nested tests passed
+- Real Cortex repository smoke: manifest current, database integrity true,
+  dashboard version 3.0.0, replay corpus non-regression true, boundary gate true,
+  persisted continuation packet valid
+
+The new suite covers GCMT state-plane separation, continuation packet integrity
+and expiry, evidence/verification/authority promotion gates, hash-chained
+receipts, rollback fidelity, selective learned-association decay, neural ledger
+integrity, cross-repository boundary preservation, vector-bucket migration,
+base-versus-learned replay evaluation, and MCP initialization/tool discovery.
+
+These checks establish implementation and repository-local benchmark evidence.
+They do not establish universal answer-quality improvement, biological
+fidelity, cross-domain robustness, or independent reproduction.
+
+The v2.0 report below is retained as release lineage.
+
 # Cortex v2.0.0 Test Report
 
 **Release validation date:** July 14, 2026

@@ -8,7 +8,9 @@ import time
 from pathlib import Path
 from typing import Any, Iterable
 
-from .embeddings import VECTOR_MAGIC, deserialize_vector, vector_to_bytes
+from .embeddings import VECTOR_MAGIC, deserialize_vector, vector_bucket, vector_to_bytes
+
+VECTOR_BUCKET_MODEL = "random-hyperplane-v1"
 
 SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -82,6 +84,16 @@ CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
     INSERT INTO memories_fts(rowid, text, path, kind)
     VALUES(new.id, new.text, new.path, new.kind);
 END;
+
+CREATE TABLE IF NOT EXISTS memory_vector_buckets(
+    memory_id INTEGER PRIMARY KEY,
+    repo TEXT NOT NULL,
+    bucket INTEGER NOT NULL,
+    FOREIGN KEY(memory_id) REFERENCES memories(id) ON DELETE CASCADE,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_vector_buckets_repo_bucket
+ON memory_vector_buckets(repo, bucket);
 
 CREATE TABLE IF NOT EXISTS edges(
     id INTEGER PRIMARY KEY,
@@ -272,6 +284,49 @@ CREATE TABLE IF NOT EXISTS evidence_credit(
     FOREIGN KEY(outcome_id) REFERENCES task_outcomes(outcome_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS continuation_packets(
+    packet_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    origin_version TEXT NOT NULL,
+    state_hash TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    expires_at REAL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_continuation_packets_repo_created
+ON continuation_packets(repo, created_at);
+
+CREATE TABLE IF NOT EXISTS canonical_states(
+    repo TEXT NOT NULL,
+    state_key TEXT NOT NULL,
+    value_json TEXT NOT NULL,
+    state_hash TEXT NOT NULL,
+    receipt_id TEXT NOT NULL,
+    updated_at REAL NOT NULL,
+    PRIMARY KEY(repo, state_key),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS continuation_receipts(
+    receipt_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    action TEXT NOT NULL,
+    state_key TEXT NOT NULL,
+    previous_json TEXT,
+    candidate_json TEXT,
+    evidence_json TEXT NOT NULL,
+    verification_json TEXT NOT NULL,
+    authority_json TEXT NOT NULL,
+    rollback_of TEXT,
+    previous_hash TEXT NOT NULL,
+    receipt_hash TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_continuation_receipts_repo_created
+ON continuation_receipts(repo, created_at);
+
 CREATE TABLE IF NOT EXISTS settings(
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -426,6 +481,7 @@ class Store:
 
     def upsert_memory(self, **memory: Any) -> None:
         now = time.time()
+        vector = memory.get("vector")
         self.db.execute(
             """
             INSERT INTO memories(
@@ -446,10 +502,27 @@ class Store:
                 memory["repo"], memory["path"], memory["chunk_index"],
                 memory["start_line"], memory["end_line"], memory["kind"],
                 memory["text"], memory["content_hash"],
-                vector_to_bytes(memory.get("vector")), memory.get("embedding_model"),
+                vector_to_bytes(vector), memory.get("embedding_model"),
                 json.dumps(memory.get("metadata", {}), sort_keys=True), now, now,
             ),
         )
+        if vector is not None:
+            row = self.db.execute(
+                """SELECT id FROM memories
+                   WHERE repo=? AND path=? AND chunk_index=? AND content_hash=?""",
+                (
+                    memory["repo"], memory["path"], memory["chunk_index"],
+                    memory["content_hash"],
+                ),
+            ).fetchone()
+            if row:
+                self.db.execute(
+                    """INSERT INTO memory_vector_buckets(memory_id, repo, bucket)
+                       VALUES(?, ?, ?)
+                       ON CONFLICT(memory_id) DO UPDATE SET
+                         repo=excluded.repo, bucket=excluded.bucket""",
+                    (row["id"], memory["repo"], vector_bucket(vector)),
+                )
 
     def memory(self, memory_id: int) -> sqlite3.Row | None:
         return self.db.execute("SELECT * FROM memories WHERE id=?", (memory_id,)).fetchone()
@@ -466,7 +539,8 @@ class Store:
         ).fetchall()
 
     def vector_candidates(
-        self, repo: str, preferred_ids: list[int], limit: int, seed: int
+        self, repo: str, preferred_ids: list[int], limit: int, seed: int,
+        query_vector: list[float] | None = None,
     ) -> list[sqlite3.Row]:
         output: dict[int, sqlite3.Row] = {}
         if preferred_ids:
@@ -479,6 +553,22 @@ class Store:
         remaining = max(0, limit - len(output))
         if remaining == 0:
             return list(output.values())
+        if query_vector:
+            bucket = vector_bucket(query_vector)
+            nearby = [bucket, *(bucket ^ (1 << bit) for bit in range(16))]
+            marks = ",".join("?" for _ in nearby)
+            rows = self.db.execute(
+                f"""SELECT m.* FROM memory_vector_buckets b
+                    JOIN memories m ON m.id=b.memory_id
+                    WHERE b.repo=? AND b.bucket IN ({marks}) AND m.vector IS NOT NULL
+                    ORDER BY CASE WHEN b.bucket=? THEN 0 ELSE 1 END, m.id
+                    LIMIT ?""",
+                [repo, *nearby, bucket, remaining],
+            ).fetchall()
+            output.update({row["id"]: row for row in rows})
+            remaining = max(0, limit - len(output))
+            if remaining == 0:
+                return list(output.values())
         bounds = self.db.execute(
             "SELECT MIN(id), MAX(id), COUNT(*) FROM memories WHERE repo=? AND vector IS NOT NULL",
             (repo,),
@@ -502,6 +592,30 @@ class Store:
                 ).fetchall()
         output.update({row["id"]: row for row in rows})
         return list(output.values())
+
+    def ensure_vector_buckets(self, repo: str) -> int:
+        """Backfill ANN sketches for databases created before Cortex v3."""
+        setting_key = f"vector_bucket_model:{repo}"
+        if self.get_setting(setting_key) != VECTOR_BUCKET_MODEL:
+            self.db.execute("DELETE FROM memory_vector_buckets WHERE repo=?", (repo,))
+            self.db.commit()
+            self.set_setting(setting_key, VECTOR_BUCKET_MODEL)
+        rows = self.db.execute(
+            """SELECT m.id, m.vector FROM memories m
+               LEFT JOIN memory_vector_buckets b ON b.memory_id=m.id
+               WHERE m.repo=? AND m.vector IS NOT NULL AND b.memory_id IS NULL""",
+            (repo,),
+        ).fetchall()
+        for row in rows:
+            vector = deserialize_vector(row["vector"])
+            if vector:
+                self.db.execute(
+                    "INSERT OR REPLACE INTO memory_vector_buckets(memory_id, repo, bucket) VALUES(?, ?, ?)",
+                    (row["id"], repo, vector_bucket(vector)),
+                )
+        if rows:
+            self.db.commit()
+        return len(rows)
 
     def lexical(self, repo: str, query: str, limit: int = 40) -> list[sqlite3.Row]:
         tokens = [token for token in query.replace('"', " ").split() if token]
@@ -1059,6 +1173,239 @@ class Store:
         return self.db.execute(
             "SELECT * FROM task_outcomes WHERE repo=? ORDER BY created_at DESC LIMIT ?", (repo, limit)
         ).fetchall()
+
+    def save_continuation_packet(
+        self, repo: str, packet_id: str, origin_version: str, state_hash: str,
+        payload: dict[str, Any], expires_at: float | None,
+    ) -> None:
+        self.db.execute(
+            """INSERT OR REPLACE INTO continuation_packets(
+                 packet_id, repo, origin_version, state_hash, payload_json, created_at, expires_at
+               ) VALUES(?, ?, ?, ?, ?, ?, ?)""",
+            (
+                packet_id, repo, origin_version, state_hash,
+                json.dumps(payload, sort_keys=True), time.time(), expires_at,
+            ),
+        )
+        self.db.commit()
+
+    def continuation_packet(self, repo: str, packet_id: str) -> dict[str, Any] | None:
+        row = self.db.execute(
+            "SELECT payload_json FROM continuation_packets WHERE repo=? AND packet_id=?",
+            (repo, packet_id),
+        ).fetchone()
+        return json.loads(row["payload_json"]) if row else None
+
+    def continuation_packets(self, repo: str, limit: int = 20) -> list[dict[str, Any]]:
+        rows = self.db.execute(
+            """SELECT payload_json FROM continuation_packets
+               WHERE repo=? ORDER BY created_at DESC LIMIT ?""",
+            (repo, limit),
+        ).fetchall()
+        return [json.loads(row["payload_json"]) for row in rows]
+
+    def canonical_state(self, repo: str, state_key: str) -> sqlite3.Row | None:
+        return self.db.execute(
+            "SELECT * FROM canonical_states WHERE repo=? AND state_key=?",
+            (repo, state_key),
+        ).fetchone()
+
+    def canonical_states(self, repo: str) -> list[sqlite3.Row]:
+        return self.db.execute(
+            "SELECT * FROM canonical_states WHERE repo=? ORDER BY state_key", (repo,)
+        ).fetchall()
+
+    @staticmethod
+    def _receipt_hash(record: dict[str, Any]) -> str:
+        canonical = json.dumps(record, sort_keys=True, separators=(",", ":"))
+        return sha256(canonical.encode("utf-8")).hexdigest()
+
+    def continuation_receipt_tail(self, repo: str) -> str:
+        row = self.db.execute(
+            """SELECT parent.receipt_hash
+               FROM continuation_receipts parent
+               LEFT JOIN continuation_receipts child
+                 ON child.repo=parent.repo AND child.previous_hash=parent.receipt_hash
+               WHERE parent.repo=? AND child.receipt_id IS NULL
+               LIMIT 1""",
+            (repo,),
+        ).fetchone()
+        return row["receipt_hash"] if row else "0" * 64
+
+    def promote_canonical_state(
+        self, repo: str, *, receipt_id: str, state_key: str, candidate: Any,
+        evidence: list[dict[str, Any]], verification: dict[str, Any],
+        authority: dict[str, Any],
+    ) -> dict[str, Any]:
+        now = time.time()
+        existing = self.canonical_state(repo, state_key)
+        previous = json.loads(existing["value_json"]) if existing else None
+        candidate_json = json.dumps(candidate, sort_keys=True)
+        state_hash = sha256(candidate_json.encode("utf-8")).hexdigest()
+        previous_hash = self.continuation_receipt_tail(repo)
+        record = {
+            "receipt_id": receipt_id,
+            "repo": repo,
+            "action": "promote",
+            "state_key": state_key,
+            "previous": previous,
+            "candidate": candidate,
+            "evidence": evidence,
+            "verification": verification,
+            "authority": authority,
+            "rollback_of": None,
+            "previous_hash": previous_hash,
+            "created_at": now,
+        }
+        receipt_hash = self._receipt_hash(record)
+        with self.transaction() as conn:
+            conn.execute(
+                """INSERT INTO continuation_receipts(
+                     receipt_id, repo, action, state_key, previous_json, candidate_json,
+                     evidence_json, verification_json, authority_json, rollback_of,
+                     previous_hash, receipt_hash, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_id, repo, "promote", state_key,
+                    json.dumps(previous, sort_keys=True) if existing else None,
+                    candidate_json, json.dumps(evidence, sort_keys=True),
+                    json.dumps(verification, sort_keys=True),
+                    json.dumps(authority, sort_keys=True), None,
+                    previous_hash, receipt_hash, now,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO canonical_states(
+                     repo, state_key, value_json, state_hash, receipt_id, updated_at
+                   ) VALUES(?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(repo, state_key) DO UPDATE SET
+                     value_json=excluded.value_json, state_hash=excluded.state_hash,
+                     receipt_id=excluded.receipt_id, updated_at=excluded.updated_at""",
+                (repo, state_key, candidate_json, state_hash, receipt_id, now),
+            )
+        return {
+            "receipt_id": receipt_id,
+            "receipt_hash": receipt_hash,
+            "state_key": state_key,
+            "state_hash": state_hash,
+            "previous": previous,
+            "candidate": candidate,
+        }
+
+    def rollback_canonical_state(
+        self, repo: str, receipt_id: str, *, authority: dict[str, Any]
+    ) -> dict[str, Any]:
+        original = self.db.execute(
+            """SELECT * FROM continuation_receipts
+               WHERE repo=? AND receipt_id=? AND action='promote'""",
+            (repo, receipt_id),
+        ).fetchone()
+        if not original:
+            raise ValueError("Promotion receipt does not exist")
+        state_key = original["state_key"]
+        current = self.canonical_state(repo, state_key)
+        if not current or current["receipt_id"] != receipt_id:
+            raise ValueError("Receipt is not the current canonical origin for this key")
+        previous = json.loads(original["previous_json"]) if original["previous_json"] else None
+        current_value = json.loads(current["value_json"])
+        now = time.time()
+        rollback_id = "rbk_" + sha256(
+            f"{repo}|{receipt_id}|{state_key}".encode("utf-8")
+        ).hexdigest()[:24]
+        previous_hash = self.continuation_receipt_tail(repo)
+        record = {
+            "receipt_id": rollback_id,
+            "repo": repo,
+            "action": "rollback",
+            "state_key": state_key,
+            "previous": current_value,
+            "candidate": previous,
+            "evidence": [],
+            "verification": {"receipt_integrity": True},
+            "authority": authority,
+            "rollback_of": receipt_id,
+            "previous_hash": previous_hash,
+            "created_at": now,
+        }
+        receipt_hash = self._receipt_hash(record)
+        with self.transaction() as conn:
+            conn.execute(
+                """INSERT OR IGNORE INTO continuation_receipts(
+                     receipt_id, repo, action, state_key, previous_json, candidate_json,
+                     evidence_json, verification_json, authority_json, rollback_of,
+                     previous_hash, receipt_hash, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, ?)""",
+                (
+                    rollback_id, repo, "rollback", state_key,
+                    json.dumps(current_value, sort_keys=True),
+                    json.dumps(previous, sort_keys=True) if previous is not None else None,
+                    json.dumps({"receipt_integrity": True}),
+                    json.dumps(authority, sort_keys=True), receipt_id,
+                    previous_hash, receipt_hash, now,
+                ),
+            )
+            if previous is None:
+                conn.execute(
+                    "DELETE FROM canonical_states WHERE repo=? AND state_key=?",
+                    (repo, state_key),
+                )
+            else:
+                value_json = json.dumps(previous, sort_keys=True)
+                state_hash = sha256(value_json.encode("utf-8")).hexdigest()
+                conn.execute(
+                    """UPDATE canonical_states
+                       SET value_json=?, state_hash=?, receipt_id=?, updated_at=?
+                       WHERE repo=? AND state_key=?""",
+                    (value_json, state_hash, rollback_id, now, repo, state_key),
+                )
+        return {
+            "rolled_back": True,
+            "receipt_id": rollback_id,
+            "rollback_of": receipt_id,
+            "state_key": state_key,
+            "restored": previous,
+            "receipt_hash": receipt_hash,
+        }
+
+    def continuation_receipts(self, repo: str, limit: int = 100) -> list[sqlite3.Row]:
+        return self.db.execute(
+            """SELECT * FROM continuation_receipts
+               WHERE repo=? ORDER BY created_at DESC LIMIT ?""",
+            (repo, limit),
+        ).fetchall()
+
+    def verify_continuation_receipts(self, repo: str) -> bool:
+        previous_hash = "0" * 64
+        pending = {
+            row["previous_hash"]: row
+            for row in self.db.execute(
+                "SELECT * FROM continuation_receipts WHERE repo=?", (repo,)
+            ).fetchall()
+        }
+        visited = 0
+        while previous_hash in pending:
+            row = pending.pop(previous_hash)
+            if row["previous_hash"] != previous_hash:
+                return False
+            record = {
+                "receipt_id": row["receipt_id"],
+                "repo": repo,
+                "action": row["action"],
+                "state_key": row["state_key"],
+                "previous": json.loads(row["previous_json"]) if row["previous_json"] else None,
+                "candidate": json.loads(row["candidate_json"]) if row["candidate_json"] else None,
+                "evidence": json.loads(row["evidence_json"]),
+                "verification": json.loads(row["verification_json"]),
+                "authority": json.loads(row["authority_json"]),
+                "rollback_of": row["rollback_of"],
+                "previous_hash": row["previous_hash"],
+                "created_at": float(row["created_at"]),
+            }
+            if self._receipt_hash(record) != row["receipt_hash"]:
+                return False
+            previous_hash = row["receipt_hash"]
+            visited += 1
+        return visited == len(self.continuation_receipts(repo, 1_000_000))
 
     def set_setting(self, key: str, value: Any) -> None:
         self.db.execute(

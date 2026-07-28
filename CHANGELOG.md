@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.0.0 - Governed Continuation Memory
+
+- Integrated James Paul Jackson's Governed Continuation Memory Theory (GCMT v1.0)
+  as an executable, non-biological software architecture.
+- Added `cortex-continuation/1.0` packets with origin, operational state,
+  evidence, canonical state, drift, wounds, authority, verification, receipts,
+  expiry, and re-anchoring conditions.
+- Added authorized Cortex canonical-memory promotion with evidence and
+  verification locks, hash-chained receipts, and rollback.
+- Added selective lifecycle decay of learned weight deviation toward structural
+  priors without deleting source evidence or graph topology.
+- Added repository-native base-versus-learned replay evaluation, boundary-
+  preserving federation, SQLite vector buckets, a read-oriented MCP server, and
+  a compact dashboard.
+- Preserved the authority boundary: no learning, continuation, federation, or
+  agent-access surface authorizes repository mutation.
+
 ## 2.0.0 — Outcome-Grounded Repository Intelligence
 
 - Made neural activation observational: association weights no longer change merely because paths co-activate.

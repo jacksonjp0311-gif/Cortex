@@ -45,6 +45,37 @@ current task
 
 Cortex is local-first, SQLite-backed, dependency-free in its core installation, and designed to integrate with existing repositories without replacing their source, tests, governance, or authorization rules.
 
+## Cortex v3: governed continuation
+
+Cortex v3 implements James Paul Jackson's Governed Continuation Memory Theory
+(GCMT v1.0): memory is regulated transformation with recoverable origin.
+
+It adds:
+
+- explicit operational, evidence, and canonical state planes;
+- verified continuation packets with drift, ambiguity, authority, expiry,
+  receipts, and re-anchoring conditions;
+- evidence-gated canonical-memory promotion and rollback;
+- selective aging of learned routing deviation without deleting source evidence;
+- cross-repository retrieval with explicit boundary preservation;
+- SQLite vector buckets for bounded semantic candidate selection;
+- base-versus-learned replay evaluation and regression gates;
+- a read-oriented MCP stdio server and compact operational dashboard.
+
+```bash
+cortex continuation --repo MyProject --task "Continue the release investigation" --json
+cortex federated-query "Where is authentication owned?" --repos Web API Shared --json
+cortex lifecycle --repo MyProject --json
+cortex evaluate examples/evaluation_corpus.json --repo MyProject --json
+cortex dashboard --repo MyProject --json
+cortex-mcp
+```
+
+Operational relevance and learned confidence remain separate from application
+and promotion authority. Canonical memory is Cortex-owned metadata; these
+commands do not authorize or perform repository source mutation. See
+[`docs/GCMT.md`](docs/GCMT.md).
+
 ## Thalamus routing
 
 Every normal activation now passes through a local, deterministic Thalamus route plan before retrieval. The plan classifies the task, allocates attention across source, tests, structure, documentation, Git, runtime, and other memory lanes, and records numerical inhibition for generated, duplicate, or out-of-scope evidence. It is an engineering routing analogy—not a biological model—and it cannot grant mutation authority. Inspect a plan with `cortex thalamus --repo <name> --task "<task>" --json`.
@@ -566,6 +597,13 @@ The current suite covers:
 - neural ledger integrity and tamper detection;
 - neural context and NexusGate packet integration;
 - embedded-engine exclusion from host assimilation.
+- verified GCMT continuation packets and expiry;
+- evidence/verification/authority-gated promotion and rollback;
+- selective lifecycle decay with ledger integrity;
+- boundary-preserving cross-repository retrieval;
+- base-versus-learned replay evaluation;
+- SQLite vector-bucket backfill;
+- MCP initialization and tool discovery.
 
 ## Sparse activation benchmark
 
@@ -608,6 +646,8 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/SECURITY.md` — trust, privacy, and authority boundaries
 - `docs/TROUBLESHOOTING.md` — common setup and runtime problems
 - `docs/NEURAL_INTERLINK.md` — sparse activation and bounded plasticity
+
+- `docs/GCMT.md` - governed continuation, lifecycle, federation, replay evaluation, and MCP
 
 ## License
 

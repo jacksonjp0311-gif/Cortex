@@ -1,5 +1,26 @@
 # Build Report
 
+## Cortex v3.0.0 addendum
+
+- Date: July 28, 2026
+- Package: `cortex-memory`
+- Python: 3.10+
+- Source distribution: built
+- Wheel: `cortex_memory-3.0.0-py3-none-any.whl`
+- Clean-wheel install: passed
+- Installed `cortex` and `cortex-mcp` entrypoints: passed
+- Automated tests: 33 passed
+- Ruff and Python compilation: passed
+- Controlled benchmark gates: passed
+- Nested-clone self-host lifecycle: passed
+
+New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
+`cortex.federation`, `cortex.evaluation`, and `cortex.mcp`. GCMT is integrated
+within Cortex's existing single-substrate and authority boundaries rather than
+as a competing memory service.
+
+The original neural-edition report follows as release lineage.
+
 ## Release
 
 - Name: Cortex Neural Interlink

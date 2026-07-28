@@ -69,6 +69,22 @@ def cosine(left: Iterable[float], right: Iterable[float]) -> float:
     return numerator / denominator if denominator else 0.0
 
 
+def vector_bucket(vector: Iterable[float], bits: int = 16) -> int:
+    """Build a compact deterministic random-hyperplane locality sketch."""
+    accumulators = [0.0] * bits
+    for index, raw_value in enumerate(vector):
+        value = float(raw_value)
+        mixed = ((index + 1) * 0x9E3779B1) & 0xFFFFFFFF
+        for bit in range(bits):
+            sign = 1.0 if ((mixed >> (bit % 32)) & 1) else -1.0
+            accumulators[bit] += value * sign
+    bucket = 0
+    for bit, value in enumerate(accumulators):
+        if value >= 0.0:
+            bucket |= 1 << bit
+    return bucket
+
+
 # ── Vector serialization: float32 BLOB for storage efficiency ──────────────
 # JSON-encoded vectors are ~5-10x larger and require json.loads on every
 # comparison. Raw float32 BLOBs are compact and can be unpacked with struct
