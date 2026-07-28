@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/semantic-proposal.schema.json",
+  "title": "ARIA semantic proposal bundle",
+  "type": "object",
+  "required": ["schema", "intentRef", "proposer", "baseline", "subject", "semanticDelta", "changedPaths", "proofObligations", "testPlan", "compatibility", "rollback", "executionEvidenceRefs", "approvalBoundary", "authority", "digest"],
+  "properties": {
+    "schema": { "const": "aria.semantic-proposal/1" },
+    "intentRef": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "proposer": {
+      "type": "object",
+      "required": ["id", "role"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "role": { "const": "producer" } },
+      "additionalProperties": false
+    },
+    "baseline": {
+      "type": "object",
+      "required": ["commit", "compilerVersion"],
+      "properties": {
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        "compilerVersion": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "subject": { "type": "object" },
+    "semanticDelta": {
+      "type": "object",
+      "required": ["grammar", "lowering", "types", "effects", "opcodes", "policies", "authority"]
+    },
+    "changedPaths": { "type": "array", "minItems": 1 },
+    "proofObligations": { "type": "array", "minItems": 1 },
+    "testPlan": { "type": "array", "minItems": 1 },
+    "compatibility": { "type": "object" },
+    "rollback": { "type": "array", "minItems": 1 },
+    "executionEvidenceRefs": { "type": "array" },
+    "approvalBoundary": {
+      "type": "object",
+      "required": ["state", "selfApprovalForbidden", "requiredApproverRole"],
+      "properties": {
+        "state": { "const": "unapproved" },
+        "selfApprovalForbidden": { "const": true },
+        "requiredApproverRole": { "const": "human" }
+      },
+      "additionalProperties": false
+    },
+    "authority": {
+      "type": "object",
+      "required": ["class", "grantsAuthority", "capabilitiesGranted"],
+      "properties": {
+        "class": { "const": "proposal" },
+        "grantsAuthority": { "const": false },
+        "capabilitiesGranted": { "type": "array", "maxItems": 0 }
+      },
+      "additionalProperties": false
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

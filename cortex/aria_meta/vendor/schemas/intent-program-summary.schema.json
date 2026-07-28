@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-program-summary.schema.json",
+  "title": "ARIA Intent Program Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "artifactId", "requestedEffects", "outcomes", "observedForbiddenOutcomes", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent-program-summary/0.9" },
+    "artifactId": { "type": "string", "minLength": 1 },
+    "requestedEffects": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "actual"],
+        "properties": { "id": { "type": "string", "minLength": 1 }, "actual": {} }
+      }
+    },
+    "observedForbiddenOutcomes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

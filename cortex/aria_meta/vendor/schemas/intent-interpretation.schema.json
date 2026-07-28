@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-interpretation.schema.json",
+  "title": "ARIA Intent Interpretation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intentId", "interpreter", "understoodObjective", "assumptions", "expectedEffects", "claimedObligations", "unresolvedAmbiguities", "implementationRef", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent-interpretation/0.9" },
+    "intentId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "interpreter": { "type": "string", "minLength": 1 },
+    "understoodObjective": { "type": "string", "minLength": 1 },
+    "assumptions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "expectedEffects": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "claimedObligations": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "unresolvedAmbiguities": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "implementationRef": { "type": "string", "minLength": 1 },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

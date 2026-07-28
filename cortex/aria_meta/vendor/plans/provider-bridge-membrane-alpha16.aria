@@ -1,0 +1,19 @@
+aria 0.4.0
+module ProviderBridgeMembrane version 1.0.0
+program ProviderBridgeMembrane version 1.0.0
+entry Main
+agent ProviderVerifier {
+}
+connection HumanProvider {
+  operator = "human"
+  agent = "ProviderVerifier"
+  protocol = "intent-proposal-consent"
+}
+flow Main {
+  connect HumanProvider
+  intent HumanProvider <- "Make provider integration portable and explicit without allowing model identity or transport eligibility to become authority."
+  propose HumanProvider <- "Add a provider-neutral bridge envelope that binds handoff, provider, model, operation, consent, requested capabilities, and a capability ceiling while performing no network call, embedding no payload, and activating no capability."
+  consent HumanProvider <- true
+  disconnect HumanProvider
+  emit "Eligibility precedes transport; transport precedes no authority."
+}

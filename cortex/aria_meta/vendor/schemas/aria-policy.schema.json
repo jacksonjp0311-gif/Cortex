@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria-lang.dev/schema/aria-policy-0.1.json",
+  "title": "ARIA repository policy",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "defaultDecision",
+    "effects"
+  ],
+  "properties": {
+    "format": {
+      "const": "aria.policy"
+    },
+    "version": {
+      "type": "string"
+    },
+    "defaultDecision": {
+      "const": "deny"
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "allow"
+        ],
+        "properties": {
+          "allow": {
+            "type": "boolean"
+          },
+          "roots": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxBytes": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+aria 0.4.0
+module PortableSessionHandoff version 1.0.0
+program PortableSessionHandoff version 1.0.0
+entry Main
+agent HandoffVerifier {
+}
+connection HumanHandoff {
+  operator = "human"
+  agent = "HandoffVerifier"
+  protocol = "intent-proposal-consent"
+}
+flow Main {
+  connect HumanHandoff
+  intent HumanHandoff <- "Let another AI continue from the minimum sufficient verified semantic state without receiving private conversation history."
+  propose HumanHandoff <- "Create a content-addressed handoff containing only typed artifact references, distinct participants, a continuation boundary, explicit privacy exclusions, and no transferred consent, capability, or authority."
+  consent HumanHandoff <- true
+  disconnect HumanHandoff
+  emit "Continuity transfers; authority does not."
+}

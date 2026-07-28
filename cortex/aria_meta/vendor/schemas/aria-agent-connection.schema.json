@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/aria-agent-connection.schema.json",
+  "title": "ARIA agent connection contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "protocol", "identity", "purpose", "entrypoint", "phases", "readOrder", "commands", "vocabulary", "authority", "invariants", "continuity", "nextAction"],
+  "properties": {
+    "schema": { "const": "aria.agent-connection/1" },
+    "protocol": { "const": "semantic-sync/1" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind", "runtime", "operatorGuide"],
+      "properties": {
+        "name": { "const": "ARIA" },
+        "kind": { "const": "language-compiler-verifier-runtime" },
+        "runtime": { "const": "ARIA-RUNTIME.json" },
+        "operatorGuide": { "const": "AGENTS.md" }
+      }
+    },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "entrypoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "resultSchema"],
+      "properties": {
+        "command": { "const": "./aria.cmd handshake --json" },
+        "resultSchema": { "const": "aria.agent-handshake/1" }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "meaning", "completion"],
+        "properties": {
+          "id": { "enum": ["discover", "orient", "verify", "align", "propose"] },
+          "meaning": { "type": "string", "minLength": 1 },
+          "completion": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "readOrder": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "commands": { "type": "object", "minProperties": 5, "additionalProperties": { "type": "string", "minLength": 1 } },
+    "vocabulary": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["term", "meaning"],
+        "properties": {
+          "term": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+          "meaning": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initial", "proposalGrantsAuthority", "interpretationSelfApproves", "humanConsentRequired", "capabilityAndPolicyRequired"],
+      "properties": {
+        "initial": { "const": "none" },
+        "proposalGrantsAuthority": { "const": false },
+        "interpretationSelfApproves": { "const": false },
+        "humanConsentRequired": { "const": true },
+        "capabilityAndPolicyRequired": { "const": true }
+      }
+    },
+    "invariants": { "type": "array", "minItems": 6, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "continuity": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["milestone", "artifact", "command", "boundary"],
+        "properties": {
+          "milestone": { "enum": ["alpha.14", "alpha.15", "alpha.16", "alpha.17"] },
+          "artifact": { "type": "string", "pattern": "^aria\\.[a-z-]+/1$" },
+          "command": { "type": "string", "minLength": 1 },
+          "boundary": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "nextAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "meaning"],
+      "properties": {
+        "command": { "const": "./aria.cmd doctor -Strict" },
+        "meaning": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

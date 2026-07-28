@@ -1,0 +1,21 @@
+aria 0.4.0
+module SemanticProjectionEvolution version 0.6.0
+program SemanticProjectionEvolution version 0.6.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanSemanticIntent {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanSemanticIntent
+  intent HumanSemanticIntent <- "Make actual ARIA state perceptible to humans and exact for machines through synchronized glyph, motion, record, and explanation projections."
+  propose HumanSemanticIntent <- "Add a content-addressed semantic cue registry, deterministic event projections, truthful transition deltas, measured-only timing, interpretation boundaries, reduced-motion and static parity, privacy-bounded journals, self-teaching cue commands, and anti-manipulation conformance without granting authority or manufacturing evidence."
+  consent HumanSemanticIntent <- true
+  disconnect HumanSemanticIntent
+}

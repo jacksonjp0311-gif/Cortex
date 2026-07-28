@@ -1,0 +1,39 @@
+aria 0.4.0
+module Coreflow version 0.1.0
+program CoreflowDemo version 0.1.0
+entry Main
+
+memory Runtime {
+  cycles: Number = 0
+  status: Text = "cold"
+}
+
+agent Architect {
+}
+
+function Double(value: Number) -> Number {
+  return value * 2
+}
+
+function IsReady(value: Number) -> Bool {
+  return value >= 6
+}
+
+flow Main {
+  signal pulse "typed core"
+  let base: Number = 3
+  let total: Number = Double(base)
+  if IsReady(total) {
+    signal pass "function online"
+  } else {
+    signal fail "function mismatch"
+  }
+  repeat 3 as cycle {
+    emit cycle
+  }
+  dispatch Architect <- "inspect coreflow"
+  remember Runtime.cycles = total
+  remember Runtime.status = "ready"
+  assert total == 6
+  halt
+}

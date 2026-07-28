@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/admission-receipt.schema.json",
+  "title": "ARIA consent and admission receipt",
+  "type": "object",
+  "required":["schema","proposalDigest","consentDigest","baselineCommit","scopeDigest","verifier","verdict","obligations","eligibleForEvolutionPlanning","nextBoundary","authority","digest"],
+  "properties":{
+    "schema":{"const":"aria.admission-receipt/1"},
+    "proposalDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "consentDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "baselineCommit":{"type":"string","pattern":"^[a-f0-9]{40,64}$"},
+    "scopeDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "verifier":{"type":"object","required":["id","version"],"properties":{"id":{"const":"aria.admission-verifier"},"version":{"const":1}},"additionalProperties":false},
+    "verdict":{"enum":["admitted","rejected"]},
+    "obligations":{"type":"array","minItems":8,"items":{"type":"object","required":["id","passed"],"properties":{"id":{"type":"string"},"passed":{"type":"boolean"}},"additionalProperties":false}},
+    "eligibleForEvolutionPlanning":{"type":"boolean"},
+    "nextBoundary":{"enum":["evolution-planning","none"]},
+    "authority":{"type":"object","required":["class","grantsRepositoryAuthority","capabilitiesGranted"],"properties":{"class":{"const":"admission-evidence"},"grantsRepositoryAuthority":{"const":false},"capabilitiesGranted":{"type":"array","maxItems":0}},"additionalProperties":false},
+    "digest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"}
+  },
+  "additionalProperties":false
+}

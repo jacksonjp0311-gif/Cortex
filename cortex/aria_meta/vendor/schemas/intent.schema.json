@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent.schema.json",
+  "title": "ARIA Canonical Intent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "name", "objective", "assumptions", "requiredOutcomes", "forbiddenOutcomes", "allowedEffects", "acceptanceCriteria", "ambiguities", "requireIndependentChallenge", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent/0.9" },
+    "name": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "assumptions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "requiredOutcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "expected"],
+        "properties": { "id": { "type": "string", "minLength": 1 }, "expected": {} }
+      }
+    },
+    "forbiddenOutcomes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "allowedEffects": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "acceptanceCriteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "evidenceKind"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "evidenceKind": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "severity"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "question": { "type": "string", "minLength": 1 },
+          "severity": { "enum": ["minor", "material"] }
+        }
+      }
+    },
+    "requireIndependentChallenge": { "type": "boolean" },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "format": "aria.glyph-registry",
+  "version": "0.1.0",
+  "glyphs": [
+    { "id": "system", "symbol": "⌬", "spoken": "system", "category": "entity", "arity": 0 },
+    { "id": "operator", "symbol": "◉", "spoken": "operator", "category": "entity", "arity": 0 },
+    { "id": "agent", "symbol": "⟁", "spoken": "agent", "category": "entity", "arity": 0 },
+    { "id": "repository", "symbol": "▧", "spoken": "repository", "category": "entity", "arity": 0 },
+    { "id": "service", "symbol": "ϟ", "spoken": "service", "category": "entity", "arity": 0 },
+    { "id": "surface", "symbol": "◇", "spoken": "surface", "category": "entity", "arity": 0 },
+    { "id": "memory", "symbol": "⊙", "spoken": "memory", "category": "entity", "arity": 0 },
+    { "id": "artifact", "symbol": "◆", "spoken": "artifact", "category": "entity", "arity": 0 },
+    { "id": "policy", "symbol": "⛨", "spoken": "policy boundary", "category": "entity", "arity": 0 },
+    { "id": "stream", "symbol": "∿", "spoken": "stream", "category": "entity", "arity": 0 }
+  ]
+}

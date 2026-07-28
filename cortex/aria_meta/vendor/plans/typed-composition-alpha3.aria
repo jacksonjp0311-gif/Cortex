@@ -1,0 +1,21 @@
+aria 0.4.0
+module TypedCompositionEvolution version 0.3.0
+program TypedCompositionEvolution version 0.3.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanMeta {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+∿ Main {
+  ↔ HumanMeta
+  🜁 HumanMeta ← "Activate ARIA's typed composition glyph only through established function semantics."
+  🜂 HumanMeta ← "Lower ≫ into deterministic nested unary calls, preserve type and diagnostic parity, verify the composition card, add no opcode or capability, and keep map, filter, and reduce inactive."
+  ⛨ HumanMeta ← true
+  ◆ HumanMeta
+}

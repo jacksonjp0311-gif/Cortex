@@ -1,0 +1,17 @@
+aria 0.4.0
+program ControlFlow version 0.1.0
+entry Main
+
+flow Main {
+  let total: Number = 0
+  repeat 4 as index {
+    set total = total + index
+  }
+  if total == 6 {
+    signal pass "loop verified"
+  } else {
+    signal fail "loop mismatch"
+  }
+  emit total
+  halt
+}

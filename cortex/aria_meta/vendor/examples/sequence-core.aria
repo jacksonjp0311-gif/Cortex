@@ -1,0 +1,18 @@
+aria 0.4.0
+module SequenceCore version 0.4.0
+program SequenceCore version 0.4.0
+entry Main
+
+function EchoNumbers(values: Sequence<Number>) -> Sequence<Number> {
+  ↩ values
+}
+
+flow Main {
+  let values: Sequence<Number> = [1, 2, 3, 4]
+  let empty: Sequence<Text> = []
+  let echoed: Sequence<Number> = ▷ EchoNumbers(values)
+  emit values
+  emit empty
+  emit values == echoed
+  halt
+}

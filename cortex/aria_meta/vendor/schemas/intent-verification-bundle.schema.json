@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-verification-bundle.schema.json",
+  "title": "ARIA Intent Verification Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intent", "interpretation", "approval", "challenges", "program", "evidence", "verificationPolicy"],
+  "properties": {
+    "schema": { "const": "aria.intent-verification-bundle/0.9" },
+    "intent": { "$ref": "intent.schema.json" },
+    "interpretation": { "$ref": "intent-interpretation.schema.json" },
+    "approval": { "$ref": "intent-approval.schema.json" },
+    "challenges": { "type": "array", "items": { "$ref": "intent-challenge.schema.json" } },
+    "program": {
+      "oneOf": [
+        { "$ref": "intent-program-summary.schema.json" },
+        { "$ref": "intent-program-summary-v1.schema.json" }
+      ]
+    },
+    "evidence": { "type": "array", "items": { "$ref": "intent-evidence.schema.json" } },
+    "verificationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "trustedApprovers"],
+      "properties": {
+        "schema": { "const": "aria.intent-verification-policy/0.9" },
+        "trustedApprovers": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

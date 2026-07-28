@@ -1,0 +1,34 @@
+{
+  "schema": "aria.graph-rule/0.3",
+  "name": "grant_access",
+  "pattern": {
+    "sourceType": "User",
+    "edgeType": "requests",
+    "targetType": "Resource",
+    "sourceWhere": {
+      "status": "active"
+    },
+    "targetWhere": {}
+  },
+  "guard": {
+    "kind": "eq",
+    "left": "source.status",
+    "right": "active"
+  },
+  "capabilities": [
+    "cap:graph.write"
+  ],
+  "rewrite": [
+    {
+      "op": "remove.edge",
+      "id": "$edge.id"
+    },
+    {
+      "op": "add.edge",
+      "id": "edge:access:1",
+      "type": "access",
+      "source": "$source.id",
+      "target": "$target.id"
+    }
+  ]
+}

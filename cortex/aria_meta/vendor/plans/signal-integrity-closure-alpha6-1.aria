@@ -1,0 +1,21 @@
+aria 0.4.0
+module SignalIntegrityClosureEvolution version 0.6.1
+program SignalIntegrityClosureEvolution version 0.6.1
+entry Main
+
+agent Architect {
+}
+
+connection HumanSignalIntegrity {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanSignalIntegrity
+  intent HumanSignalIntegrity <- "Ensure every temporal cue arises from a verified event, measured value, or live bounded predicate, and make every significant operation part of a continuous machine-verifiable history before ARIA gains iterable behavior."
+  propose HumanSignalIntegrity <- "Add a hash-chained Event Spine v3 with persistent sequence continuity and operation-local transitions; replace clock-generated Bufferflow phases with an honest pending state; bind measured receipts and VM signals to semantic projections; distinguish static layout from evidence; preserve legacy replay, privacy, reduced-motion parity, deny-by-default authority, and inactive algorithm cards."
+  consent HumanSignalIntegrity <- true
+  disconnect HumanSignalIntegrity
+}

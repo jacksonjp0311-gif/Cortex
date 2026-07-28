@@ -1,0 +1,139 @@
+{
+  "schema": "aria.agent-connection/1",
+  "protocol": "semantic-sync/1",
+  "identity": {
+    "name": "ARIA",
+    "kind": "language-compiler-verifier-runtime",
+    "runtime": "ARIA-RUNTIME.json",
+    "operatorGuide": "AGENTS.md"
+  },
+  "purpose": "Create a shared, verified semantic surface through which humans and AI systems can understand and evolve the same computational events.",
+  "entrypoint": {
+    "command": "./aria.cmd handshake --json",
+    "resultSchema": "aria.agent-handshake/1"
+  },
+  "phases": [
+    {
+      "id": "discover",
+      "meaning": "Resolve repository identity and the canonical connection contract.",
+      "completion": "The contract and runtime identities are available."
+    },
+    {
+      "id": "orient",
+      "meaning": "Learn ARIA's semantic vocabulary, architecture, and trust boundaries.",
+      "completion": "The agent can distinguish proposal, consent, authority, evidence, and execution."
+    },
+    {
+      "id": "verify",
+      "meaning": "Establish the actual repository baseline before proposing change.",
+      "completion": "Manifest, doctor, and conformance state are known."
+    },
+    {
+      "id": "align",
+      "meaning": "Map the human objective into explicit intent, assumptions, effects, ambiguities, and acceptance criteria.",
+      "completion": "Material ambiguity is resolved and the interpretation can be reviewed."
+    },
+    {
+      "id": "propose",
+      "meaning": "Offer a bounded implementation and evidence plan without self-granting authority.",
+      "completion": "A human may consent, reject, or refine the proposal."
+    }
+  ],
+  "readOrder": [
+    "ARIA-CONNECT.json",
+    "ARIA-RUNTIME.json",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "commands": {
+    "handshake": "./aria.cmd handshake --json",
+    "baseline": "./aria.cmd begin --json",
+    "health": "./aria.cmd doctor -Strict",
+    "conformance": "./aria.cmd test",
+    "languageConnection": "./aria.cmd connect",
+    "repositoryIntegrity": "./aria.cmd verify"
+    ,"replayCreate": "./aria.cmd replay create <request.json> --json"
+    ,"handoffCreate": "./aria.cmd handoff create <request.json> --json"
+    ,"bridgeCreate": "./aria.cmd bridge create <request.json> --json"
+    ,"meshCreate": "./aria.cmd mesh create <request.json> --json"
+  },
+  "vocabulary": [
+    {
+      "term": "intent",
+      "meaning": "A declared human objective and its bounded success conditions."
+    },
+    {
+      "term": "interpretation",
+      "meaning": "A reviewable account of what an agent believes the intent means."
+    },
+    {
+      "term": "proposal",
+      "meaning": "A candidate semantic or repository change that grants no authority."
+    },
+    {
+      "term": "consent",
+      "meaning": "An explicit human decision bound to a specific proposal identity."
+    },
+    {
+      "term": "authority",
+      "meaning": "A capability admitted by policy and activated at a deterministic boundary."
+    },
+    {
+      "term": "evidence",
+      "meaning": "A bounded record used to derive a verdict; it is not authority."
+    },
+    {
+      "term": "fracture",
+      "meaning": "A specific invariant failure with a bounded diagnostic identity."
+    },
+    {
+      "term": "closure",
+      "meaning": "A terminal state whose declared obligations and evidence are resolved."
+    }
+  ],
+  "authority": {
+    "initial": "none",
+    "proposalGrantsAuthority": false,
+    "interpretationSelfApproves": false,
+    "humanConsentRequired": true,
+    "capabilityAndPolicyRequired": true
+  },
+  "invariants": [
+    "Read repository state before proposing mutation.",
+    "Keep symbol, meaning, implementation, and authority distinct.",
+    "Treat AI output as input to deterministic verification.",
+    "Represent material ambiguity instead of silently resolving it.",
+    "Derive success from evidence instead of asserting it.",
+    "Preserve privacy by excluding secrets and unrelated payloads."
+  ],
+  "continuity": [
+    {
+      "milestone": "alpha.14",
+      "artifact": "aria.semantic-replay/1",
+      "command": "./aria.cmd replay create <request.json> --json",
+      "boundary": "Reconstructs meaning without repeating external effects."
+    },
+    {
+      "milestone": "alpha.15",
+      "artifact": "aria.session-handoff/1",
+      "command": "./aria.cmd handoff create <request.json> --json",
+      "boundary": "Transfers bounded semantic references, not prompts, consent, or authority."
+    },
+    {
+      "milestone": "alpha.16",
+      "artifact": "aria.provider-bridge/1",
+      "command": "./aria.cmd bridge create <request.json> --json",
+      "boundary": "Determines transport eligibility without calling a provider or activating capability."
+    },
+    {
+      "milestone": "alpha.17",
+      "artifact": "aria.cooperative-mesh/1",
+      "command": "./aria.cmd mesh create <request.json> --json",
+      "boundary": "Coordinates independent participants without asserting consensus or aggregating authority."
+    }
+  ],
+  "nextAction": {
+    "command": "./aria.cmd doctor -Strict",
+    "meaning": "Verify the declared repository baseline before making a change."
+  }
+}

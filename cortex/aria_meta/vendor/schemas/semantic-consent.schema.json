@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/semantic-consent.schema.json",
+  "title": "ARIA semantic consent",
+  "type": "object",
+  "required": ["schema","proposalDigest","intentRef","scopeDigest","proposerId","approverId","decision","decidedAt","acknowledgements","nonce","signature","digest"],
+  "properties": {
+    "schema": {"const":"aria.semantic-consent/1"},
+    "proposalDigest": {"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "intentRef": {"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "scopeDigest": {"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "proposerId": {"type":"string","minLength":1},
+    "approverId": {"type":"string","minLength":1},
+    "decision": {"enum":["approved","rejected"]},
+    "decidedAt": {"type":"string","format":"date-time"},
+    "acknowledgements": {
+      "type":"object",
+      "required":["proposalIsNotAuthority","scopeReviewed","rollbackReviewed","authorityExpansionReviewed"],
+      "properties":{
+        "proposalIsNotAuthority":{"const":true},
+        "scopeReviewed":{"const":true},
+        "rollbackReviewed":{"const":true},
+        "authorityExpansionReviewed":{"type":"boolean"}
+      },
+      "additionalProperties":false
+    },
+    "nonce":{"type":"string","minLength":1},
+    "signature":{"type":"object","required":["algorithm","value"],"properties":{"algorithm":{"const":"none"},"value":{"const":""}},"additionalProperties":false},
+    "digest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"}
+  },
+  "additionalProperties":false
+}

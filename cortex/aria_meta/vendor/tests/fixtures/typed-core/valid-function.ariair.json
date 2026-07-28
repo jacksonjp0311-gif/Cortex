@@ -1,0 +1,18 @@
+{
+  "schema": "aria.typed-ir/0.2",
+  "entry": "main",
+  "functions": [
+    {
+      "name": "main",
+      "parameters": [],
+      "returnType": "Result<Int,Text>",
+      "effects": ["memory.read"],
+      "capabilities": ["cap:memory.read"],
+      "instructions": [
+        { "op": "const", "type": "Int", "value": 7 },
+        { "op": "make.result", "variant": "ok" },
+        { "op": "return" }
+      ]
+    }
+  ]
+}

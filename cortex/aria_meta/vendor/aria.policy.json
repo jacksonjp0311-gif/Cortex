@@ -1,0 +1,44 @@
+{
+  "format": "aria.policy",
+  "version": "0.2.0",
+  "defaultDecision": "deny",
+  "effects": {
+    "console.emit": {
+      "allow": true,
+      "maxBytes": 262144
+    },
+    "memory.read": {
+      "allow": true,
+      "maxBytes": 16777216
+    },
+    "memory.write": {
+      "allow": true,
+      "maxBytes": 16777216
+    },
+    "graph.inspect": {
+      "allow": true
+    },
+    "fs.read": {
+      "allow": true,
+      "roots": [
+        "."
+      ],
+      "maxBytes": 4194304
+    },
+    "fs.write": {
+      "allow": false,
+      "roots": [],
+      "maxBytes": 1048576
+    },
+    "process.exec": {
+      "allow": false
+    },
+    "network.connect": {
+      "allow": false
+    },
+    "agent.dispatch": {
+      "allow": true,
+      "maxBytes": 262144
+    }
+  }
+}

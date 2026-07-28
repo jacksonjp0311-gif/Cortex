@@ -1,0 +1,5 @@
+fn classify(value: Int) -> Text {
+    if value == 0 { "zero" } else { "nonzero" }
+}
+emit classify(0);
+emit classify(9);

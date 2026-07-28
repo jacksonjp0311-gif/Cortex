@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-proof.schema.json",
+  "title": "ARIA Derived Intent Proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intentId", "interpretationId", "approvalId", "challengeIds", "programId", "evidenceIds", "verdict", "reasonCodes", "obligations", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent-proof/0.9" },
+    "intentId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "interpretationId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "approvalId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "challengeIds": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "programId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "evidenceIds": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "verdict": { "enum": ["satisfied", "rejected"] },
+    "reasonCodes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "satisfied"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["required-outcome", "forbidden-outcome", "acceptance-evidence"] },
+          "satisfied": { "type": "boolean" }
+        }
+      }
+    },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/capability-authority.schema.json",
+  "title": "ARIA Capability Authority 0.5",
+  "type": "object",
+  "required": [
+    "schema",
+    "issuer",
+    "subject",
+    "resource",
+    "effects",
+    "notBefore",
+    "expiresAt",
+    "delegationDepth",
+    "parent",
+    "nonce",
+    "singleUse",
+    "signature",
+    "id"
+  ],
+  "properties": {
+    "schema": { "const": "aria.capability/0.5" },
+    "issuer": { "type": "string", "minLength": 1 },
+    "subject": { "type": "string", "minLength": 1 },
+    "resource": { "type": "string", "minLength": 1 },
+    "effects": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "notBefore": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "delegationDepth": { "type": "integer", "minimum": 0 },
+    "parent": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      ]
+    },
+    "nonce": { "type": "string", "minLength": 1 },
+    "singleUse": { "type": "boolean" },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": { "const": "none" },
+        "value": { "const": "" }
+      },
+      "additionalProperties": false
+    },
+    "id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,32 @@
+aria 0.4.0
+module Connection version 0.1.0
+program ConnectionDemo version 0.1.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanAI {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+graph ConnectionMap {
+  node ◉ operator human
+  node ⟁ agent Architect
+  node ⛨ policy consent
+  node ∿ stream dialogue
+  link human -> dialogue as expresses
+  link Architect -> dialogue as proposes
+  link consent -> dialogue as authorizes
+}
+
+flow Main {
+  connect HumanAI
+  intent HumanAI <- "Evolve ARIA and its CLI as one connected language."
+  propose HumanAI <- "Add a verified intent-proposal-consent protocol before external model access."
+  consent HumanAI <- true
+  disconnect HumanAI
+  emit "Connection precedes execution."
+}

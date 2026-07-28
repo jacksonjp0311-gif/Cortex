@@ -1,0 +1,3 @@
+let ready: Bool = true;
+let approved: Bool = false;
+emit ready && !approved;

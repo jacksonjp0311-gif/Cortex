@@ -1,0 +1,21 @@
+aria 0.4.0
+module MetaEvolution version 0.1.0
+program EvolveARIAMetaSystem version 0.1.0
+entry Main
+
+agent MetaArchitect {
+}
+
+connection HumanMeta {
+  operator = "human"
+  agent = "MetaArchitect"
+  protocol = "intent-proposal-consent"
+}
+
+∿ Main {
+  ↔ HumanMeta
+  🜁 HumanMeta ← "Use ARIA source as the authoritative contract for evolving ARIA while preserving explicit human authority, deterministic compilation, bounded repository effects, rollback, and complete conformance."
+  🜂 HumanMeta ← "Add an ARIA-native meta-evolution bridge that compiles a verified ARIA contract into a canonical evolution request artifact, then routes that artifact through evolve plan, evolve verify, and evolve apply without granting the agent self-authorization."
+  ⛨ HumanMeta ← true
+  ◆ HumanMeta
+}

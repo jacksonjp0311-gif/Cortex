@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/semantic-replay.schema.json",
+  "title": "ARIA deterministic semantic replay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","protocol","sessionId","handshakeDigest","baselineDigest","intentDigest","interpretationDigest","proposalDigest","consentDigest","policyDigest","evidenceDigests","stateDigest","replay","authority","digest"],
+  "properties": {
+    "schema": {"const":"aria.semantic-replay/1"},
+    "protocol": {"const":"semantic-replay/1"},
+    "sessionId": {"type":"string","minLength":1},
+    "handshakeDigest": {"$ref":"#/$defs/digest"},
+    "baselineDigest": {"$ref":"#/$defs/digest"},
+    "intentDigest": {"$ref":"#/$defs/digest"},
+    "interpretationDigest": {"$ref":"#/$defs/digest"},
+    "proposalDigest": {"$ref":"#/$defs/digest"},
+    "consentDigest": {"$ref":"#/$defs/digest"},
+    "policyDigest": {"$ref":"#/$defs/digest"},
+    "evidenceDigests": {"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/digest"}},
+    "stateDigest": {"$ref":"#/$defs/digest"},
+    "replay": {
+      "type":"object","additionalProperties":false,"required":["mode","repeatsExternalEffects","firstDriftRequired"],
+      "properties":{"mode":{"const":"verify-only"},"repeatsExternalEffects":{"const":false},"firstDriftRequired":{"const":true}}
+    },
+    "authority": {
+      "type":"object","additionalProperties":false,"required":["grantsAuthority","capabilities"],
+      "properties":{"grantsAuthority":{"const":false},"capabilities":{"type":"array","maxItems":0}}
+    },
+    "digest": {"$ref":"#/$defs/digest"}
+  },
+  "$defs":{"digest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"}}
+}

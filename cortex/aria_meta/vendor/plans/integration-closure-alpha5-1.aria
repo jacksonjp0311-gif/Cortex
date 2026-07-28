@@ -1,0 +1,21 @@
+aria 0.4.0
+module IntegrationClosureEvolution version 0.5.1
+program IntegrationClosureEvolution version 0.5.1
+entry Main
+
+agent Architect {
+}
+
+connection HumanMeta {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanMeta
+  intent HumanMeta <- "Close the gaps between ARIA intent, whole-program effects, executable evidence, conformance, release discovery, and operator truth before activating a sequence algorithm."
+  propose HumanMeta <- "Add a verified entry-flow effect summary, bind intent program summaries to admitted bytecode and effect identities, make aria test execute every established lattice, synchronize release metadata and documentation, expose version data in compact mode, add no opcode or authority, and keep map, filter, and reduce inactive."
+  consent HumanMeta <- true
+  disconnect HumanMeta
+}

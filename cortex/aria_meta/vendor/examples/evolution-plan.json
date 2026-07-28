@@ -1,0 +1,23 @@
+{
+  "schema": "aria.evolution-request/0.7",
+  "proposer": "agent:example-planner",
+  "targetVersion": "0.5.0-alpha.23",
+  "resource": "repository:ARIA",
+  "capabilityIds": [
+    "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  ],
+  "changes": [
+    {
+      "path": "docs/planned-example.md",
+      "operation": "write",
+      "content": "# Planned example\n\nThis candidate is data until separately authorized.\n"
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "example",
+      "id": "docs/34-evolution-planning.md",
+      "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

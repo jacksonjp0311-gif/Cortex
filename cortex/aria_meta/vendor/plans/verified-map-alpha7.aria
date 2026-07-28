@@ -1,0 +1,21 @@
+aria 0.4.0
+module VerifiedMapEvolution version 0.7.0
+program VerifiedMapEvolution version 0.7.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanVerifiedMap {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanVerifiedMap
+  intent HumanVerifiedMap <- "Activate ARIA's first bounded sequence algorithm so humans and AI can use the language itself for deterministic typed transformation while observing the same real iteration history."
+  propose HumanVerifiedMap <- "Admit the exact surface ⨯(sequence, Transform); require a compile-time unary pure transform with exact scalar input and output types; add one MAP bytecode contract with no capability or policy expansion; preserve order and length; enforce existing sequence and call-depth bounds; emit value-free start, measured iteration, completion, and fracture evidence through Event Spine v3; verify the algorithm.map card only after a dedicated admission lattice."
+  consent HumanVerifiedMap <- true
+  disconnect HumanVerifiedMap
+}

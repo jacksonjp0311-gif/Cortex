@@ -1,0 +1,20 @@
+aria 0.4.0
+module GlyphFunctions version 0.1.0
+program GlyphFunctions version 0.1.0
+entry Main
+
+function Add(left: Number, right: Number) -> Number {
+  ↩ left + right
+}
+
+function Double(value: Number) -> Number {
+  ↩ value * 2
+}
+
+flow Main {
+  let total: Number = ▷ Add(20, 22)
+  let nested: Number = ▷ Double(▷ Add(10, 11))
+  emit total
+  emit nested
+  halt
+}

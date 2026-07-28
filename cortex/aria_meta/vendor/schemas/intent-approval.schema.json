@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-approval.schema.json",
+  "title": "ARIA Intent Interpretation Approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intentId", "interpretationId", "approver", "decision", "decidedAt", "ambiguityResolutions", "challengeResolutions", "nonce", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent-approval/0.9" },
+    "intentId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "interpretationId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "approver": { "type": "string", "minLength": 1 },
+    "decision": { "enum": ["approved", "rejected"] },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "ambiguityResolutions": { "$ref": "#/$defs/resolutions" },
+    "challengeResolutions": { "$ref": "#/$defs/resolutions" },
+    "nonce": { "type": "string", "minLength": 1 },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "$defs": {
+    "resolutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "resolution"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "resolution": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

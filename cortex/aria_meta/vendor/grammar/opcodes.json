@@ -1,0 +1,246 @@
+{
+  "format": "aria.opcode-registry",
+  "version": "0.6.0",
+  "opcodes": [
+    {
+      "id": "PUSH_CONST",
+      "pops": 0,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "LOAD",
+      "pops": 0,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "STORE",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "local.write"
+    },
+    {
+      "id": "SET",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "local.write"
+    },
+    {
+      "id": "ADD",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "SUB",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "MUL",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "DIV",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "EQ",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "NE",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "LT",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "LE",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "GT",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "GE",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "AND",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "OR",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "NOT",
+      "pops": 1,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "NEG",
+      "pops": 1,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "EMIT",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "console.emit"
+    },
+    {
+      "id": "SIGNAL",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "console.emit"
+    },
+    {
+      "id": "MEM_SET",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "memory.write"
+    },
+    {
+      "id": "MEM_GET",
+      "pops": 0,
+      "pushes": 1,
+      "effect": "memory.read"
+    },
+    {
+      "id": "REQUIRE_CAP",
+      "pops": 0,
+      "pushes": 0,
+      "effect": "authority.activate"
+    },
+    {
+      "id": "ASSERT_TRUE",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "pure"
+    },
+    {
+      "id": "FS_READ",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "fs.read"
+    },
+    {
+      "id": "FS_WRITE",
+      "pops": 2,
+      "pushes": 0,
+      "effect": "fs.write"
+    },
+    {
+      "id": "AGENT_DISPATCH",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "agent.dispatch"
+    },
+    {
+      "id": "CALL",
+      "pops": "dynamic",
+      "pushes": "dynamic",
+      "effect": "control.call"
+    },
+    {
+      "id": "MAP",
+      "pops": 1,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "FILTER",
+      "pops": 1,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "REDUCE",
+      "pops": 2,
+      "pushes": 1,
+      "effect": "pure"
+    },
+    {
+      "id": "IF",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "control.branch"
+    },
+    {
+      "id": "REPEAT",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "control.loop"
+    },
+    {
+      "id": "RETURN",
+      "pops": "dynamic",
+      "pushes": 0,
+      "effect": "control.return"
+    },
+    {
+      "id": "HALT",
+      "pops": 0,
+      "pushes": 0,
+      "effect": "control.halt"
+    },
+    {
+      "id": "CONNECT_OPEN",
+      "pops": 0,
+      "pushes": 0,
+      "effect": "connection.lifecycle"
+    },
+    {
+      "id": "CONNECT_INTENT",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "connection.intent"
+    },
+    {
+      "id": "CONNECT_PROPOSE",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "connection.proposal"
+    },
+    {
+      "id": "CONNECT_CONSENT",
+      "pops": 1,
+      "pushes": 0,
+      "effect": "connection.consent"
+    },
+    {
+      "id": "CONNECT_CLOSE",
+      "pops": 0,
+      "pushes": 0,
+      "effect": "connection.lifecycle"
+    }
+  ]
+}

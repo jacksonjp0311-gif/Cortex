@@ -1,0 +1,2 @@
+let temperature: Int = 31;
+emit if temperature > 30 { "hot" } else { "mild" };

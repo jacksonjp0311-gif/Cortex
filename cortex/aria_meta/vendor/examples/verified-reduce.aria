@@ -1,0 +1,23 @@
+aria 0.4.0
+module VerifiedAlgorithmPipeline version 0.9.0
+program VerifiedAlgorithmPipeline version 0.9.0
+entry Main
+
+function Double(value: Number) -> Number {
+  ↩ value * 2
+}
+
+function Positive(value: Number) -> Bool {
+  ↩ value > 0
+}
+
+function Add(total: Number, value: Number) -> Number {
+  ↩ total + value
+}
+
+flow Main {
+  let values: Sequence<Number> = [-2, -1, 1, 2]
+  let total: Number = Σ(⫰(⨯(values, Double), Positive), Add, 0)
+  emit total
+  halt
+}

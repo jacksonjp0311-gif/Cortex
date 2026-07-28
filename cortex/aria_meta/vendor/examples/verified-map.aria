@@ -1,0 +1,15 @@
+aria 0.4.0
+module VerifiedMapExample version 0.7.0
+program VerifiedMapExample version 0.7.0
+entry Main
+
+function Double(value: Number) -> Number {
+  ↩ value * 2
+}
+
+flow Main {
+  let values: Sequence<Number> = [1, 2, 3, 4]
+  let doubled: Sequence<Number> = ⨯(values, Double)
+  emit doubled
+  halt
+}

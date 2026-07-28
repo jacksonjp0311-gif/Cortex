@@ -1,0 +1,3 @@
+let first: Text = "ARIA ";
+let second: Text = "online";
+emit first + second;

@@ -1,0 +1,22 @@
+{
+  "format":"aria.signal-subset",
+  "version":1,
+  "purpose":"measure verified Git transport outcomes without retaining raw provider output",
+  "source":"github.push.receipts",
+  "fields":["branch","coherence","durationMs","exitCode"],
+  "excludedFields":["stderr","stdout","token"],
+  "sourceCount":3,
+  "emittedCount":3,
+  "limit":32,
+  "consent":{
+    "basis":"operator-approved repository telemetry",
+    "scope":"ARIA Git transport receipts only",
+    "retention":"release"
+  },
+  "items":[
+    {"branch":"main","coherence":"aligned","durationMs":1912,"exitCode":0},
+    {"branch":"main","coherence":"aligned","durationMs":1740,"exitCode":0},
+    {"branch":"main","coherence":"aligned","durationMs":1688,"exitCode":0}
+  ],
+  "digest":"example-recompute-with-New-AriaSignalSubset"
+}

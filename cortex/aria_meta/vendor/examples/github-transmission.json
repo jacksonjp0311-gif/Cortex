@@ -1,0 +1,12 @@
+{
+  "provider": "github",
+  "kind": "workflow",
+  "status": "pass",
+  "repository": "jacksonjp0311-gif/ARIA",
+  "branch": "main",
+  "checks": {
+    "windows-powershell-5": "pass",
+    "powershell-7-windows": "pass",
+    "powershell-7-ubuntu": "pass"
+  }
+}

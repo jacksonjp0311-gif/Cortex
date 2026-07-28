@@ -1,0 +1,24 @@
+{
+  "schema": {
+    "schema": "aria.graph-schema/0.3",
+    "nodeTypes": ["Resource", "User"],
+    "edgeTypes": [
+      {
+        "name": "requests",
+        "sourceType": "User",
+        "targetType": "Resource"
+      }
+    ]
+  },
+  "nodes": [
+    { "id": "user:42", "type": "User", "status": "active" }
+  ],
+  "edges": [
+    {
+      "id": "edge:request:1",
+      "type": "requests",
+      "source": "user:42",
+      "target": "resource:missing"
+    }
+  ]
+}
