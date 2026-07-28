@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/aria-agent-handshake.schema.json",
+  "title": "ARIA agent handshake",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "protocol", "status", "purpose", "repository", "contract", "runtime", "guide", "manifest", "baseline", "session", "synchronization", "readOrder", "commands", "digest"],
+  "properties": {
+    "schema": { "const": "aria.agent-handshake/1" },
+    "protocol": { "const": "semantic-sync/1" },
+    "status": { "enum": ["ready", "degraded"] },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "repository": {
+      "type": "object",
+      "required": ["name", "release", "languageEvolution", "stableTag"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "const": "ARIA" },
+        "release": { "type": "string", "minLength": 1 },
+        "languageEvolution": { "type": "string", "minLength": 1 },
+        "stableTag": { "type": "string", "minLength": 1 }
+      }
+    },
+    "contract": { "$ref": "#/$defs/resourceIdentity" },
+    "runtime": { "$ref": "#/$defs/resourceIdentity" },
+    "guide": { "$ref": "#/$defs/resourceIdentity" },
+    "manifest": { "$ref": "#/$defs/resourceIdentity" },
+    "baseline": {
+      "type": "object",
+      "required": ["manifestValid", "verifiedFiles", "declaredFiles"],
+      "additionalProperties": false,
+      "properties": {
+        "manifestValid": { "type": "boolean" },
+        "verifiedFiles": { "type": "integer", "minimum": 0 },
+        "declaredFiles": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "session": {
+      "type": "object",
+      "required": ["phase", "authority", "proposalGrantsAuthority", "nextAction", "meaning"],
+      "additionalProperties": false,
+      "properties": {
+        "phase": { "const": "discovered" },
+        "authority": { "const": "none" },
+        "proposalGrantsAuthority": { "const": false },
+        "nextAction": { "type": "string", "minLength": 1 },
+        "meaning": { "type": "string", "minLength": 1 }
+      }
+    },
+    "synchronization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phases", "vocabulary", "invariants", "continuity"],
+      "properties": {
+        "phases": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["id", "meaning", "completion"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "enum": ["discover", "orient", "verify", "align", "propose"] },
+              "meaning": { "type": "string", "minLength": 1 },
+              "completion": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "vocabulary": {
+          "type": "array",
+          "minItems": 8,
+          "items": {
+            "type": "object",
+            "required": ["term", "meaning"],
+            "additionalProperties": false,
+            "properties": {
+              "term": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+              "meaning": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "invariants": {
+          "type": "array",
+          "minItems": 6,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "continuity": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["milestone", "artifact", "command", "boundary"],
+            "properties": {
+              "milestone": { "enum": ["alpha.14", "alpha.15", "alpha.16", "alpha.17"] },
+              "artifact": { "type": "string", "pattern": "^aria\\.[a-z-]+/1$" },
+              "command": { "type": "string", "minLength": 1 },
+              "boundary": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "readOrder": { "type": "array", "minItems": 4, "uniqueItems": true, "items": { "type": "string" } },
+    "commands": { "type": "object", "minProperties": 5 },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "resourceIdentity": {
+      "type": "object",
+      "required": ["path", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

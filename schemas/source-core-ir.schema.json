@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/source-core-ir.schema.json",
+  "title": "ARIA Source Core IR 0.7",
+  "type": "object",
+  "required": ["schema", "declarations", "effects", "id"],
+  "properties": {
+    "schema": { "const": "aria.source-ir/0.7" },
+    "declarations": { "type": "array" },
+    "effects": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

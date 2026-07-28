@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/evolution-verification-policy.schema.json",
+  "title": "ARIA Evolution Verification Policy 0.8",
+  "type": "object",
+  "required": ["schema", "trustedAuthorizers", "issuerPolicy"],
+  "properties": {
+    "schema": { "const": "aria.evolution-verification-policy/0.8" },
+    "trustedAuthorizers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "issuerPolicy": {
+      "type": "object",
+      "required": ["schema", "trustedIssuers", "maxDelegationDepth", "id"]
+    }
+  },
+  "additionalProperties": false
+}

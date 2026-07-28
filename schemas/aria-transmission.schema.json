@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/aria-transmission.schema.json",
+  "title": "ARIA Transmission Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "channel", "kind", "status", "source", "payload", "digest"],
+  "properties": {
+    "format": { "const": "aria.transmission" },
+    "version": { "const": 1 },
+    "channel": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "kind": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "status": { "enum": ["pass", "reject", "warn", "fail", "info"] },
+    "source": { "type": "string", "minLength": 1 },
+    "payload": {},
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

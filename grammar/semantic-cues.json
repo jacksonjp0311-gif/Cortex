@@ -1,0 +1,375 @@
+{
+    "format":  "aria.semantic-cue-registry",
+    "version":  1,
+    "cues":  [
+                 {
+                     "id":  "signal.transmit",
+                     "states":  [
+                                    "ACTIVE"
+                                ],
+                     "domains":  [
+                                     "*"
+                                 ],
+                     "phases":  [
+                                    "*"
+                                ],
+                     "glyph":  "🜂",
+                     "label":  "TRANSMIT",
+                     "colorRole":  "signal.active",
+                     "motion":  {
+                                    "kind":  "Wave",
+                                    "trigger":  "information-crosses-stage",
+                                    "metric":  "measured-latency",
+                                    "repetition":  "actual-stage-count",
+                                    "completion":  "next-recorded-state"
+                                },
+                     "rhythm":  {
+                                    "basis":  "event-timing",
+                                    "waiting":  "calm-unbounded",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "Information is moving through a named bounded stage.",
+                     "nonMeaning":  "The receiver has not necessarily accepted the information and no authority is granted.",
+                     "staticFallback":  "[TRANSMIT] information moving through bounded stage",
+                     "contexts":  [
+                                      "compiler",
+                                      "verifier",
+                                      "runtime",
+                                      "transmission",
+                                      "memory",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "accepted",
+                                                       "authorized",
+                                                       "complete"
+                                                   ],
+                     "digest":  "sha256:9bdb365d043b7f4982f22479873d7aa3e5aa1837fe50b630da29ad54b062774d"
+                 },
+                 {
+                     "id":  "buffer.wait",
+                     "states":  [
+                                    "ACTIVE",
+                                    "INFO"
+                                ],
+                     "domains":  [
+                                     "*"
+                                 ],
+                     "phases":  [
+                                    "wait",
+                                    "buffer",
+                                    "queue"
+                                ],
+                     "glyph":  "⧖",
+                     "label":  "WAIT",
+                     "colorRole":  "signal.information",
+                     "motion":  {
+                                    "kind":  "Pulse",
+                                    "trigger":  "measured-wait-state",
+                                    "metric":  "elapsed-latency",
+                                    "repetition":  "actual-heartbeat",
+                                    "completion":  "next-recorded-state"
+                                },
+                     "rhythm":  {
+                                    "basis":  "measured-latency",
+                                    "waiting":  "calm-unbounded",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "Work is pending and the system remains observable.",
+                     "nonMeaning":  "No completion percentage or completion time is implied.",
+                     "staticFallback":  "[WAIT] pending; elapsed time only",
+                     "contexts":  [
+                                      "runtime",
+                                      "transmission",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "percent-complete",
+                                                       "stalled",
+                                                       "failed"
+                                                   ],
+                     "digest":  "sha256:26b8fa1ec99ebb38f6b21fa2321419429cf462bff55f5eae1ea188e8c2f8f3ab"
+                 },
+                 {
+                     "id":  "authority.evaluate",
+                     "states":  [
+                                    "ACTIVE",
+                                    "INFO"
+                                ],
+                     "domains":  [
+                                     "authority",
+                                     "policy",
+                                     "gate"
+                                 ],
+                     "phases":  [
+                                    "*"
+                                ],
+                     "glyph":  "⛨",
+                     "label":  "AUTHORITY",
+                     "colorRole":  "signal.active",
+                     "motion":  {
+                                    "kind":  "Clamp",
+                                    "trigger":  "authority-boundary-entered",
+                                    "metric":  "declared-capability-count",
+                                    "repetition":  "actual-check-count",
+                                    "completion":  "authority-verdict-recorded"
+                                },
+                     "rhythm":  {
+                                    "basis":  "verification-depth",
+                                    "waiting":  "bounded-evaluation",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "A policy or authority boundary is being evaluated.",
+                     "nonMeaning":  "Permission has not been granted.",
+                     "staticFallback":  "[AUTHORITY] permission evaluation in progress",
+                     "contexts":  [
+                                      "policy",
+                                      "authority",
+                                      "verifier"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "authorized",
+                                                       "approved",
+                                                       "executed"
+                                                   ],
+                     "digest":  "sha256:b77d4b12596a9aac92fa5ae042ff4d417e93496251ad66d2012cf5391d6d110a"
+                 },
+                 {
+                     "id":  "verification.seal",
+                     "states":  [
+                                    "PASS"
+                                ],
+                     "domains":  [
+                                     "*"
+                                 ],
+                     "phases":  [
+                                    "*"
+                                ],
+                     "glyph":  "◆",
+                     "label":  "VERIFIED",
+                     "colorRole":  "signal.pass",
+                     "motion":  {
+                                    "kind":  "Settle",
+                                    "trigger":  "declared-contract-passed",
+                                    "metric":  "verified-obligation-count",
+                                    "repetition":  "none",
+                                    "completion":  "stable-seal"
+                                },
+                     "rhythm":  {
+                                    "basis":  "verification-closure",
+                                    "waiting":  "none",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "All checks declared for this event passed.",
+                     "nonMeaning":  "This is not universal truth, unlimited authority, infallibility, or proof that unknown defects do not exist.",
+                     "staticFallback":  "[VERIFIED] declared checks passed",
+                     "contexts":  [
+                                      "compiler",
+                                      "verifier",
+                                      "runtime",
+                                      "policy",
+                                      "memory",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "universally-true",
+                                                       "infallible",
+                                                       "unlimited-authority",
+                                                       "defect-free"
+                                                   ],
+                     "digest":  "sha256:66351b2e6917f5ce90607cb16ceac42e55d7f222b0a8d51ceefb07fcb9a117c7"
+                 },
+                 {
+                     "id":  "invariant.fracture",
+                     "states":  [
+                                    "FAIL",
+                                    "REJECT"
+                                ],
+                     "domains":  [
+                                     "*"
+                                 ],
+                     "phases":  [
+                                    "*"
+                                ],
+                     "glyph":  "⬗",
+                     "label":  "FRACTURE",
+                     "colorRole":  "signal.failure",
+                     "motion":  {
+                                    "kind":  "Shake",
+                                    "trigger":  "named-invariant-failed",
+                                    "metric":  "failed-invariant-count",
+                                    "repetition":  "once-per-failure-record",
+                                    "completion":  "stable-fracture"
+                                },
+                     "rhythm":  {
+                                    "basis":  "failure-occurrence",
+                                    "waiting":  "none",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "A named invariant failed or the event was explicitly rejected.",
+                     "nonMeaning":  "The display does not identify blame, catastrophe, or permission to bypass the failed boundary.",
+                     "staticFallback":  "[FRACTURE] named invariant failed",
+                     "contexts":  [
+                                      "compiler",
+                                      "verifier",
+                                      "runtime",
+                                      "policy",
+                                      "memory",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "catastrophe",
+                                                       "override-allowed",
+                                                       "operator-blame"
+                                                   ],
+                     "digest":  "sha256:8908c448832e8786f4ab8bf999a9ab8b3207ab7944d025d2ce33e4f49a94c5cf"
+                 },
+                 {
+                     "id":  "boundary.warning",
+                     "states":  [
+                                    "WARN"
+                                ],
+                     "domains":  [
+                                     "*"
+                                 ],
+                     "phases":  [
+                                    "*"
+                                ],
+                     "glyph":  "⬖",
+                     "label":  "WARNING",
+                     "colorRole":  "signal.warning",
+                     "motion":  {
+                                    "kind":  "Pulse",
+                                    "trigger":  "bounded-warning-recorded",
+                                    "metric":  "warning-count",
+                                    "repetition":  "once-per-warning-record",
+                                    "completion":  "stable-warning"
+                                },
+                     "rhythm":  {
+                                    "basis":  "warning-occurrence",
+                                    "waiting":  "none",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "A bounded concern requires attention without asserting failure.",
+                     "nonMeaning":  "Failure, urgency, or permission denial is not implied.",
+                     "staticFallback":  "[WARNING] bounded concern requires attention",
+                     "contexts":  [
+                                      "compiler",
+                                      "verifier",
+                                      "runtime",
+                                      "policy",
+                                      "memory",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "failed",
+                                                       "urgent",
+                                                       "denied"
+                                                   ],
+                     "digest":  "sha256:abcd8071ba4d3547606879adb284df297d8779d72266bfbe8b66ebe27745e6a4"
+                 },
+                 {
+                     "id":  "observation.info",
+                     "states":  [
+                                    "INFO"
+                                ],
+                     "domains":  [
+                                     "*"
+                                 ],
+                     "phases":  [
+                                    "*"
+                                ],
+                     "glyph":  "🜁",
+                     "label":  "OBSERVE",
+                     "colorRole":  "signal.information",
+                     "motion":  {
+                                    "kind":  "Pulse",
+                                    "trigger":  "new-observation-recorded",
+                                    "metric":  "observation-count",
+                                    "repetition":  "once-per-observation",
+                                    "completion":  "stable-observation"
+                                },
+                     "rhythm":  {
+                                    "basis":  "event-occurrence",
+                                    "waiting":  "none",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "A bounded observation was recorded.",
+                     "nonMeaning":  "No pass, failure, authority, or execution claim is made.",
+                     "staticFallback":  "[OBSERVE] bounded information recorded",
+                     "contexts":  [
+                                      "compiler",
+                                      "verifier",
+                                      "runtime",
+                                      "policy",
+                                      "memory",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "verified",
+                                                       "failed",
+                                                       "authorized",
+                                                       "executed"
+                                                   ],
+                     "digest":  "sha256:11bdfa14f368cc773af0dfed729cf7252198543d923a705658849e9fcfc707c1"
+                 },
+                 {
+                     "id":  "execution.closure",
+                     "states":  [
+                                    "PASS"
+                                ],
+                     "domains":  [
+                                     "connection",
+                                     "runtime",
+                                     "vm",
+                                     "evolution"
+                                 ],
+                     "phases":  [
+                                    "closure",
+                                    "halt",
+                                    "complete",
+                                    "committed"
+                                ],
+                     "glyph":  "◇",
+                     "label":  "CLOSED",
+                     "colorRole":  "signal.closure",
+                     "motion":  {
+                                    "kind":  "Settle",
+                                    "trigger":  "bounded-lifecycle-closed",
+                                    "metric":  "closure-obligation-count",
+                                    "repetition":  "none",
+                                    "completion":  "stable-closure"
+                                },
+                     "rhythm":  {
+                                    "basis":  "lifecycle-closure",
+                                    "waiting":  "none",
+                                    "falseProgress":  false
+                                },
+                     "meaning":  "The named bounded lifecycle reached its recorded closure state.",
+                     "nonMeaning":  "Closure does not erase provenance, expand authority, or assert that unrelated work is complete.",
+                     "staticFallback":  "[CLOSED] named bounded lifecycle closed",
+                     "contexts":  [
+                                      "runtime",
+                                      "connection",
+                                      "evolution",
+                                      "repository"
+                                  ],
+                     "prohibitedInterpretations":  [
+                                                       "history-erased",
+                                                       "authority-expanded",
+                                                       "all-work-complete"
+                                                   ],
+                     "digest":  "sha256:1a8f2a7c19ea3283a8940ebb112f818eb58483cdf37494f2db235317df0a6931"
+                 }
+             ],
+    "engagementContract":  {
+                               "rewardPattern":  "none",
+                               "fakeUrgency":  false,
+                               "artificialScarcity":  false,
+                               "streakMechanics":  false,
+                               "surpriseReinforcement":  false,
+                               "unboundedLoops":  false,
+                               "attentionBasis":  "truthful-state-change"
+                           },
+    "digest":  "sha256:6a1645945b84218ae02ce9f6c266109d773a2380a2c1f7c5abe8e1a38fce4e9a"
+}

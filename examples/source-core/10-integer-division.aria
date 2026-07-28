@@ -1,0 +1,4 @@
+fn half(value: Int) -> Int {
+    value / 2
+}
+emit half(21);

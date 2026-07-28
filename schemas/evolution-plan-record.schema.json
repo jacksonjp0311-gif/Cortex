@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/evolution-plan-record.schema.json",
+  "title": "ARIA Evolution Plan Record 0.7",
+  "type": "object",
+  "required": [
+    "schema",
+    "state",
+    "proposalId",
+    "baseCommit",
+    "originalSnapshotId",
+    "candidateSnapshotId",
+    "semanticDiff",
+    "rollbackVerified",
+    "requiredGates",
+    "id"
+  ],
+  "properties": {
+    "schema": { "const": "aria.evolution-plan-record/0.7" },
+    "state": { "const": "awaiting-authorization" },
+    "proposalId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "baseCommit": { "type": "string", "pattern": "^[a-fA-F0-9]{40,64}$" },
+    "originalSnapshotId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "candidateSnapshotId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "semanticDiff": { "type": "object" },
+    "rollbackVerified": { "const": true },
+    "requiredGates": {
+      "type": "array",
+      "items": { "enum": ["manifest", "doctor.strict", "conformance"] },
+      "minItems": 3,
+      "uniqueItems": true
+    },
+    "id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

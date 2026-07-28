@@ -1,0 +1,30 @@
+{
+  "schema": {
+    "schema": "aria.graph-schema/0.3",
+    "nodeTypes": ["Resource", "User"],
+    "edgeTypes": [
+      {
+        "name": "access",
+        "sourceType": "User",
+        "targetType": "Resource"
+      },
+      {
+        "name": "requests",
+        "sourceType": "User",
+        "targetType": "Resource"
+      }
+    ]
+  },
+  "nodes": [
+    { "id": "user:42", "type": "User", "status": "active" },
+    { "id": "resource:7", "type": "Resource", "status": "available" }
+  ],
+  "edges": [
+    {
+      "id": "edge:request:1",
+      "type": "requests",
+      "source": "user:42",
+      "target": "resource:7"
+    }
+  ]
+}

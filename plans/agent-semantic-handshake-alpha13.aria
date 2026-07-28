@@ -1,0 +1,22 @@
+aria 0.4.0
+module AgentSemanticHandshake version 1.0.0
+program AgentSemanticHandshake version 1.0.0
+entry Main
+
+agent Integrator {
+}
+
+connection HumanMachineMesh {
+  operator = "human"
+  agent = "Integrator"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanMachineMesh
+  intent HumanMachineMesh <- "Let an unfamiliar AI discover, understand, verify, and align with ARIA through one seamless deterministic connection surface."
+  propose HumanMachineMesh <- "Add a canonical machine-readable connection contract, content-addressed handshake, explicit synchronization phases, shared vocabulary, authority boundaries, CLI discovery command, tests, and human documentation without granting authority or calling an external model."
+  consent HumanMachineMesh <- true
+  disconnect HumanMachineMesh
+  emit "Connection becomes an explicit shared semantic state."
+}

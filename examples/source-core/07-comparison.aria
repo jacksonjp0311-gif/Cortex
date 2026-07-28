@@ -1,0 +1,4 @@
+fn adult(age: Int) -> Bool {
+    age >= 18
+}
+emit adult(21);

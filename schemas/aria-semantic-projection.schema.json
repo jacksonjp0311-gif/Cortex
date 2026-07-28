@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria-lang.local/schemas/aria-semantic-projection.schema.json",
+  "title": "ARIA Semantic Projection",
+  "type": "object",
+  "required": ["format", "version", "sequence", "stateIdentity", "phase", "state", "source", "cue", "glyph", "motion", "rhythm", "metrics", "transition", "record", "explanation", "accessibility", "engagement", "digest"],
+  "properties": {
+    "format": { "const": "aria.semantic-projection" },
+    "version": { "const": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "stateIdentity": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["ACTIVE", "PASS", "REJECT", "WARN", "FAIL", "INFO"] },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": true
+}

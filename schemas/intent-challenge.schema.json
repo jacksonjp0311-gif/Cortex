@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-challenge.schema.json",
+  "title": "ARIA Independent Intent Challenge",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intentId", "interpretationId", "challenger", "issues", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent-challenge/0.9" },
+    "intentId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "interpretationId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "challenger": { "type": "string", "minLength": 1 },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "message"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "severity": { "enum": ["minor", "material"] },
+          "message": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

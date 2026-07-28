@@ -1,0 +1,44 @@
+name: aria-gates
+
+on:
+  push:
+  pull_request:
+
+env:
+  ARIA_ANIMATION: '0'
+
+permissions:
+  contents: read
+
+jobs:
+  powershell-7:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Doctor and strict repository verification
+        shell: pwsh
+        run: ./aria.ps1 doctor -Strict
+      - name: Compiler and VM tests
+        shell: pwsh
+        run: ./aria.ps1 test
+      - name: Gate hello program
+        shell: pwsh
+        run: ./aria.ps1 gate ./examples/hello.aria -Strict
+      - name: Compile and execute hello program
+        shell: pwsh
+        run: ./aria.ps1 run ./examples/hello.aria -Strict
+
+  windows-powershell-5:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Windows PowerShell 5.1 compatibility gate
+        shell: powershell
+        run: |
+          .\aria.ps1 doctor -Strict
+          .\aria.ps1 test
+          .\aria.ps1 run .\examples\hello.aria -Strict

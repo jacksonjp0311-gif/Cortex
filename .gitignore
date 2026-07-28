@@ -1,0 +1,8 @@
+﻿.aria/
+dist/
+*.ariac
+*.aria-provenance.json
+*.zip
+.DS_Store
+Thumbs.db
+*.bak-*

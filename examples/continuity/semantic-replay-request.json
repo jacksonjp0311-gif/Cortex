@@ -1,0 +1,14 @@
+{
+  "handshakeDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "sessionId": "session:example-alpha14",
+  "baselineDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "intentDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "interpretationDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "proposalDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "consentDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "policyDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "evidenceDigests": [
+    "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  ],
+  "stateDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+}

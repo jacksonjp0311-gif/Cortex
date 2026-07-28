@@ -1,0 +1,21 @@
+aria 0.4.0
+module SequenceCoreEvolution version 0.4.0
+program SequenceCoreEvolution version 0.4.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanMeta {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+∿ Main {
+  ↔ HumanMeta
+  🜁 HumanMeta ← "Give ARIA its first bounded immutable structured value before activating sequence algorithms."
+  🜂 HumanMeta ← "Introduce flat homogeneous Sequence<T> literals, typed empty sequences, deterministic structured constants through PUSH_CONST, verifier and VM support, explicit 256-element and 65536-byte ceilings, no new opcode or capability, and keep map, filter, and reduce specified."
+  ⛨ HumanMeta ← true
+  ◆ HumanMeta
+}

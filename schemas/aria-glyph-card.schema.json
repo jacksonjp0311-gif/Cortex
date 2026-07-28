@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/aria-glyph-card.schema.json",
+  "title": "ARIA Glyph Card",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "id",
+    "symbol",
+    "spoken",
+    "family",
+    "category",
+    "fixity",
+    "arity",
+    "inputs",
+    "output",
+    "purity",
+    "deterministic",
+    "effects",
+    "capabilities",
+    "lowering",
+    "status",
+    "tests",
+    "digest"
+  ],
+  "properties": {
+    "format": { "const": "aria.glyph-card" },
+    "version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+    "symbol": { "type": "string", "minLength": 1 },
+    "spoken": { "type": "string", "minLength": 1 },
+    "family": {
+      "enum": [
+        "primitive",
+        "function",
+        "composition",
+        "algorithm",
+        "control",
+        "intelligence",
+        "authority"
+      ]
+    },
+    "category": { "type": "string", "minLength": 1 },
+    "fixity": {
+      "enum": ["prefix", "infix", "postfix", "block", "entity"]
+    },
+    "arity": { "type": "integer", "minimum": 0, "maximum": 8 },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]*$"
+          },
+          "type": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "output": { "type": "string", "minLength": 1 },
+    "purity": { "enum": ["pure", "effectful"] },
+    "deterministic": { "type": "boolean" },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9.-]*$"
+      },
+      "uniqueItems": true
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^cap:[a-z][a-z0-9.:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "lowering": {
+      "type": "object",
+      "required": ["kind", "target"],
+      "properties": {
+        "kind": { "enum": ["alias", "composition", "builtin"] },
+        "target": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "status": { "enum": ["specified", "verified", "deprecated"] },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

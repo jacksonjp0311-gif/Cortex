@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria-lang.dev/schema/aria-provenance-0.1.json",
+  "title": "ARIA build provenance",
+  "type": "object",
+  "required": ["format", "generatedAtUtc", "builder", "compilerVersion", "sourceHash", "irHash", "artifactHash", "policyHash"],
+  "properties": {
+    "format": { "const": "aria.provenance" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "builder": { "type": "string" },
+    "compilerVersion": { "type": "string" },
+    "sourceHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "irHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "artifactHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "policyHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

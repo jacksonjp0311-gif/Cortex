@@ -1,0 +1,22 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://aria.local/schemas/session-handoff.schema.json",
+  "title":"ARIA portable semantic session handoff",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema","protocol","replayDigest","fromAgent","toAgent","contextRefs","continuationBoundary","exclusions","session","authority","digest"],
+  "properties":{
+    "schema":{"const":"aria.session-handoff/1"},
+    "protocol":{"const":"semantic-handoff/1"},
+    "replayDigest":{"$ref":"#/$defs/digest"},
+    "fromAgent":{"type":"string","minLength":1},
+    "toAgent":{"type":"string","minLength":1},
+    "contextRefs":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["kind","digest"],"properties":{"kind":{"enum":["intent","interpretation","proposal","consent","evidence","replay"]},"digest":{"$ref":"#/$defs/digest"}}}},
+    "continuationBoundary":{"type":"string","minLength":1},
+    "exclusions":{"type":"array","minItems":5,"uniqueItems":true,"items":{"enum":["prompts","secrets","credentials","private-payloads","unrelated-history"]}},
+    "session":{"type":"object","additionalProperties":false,"required":["resumable","phase","authority"],"properties":{"resumable":{"const":true},"phase":{"const":"transferred"},"authority":{"const":"none"}}},
+    "authority":{"type":"object","additionalProperties":false,"required":["grantsAuthority","consentTransfers","capabilities"],"properties":{"grantsAuthority":{"const":false},"consentTransfers":{"const":false},"capabilities":{"type":"array","maxItems":0}}},
+    "digest":{"$ref":"#/$defs/digest"}
+  },
+  "$defs":{"digest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"}}
+}

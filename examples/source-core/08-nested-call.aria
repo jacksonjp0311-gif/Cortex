@@ -1,0 +1,7 @@
+fn double(x: Int) -> Int {
+    x * 2
+}
+fn add(x: Int, y: Int) -> Int {
+    x + y
+}
+emit add(double(10), double(6));

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria-lang.local/schemas/aria-event-v3.schema.json",
+  "title": "ARIA Hash-Chained Event v3",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "sequence",
+    "operationId",
+    "operationSequence",
+    "previousDigest",
+    "domain",
+    "phase",
+    "state",
+    "energy",
+    "information",
+    "coherence",
+    "source",
+    "occurredAt",
+    "data",
+    "projection",
+    "digest"
+  ],
+  "properties": {
+    "format": { "const": "aria.event" },
+    "version": { "const": 3 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "operationId": {
+      "type": "string",
+      "pattern": "^aria\\.operation\\.[a-z0-9._-]+:[a-f0-9]{64}$"
+    },
+    "operationSequence": { "type": "integer", "minimum": 1 },
+    "previousDigest": {
+      "type": "string",
+      "pattern": "^$|^[a-f0-9]{64}$"
+    },
+    "domain": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" },
+    "phase": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" },
+    "state": {
+      "enum": ["ACTIVE", "PASS", "REJECT", "WARN", "FAIL", "INFO"]
+    },
+    "energy": { "type": "string" },
+    "information": { "type": "string" },
+    "coherence": { "type": "string" },
+    "source": { "type": "string" },
+    "occurredAt": { "type": "string" },
+    "projection": {
+      "$ref": "aria-semantic-projection.schema.json"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

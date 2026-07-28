@@ -1,0 +1,15 @@
+{
+  "handoffDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+  "provider": {
+    "id": "provider:declared",
+    "model": "model:declared"
+  },
+  "operation": "interpret.intent",
+  "requestedCapabilities": [
+    "context.read"
+  ],
+  "capabilityCeiling": [
+    "context.read"
+  ],
+  "consentDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+}

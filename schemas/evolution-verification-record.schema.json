@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/evolution-verification-record.schema.json",
+  "title": "ARIA Evolution Verification Record 0.8",
+  "type": "object",
+  "required": [
+    "schema",
+    "state",
+    "proposalId",
+    "planRecordId",
+    "authorizationId",
+    "authorityDecisionId",
+    "governedEventId",
+    "baseCommit",
+    "candidateSnapshotId",
+    "rollbackVerified",
+    "requiredGates",
+    "id"
+  ],
+  "properties": {
+    "schema": { "const": "aria.evolution-verification-record/0.8" },
+    "state": { "const": "authorized" },
+    "proposalId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "planRecordId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "authorizationId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "authorityDecisionId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "governedEventId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "baseCommit": { "type": "string", "pattern": "^[a-fA-F0-9]{40,64}$" },
+    "candidateSnapshotId": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "rollbackVerified": { "const": true },
+    "requiredGates": {
+      "type": "array",
+      "items": { "enum": ["manifest", "doctor.strict", "conformance"] },
+      "minItems": 3,
+      "uniqueItems": true
+    },
+    "id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

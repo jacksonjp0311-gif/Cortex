@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/card-execution-evidence.schema.json",
+  "title": "ARIA per-card execution evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "card", "toolchain", "program", "policyDigest", "admissionTestReceiptDigest", "operation", "outcome", "counts", "terminalEvent", "signalSubset", "authority", "digest"],
+  "properties": {
+    "format": { "const": "aria.card-execution-evidence" },
+    "version": { "const": 1 },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "digest", "symbol"],
+      "properties": {
+        "id": { "enum": ["algorithm.map", "algorithm.filter", "algorithm.reduce"] },
+        "digest": { "$ref": "#/$defs/identity" },
+        "symbol": { "type": "string", "minLength": 1, "maxLength": 8 }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compilerVersion", "runtimeVersion"],
+      "properties": {
+        "compilerVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "runtimeVersion": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceHash", "irHash", "artifactHash", "effectGraphDigest"],
+      "properties": {
+        "sourceHash": { "$ref": "#/$defs/identity" },
+        "irHash": { "$ref": "#/$defs/identity" },
+        "artifactHash": { "$ref": "#/$defs/identity" },
+        "effectGraphDigest": { "$ref": "#/$defs/identity" }
+      }
+    },
+    "policyDigest": { "$ref": "#/$defs/identity" },
+    "admissionTestReceiptDigest": { "$ref": "#/$defs/identity" },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "target", "line"],
+      "properties": {
+        "kind": { "enum": ["map", "filter", "reduce"] },
+        "target": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "line": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "outcome": { "enum": ["completed", "fractured"] },
+    "counts": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][A-Za-z0-9]*Count$" },
+      "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 1048576 }
+    },
+    "terminalEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationId", "sequence", "operationSequence", "occurredAt", "state", "digest"],
+      "properties": {
+        "operationId": { "type": "string", "pattern": "^aria\\.operation\\.[a-z0-9._-]+:[a-f0-9]{64}$" },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "operationSequence": { "type": "integer", "minimum": 1 },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "state": { "enum": ["PASS", "FAIL"] },
+        "digest": { "$ref": "#/$defs/identity" }
+      }
+    },
+    "signalSubset": { "type": "object" },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "grantsAuthority", "capabilitiesGranted"],
+      "properties": {
+        "class": { "const": "observational" },
+        "grantsAuthority": { "const": false },
+        "capabilitiesGranted": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "digest": { "$ref": "#/$defs/identity" }
+  },
+  "$defs": {
+    "identity": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

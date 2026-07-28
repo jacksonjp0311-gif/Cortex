@@ -1,0 +1,18 @@
+aria 0.4.0
+program SemanticProjectionExample version 0.6.0
+entry Main
+
+memory Projection {
+  state = "intent"
+}
+
+flow Main {
+  signal pulse "semantic event begins"
+  recall Projection.state -> state
+  emit state
+  remember Projection.state = "closure"
+  recall Projection.state -> closed
+  assert closed == "closure"
+  signal pass "declared checks passed"
+  halt
+}

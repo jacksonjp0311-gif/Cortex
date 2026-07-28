@@ -1,0 +1,15 @@
+aria 0.4.0
+module VerifiedFilterExample version 0.8.0
+program VerifiedFilterExample version 0.8.0
+entry Main
+
+function IsPositive(value: Number) -> Bool {
+  ↩ value > 0
+}
+
+flow Main {
+  let values: Sequence<Number> = [-2, 0, 3, 4]
+  let selected: Sequence<Number> = ⫰(values, IsPositive)
+  emit selected
+  halt
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/intent-evidence.schema.json",
+  "title": "ARIA Intent Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "criterionId", "kind", "subjectId", "digest", "passed", "id"],
+  "properties": {
+    "schema": { "const": "aria.intent-evidence/0.9" },
+    "criterionId": { "type": "string", "minLength": 1 },
+    "kind": { "type": "string", "minLength": 1 },
+    "subjectId": { "type": "string", "minLength": 1 },
+    "digest": { "type": "string", "minLength": 1 },
+    "passed": { "type": "boolean" },
+    "id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

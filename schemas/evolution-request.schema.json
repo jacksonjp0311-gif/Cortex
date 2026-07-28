@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/evolution-request.schema.json",
+  "title": "ARIA Evolution Request 0.7",
+  "type": "object",
+  "required": ["schema", "proposer", "targetVersion", "resource", "capabilityIds", "changes", "evidence"],
+  "properties": {
+    "schema": { "const": "aria.evolution-request/0.7" },
+    "proposer": { "type": "string", "minLength": 1 },
+    "targetVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+([\\-+][0-9A-Za-z.-]+)?$"
+    },
+    "resource": { "type": "string", "minLength": 1 },
+    "capabilityIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "changes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "operation"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "operation": { "enum": ["write", "delete"] },
+          "content": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["kind", "id", "digest"],
+        "properties": {
+          "kind": { "type": "string", "minLength": 1 },
+          "id": { "type": "string", "minLength": 1 },
+          "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

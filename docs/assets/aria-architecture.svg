@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">ARIA system architecture</title>
+  <desc id="desc">Human and AI inputs converge through intent, semantic analysis, authority verification, deterministic execution, and shared evidence projections.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0913"/>
+      <stop offset="1" stop-color="#101522"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff4fc8"/>
+      <stop offset=".5" stop-color="#ae72ff"/>
+      <stop offset="1" stop-color="#60e8e0"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <rect width="1200" height="700" rx="24" fill="url(#bg2)"/>
+  <text x="60" y="65" fill="#fff" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="28" font-weight="750">ONE EVENT · TWO LEGIBLE SURFACES · ONE VERIFIED IDENTITY</text>
+  <text x="60" y="94" fill="#91879f" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="15">Every display cue and machine record projects from the same bounded semantic state.</text>
+
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <g transform="translate(60 145)">
+      <rect width="180" height="92" rx="18" fill="#ff4fc8" fill-opacity=".08" stroke="#ff4fc8" stroke-opacity=".55"/>
+      <text x="90" y="39" fill="#ff72d2" text-anchor="middle" font-size="16" font-weight="700">HUMAN</text>
+      <text x="90" y="65" fill="#bcb0c8" text-anchor="middle" font-size="13">intent · consent</text>
+    </g>
+    <g transform="translate(60 463)">
+      <rect width="180" height="92" rx="18" fill="#67e8f9" fill-opacity=".07" stroke="#67e8f9" stroke-opacity=".5"/>
+      <text x="90" y="39" fill="#79e9f8" text-anchor="middle" font-size="16" font-weight="700">AI / TOOL</text>
+      <text x="90" y="65" fill="#bcb0c8" text-anchor="middle" font-size="13">proposal · challenge</text>
+    </g>
+
+    <path d="M240 191H310V282" fill="none" stroke="#ff65cd" stroke-width="2"/>
+    <path d="M240 509H310V418" fill="none" stroke="#67dce9" stroke-width="2"/>
+    <circle cx="310" cy="350" r="7" fill="#c66cff"/>
+
+    <g transform="translate(350 135)">
+      <rect width="240" height="430" rx="22" fill="#fff" fill-opacity=".035" stroke="#fff" stroke-opacity=".13"/>
+      <text x="120" y="42" fill="#fff" text-anchor="middle" font-size="17" font-weight="700">SEMANTIC CORE</text>
+      <g font-size="14">
+        <rect x="28" y="72" width="184" height="52" rx="12" fill="#ff4fc8" fill-opacity=".08"/>
+        <text x="120" y="104" fill="#eacfe1" text-anchor="middle">intent + interpretation</text>
+        <rect x="28" y="140" width="184" height="52" rx="12" fill="#d85ee8" fill-opacity=".08"/>
+        <text x="120" y="172" fill="#e2cfe9" text-anchor="middle">types + effects</text>
+        <rect x="28" y="208" width="184" height="52" rx="12" fill="#ae72ff" fill-opacity=".08"/>
+        <text x="120" y="240" fill="#ddd2ec" text-anchor="middle">IR + bytecode</text>
+        <rect x="28" y="276" width="184" height="52" rx="12" fill="#8a82ff" fill-opacity=".08"/>
+        <text x="120" y="308" fill="#d7d5ef" text-anchor="middle">policy + capability</text>
+        <rect x="28" y="344" width="184" height="52" rx="12" fill="#60e8e0" fill-opacity=".07"/>
+        <text x="120" y="376" fill="#cceae8" text-anchor="middle">admission + evidence</text>
+      </g>
+    </g>
+
+    <path d="M310 350H350" stroke="#c66cff" stroke-width="3"/>
+    <path d="M590 350H665" stroke="url(#rail)" stroke-width="4"/>
+    <circle cx="629" cy="350" r="15" fill="#bb74ff" fill-opacity=".18" stroke="#bb74ff"/>
+
+    <g transform="translate(665 155)">
+      <rect width="220" height="390" rx="22" fill="#fff" fill-opacity=".035" stroke="#fff" stroke-opacity=".13"/>
+      <text x="110" y="42" fill="#fff" text-anchor="middle" font-size="17" font-weight="700">VERIFIED RUNTIME</text>
+      <g fill="#bdb5ca" font-size="14">
+        <text x="28" y="95">01  parse</text>
+        <text x="28" y="135">02  validate</text>
+        <text x="28" y="175">03  compile</text>
+        <text x="28" y="215">04  package</text>
+        <text x="28" y="255">05  verify</text>
+        <text x="28" y="295">06  authorize</text>
+        <text x="28" y="335">07  execute</text>
+      </g>
+      <path d="M174 80V340" stroke="url(#rail)" stroke-width="3"/>
+      <g fill="#11121d" stroke="#ba78fa">
+        <circle cx="174" cy="91" r="6"/><circle cx="174" cy="131" r="6"/>
+        <circle cx="174" cy="171" r="6"/><circle cx="174" cy="211" r="6"/>
+        <circle cx="174" cy="251" r="6"/><circle cx="174" cy="291" r="6"/>
+        <circle cx="174" cy="331" r="6"/>
+      </g>
+    </g>
+
+    <path d="M885 350H940" stroke="#66e5df" stroke-width="3"/>
+    <g transform="translate(940 145)">
+      <rect width="200" height="190" rx="18" fill="#ff4fc8" fill-opacity=".055" stroke="#ff4fc8" stroke-opacity=".38"/>
+      <text x="100" y="37" fill="#ff72d2" text-anchor="middle" font-size="15" font-weight="700">HUMAN VIEW</text>
+      <text x="100" y="77" fill="#c8bdcf" text-anchor="middle" font-size="13">glyph · motion</text>
+      <text x="100" y="105" fill="#c8bdcf" text-anchor="middle" font-size="13">rhythm · metrics</text>
+      <text x="100" y="133" fill="#c8bdcf" text-anchor="middle" font-size="13">plain meaning</text>
+      <text x="100" y="163" fill="#8d8499" text-anchor="middle" font-size="11">color is never the only signal</text>
+    </g>
+    <g transform="translate(940 365)">
+      <rect width="200" height="190" rx="18" fill="#67e8f9" fill-opacity=".05" stroke="#67e8f9" stroke-opacity=".35"/>
+      <text x="100" y="37" fill="#79e9f8" text-anchor="middle" font-size="15" font-weight="700">MACHINE VIEW</text>
+      <text x="100" y="77" fill="#c8bdcf" text-anchor="middle" font-size="13">schema · type</text>
+      <text x="100" y="105" fill="#c8bdcf" text-anchor="middle" font-size="13">digest · provenance</text>
+      <text x="100" y="133" fill="#c8bdcf" text-anchor="middle" font-size="13">event · evidence</text>
+      <text x="100" y="163" fill="#8d8499" text-anchor="middle" font-size="11">bounded, canonical records</text>
+    </g>
+    <path d="M885 350H915V240H940" fill="none" stroke="#ff65cd" stroke-width="2"/>
+    <path d="M915 350V460H940" fill="none" stroke="#67dce9" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(350 610)" font-family="Inter,Segoe UI,Arial,sans-serif">
+    <rect width="535" height="48" rx="14" fill="#fff" fill-opacity=".035" stroke="#fff" stroke-opacity=".1"/>
+    <text x="267" y="30" fill="#a9a0b6" text-anchor="middle" font-size="13">SYMBOL ≠ MEANING ≠ IMPLEMENTATION ≠ AUTHORITY</text>
+  </g>
+</svg>

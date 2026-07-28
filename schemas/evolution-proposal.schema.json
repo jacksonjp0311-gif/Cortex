@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schemas/evolution-proposal.schema.json",
+  "title": "ARIA Governed Evolution Proposal 0.6",
+  "type": "object",
+  "required": [
+    "schema",
+    "proposer",
+    "baseCommit",
+    "targetVersion",
+    "resource",
+    "requestedEffects",
+    "capabilityIds",
+    "changes",
+    "evidence",
+    "requiredGates",
+    "rollbackPlan",
+    "signature",
+    "id"
+  ],
+  "properties": {
+    "schema": { "const": "aria.evolution-proposal/0.6" },
+    "proposer": { "type": "string", "minLength": 1 },
+    "baseCommit": { "type": "string", "pattern": "^[a-fA-F0-9]{40,64}$" },
+    "targetVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+([\\-+][0-9A-Za-z.-]+)?$"
+    },
+    "resource": { "type": "string", "minLength": 1 },
+    "requestedEffects": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "capabilityIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "changes": { "type": "array", "minItems": 1 },
+    "evidence": { "type": "array", "minItems": 1 },
+    "requiredGates": {
+      "type": "array",
+      "items": { "enum": ["manifest", "doctor.strict", "conformance"] },
+      "minItems": 3,
+      "uniqueItems": true
+    },
+    "rollbackPlan": { "type": "array", "minItems": 1 },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": { "const": "none" },
+        "value": { "const": "" }
+      },
+      "additionalProperties": false
+    },
+    "id": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

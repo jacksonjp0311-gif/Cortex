@@ -1,0 +1,19 @@
+aria 0.4.0
+module DeterministicSemanticReplay version 1.0.0
+program DeterministicSemanticReplay version 1.0.0
+entry Main
+agent ContinuityVerifier {
+}
+connection HumanReplay {
+  operator = "human"
+  agent = "ContinuityVerifier"
+  protocol = "intent-proposal-consent"
+}
+flow Main {
+  connect HumanReplay
+  intent HumanReplay <- "Reconstruct the same admitted semantic state across sessions or identify the first exact drift boundary."
+  propose HumanReplay <- "Bind handshake, baseline, intent, interpretation, proposal, consent, policy, evidence, and terminal state into a deterministic verify-only replay that never repeats external effects or grants authority."
+  consent HumanReplay <- true
+  disconnect HumanReplay
+  emit "Semantic replay is evidence, not execution authority."
+}

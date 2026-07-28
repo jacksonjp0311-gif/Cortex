@@ -1,0 +1,326 @@
+{
+    "format":  "aria.glyph-card-registry",
+    "version":  1,
+    "reserved":  [
+                     {
+                         "symbol":  "⌬",
+                         "semanticRoot":  "system",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "◉",
+                         "semanticRoot":  "operator",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "⟁",
+                         "semanticRoot":  "agent",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "▧",
+                         "semanticRoot":  "repository",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "ϟ",
+                         "semanticRoot":  "service",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "◇",
+                         "semanticRoot":  "surface",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "⊙",
+                         "semanticRoot":  "memory",
+                         "source":  "grammar/glyphs.json"
+                     },
+                     {
+                         "symbol":  "◆",
+                         "semanticRoot":  "artifact-or-closure",
+                         "source":  "legacy surfaces"
+                     },
+                     {
+                         "symbol":  "⛨",
+                         "semanticRoot":  "policy-or-consent",
+                         "source":  "legacy surfaces"
+                     },
+                     {
+                         "symbol":  "∿",
+                         "semanticRoot":  "stream-or-flow",
+                         "source":  "legacy surfaces"
+                     },
+                     {
+                         "symbol":  "🜁",
+                         "semanticRoot":  "acquire-or-intent",
+                         "source":  "legacy surfaces"
+                     },
+                     {
+                         "symbol":  "🜂",
+                         "semanticRoot":  "externalize-or-propose",
+                         "source":  "legacy surfaces"
+                     },
+                     {
+                         "symbol":  "🜄",
+                         "semanticRoot":  "preserve",
+                         "source":  "grammar/alchemy.json"
+                     },
+                     {
+                         "symbol":  "↔",
+                         "semanticRoot":  "connection",
+                         "source":  "executable connection surface"
+                     }
+                 ],
+    "cards":  [
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "function.invoke",
+                      "symbol":  "▷",
+                      "spoken":  "invoke",
+                      "family":  "function",
+                      "category":  "invocation",
+                      "fixity":  "prefix",
+                      "arity":  1,
+                      "inputs":  [
+                                     {
+                                         "name":  "call",
+                                         "type":  "FunctionCall\u003cT\u003e"
+                                     }
+                                 ],
+                      "output":  "Value\u003cT\u003e",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "call"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "existing CALL bytecode verification",
+                                    "typed function argument verification",
+                                    "typed function return verification"
+                                ],
+                      "digest":  "sha256:b5028424bde72ea759926d0318e6640d078bea5f902694a43d98ae92a078f572"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "function.return",
+                      "symbol":  "↩",
+                      "spoken":  "return",
+                      "family":  "function",
+                      "category":  "termination",
+                      "fixity":  "prefix",
+                      "arity":  1,
+                      "inputs":  [
+                                     {
+                                         "name":  "value",
+                                         "type":  "Value\u003cT\u003e"
+                                     }
+                                 ],
+                      "output":  "Control\u003cReturn\u003cT\u003e\u003e",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "return"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "existing RETURN bytecode verification",
+                                    "function return type verification",
+                                    "function scope closure verification"
+                                ],
+                      "digest":  "sha256:0dcd6616eb81b3475b18afaf35560ee7eec7495becc2404901c92649258a1de4"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "composition.pipe",
+                      "symbol":  "≫",
+                      "spoken":  "pipe",
+                      "family":  "composition",
+                      "category":  "sequence",
+                      "fixity":  "infix",
+                      "arity":  2,
+                      "inputs":  [
+                                     {
+                                         "name":  "value",
+                                         "type":  "Value\u003cT\u003e"
+                                     },
+                                     {
+                                         "name":  "stage",
+                                         "type":  "Function\u003cT,U\u003e"
+                                     }
+                                 ],
+                      "output":  "Value\u003cU\u003e",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "composition",
+                                       "target":  "nested-call"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "typed unary-stage continuity",
+                                    "left-to-right canonical nested-call lowering",
+                                    "semantic IR and executable bytecode parity",
+                                    "unknown, arity, and type diagnostic parity",
+                                    "cross-platform runtime attestation"
+                                ],
+                      "digest":  "sha256:1d047e9e6bb1c1f9934ac30ba980141e97d7126d9e96a46684e2514b4302b9c7"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "algorithm.map",
+                      "symbol":  "⨯",
+                      "spoken":  "map",
+                      "family":  "algorithm",
+                      "category":  "transform",
+                      "fixity":  "prefix",
+                      "arity":  2,
+                      "inputs":  [
+                                     {
+                                         "name":  "sequence",
+                                         "type":  "Sequence\u003cT\u003e"
+                                     },
+                                     {
+                                         "name":  "transform",
+                                         "type":  "Function\u003cT,U\u003e"
+                                     }
+                                 ],
+                      "output":  "Sequence\u003cU\u003e",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "builtin",
+                                       "target":  "sequence.map"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "map preserves sequence order",
+                                    "map validates transform types",
+                                    "map execution is deterministic",
+                                    "transform purity is proven by deterministic effect graph"
+                                ],
+                      "digest":  "sha256:db5f26dd38ad6e2aefe7659fc6883fff9f2cdbc111c32679fc0af5043cee156b"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "algorithm.filter",
+                      "symbol":  "⫰",
+                      "spoken":  "filter",
+                      "family":  "algorithm",
+                      "category":  "selection",
+                      "fixity":  "prefix",
+                      "arity":  2,
+                      "inputs":  [
+                                     {
+                                         "name":  "sequence",
+                                         "type":  "Sequence\u003cT\u003e"
+                                     },
+                                     {
+                                         "name":  "predicate",
+                                         "type":  "Function\u003cT,Bool\u003e"
+                                     }
+                                 ],
+                      "output":  "Sequence\u003cT\u003e",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "builtin",
+                                       "target":  "sequence.filter"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "filter preserves source order",
+                                    "filter requires Bool predicate",
+                                    "filter execution is deterministic",
+                                    "predicate purity is proven by deterministic effect graph"
+                                ],
+                      "digest":  "sha256:f121430ae62108c1e087a0ed5a5022e3c28c19023ac3b01e82a6f1debabc0be9"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "algorithm.reduce",
+                      "symbol":  "Σ",
+                      "spoken":  "reduce",
+                      "family":  "algorithm",
+                      "category":  "aggregation",
+                      "fixity":  "prefix",
+                      "arity":  3,
+                      "inputs":  [
+                                     {
+                                         "name":  "sequence",
+                                         "type":  "Sequence\u003cT\u003e"
+                                     },
+                                     {
+                                         "name":  "reducer",
+                                         "type":  "Function\u003cA,T,A\u003e"
+                                     },
+                                     {
+                                         "name":  "initial",
+                                         "type":  "Value\u003cA\u003e"
+                                     }
+                                 ],
+                      "output":  "Value\u003cA\u003e",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "builtin",
+                                       "target":  "sequence.reduce"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "reduce validates accumulator continuity",
+                                    "reduce requires explicit initial value",
+                                    "reduce execution is deterministic",
+                                    "reducer purity is proven by deterministic effect graph"
+                                ],
+                      "digest":  "sha256:7b1a8f4ce8b6cc509be7425511d57398d04cd77f2ad40f7e81aa14b06d6512be"
+                  }
+              ],
+    "digest":  "sha256:76fa342aeffc5fd6e6dd3662dabb7eb79b4e89c523bc7830a799deb02d1ce76e"
+}

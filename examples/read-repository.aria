@@ -1,0 +1,26 @@
+aria 0.4.0
+program RepositoryReader version 0.1.0
+entry Main
+
+capability RepoRead {
+  effect = "fs.read"
+  scope = "."
+}
+
+agent Archivist {
+  grant RepoRead
+}
+
+graph RepositoryMap {
+  node ⟁ agent archivist
+  node ▧ repository aria
+  node ◆ artifact readme
+  link archivist -> aria as inspects
+  link aria -> readme as contains
+}
+
+flow Main {
+  require RepoRead
+  read "README.md" -> document
+  emit document
+}

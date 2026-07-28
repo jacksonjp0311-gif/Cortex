@@ -1,0 +1,21 @@
+aria 0.4.0
+module ConsentAdmissionReceiptsEvolution version 0.12.0
+program ConsentAdmissionReceiptsEvolution version 0.12.0
+entry Main
+
+agent Architect {
+}
+
+connection HumanAdmission {
+  operator = "human"
+  agent = "Architect"
+  protocol = "intent-proposal-consent"
+}
+
+flow Main {
+  connect HumanAdmission
+  intent HumanAdmission <- "Bind an independent human decision to one exact semantic proposal before governed evolution planning."
+  propose HumanAdmission <- "Add canonical semantic-consent and admission-receipt artifacts; reconstruct proposal, consent, identity-separation, baseline, scope, rollback, and authority obligations; preserve rejection evidence; grant no capability and perform no mutation."
+  consent HumanAdmission <- true
+  disconnect HumanAdmission
+}

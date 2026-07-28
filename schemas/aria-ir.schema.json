@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria-lang.dev/schema/aria-ir-0.4.json",
+  "title": "ARIA semantic intermediate representation",
+  "type": "object",
+  "required": [
+    "format",
+    "specVersion",
+    "programName",
+    "programVersion",
+    "entry",
+    "memories",
+    "capabilities",
+    "agents",
+    "connections",
+    "graphs",
+    "functions",
+    "flows"
+  ],
+  "properties": {
+    "format": {
+      "const": "aria.ir"
+    },
+    "specVersion": {
+      "type": "string"
+    },
+    "programName": {
+      "type": "string"
+    },
+    "programVersion": {
+      "type": "string"
+    },
+    "entry": {
+      "type": "string"
+    },
+    "memories": {
+      "type": "array"
+    },
+    "capabilities": {
+      "type": "array"
+    },
+    "agents": {
+      "type": "array"
+    },
+    "graphs": {
+      "type": "array"
+    },
+    "flows": {
+      "type": "array"
+    },
+    "moduleName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "moduleVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "functions": {
+      "type": "array"
+    },
+    "connections": {
+      "type": "array"
+    }
+  }
+}

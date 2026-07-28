@@ -1,0 +1,71 @@
+{
+    "schema":  "aria.runtime/1",
+    "release":  "0.1.0-alpha.14",
+    "languageEvolution":  "cooperative-agent-mesh-alpha.17",
+    "status":  "experimental",
+    "repository":  {
+                       "name":  "ARIA",
+                       "root":  ".",
+                       "canonicalCli":  "aria.cmd",
+                       "mainEntrypoint":  "aria.ps1"
+                   },
+    "bootstrap":  {
+                      "humanGuide":  "AGENTS.md",
+                      "connectionContract":  "ARIA-CONNECT.json",
+                      "handshake":  "aria.cmd handshake --json",
+                      "runtimeManifest":  "ARIA-RUNTIME.json",
+                      "doctor":  "aria.cmd doctor -Strict",
+                      "tests":  "aria.cmd test"
+                  },
+    "architecture":  {
+                         "compiler":  "src/Aria.Gate.psm1",
+                         "parser":  "src/Aria.Parser.psm1",
+                         "semantics":  "src/Aria.Semantics.psm1",
+                         "bytecode":  "src/Aria.Bytecode.psm1",
+                         "virtualMachine":  "src/Aria.VM.psm1",
+                         "sourceCore":  "src/Aria.SourceCore.psm1",
+                         "alchemicalSyntax":  "grammar/alchemy.json",
+                         "evolutionApplication":  "src/Aria.EvolutionApply.psm1",
+                         "signalSubset":  "src/Aria.SignalSubset.psm1",
+                         "effectGraph":  "src/Aria.Effects.psm1",
+                         "intentVerifier":  "src/Aria.IntentVerifier.psm1",
+                         "glyphMemory":  "src/Aria.GlyphMemory.psm1",
+                         "semanticProjection":  "src/Aria.SemanticProjection.psm1",
+                         "semanticCues":  "grammar/semantic-cues.json",
+                         "eventSpine":  "src/Aria.EventSpine.psm1",
+                         "executionEvidence":  "src/Aria.ExecutionEvidence.psm1",
+                         "signalIntegrityPlan":  "plans/signal-integrity-closure-alpha6-1.aria",
+                         "verifiedMap":  "src/Aria.VM.psm1",
+                         "verifiedMapPlan":  "plans/verified-map-alpha7.aria",
+                         "verifiedFilter":  "src/Aria.VM.psm1",
+                         "verifiedFilterPlan":  "plans/verified-filter-alpha8.aria",
+                         "verifiedReduce":  "src/Aria.VM.psm1",
+                         "verifiedReducePlan":  "plans/verified-reduce-alpha9.aria",
+                         "verifiedReduceIntent":  "plans/verified-reduce-alpha9-intent.json",
+                         "executionEvidencePlan":  "plans/per-card-execution-evidence-alpha10.aria",
+                         "executionEvidenceIntent":  "plans/per-card-execution-evidence-alpha10-intent.json",
+                         "semanticProposal":  "src/Aria.SemanticProposal.psm1",
+                         "semanticProposalPlan":  "plans/semantic-proposal-bundles-alpha11.aria",
+                         "semanticProposalIntent":  "plans/semantic-proposal-bundles-alpha11-intent.json",
+                         "admission":  "src/Aria.Admission.psm1",
+                         "admissionPlan":  "plans/consent-admission-receipts-alpha12.aria",
+                         "admissionIntent":  "plans/consent-admission-receipts-alpha12-intent.json",
+                         "agentHandshake":  "src/Aria.AgentHandshake.psm1",
+                         "agentConnectionContract":  "ARIA-CONNECT.json",
+                         "agentHandshakeSchema":  "schemas/aria-agent-handshake.schema.json",
+                         "agentHandshakePlan":  "plans/agent-semantic-handshake-alpha13.aria",
+                         "semanticContinuity":  "src/Aria.SemanticContinuity.psm1",
+                         "semanticReplaySchema":  "schemas/semantic-replay.schema.json",
+                         "sessionHandoffSchema":  "schemas/session-handoff.schema.json",
+                         "providerBridgeSchema":  "schemas/provider-bridge.schema.json",
+                         "cooperativeMeshSchema":  "schemas/cooperative-mesh.schema.json"
+                         ,"semanticReplayPlan":  "plans/deterministic-semantic-replay-alpha14.aria"
+                         ,"sessionHandoffPlan":  "plans/portable-session-handoff-alpha15.aria"
+                         ,"providerBridgePlan":  "plans/provider-bridge-membrane-alpha16.aria"
+                         ,"cooperativeMeshPlan":  "plans/cooperative-agent-mesh-alpha17.aria"
+                     },
+    "continuity":  {
+                       "stableTag":  "aria-alpha21-stable",
+                       "rule":  "Every evolution must preserve doctor, all conformance lattices, manifest integrity, documentation, and machine discovery."
+                   }
+}

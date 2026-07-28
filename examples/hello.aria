@@ -1,0 +1,27 @@
+aria 0.4.0
+program HelloARIA version 0.1.0
+entry Main
+
+memory Project {
+  status = "booting"
+}
+
+graph Surface {
+  node ◉ operator human
+  node ⟁ agent architect
+  node ▧ repository workspace
+  node ◆ artifact build
+  link human -> architect as authorizes
+  link architect -> workspace as observes
+  link workspace -> build as produces
+}
+
+flow Main {
+  signal pulse "language core"
+  emit "ARIA is online."
+  remember Project.status = "active"
+  recall Project.status -> state
+  emit state
+  assert state == "active"
+  signal pass "memory online"
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aria.local/schema/aria-glyph-registry.schema.json",
+  "title": "ARIA Glyph Registry",
+  "type": "object",
+  "required": ["format", "version", "glyphs"],
+  "properties": {
+    "format": { "const": "aria.glyph-registry" },
+    "version": { "type": "string" },
+    "glyphs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "symbol", "spoken", "category", "arity"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$" },
+          "symbol": { "type": "string", "minLength": 1 },
+          "spoken": { "type": "string", "minLength": 1 },
+          "category": { "type": "string" },
+          "arity": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
