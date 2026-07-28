@@ -43,7 +43,8 @@ treated as ambient host evidence.
 | Fired ARIA nodes | 0 | 15 |
 | Total eligible graph nodes | 107 | 399 |
 | Total considered nodes | 54 | 64 |
-| Activation time | 0.021131 s | 0.033676 s |
+| Retrieval time | 0.051048 s | 0.149909 s |
+| Activation time | 0.025636 s | 0.031859 s |
 
 The ARIA task was `ARIA semantic replay cooperative mesh session handoff`; the
 generic control was `Fix Python retrieval ranking and run unit tests`. Both

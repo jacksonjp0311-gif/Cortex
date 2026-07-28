@@ -6,7 +6,11 @@ import math
 from collections import defaultdict
 from typing import Any
 
-from .aria_meta.substrate import classify_aria_task, is_internal_aria_path
+from .aria_meta.substrate import (
+    INTERNAL_ARIA_PREFIX,
+    classify_aria_task,
+    is_internal_aria_path,
+)
 from .embeddings import cosine, get_embedder, deserialize_vector
 from .models import Hit
 
@@ -24,7 +28,10 @@ def reciprocal_rank_fusion(
 
 def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
     aria_active = classify_aria_task(text)["mode"] == "active"
-    lexical_rows = store.lexical(repo, text, 60)
+    excluded_prefixes = () if aria_active else (INTERNAL_ARIA_PREFIX,)
+    lexical_rows = store.lexical(
+        repo, text, 60, excluded_prefixes=excluded_prefixes
+    )
     lexical_ids = [row["id"] for row in lexical_rows]
 
     query_vector = get_embedder().encode_one(text)
@@ -37,6 +44,7 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
         limit=semantic_scan_limit,
         seed=seed,
         query_vector=query_vector,
+        excluded_prefixes=excluded_prefixes,
     ):
         try:
             vector = deserialize_vector(row["vector"])

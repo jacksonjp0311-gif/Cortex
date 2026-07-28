@@ -29,6 +29,8 @@
 - Native-region routing: INTERNAL ARIA remains known but contributes zero
   eligible nodes to unrelated tasks; semantic and continuity signals activate
   the region deterministically
+- Dormant-region retrieval: internal ARIA paths are excluded at lexical and
+  vector candidate selection rather than discarded after scoring
 - Bootstrap probe hardening: ambiguous duplicate symbols excluded and exact
   heading evidence accepted when a specialized document outranks README
 - Real Cortex repository smoke: manifest current, database integrity true,

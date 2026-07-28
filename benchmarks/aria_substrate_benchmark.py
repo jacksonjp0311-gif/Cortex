@@ -46,7 +46,9 @@ def main() -> None:
             )
             results: dict[str, object] = {}
             for name, task in TASKS.items():
+                retrieval_started = time.perf_counter()
                 hits = query(store, "AriaSubstrateBenchmark", task, limit=24)
+                retrieval_seconds = time.perf_counter() - retrieval_started
                 activation_started = time.perf_counter()
                 packet = activate_interlink(
                     store,
@@ -61,6 +63,7 @@ def main() -> None:
                 )
                 results[name] = {
                     "task": task,
+                    "retrieval_seconds": round(retrieval_seconds, 6),
                     "seconds": round(time.perf_counter() - activation_started, 6),
                     "state_hash": packet.state_hash,
                     "metrics": packet.metrics,

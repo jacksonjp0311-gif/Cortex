@@ -22,6 +22,8 @@
 - Native ARIA neural-region compilation: 292 internal / 107 repository nodes
 - Generic Python task: ARIA dormant, 0 eligible / considered / fired nodes
 - ARIA continuity task: ARIA active, 45 considered / 15 fired nodes
+- Dormant-region exclusion occurs in lexical and vector candidate SQL, before
+  embedding comparison or neural propagation
 
 New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
 `cortex.federation`, `cortex.evaluation`, and `cortex.mcp`. GCMT is integrated

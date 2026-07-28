@@ -4,7 +4,7 @@
   "generated_on": "2026-07-28",
   "manifest_scope": "Git-tracked and intended release files except RELEASE_MANIFEST.json itself.",
   "file_count": 403,
-  "total_bytes": 3708918,
+  "total_bytes": 3710924,
   "files": [
     {
       "path": ".editorconfig",
@@ -26,15 +26,15 @@
     },
     {
       "path": "BENCHMARK_REPORT.md",
-      "bytes": 9492,
+      "bytes": 9537,
       "mode": "0o666",
-      "sha256": "20a7cdd92533c617f7498160b1b96b418922abde19ce804c1cfa1baf39e370ad"
+      "sha256": "6e203fab96c0e3ff51d8d3adbab7d42616146a6714a357166dc8f475fb875095"
     },
     {
       "path": "BUILD_REPORT.md",
-      "bytes": 4316,
+      "bytes": 4439,
       "mode": "0o666",
-      "sha256": "5ea8fcbc65a074303691fac9b14c884758a93bf7274f8b2453e19ae37384c8e5"
+      "sha256": "fb53827f865240bbcee59eb679757f1321aabf14a9ed830507cc62195479298a"
     },
     {
       "path": "CHANGELOG.md",
@@ -68,9 +68,9 @@
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 7410,
+      "bytes": 7551,
       "mode": "0o666",
-      "sha256": "3db9fd8f5a40a80bf3be242f1bec75bde1eb865f401302fd18d00642c18f42ad"
+      "sha256": "05def99ae649688ab5c0aa6bb8c56d85b39c82b3d1701a8a859d49439ba49e6c"
     },
     {
       "path": "assets/cortex-neural-brain.png",
@@ -80,9 +80,9 @@
     },
     {
       "path": "benchmarks/aria_substrate_benchmark.py",
-      "bytes": 2982,
+      "bytes": 3184,
       "mode": "0o666",
-      "sha256": "27914e774b3ad7a89533c0dd9cf9df74978b7253ba29ea9b582e7519ae72407f"
+      "sha256": "77f5c1058a8d7e919176f3c6d4e120edfe007d8efad3f449aa62755c4e76740b"
     },
     {
       "path": "benchmarks/corpora/aria_language.json",
@@ -2174,9 +2174,9 @@
     },
     {
       "path": "cortex/retrieval.py",
-      "bytes": 5311,
+      "bytes": 5517,
       "mode": "0o666",
-      "sha256": "f4e684c10af8f5ad77bc77b2a9b794ce27c5c637240564e746db100c197ffe32"
+      "sha256": "911d6e4711b8a1bb9d58d3eb69a0cc951caff3d9e12e031d14fcff9b37789b43"
     },
     {
       "path": "cortex/selftest.py",
@@ -2186,9 +2186,9 @@
     },
     {
       "path": "cortex/store.py",
-      "bytes": 59205,
+      "bytes": 60494,
       "mode": "0o666",
-      "sha256": "1338baacedded08ba8b4288e02afa5c61e5e0d3fe2b5cf0735980c807a03cca7"
+      "sha256": "8169b65956a76bba0e4ef53d4131fbe5000714139af3c0416ed66f71d2393e07"
     },
     {
       "path": "cortex/telemetry.py",
