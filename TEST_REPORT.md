@@ -4,7 +4,7 @@
 
 ## v3.0 release validation
 
-- `python -m unittest discover -s tests -q`: 38 passed
+- `python -m unittest discover -s tests -q`: 39 passed
 - `python -m ruff check cortex thalamus tests`: passed
 - Python compilation: passed
 - Source distribution and wheel build: passed
@@ -19,6 +19,13 @@
 - ARIA meta-language boundary: Python implementation/execution retained,
   automatic ARIA execution disabled, context and continuation propagation
   verified
+- INTERNAL ARIA snapshot: 298 tracked files vendored as a squashed subtree;
+  no submodule or external runtime repository dependency
+- Bundled ARIA native manifest: 297/297 verified
+- Bundled ARIA handshake, strict doctor, and full conformance suite: passed
+- Clean-wheel bundle verification: 297 entries checked, zero failures
+- Host-local ARIA integration remains available and takes precedence when
+  Cortex is explicitly operating on such a repository
 - Real Cortex repository smoke: manifest current, database integrity true,
   dashboard version 3.0.0, replay corpus non-regression true, boundary gate true,
   persisted continuation packet valid
@@ -29,7 +36,8 @@ receipts, rollback fidelity, selective learned-association decay, neural ledger
 integrity, cross-repository boundary preservation, vector-bucket migration,
 base-versus-learned replay evaluation, external sealed-host attachment,
 internal-engine identity/freshness, native `.aria`/batch indexing, fused
-reranking, optional ARIA meta-language discovery, and MCP
+reranking, bundled and host-local ARIA meta-language discovery, INTERNAL ARIA
+identity and manifest verification, and MCP
 initialization/tool discovery.
 
 These checks establish implementation and repository-local benchmark evidence.

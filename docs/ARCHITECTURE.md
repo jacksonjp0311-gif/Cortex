@@ -91,8 +91,10 @@ Cortex-owned canonical memory.
 
 ### Optional ARIA meta-language
 
-`cortex.meta_language` derives a bounded descriptor from `ARIA-RUNTIME.json`,
-`ARIA-CONNECT.json`, and indexed `.aria` plans. It exposes semantic intent,
+`cortex.aria_meta` carries a manifest-verified, self-contained ARIA subtree.
+`cortex.meta_language` derives a bounded descriptor from the bundled snapshot
+or a host's `ARIA-RUNTIME.json`, `ARIA-CONNECT.json`, and indexed `.aria`
+plans. Host-local evidence takes precedence. The descriptor exposes semantic intent,
 planning, governance, continuation, and coordination capabilities through the
 learned environment and context protocols. Cortex's implementation and
 execution language remains Python. ARIA plans are advisory evidence: Cortex

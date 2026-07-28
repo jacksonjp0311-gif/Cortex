@@ -9,12 +9,15 @@
 - Wheel: `cortex_memory-3.0.0-py3-none-any.whl`
 - Clean-wheel install: passed
 - Installed `cortex` and `cortex-mcp` entrypoints: passed
-- Automated tests: 38 passed
+- Automated tests: 39 passed
 - Ruff and Python compilation: passed
 - Controlled benchmark gates: passed
 - Nested-clone self-host lifecycle: passed
 - External sealed-host bootstrap/activation: passed without host writes
-- Aria strict manifest/doctor after external attachment: passed
+- Self-contained INTERNAL ARIA subtree: packaged (298 tracked files)
+- ARIA native manifest: 297/297 verified
+- Bundled ARIA handshake, strict doctor, and conformance suite: passed
+- Clean-wheel INTERNAL ARIA verification: passed with no external repository dependency
 - ARIA meta-language descriptor/context/continuation integration: passed
 
 New v3 modules are `cortex.continuation`, `cortex.lifecycle`,
@@ -23,8 +26,17 @@ within Cortex's existing single-substrate and authority boundaries rather than
 as a competing memory service. The internal self-host engine is explicitly
 labeled and commit-verified. `--external` supports sealed repositories by
 placing all configuration and runtime artifacts under Cortex home.
-`cortex.meta_language` is an optional semantic layer; Cortex core remains
-implemented and executed in Python.
+`cortex.aria_meta` contains the complete ARIA source snapshot as a squashed Git
+subtree, including its Apache-2.0 license and notice. `cortex.meta_language`
+uses this internal bundle by default and can integrate a host-local ARIA
+repository when one is present. Cortex core remains implemented and executed
+in Python; ARIA is not automatically executed and grants no mutation authority.
+
+The release artifacts include the internal snapshot:
+
+- wheel: 604,784 bytes;
+- source distribution: 465,906 bytes;
+- clean-wheel verification: 297 manifest entries checked, zero failures.
 
 The original neural-edition report follows as release lineage.
 

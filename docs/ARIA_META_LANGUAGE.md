@@ -1,9 +1,9 @@
 # ARIA as an Optional Cortex Meta-Language
 
-Cortex remains implemented and executed in Python. ARIA is an optional
-meta-language for repositories that use it to represent intent, semantic
-plans, governance contracts, verified continuation, and cooperative agent
-coordination.
+Cortex remains implemented and executed in Python. It ships a self-contained,
+Apache-2.0-licensed ARIA snapshot labeled `INTERNAL ARIA META-LANGUAGE`.
+ARIA is used optionally to represent intent, semantic plans, governance
+contracts, verified continuation, and cooperative agent coordination.
 
 ## Boundary
 
@@ -27,6 +27,11 @@ Cortex detects ARIA from bounded repository evidence:
 - `ARIA-CONNECT.json`;
 - supported `.aria` artifacts.
 
+Host-local ARIA evidence takes precedence when present. Otherwise Cortex uses
+its bundled snapshot under `cortex/aria_meta/vendor/`. The bundle is a squashed
+Git subtree, not a submodule, and has no runtime dependency on another
+repository. Its native `MANIFEST.sha256` is verified by Cortex.
+
 The hidden `.aria/` runtime and backup directory is excluded from
 assimilation. The `.aria` file extension remains supported, so declared plans
 under paths such as `plans/*.aria` and `examples/*.aria` are indexed.
@@ -41,7 +46,7 @@ The descriptor states:
 
 - `cortex_implementation_language: python`;
 - `cortex_execution_language: python`;
-- `role: meta_language`;
+- `role: host_meta_language` or `internal_optional_meta_language`;
 - `automatic_execution: false`;
 - `automatic_translation_to_core: false`;
 - `grants_mutation_authority: false`.
@@ -65,8 +70,8 @@ replay, handoff, bridge, and mesh commands as recommendations. It does not run
 them automatically. Agents may run them when authorized and useful, and their
 outputs remain evidence subject to deterministic verification.
 
-For sealed ARIA repositories, use external attachment so no Cortex files enter
-the host:
+External attachment remains available when a host repository has its own ARIA
+evolution and must remain sealed:
 
 ```bash
 cortex --home /path/to/cortex-home bootstrap /path/to/aria \

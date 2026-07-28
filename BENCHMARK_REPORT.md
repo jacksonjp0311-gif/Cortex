@@ -2,6 +2,33 @@
 
 ## Cortex v3 / Aria real-repository validation (July 28, 2026)
 
+### INTERNAL ARIA phase change
+
+ARIA is now a self-contained Cortex component at
+`cortex/aria_meta/vendor`, imported as a squashed Git subtree rather than a
+submodule. The separate ARIA checkout is no longer a runtime or packaging
+dependency. Cortex uses the internal snapshot by default and only integrates a
+host-local ARIA surface when one is actually present.
+
+| Measure | Result |
+|---|---:|
+| Vendored source files | 298 |
+| Vendored source size | 1,633,385 bytes |
+| Native manifest verification | 297/297 |
+| Bundled handshake | ready |
+| Bundled strict doctor | pass |
+| Bundled full conformance suite | pass (148.827 s) |
+| Cortex tests | 39 passed |
+| Clean-wheel bundle verification | 297 checked; 0 failures |
+| Wheel / source distribution | 604,784 / 465,906 bytes |
+| External ARIA repository dependency | false |
+| Cortex implementation / execution | Python / Python |
+| Automatic ARIA execution / mutation authority | false / false |
+
+The vendored snapshot retains its Apache-2.0 license and notice. These results
+establish reproducibility and boundary integrity for this snapshot; they do not
+grant ARIA plans automatic execution or source-mutation authority.
+
 The workload used a clean clone sourced from
 `C:\Users\jacks\OneDrive\Desktop\aria-language`. Cortex was attached with
 `--external`, so the benchmark wrote no files into the host and Aria's strict
@@ -42,7 +69,7 @@ the explicit meta-language boundary.
 | Declared ARIA artifacts | 52 |
 | Hidden `.aria/` runtime/backups | excluded |
 | Cortex implementation / execution language | Python / Python |
-| ARIA role | `meta_language` |
+| ARIA role | `host_meta_language` |
 | Automatic ARIA execution | false |
 | ARIA mutation authority | false |
 | Context descriptor | present |

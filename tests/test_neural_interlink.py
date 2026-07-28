@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
+from cortex.aria_meta import bundle_identity, bundle_root, verify_bundle
 from cortex.config import ensure_home, load_repo_config
 from cortex.context import build_context, nexus_packet
 from cortex.governor import Governor
@@ -72,10 +73,27 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertTrue(neural["ledger_valid"])
         self.assertTrue((self.repo / ".cortex" / "runtime" / "environment_latest.json").exists())
         self.assertFalse((self.home / "neuron.db").exists())
-        self.assertFalse(environment["meta_language"]["available"])
+        self.assertTrue(environment["meta_language"]["available"])
         self.assertEqual(
             environment["meta_language"]["cortex_implementation_language"], "python"
         )
+        self.assertEqual(
+            environment["meta_language"]["source_kind"], "bundled_internal"
+        )
+        self.assertEqual(
+            environment["meta_language"]["role"], "internal_optional_meta_language"
+        )
+        self.assertTrue(environment["meta_language"]["bundle"]["valid"])
+
+    def test_internal_aria_bundle_is_self_contained_and_manifest_valid(self) -> None:
+        identity = bundle_identity()
+        verification = verify_bundle()
+        self.assertEqual(identity["label"], "INTERNAL ARIA META-LANGUAGE")
+        self.assertFalse(identity["external_runtime_dependency"])
+        self.assertTrue((bundle_root() / "ARIA-RUNTIME.json").is_file())
+        self.assertTrue((bundle_root() / "ARIA-CONNECT.json").is_file())
+        self.assertTrue(verification["valid"], verification)
+        self.assertEqual(verification["checked_files"], 297)
 
     def test_aria_is_detected_as_meta_language_without_replacing_python(self) -> None:
         (self.repo / "ARIA-RUNTIME.json").write_text(
@@ -121,7 +139,9 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         meta = refreshed["environment"]["meta_language"]
         self.assertTrue(meta["available"])
         self.assertEqual(meta["name"], "ARIA")
-        self.assertEqual(meta["role"], "meta_language")
+        self.assertEqual(meta["role"], "host_meta_language")
+        self.assertEqual(meta["source_kind"], "host_repository")
+        self.assertIsNone(meta["bundle"])
         self.assertEqual(meta["cortex_implementation_language"], "python")
         self.assertEqual(meta["cortex_execution_language"], "python")
         self.assertFalse(meta["execution_policy"]["automatic_execution"])

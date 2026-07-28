@@ -78,16 +78,17 @@ commands do not authorize or perform repository source mutation. See
 
 ## Optional ARIA meta-language
 
-Cortex stays Python. When a repository contains `ARIA-RUNTIME.json`,
-`ARIA-CONNECT.json`, or supported `.aria` plans, Cortex identifies ARIA as an
-optional `meta_language` for intent, planning, governance, continuation, and
-agent coordination.
+Cortex stays Python and now carries a self-contained
+`INTERNAL ARIA META-LANGUAGE` snapshot. It is a squashed subtree rather than a
+submodule, so Cortex has no runtime dependency on another repository. A host's
+own `ARIA-RUNTIME.json`, `ARIA-CONNECT.json`, and `.aria` plans take precedence
+when present.
 
 ```bash
 cortex meta-language --repo MyProject --json
 ```
 
-ARIA artifacts are never executed automatically, translated into Cortex core,
+Bundled or host ARIA artifacts are never executed automatically, translated into Cortex core,
 or treated as mutation authority. Hidden `.aria/` runtime/backups are excluded
 while declared `*.aria` source plans remain indexed. The descriptor is carried
 through environment, context, and GCMT continuation packets. See
