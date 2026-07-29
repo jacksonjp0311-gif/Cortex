@@ -24,6 +24,7 @@ def activate_repository(
     budget: int = 1200,
     refresh: str = "auto",
     profile: str = "agent",
+    prefetch: str = "auto",
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -143,6 +144,35 @@ def activate_repository(
     persist_organism_pulse(store, repo, organism, session_id=session.get("session_id"))
     save_prior_pulse(store, repo, organism["pulse"])
 
+    # Prefetch (v5): proactive evidence proposal — never ARIA surprise-wake.
+    prediction: dict[str, Any] | None = None
+    gov_mode = str((context.get("governor") or {}).get("mode") or "normal")
+    do_prefetch = prefetch == "aggressive" or (
+        prefetch == "auto" and gov_mode != "read_only"
+    )
+    if do_prefetch:
+        try:
+            from .predict import predict_context
+
+            pref_budget = min(200, max(80, budget // 6))
+            if prefetch == "aggressive":
+                pref_budget = min(400, budget // 3)
+            prediction = predict_context(
+                store,
+                repo,
+                task,
+                budget=pref_budget,
+                session_id=session.get("session_id"),
+                governor_mode=gov_mode,
+            )
+            context["prediction"] = {
+                "trace_id": prediction.get("trace_id"),
+                "predicted_paths": prediction.get("predicted_paths"),
+                "scores": prediction.get("scores"),
+            }
+        except Exception:
+            prediction = None
+
     # Connect pass: gather multi-surface metrics, expand metric graph, distill.
     from .connect_pass import record_connect_pass
 
@@ -188,6 +218,7 @@ def activate_repository(
         "immune_action": control.get("immune_action"),
         "control_error": control,
         "connect_pass": connect,
+        "prediction": prediction,
         "organism": organism,
         "environment": environment,
         "neural_interlink": neural,

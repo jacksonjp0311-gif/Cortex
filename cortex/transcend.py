@@ -170,6 +170,49 @@ def run_transcend_check(
     if len(glyphs.get("glyphs") or {}) < 7:
         breaks.append({"id": "progress_glyphs_incomplete"})
 
+    # v5 capability surface falsification (local unit-level; no host mutation)
+    try:
+        from .agents.tokens import ALLOWED_SCOPES, FORBIDDEN_SCOPES
+        from .contract.check import DEFAULT_CONTRACT, STRICT_CONTRACT, check_contract
+        from .ranker.model import FEATURE_NAMES, default_weights, score_features
+        from .vectors.hnsw import HNSWIndex
+
+        if "host.mutate" in ALLOWED_SCOPES or "host.mutate" not in FORBIDDEN_SCOPES:
+            breaks.append({"id": "v5_host_mutate_scope_exists"})
+        w = default_weights()
+        if len(w) != len(FEATURE_NAMES):
+            breaks.append({"id": "v5_ranker_feature_dim"})
+        s = score_features({"weights": w, "bias": 0.0}, [0.5] * len(FEATURE_NAMES))
+        if not (0.0 <= s <= 1.0):
+            breaks.append({"id": "v5_ranker_score_range"})
+        idx = HNSWIndex(dim=4, M=4, seed=1)
+        idx.build([("a", [1.0, 0.0, 0.0, 0.0]), ("b", [0.9, 0.1, 0.0, 0.0])])
+        hits = idx.search([1.0, 0.0, 0.0, 0.0], k=1)
+        if not hits or hits[0][0] != "a":
+            breaks.append({"id": "v5_hnsw_search"})
+        ro_pkt = {
+            "authority": {"cortex_may_mutate": False},
+            "claim_boundary": "x",
+            "operational_state": {"evidence_ids": [1]},
+            "governor": {"mode": "read_only"},
+        }
+        strict_fail = check_contract(ro_pkt, contract=STRICT_CONTRACT)
+        if strict_fail.get("passed"):
+            breaks.append({"id": "v5_strict_contract_should_fail_readonly"})
+        ok_pkt = {
+            "authority": {"cortex_may_mutate": False, "packet_is_not_authorization": True},
+            "claim_boundary": "x",
+            "operational_state": {"evidence_ids": [1]},
+            "governor": {"mode": "normal"},
+            "control_error": {"block": False},
+        }
+        default_ok = check_contract(ok_pkt, contract=DEFAULT_CONTRACT)
+        if not default_ok.get("passed"):
+            breaks.append({"id": "v5_default_contract_should_pass", "breaks": default_ok.get("breaks")})
+        notes.append({"v5_surfaces": "ok"})
+    except Exception as exc:
+        breaks.append({"id": "v5_surface_exception", "error": f"{type(exc).__name__}: {exc}"})
+
     mirror_result: dict[str, Any] | None = None
     if run_mirror_glow:
         # Separate home so mirror bootstrap isolation stays clean
@@ -198,7 +241,7 @@ def run_transcend_check(
 
     passed = len(breaks) == 0
     return {
-        "schema_version": "cortex-transcend-check/1.1",
+        "schema_version": "cortex-transcend-check/2.0",
         "glyph": "⟡",
         "passed": passed,
         "break_count": len(breaks),
@@ -215,7 +258,8 @@ def run_transcend_check(
         ),
         "definition": (
             "Agent can run from packet alone, obey immune_action, close with ritual, "
-            "mirror stays bright; no new organs; no unsolicited foreign hosts."
+            "mirror stays bright; v5 ranker/HNSW/contracts/agent scopes falsify safely; "
+            "no host.mutate path; no unsolicited foreign hosts."
         ),
         "claim_boundary": (
             "Transcend-check is local operational falsification; not consciousness "

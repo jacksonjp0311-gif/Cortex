@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.0.0 - Governed local cognition substrate
+
+Seven capabilities on one SQLite body; recommend-only preserved:
+
+1. **Multi-resolution neural graph** — file → symbol → basic_block; contains/child_of/calls.
+2. **Tiny online ranker** — verified outcomes only; Governor-gated train.
+3. **Predictive prefetch** — `cortex predict` / activate `--prefetch`; never ARIA surprise-wake.
+4. **Continuation contracts** — machine-checkable default/strict; constrain only.
+5. **Multi-agent capability tokens** — closed scope vocab; **no host.mutate**.
+6. **Deterministic HNSW** — pure-Python local index; FTS/LSH fallback.
+7. **Causal outcome ledger** — improved/regressed/inconclusive; no authority.
+
+CLI: `vectors`, `ranker`, `predict`, `contract`, `agent`, `token`, `causal`, `compile-interlink`.  
+Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organism unchanged.
+
 ## 3.6.0 - Connect pass · metric graph · distill
 
 - **Connect ⧉:** each activate/organism/breathe gathers multi-surface metrics into one pass vector.

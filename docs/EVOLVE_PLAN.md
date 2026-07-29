@@ -13,7 +13,8 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v3.6.0**.
 | 6 | Teach body | done | v3.5.1 ARIA memory packets + teach --seed |
 | 7 | Immune adherence | done | v3.5.2–3.5.4 immune_action, cortex immune, packet block |
 | 8 | Connect metric graph | done | v3.6.0 connect_pass gather → graph → distill |
-| 9 | Architecture v4–v5 | designed | `docs/ARCHITECTURE_V4.md` (seven capabilities; not yet implemented) |
+| 9 | Architecture v4–v5 | designed | `docs/ARCHITECTURE_V4.md` |
+| 10 | v5.0 substrate | **done** | multi-res + HNSW + ranker + prefetch + contracts + agents + causal |
 
 ## Verbs used as design motions
 

@@ -147,10 +147,41 @@ def build_continuation_packet(
             ],
         },
     }
+    # Attach checkable contract (v5) — constrain only, never grant.
+    from .contract.check import DEFAULT_CONTRACT, check_contract
+
+    payload["contract"] = DEFAULT_CONTRACT
+    payload["claim_boundary"] = (
+        "Continuation packet is operational transfer only; never host mutation authority."
+    )
+    # Pre-check without packet_id (included in hash material)
+    pre_check = check_contract(
+        payload,
+        contract=DEFAULT_CONTRACT,
+        context=context,
+        store=None,
+        repo=None,
+        persist=False,
+    )
+    payload["contract_check"] = {
+        "result": pre_check.get("result"),
+        "passed": pre_check.get("passed"),
+        "breaks": pre_check.get("breaks"),
+        "check_id": pre_check.get("check_id"),
+    }
     state_hash = _hash(payload)
     packet_id = "vcp_" + _hash([repo, state_hash])[:24]
     payload["packet_id"] = packet_id
     payload["state_hash"] = state_hash
+    # Persist check receipt with packet id
+    check_contract(
+        payload,
+        contract=DEFAULT_CONTRACT,
+        context=context,
+        store=store,
+        repo=repo,
+        persist=True,
+    )
     store.save_continuation_packet(
         repo,
         packet_id,

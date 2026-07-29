@@ -92,6 +92,43 @@ def record_outcome(
         governance_mode=governance_mode,
     )
     graph_after = store.neural_graph_hash(repo)
+    # Ranker online update (v5) — verified outcomes only; cannot clear immune.
+    ranker_result: dict[str, Any]
+    try:
+        from ..ranker.model import train_from_outcome
+
+        ranker_result = train_from_outcome(
+            store,
+            repo,
+            outcome_id=outcome_id,
+            activation_id=activation_id,
+            status=status,
+            reward=final_reward,
+            verification_type=verification_type,
+            governance_mode=governance_mode,
+        )
+    except Exception as exc:
+        ranker_result = {"trained": False, "error": f"{type(exc).__name__}: {exc}"}
+    # Causal episode bookkeeping (optional auto-close on verified)
+    causal_result: dict[str, Any] | None = None
+    if status in {"verified", "failed"} and governance_mode != "read_only":
+        try:
+            from ..causal.ledger import evaluate_causal_episode, open_episode
+
+            open_episode(
+                store,
+                repo,
+                f"outcome:{status}",
+                treatment={
+                    "kind": "outcome",
+                    "outcome_id": outcome_id,
+                    "ranker": ranker_result.get("trained"),
+                    "plasticity": apply_updates,
+                },
+            )
+            causal_result = evaluate_causal_episode(store, repo)
+        except Exception as exc:
+            causal_result = {"error": f"{type(exc).__name__}: {exc}"}
     return {"outcome_id": outcome_id, "activation_id": activation_id, "status": status, "reward": final_reward,
             "verification_type": verification_type, "credited_nodes": len({item["node_id"] for item in credits}),
             "credited_synapses": len(credits), "proposed_updates": len(updates),
@@ -99,4 +136,6 @@ def record_outcome(
             "rejected_updates": 0 if apply_updates else len(updates), "replay": replay,
             "graph_hash_before": graph_before, "graph_hash_after": graph_after,
             "governance_mode": governance_mode,
-            "aria_cue_learning": aria_cue_learning}
+            "aria_cue_learning": aria_cue_learning,
+            "ranker": ranker_result,
+            "causal": causal_result}

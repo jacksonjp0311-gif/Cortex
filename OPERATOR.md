@@ -17,9 +17,27 @@ python -m cortex remember --repo Cortex --kind discovery --text "durable fact" -
 python -m cortex breathe --repo Cortex --json
 python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --json
 python -m cortex metrics --repo Cortex --json
+python -m cortex vectors build --repo Cortex --json
+python -m cortex ranker status --repo Cortex --json
+python -m cortex predict --repo Cortex --task "interconnect" --json
+python -m cortex compile-interlink --repo Cortex --resolutions file,symbol,basic_block --json
+python -m cortex causal report --repo Cortex --json
 python -m cortex transcend-check --json
 python -m cortex mirror --json
 ```
+
+## v5 surfaces (additive)
+
+| Command | Purpose |
+|---|---|
+| `vectors build\|status\|query` | Local HNSW index |
+| `ranker status` | Verified-only ranking model |
+| `predict` | Prefetch proposal (not rights) |
+| `contract check\|diff` | Continuation contracts |
+| `agent register\|list` | Multi-agent principals |
+| `token mint\|revoke\|validate` | Capability scopes (no host.mutate) |
+| `causal report\|evaluate` | Closed-loop memory effect ledger |
+| `compile-interlink` | Multi-res neural compile |
 
 ## Read order every activate
 

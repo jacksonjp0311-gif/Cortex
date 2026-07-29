@@ -49,6 +49,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/smoke_connect_metrics.py
+      - name: V5 substrate smoke (this repo only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/smoke_v5_substrate.py
       - name: Bash syntax
         if: runner.os != 'Windows'
         run: bash -n cortex.sh cortex-all-one.sh scripts/bash/*.sh

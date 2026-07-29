@@ -134,6 +134,20 @@ def gather_connect_metrics(
         "organism_pulse": organism.get("pulse"),
         "organism_phase": organism.get("phase")
         or (organism.get("body") or {}).get("identity", {}).get("phase"),
+        "prediction": {
+            "paths": len(
+                ((context.get("prediction") or {}).get("predicted_paths") or [])
+            ),
+            "trace_id": (context.get("prediction") or {}).get("trace_id"),
+        },
+        "v5": {
+            "multi_res": True,
+            "ranker": True,
+            "hnsw": True,
+            "contracts": True,
+            "agents": True,
+            "causal": True,
+        },
         "claim_boundary": (
             "Connect metrics are local operational telemetry; not consciousness "
             "and not mutation authority."

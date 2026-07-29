@@ -174,6 +174,52 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_predict",
+        "description": (
+            "Proactive evidence prediction (recommend-only prefetch). " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo", "task"],
+            "properties": {
+                "repo": {"type": "string"},
+                "task": {"type": "string"},
+                "budget": {"type": "integer", "default": 200},
+            },
+        },
+    },
+    {
+        "name": "cortex_ranker_status",
+        "description": "Local ranker status (verified-only learning). " + _REFUSE,
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
+        "name": "cortex_vectors_query",
+        "description": "Query local HNSW vector index. " + _REFUSE,
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo", "text"],
+            "properties": {
+                "repo": {"type": "string"},
+                "text": {"type": "string"},
+                "k": {"type": "integer", "default": 12},
+            },
+        },
+    },
+    {
+        "name": "cortex_causal_report",
+        "description": "Causal outcome ledger report. " + _REFUSE,
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -330,6 +376,37 @@ class CortexMCP:
             from .connect_pass import metric_graph_report
 
             return metric_graph_report(self.store, str(arguments["repo"]))
+        if name == "cortex_predict":
+            from .predict import predict_context
+
+            gov = self.governor.evaluate(str(arguments["repo"]))
+            return predict_context(
+                self.store,
+                str(arguments["repo"]),
+                str(arguments["task"]),
+                budget=int(arguments.get("budget", 200)),
+                governor_mode=str(gov.get("mode") or "normal"),
+            )
+        if name == "cortex_ranker_status":
+            from .ranker import ranker_status
+
+            return ranker_status(self.store, str(arguments["repo"]))
+        if name == "cortex_vectors_query":
+            from .vectors import query_hnsw
+
+            return {
+                "hits": query_hnsw(
+                    self.store,
+                    str(arguments["repo"]),
+                    str(arguments["text"]),
+                    k=int(arguments.get("k", 12)),
+                ),
+                "claim_boundary": "HNSW query is evidence only.",
+            }
+        if name == "cortex_causal_report":
+            from .causal import causal_report
+
+            return causal_report(self.store, str(arguments["repo"]))
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,

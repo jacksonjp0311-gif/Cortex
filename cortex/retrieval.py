@@ -90,11 +90,23 @@ def query(
 
     query_vector = get_embedder().encode_one(text)
     store.ensure_vector_buckets(repo)
+    # Optional HNSW lane (v5) — blends with LSH candidates when available.
+    hnsw_ids: list[int] = []
+    try:
+        from .vectors import hnsw_status, query_hnsw
+
+        if hnsw_status(store, repo).get("available"):
+            for item in query_hnsw(store, repo, text, k=min(24, limit * 3)):
+                mid = item.get("memory_id")
+                if mid is not None:
+                    hnsw_ids.append(int(mid))
+    except Exception:
+        hnsw_ids = []
     semantic: list[tuple[float, int]] = []
     seed = int.from_bytes(hashlib.blake2b(text.encode("utf-8"), digest_size=8).digest(), "big")
     for row in store.vector_candidates(
         repo,
-        lexical_ids,
+        list(dict.fromkeys([*lexical_ids, *hnsw_ids])),
         limit=semantic_scan_limit,
         seed=seed,
         query_vector=query_vector,
@@ -115,7 +127,10 @@ def query(
     semantic.sort(key=lambda item: item[0], reverse=True)
     semantic_ids = [memory_id for _, memory_id in semantic[:60]]
 
-    fused = reciprocal_rank_fusion([lexical_ids, semantic_ids], [1.0, 1.25])
+    fused = reciprocal_rank_fusion(
+        [lexical_ids, semantic_ids, hnsw_ids] if hnsw_ids else [lexical_ids, semantic_ids],
+        [1.0, 1.25, 1.15] if hnsw_ids else [1.0, 1.25],
+    )
     semantic_lookup = {memory_id: similarity for similarity, memory_id in semantic[:100]}
     output: list[Hit] = []
     normalized_query = " ".join(text.casefold().split())
@@ -200,6 +215,20 @@ def query(
             metadata=metadata,
         ))
     output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
+    # Tiny local ranker (v5) — operational reordering only; never authority.
+    try:
+        from .ranker.model import rerank_hits
+
+        output = rerank_hits(store, repo, output)
+        output.sort(
+            key=lambda hit: (
+                -float((hit.metadata or {}).get("ranker_score") or hit.score),
+                hit.path,
+                hit.start_line,
+            )
+        )
+    except Exception:
+        pass
     floor = _aria_evidence_floor(store, repo, text, output, limit=limit)
     return floor
 

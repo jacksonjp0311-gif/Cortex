@@ -95,6 +95,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="agent",
         help="Packet disclosure profile (HCI progressive disclosure).",
     )
+    activate.add_argument(
+        "--prefetch",
+        choices=["auto", "off", "aggressive"],
+        default="auto",
+        help="Proactive evidence prefetch (v5); never grants mutation rights.",
+    )
     activate.add_argument("--json", action="store_true")
 
     index = sub.add_parser("index", help="Incrementally index an attached repository.")
@@ -441,6 +447,66 @@ def build_parser() -> argparse.ArgumentParser:
     metrics.add_argument("--repo", required=True)
     metrics.add_argument("--json", action="store_true")
 
+    # ── v5 surfaces ──────────────────────────────────────────────────────────
+    vectors = sub.add_parser("vectors", help="Local HNSW vector index (build/status/query).")
+    vectors.add_argument("action", choices=["build", "status", "query"])
+    vectors.add_argument("--repo", required=True)
+    vectors.add_argument("--text", help="Query text for action=query")
+    vectors.add_argument("--k", type=int, default=12)
+    vectors.add_argument("--json", action="store_true")
+
+    ranker = sub.add_parser("ranker", help="Tiny local ranker status (verified-only training).")
+    ranker.add_argument("action", choices=["status"], default="status", nargs="?")
+    ranker.add_argument("--repo", required=True)
+    ranker.add_argument("--json", action="store_true")
+
+    predict = sub.add_parser("predict", help="Proactive evidence prediction (recommend-only).")
+    predict.add_argument("--repo", required=True)
+    predict.add_argument("--task", required=True)
+    predict.add_argument("--budget", type=int, default=200)
+    predict.add_argument("--json", action="store_true")
+
+    contract_p = sub.add_parser("contract", help="Check/diff continuation contracts.")
+    contract_p.add_argument("action", choices=["check", "diff"])
+    contract_p.add_argument("--packet-id")
+    contract_p.add_argument("--from-packet")
+    contract_p.add_argument("--to-packet")
+    contract_p.add_argument("--profile", choices=["default", "strict"], default="default")
+    contract_p.add_argument("--json", action="store_true")
+
+    agent_p = sub.add_parser("agent", help="Register multi-agent principal (local only).")
+    agent_p.add_argument("action", choices=["register", "list"])
+    agent_p.add_argument("--repo", required=True)
+    agent_p.add_argument("--agent-id")
+    agent_p.add_argument("--name")
+    agent_p.add_argument("--json", action="store_true")
+
+    token_p = sub.add_parser("token", help="Mint/revoke capability tokens (no host.mutate).")
+    token_p.add_argument("action", choices=["mint", "revoke", "validate"])
+    token_p.add_argument("--repo", required=True)
+    token_p.add_argument("--agent-id")
+    token_p.add_argument("--token-id")
+    token_p.add_argument("--scope", action="append", default=[])
+    token_p.add_argument("--ttl", type=int, default=28800)
+    token_p.add_argument("--json", action="store_true")
+
+    causal_p = sub.add_parser("causal", help="Causal outcome ledger report/evaluate.")
+    causal_p.add_argument("action", choices=["status", "report", "evaluate"])
+    causal_p.add_argument("--repo", required=True)
+    causal_p.add_argument("--json", action="store_true")
+
+    compile_il = sub.add_parser(
+        "compile-interlink",
+        help="Compile multi-resolution neural interlink (file/symbol/bb).",
+    )
+    compile_il.add_argument("--repo", required=True)
+    compile_il.add_argument(
+        "--resolutions",
+        default="file,symbol",
+        help="Comma list: file,symbol,basic_block",
+    )
+    compile_il.add_argument("--json", action="store_true")
+
     contact = sub.add_parser(
         "contact",
         help="Strike the tuning fork: mirror + fluency + foreign host resonance.",
@@ -507,6 +573,7 @@ def main(argv: list[str] | None = None) -> None:
                 budget=args.budget,
                 refresh=refresh,
                 profile=args.profile,
+                prefetch=getattr(args, "prefetch", "auto"),
             )
             result["requested_mode"] = args.refresh
             emit(result, args.json)
@@ -1039,6 +1106,156 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "metrics":
             emit(metric_graph_report(store, args.repo), args.json)
+
+        elif command == "vectors":
+            from .vectors import build_hnsw_index, hnsw_status, query_hnsw
+
+            if args.action == "build":
+                emit(build_hnsw_index(store, args.repo), args.json)
+            elif args.action == "status":
+                emit(hnsw_status(store, args.repo), args.json)
+            else:
+                if not args.text:
+                    raise ValueError("--text required for vectors query")
+                emit(
+                    {
+                        "repo": args.repo,
+                        "hits": query_hnsw(store, args.repo, args.text, k=args.k),
+                        "claim_boundary": "HNSW query is evidence retrieval only.",
+                    },
+                    args.json,
+                )
+
+        elif command == "ranker":
+            from .ranker import ranker_status
+
+            emit(ranker_status(store, args.repo), args.json)
+
+        elif command == "predict":
+            from .predict import predict_context
+
+            gov = governor.evaluate(args.repo)
+            emit(
+                predict_context(
+                    store,
+                    args.repo,
+                    args.task,
+                    budget=args.budget,
+                    governor_mode=str(gov.get("mode") or "normal"),
+                ),
+                args.json,
+            )
+
+        elif command == "contract":
+            from .contract.check import (
+                DEFAULT_CONTRACT,
+                STRICT_CONTRACT,
+                check_contract,
+                contract_diff,
+            )
+
+            profile = STRICT_CONTRACT if args.profile == "strict" else DEFAULT_CONTRACT
+            if args.action == "check":
+                if not args.packet_id:
+                    raise ValueError("--packet-id required")
+                # Find packet across repos by id
+                row = store.db.execute(
+                    "SELECT * FROM continuation_packets WHERE packet_id=?",
+                    (args.packet_id,),
+                ).fetchone()
+                if not row:
+                    raise ValueError(f"Unknown packet: {args.packet_id}")
+                payload = json.loads(row["payload_json"])
+                emit(
+                    check_contract(
+                        payload,
+                        contract=profile,
+                        store=store,
+                        repo=row["repo"],
+                        persist=True,
+                    ),
+                    args.json,
+                )
+            else:
+                if not args.from_packet or not args.to_packet:
+                    raise ValueError("--from-packet and --to-packet required")
+                ra = store.db.execute(
+                    "SELECT payload_json FROM continuation_packets WHERE packet_id=?",
+                    (args.from_packet,),
+                ).fetchone()
+                rb = store.db.execute(
+                    "SELECT payload_json FROM continuation_packets WHERE packet_id=?",
+                    (args.to_packet,),
+                ).fetchone()
+                pa = json.loads(ra["payload_json"]) if ra else {}
+                pb = json.loads(rb["payload_json"]) if rb else {}
+                emit(contract_diff(pa, pb), args.json)
+
+        elif command == "agent":
+            from .agents import register_agent
+
+            if args.action == "register":
+                if not args.agent_id or not args.name:
+                    raise ValueError("--agent-id and --name required")
+                emit(
+                    register_agent(store, args.repo, args.agent_id, args.name),
+                    args.json,
+                )
+            else:
+                rows = store.db.execute(
+                    "SELECT agent_id, display_name, created_at FROM agent_principals WHERE repo=?",
+                    (args.repo,),
+                ).fetchall()
+                emit(
+                    {
+                        "repo": args.repo,
+                        "agents": [dict(r) for r in rows],
+                        "claim_boundary": "Agent list is local identity only.",
+                    },
+                    args.json,
+                )
+
+        elif command == "token":
+            from .agents import mint_token, revoke_token, validate_token
+
+            if args.action == "mint":
+                if not args.agent_id:
+                    raise ValueError("--agent-id required")
+                emit(
+                    mint_token(
+                        store,
+                        args.repo,
+                        args.agent_id,
+                        args.scope or ["memory.read", "memory.remember"],
+                        ttl_seconds=args.ttl,
+                    ),
+                    args.json,
+                )
+            elif args.action == "revoke":
+                if not args.token_id:
+                    raise ValueError("--token-id required")
+                emit(revoke_token(store, args.repo, args.token_id), args.json)
+            else:
+                if not args.token_id:
+                    raise ValueError("--token-id required")
+                emit(validate_token(store, args.repo, args.token_id), args.json)
+
+        elif command == "causal":
+            from .causal import causal_report, evaluate_causal_episode, open_episode
+
+            if args.action == "report" or args.action == "status":
+                emit(causal_report(store, args.repo), args.json)
+            else:
+                open_episode(store, args.repo, "cli_evaluate")
+                emit(evaluate_causal_episode(store, args.repo), args.json)
+
+        elif command == "compile-interlink":
+            from .neuron import compile_interlink
+
+            res = tuple(
+                r.strip() for r in str(args.resolutions).split(",") if r.strip()
+            )
+            emit(compile_interlink(store, args.repo, resolutions=res or ("file", "symbol")), args.json)
 
         elif command == "dashboard":
             repository = store.repo(args.repo)

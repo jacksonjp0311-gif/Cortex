@@ -1,7 +1,7 @@
 # Cortex Architecture Upgrade — v4.0 → v5.0
 
-**Status:** Design record (not yet implemented)  
-**Baseline:** Cortex **v3.6.0** (living organism ⊛, immune ⚠, connect pass ⧉, teach ☰, GCMT v1.5)  
+**Status:** Implemented in **v5.0.0** (incremental depth continues)  
+**Baseline:** Cortex **v3.6.0** → **v5.0.0** (living organism ⊛, immune ⚠, connect pass ⧉, teach ☰, GCMT v1.5 + seven capabilities)  
 **Author posture:** Local-first, governed, recommend-only  
 **Supersession:** Argues *with* `docs/COVENANT.md`; does not walk around it.
 

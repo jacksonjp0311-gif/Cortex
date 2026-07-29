@@ -76,6 +76,36 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "OrganismBreathe",
         "maps_to": "cortex breathe",
     },
+    "hnsw_vectors": {
+        "symbol": "▦",
+        "spoken": "hnsw vectors",
+        "target": "HnswVectors",
+        "maps_to": "cortex vectors",
+    },
+    "ranker": {
+        "symbol": "⇅",
+        "spoken": "ranker",
+        "target": "LocalRanker",
+        "maps_to": "cortex ranker",
+    },
+    "predict": {
+        "symbol": "⇢",
+        "spoken": "predict prefetch",
+        "target": "PredictPrefetch",
+        "maps_to": "cortex predict",
+    },
+    "contract": {
+        "symbol": "▤",
+        "spoken": "contract check",
+        "target": "ContractCheck",
+        "maps_to": "cortex contract",
+    },
+    "causal": {
+        "symbol": "↻",
+        "spoken": "causal ledger",
+        "target": "CausalLedger",
+        "maps_to": "cortex causal",
+    },
 }
 
 

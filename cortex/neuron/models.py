@@ -12,6 +12,11 @@ class NeuralNode:
     threshold: float
     tags: tuple[str, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
+    resolution: str = "file"  # file | symbol | ast | basic_block
+    parent_node_id: str | None = None
+    span_start: int | None = None
+    span_end: int | None = None
+    fingerprint: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

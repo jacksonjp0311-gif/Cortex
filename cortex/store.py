@@ -331,6 +331,178 @@ CREATE TABLE IF NOT EXISTS settings(
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- ── v5.0 governed local cognition substrate (additive; one body) ──────────
+CREATE TABLE IF NOT EXISTS coverage_facts(
+    repo TEXT NOT NULL,
+    test_node_id TEXT NOT NULL,
+    target_node_id TEXT NOT NULL,
+    coverage_kind TEXT NOT NULL,
+    weight REAL NOT NULL,
+    source TEXT NOT NULL,
+    observed_at REAL NOT NULL,
+    PRIMARY KEY(repo, test_node_id, target_node_id, coverage_kind),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ranker_models(
+    repo TEXT NOT NULL,
+    model_id TEXT NOT NULL,
+    schema_version TEXT NOT NULL,
+    feature_names_json TEXT NOT NULL,
+    weights_json TEXT NOT NULL,
+    bias REAL NOT NULL,
+    train_count INTEGER NOT NULL DEFAULT 0,
+    last_outcome_id TEXT,
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL,
+    PRIMARY KEY(repo, model_id),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ranker_examples(
+    example_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    outcome_id TEXT NOT NULL,
+    activation_id TEXT NOT NULL,
+    feature_vector_json TEXT NOT NULL,
+    label REAL NOT NULL,
+    verification_type TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_ranker_examples_repo ON ranker_examples(repo, created_at);
+
+CREATE TABLE IF NOT EXISTS prediction_traces(
+    trace_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    session_id TEXT,
+    task_hash TEXT NOT NULL,
+    predicted_paths_json TEXT NOT NULL,
+    scores_json TEXT NOT NULL,
+    materialize_cost INTEGER NOT NULL DEFAULT 0,
+    created_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS prediction_outcomes(
+    trace_id TEXT PRIMARY KEY,
+    used_count INTEGER NOT NULL,
+    unused_count INTEGER NOT NULL,
+    precision REAL NOT NULL,
+    outcome_id TEXT,
+    FOREIGN KEY(trace_id) REFERENCES prediction_traces(trace_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS contract_checks(
+    check_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    packet_id TEXT NOT NULL,
+    contract_hash TEXT NOT NULL,
+    result TEXT NOT NULL,
+    breaks_json TEXT NOT NULL,
+    differential_json TEXT NOT NULL DEFAULT '{}',
+    checked_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS agent_principals(
+    repo TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    secret_hash TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    PRIMARY KEY(repo, agent_id),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS capability_tokens(
+    token_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    scope_json TEXT NOT NULL,
+    not_before REAL NOT NULL,
+    not_after REAL NOT NULL,
+    issued_by TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    revoked INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS memory_conflicts(
+    conflict_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    session_a TEXT NOT NULL,
+    session_b TEXT NOT NULL,
+    path_or_claim TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    receipt_hash TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS shared_locks(
+    repo TEXT NOT NULL,
+    resource_key TEXT NOT NULL,
+    holder_agent_id TEXT NOT NULL,
+    token_id TEXT NOT NULL,
+    expires_at REAL NOT NULL,
+    PRIMARY KEY(repo, resource_key),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS vector_indices(
+    repo TEXT NOT NULL,
+    index_id TEXT NOT NULL,
+    algorithm TEXT NOT NULL,
+    dim INTEGER NOT NULL,
+    metric TEXT NOT NULL,
+    params_json TEXT NOT NULL,
+    build_fingerprint TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    PRIMARY KEY(repo, index_id),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS vector_index_nodes(
+    repo TEXT NOT NULL,
+    index_id TEXT NOT NULL,
+    node_key TEXT NOT NULL,
+    vector_kind TEXT NOT NULL,
+    layer INTEGER NOT NULL DEFAULT 0,
+    neighbors_json TEXT NOT NULL DEFAULT '[]',
+    vector_blob BLOB NOT NULL,
+    path TEXT NOT NULL DEFAULT '',
+    memory_id INTEGER,
+    PRIMARY KEY(repo, index_id, node_key, vector_kind),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_vin_repo_index ON vector_index_nodes(repo, index_id);
+
+CREATE TABLE IF NOT EXISTS causal_episodes(
+    episode_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    task_family TEXT NOT NULL,
+    baseline_fingerprint TEXT NOT NULL,
+    treatment_json TEXT NOT NULL,
+    metrics_before_json TEXT NOT NULL,
+    metrics_after_json TEXT NOT NULL,
+    delta_json TEXT NOT NULL,
+    verdict TEXT NOT NULL,
+    confounds_json TEXT NOT NULL DEFAULT '[]',
+    created_at REAL NOT NULL,
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS causal_links(
+    episode_id TEXT NOT NULL,
+    cause_kind TEXT NOT NULL,
+    cause_id TEXT NOT NULL,
+    effect_metric TEXT NOT NULL,
+    effect_delta REAL NOT NULL,
+    PRIMARY KEY(episode_id, cause_kind, cause_id, effect_metric),
+    FOREIGN KEY(episode_id) REFERENCES causal_episodes(episode_id) ON DELETE CASCADE
+);
 """
 
 
@@ -342,6 +514,32 @@ class Store:
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA busy_timeout=5000")
         self.db.executescript(SCHEMA)
+        self._ensure_v5_columns()
+
+    def _ensure_v5_columns(self) -> None:
+        """Additive columns on pre-v5 neural_nodes without rebuilding the table."""
+
+        cols = {
+            row[1]
+            for row in self.db.execute("PRAGMA table_info(neural_nodes)").fetchall()
+        }
+        alters: list[str] = []
+        if "resolution" not in cols:
+            alters.append(
+                "ALTER TABLE neural_nodes ADD COLUMN resolution TEXT NOT NULL DEFAULT 'file'"
+            )
+        if "parent_node_id" not in cols:
+            alters.append("ALTER TABLE neural_nodes ADD COLUMN parent_node_id TEXT")
+        if "span_start" not in cols:
+            alters.append("ALTER TABLE neural_nodes ADD COLUMN span_start INTEGER")
+        if "span_end" not in cols:
+            alters.append("ALTER TABLE neural_nodes ADD COLUMN span_end INTEGER")
+        if "fingerprint" not in cols:
+            alters.append("ALTER TABLE neural_nodes ADD COLUMN fingerprint TEXT")
+        for stmt in alters:
+            self.db.execute(stmt)
+        if alters:
+            self.db.commit()
 
     def close(self) -> None:
         self.db.close()
@@ -937,18 +1135,38 @@ class Store:
         now = time.time()
         with self.transaction() as conn:
             for node in nodes:
+                resolution = getattr(node, "resolution", None) or (
+                    (node.metadata or {}).get("resolution") or "file"
+                )
+                parent = getattr(node, "parent_node_id", None) or (
+                    (node.metadata or {}).get("parent_node_id")
+                )
+                span_start = getattr(node, "span_start", None)
+                if span_start is None:
+                    span_start = (node.metadata or {}).get("span_start")
+                span_end = getattr(node, "span_end", None)
+                if span_end is None:
+                    span_end = (node.metadata or {}).get("span_end")
+                fingerprint = getattr(node, "fingerprint", None) or (
+                    (node.metadata or {}).get("fingerprint")
+                )
                 conn.execute(
                     """
                     INSERT INTO neural_nodes(
-                      repo, node_id, path, kind, threshold, tags_json, metadata, updated_at
-                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+                      repo, node_id, path, kind, threshold, tags_json, metadata, updated_at,
+                      resolution, parent_node_id, span_start, span_end, fingerprint
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(repo, node_id) DO UPDATE SET
                       path=excluded.path, kind=excluded.kind, threshold=excluded.threshold,
-                      tags_json=excluded.tags_json, metadata=excluded.metadata, updated_at=excluded.updated_at
+                      tags_json=excluded.tags_json, metadata=excluded.metadata,
+                      updated_at=excluded.updated_at, resolution=excluded.resolution,
+                      parent_node_id=excluded.parent_node_id, span_start=excluded.span_start,
+                      span_end=excluded.span_end, fingerprint=excluded.fingerprint
                     """,
                     (
                         repo, node.node_id, node.path, node.kind, node.threshold,
                         json.dumps(node.tags), json.dumps(node.metadata, sort_keys=True), now,
+                        resolution, parent, span_start, span_end, fingerprint,
                     ),
                 )
             for synapse in synapses:
