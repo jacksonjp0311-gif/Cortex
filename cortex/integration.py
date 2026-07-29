@@ -62,7 +62,7 @@ POWERSHELL_WRAPPER = r'''param(
         "verify", "status", "graph", "telemetry", "environment", "meta-language",
         "thalamus", "interlink", "neural-replay", "doctor",
         "identity", "distill", "kernels", "interconnect", "immune", "metrics",
-        "prune", "organism", "breathe", "causal", "glyphs", "evolve"
+        "prune", "organism", "breathe", "causal", "glyphs", "evolve", "stream"
     )]
     [string]$Command = "activate",
     [string]$Task = "",
@@ -213,6 +213,14 @@ if ($Command -eq "causal") {
 }
 if ($Command -eq "glyphs") {
     $ArgsList += @("glyphs", "--json")
+}
+if ($Command -eq "stream") {
+    $StreamAction = if (-not [string]::IsNullOrWhiteSpace($Action)) { $Action } else { "status" }
+    if ($StreamAction -eq "seal") {
+        $ArgsList += @("stream", "seal", "--repo", $RepoName, "--json")
+    } else {
+        $ArgsList += @("stream", "status", "--repo", $RepoName, "--json")
+    }
 }
 if ($Command -eq "evolve") {
     if ([string]::IsNullOrWhiteSpace($Text)) {
@@ -458,6 +466,16 @@ case "$COMMAND" in
     ;;
   glyphs)
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" glyphs --json
+    ;;
+  stream)
+    SACTION="${1:-status}"
+    if [[ $# -gt 0 ]]; then shift; fi
+    case "$SACTION" in
+      status|seal)
+        exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" stream "$SACTION" --repo "$REPO_NAME" --json
+        ;;
+      *) echo "Unknown stream action: $SACTION (status|seal)" >&2; exit 2 ;;
+    esac
     ;;
   evolve)
     ACT=""

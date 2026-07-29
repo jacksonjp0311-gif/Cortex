@@ -144,6 +144,57 @@ def activate_repository(
     persist_organism_pulse(store, repo, organism, session_id=session.get("session_id"))
     save_prior_pulse(store, repo, organism["pulse"])
 
+    # Consciousness stream 〰: rebind durable episodic thread; session bond is temporary.
+    try:
+        from .stream import append_stream_frame, stream_context_for_packet, stream_status
+
+        stream_surface = stream_context_for_packet(
+            store,
+            repo,
+            task=task,
+            session_id=session.get("session_id"),
+            control=context.get("control_error") or {},
+            governor=context.get("governor") or {},
+            aria=context.get("aria_materialization") or {},
+        )
+        append_stream_frame(
+            store,
+            repo,
+            kind="activate" if refresh != "never" else "breathe",
+            task=task,
+            session_id=session.get("session_id"),
+            surface="activate" if refresh != "never" else "breathe",
+            payload={
+                "activation": (
+                    "ready" if certificate["status"] == "verified" else "degraded"
+                ),
+                "budget": budget,
+                "profile": profile,
+            },
+            glyph_line=stream_surface.get("glyph_line"),
+        )
+        status = stream_status(store, repo)
+        context["stream"] = {
+            **stream_surface,
+            "frame_count": status.get("frame_count"),
+            "chain_tip": status.get("chain_tip"),
+            "recent_frames": status.get("recent_frames"),
+        }
+        organism["stream"] = {
+            "glyph": "〰",
+            "stream_id": status.get("stream_id"),
+            "frame_count": status.get("frame_count"),
+            "alive": status.get("alive"),
+            "continuity": stream_surface.get("continuity"),
+        }
+    except Exception as exc:
+        context["stream"] = {
+            "glyph": "〰",
+            "alive": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "claim_boundary": "Stream optional; activation still valid without it.",
+        }
+
     # Prefetch (v5): proactive evidence proposal — never ARIA surprise-wake.
     prediction: dict[str, Any] | None = None
     gov_mode = str((context.get("governor") or {}).get("mode") or "normal")

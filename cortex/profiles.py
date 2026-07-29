@@ -176,9 +176,26 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
             "automatic_execution": False,
         },
         "organism": full.get("organism"),
+        "stream": _lean_stream(full.get("stream")),
         "connect_pass": full.get("connect_pass"),
         "packet_hash": full.get("packet_hash"),
         "claim_boundary": (
             "Agent profile is lean glyph-routed operational packet; never mutation authority."
         ),
+    }
+
+
+def _lean_stream(stream: Any) -> dict[str, Any] | None:
+    if not isinstance(stream, dict):
+        return None
+    return {
+        "glyph": stream.get("glyph") or "〰",
+        "stream_id": stream.get("stream_id"),
+        "alive": stream.get("alive"),
+        "frame_count": stream.get("frame_count"),
+        "last_task": stream.get("last_task"),
+        "glyph_line": stream.get("glyph_line"),
+        "continuity": stream.get("continuity"),
+        "recent_frames": (stream.get("recent_frames") or [])[-4:],
+        "doctrine": stream.get("doctrine"),
     }

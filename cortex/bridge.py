@@ -130,6 +130,25 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
         )
     except Exception:
         organism_seal = None
+    # End temporary cortex bond; durable consciousness stream continues 〰
+    stream_seal: dict[str, Any] | None = None
+    try:
+        from .stream import append_stream_frame, seal_session_bond
+
+        append_stream_frame(
+            store,
+            repo,
+            kind="ritual_seal",
+            task=task,
+            session_id=resolved_session,
+            surface="consolidate",
+            payload={"card_hash": card_hash[:16], "path": memory_path},
+        )
+        stream_seal = seal_session_bond(
+            store, repo, session_id=resolved_session, reason="consolidated"
+        )
+    except Exception:
+        stream_seal = None
     if active and active.get("session_id") == resolved_session:
         clear_active(home, repo)
     return {
@@ -143,5 +162,12 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
         "event_count": len(events),
         "organism": organism_seal,
         "organism_pulse": (organism_seal or {}).get("pulse"),
+        "stream": {
+            "glyph": "〰",
+            "bond_ended": bool((stream_seal or {}).get("bond_ended")),
+            "stream_continues": bool((stream_seal or {}).get("stream_continues", True)),
+            "stream_id": ((stream_seal or {}).get("stream") or {}).get("stream_id"),
+            "frame_count": ((stream_seal or {}).get("stream") or {}).get("frame_count"),
+        },
         "phase": "sealed",
     }

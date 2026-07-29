@@ -125,6 +125,24 @@ def close_signal_loop(
         )
     except Exception:
         pass
+    try:
+        from .stream import append_stream_frame
+
+        append_stream_frame(
+            store,
+            repo,
+            kind="evolve",
+            task=probe_task,
+            surface="evolve",
+            payload={
+                "verdict": causal.get("verdict"),
+                "outcome_id": outcome.get("outcome_id"),
+                "ranker_trained": (outcome.get("ranker") or {}).get("trained"),
+            },
+            glyph_line=glyph_state.get("line"),
+        )
+    except Exception:
+        pass
 
     return {
         "schema_version": "cortex-signal-loop/1.0",

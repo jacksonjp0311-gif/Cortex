@@ -202,6 +202,14 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "loop",
         "kernel": "integrate",
     },
+    "consciousness_stream": {
+        "symbol": "〰",
+        "spoken": "consciousness stream",
+        "aria_id": "ConsciousnessStream",
+        "maps_to": "cortex stream / packet.stream",
+        "role": "pulse",
+        "kernel": "retain",
+    },
     "glyph_canon": {
         "symbol": CANON_GLYPH,
         "spoken": "glyph canon",
@@ -363,6 +371,8 @@ def encode_state(
 
     # Organism always present as meta bond marker
     tokens.append("organism_pulse")
+    # Durable stream spine (cross-session)
+    tokens.append("consciousness_stream")
 
     # Connect / mesh
     tokens.append("connect_pass")

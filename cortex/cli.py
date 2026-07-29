@@ -596,6 +596,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     glyphs_p.add_argument("--json", action="store_true")
 
+    stream_p = sub.add_parser(
+        "stream",
+        help="Consciousness stream 〰 (episodic frames on durable body).",
+    )
+    stream_p.add_argument("--repo", required=True)
+    stream_p.add_argument(
+        "action",
+        choices=["status", "seal"],
+        nargs="?",
+        default="status",
+        help="status (default) or seal session bond (stream continues).",
+    )
+    stream_p.add_argument("--session-id", help="Session id for seal.")
+    stream_p.add_argument("--json", action="store_true")
+
     causal_p = sub.add_parser(
         "causal",
         help="Causal outcome ledger (status|report|evaluate|probe).",
@@ -1509,6 +1524,22 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "glyphs":
             emit(glyph_canon_registry(optimized=not args.full), args.json)
+
+        elif command == "stream":
+            from .stream import seal_session_bond, stream_status
+
+            if args.action == "seal":
+                emit(
+                    seal_session_bond(
+                        store,
+                        args.repo,
+                        session_id=args.session_id,
+                        reason="cli_seal",
+                    ),
+                    args.json,
+                )
+            else:
+                emit(stream_status(store, args.repo), args.json)
 
         elif command == "evolve":
             governance = governor.evaluate(args.repo)
