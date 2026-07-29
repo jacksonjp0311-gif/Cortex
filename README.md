@@ -4,6 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
+  <img src="https://img.shields.io/badge/version-3.4.0-0ea5e9?style=for-the-badge" alt="v3.4.0" />
+  <img src="https://img.shields.io/badge/organism-⊛_co--process-a855f7?style=for-the-badge" alt="Organism co-process" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/authority-recommend--only-f8fafc?style=for-the-badge&labelColor=111827" alt="Recommend only" />
@@ -11,11 +13,156 @@
 
 # Cortex Neural Interlink
 
-**Verified repository assimilation, selective memory, environment learning, and sparse neural interlinking for AI agent systems.**
+**Local-first repository memory, governed continuation, and session co-process for AI coding agents.**
 
-Cortex is a portable local memory organ for coding agents. Drop the folder into or beside a repository, run one PowerShell or Bash command, and Cortex inventories the repository, learns its development environment, indexes supported content, extracts relationships, imports bounded Git telemetry, compiles those relationships into a sparse neural interlink, validates retrieval, installs repository-local agent instructions, and issues a bootstrap certificate.
+Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-After bootstrap, an agent does not need to rediscover the whole environment on every task. Cortex checks for drift, refreshes only changed surfaces, retrieves task-relevant evidence, propagates activation through bounded structural associations, and emits a compact context packet with provenance.
+**Current release: v3.4.0** — organism interlink (⊛), packet-first agent protocol, ritual loop, transcend-check, ARIA progress glyphs.
+
+```bash
+pip install -e .
+python -m cortex bootstrap . --name MyProject --json
+python -m cortex organism --repo MyProject --task "Map the auth surface" --json
+python -m cortex ritual --repo MyProject --task "Close the loop" \
+  --remember-text "Auth lives in middleware" --json
+python -m cortex transcend-check --json
+```
+
+Cortex is SQLite-backed, dependency-free in core install, and **recommend-only**: it never grants mutation authority.
+
+---
+
+## What agents get
+
+| Surface | Purpose |
+|---|---|
+| **Packet** | Evidence + `instructions` + `agent_protocol` + `control_error` |
+| **Organism ⊛** | Session co-process: shared living state (not consciousness) |
+| **Ritual ⟳** | `activate → remember → consolidate` on one substrate |
+| **Governor** | `normal` / `constrained` / `read_only` with forced hard stops |
+| **Mirror / contact / ⟡** | Self-audit: glow when invariants hold |
+| **ARIA** | Native semantic language — dormant by default, never auto-executed |
+
+Read the packet in order: **control_error → instructions → agent_protocol → evidence**.  
+See [`docs/TRANSCEND.md`](docs/TRANSCEND.md) and [`docs/ORGANISM.md`](docs/ORGANISM.md).
+
+---
+
+## Organism interlink (v3.4) ⊛
+
+For one task session, agent and Cortex share a **single living state vector**:
+
+```text
+identity ── nervous (thalamus + neural + ARIA)
+    │
+immune (governor + control_error) ── metabolism (surprise + efficiency)
+    │
+memory (evidence) ── intention (task + protocol)
+    │
+conscience (geometry) ── pulse / pulse_chain
+```
+
+| Role | Who | Lifetime |
+|---|---|---|
+| Durable body | Cortex (index, graph, ledger) | Across sessions |
+| Temporary working cortex | The agent | This session only |
+| Authority | Host rules + human | Always |
+
+```bash
+cortex organism --repo MyProject --task "Continue the investigation" --json
+# also present on every activate as context.organism
+```
+
+Not a second mind. Separable bond. Host remains sovereign.  
+Docs: [`docs/ORGANISM.md`](docs/ORGANISM.md).
+
+---
+
+## Session ritual
+
+```text
+activate → work under host/human authority → remember → consolidate
+```
+
+```bash
+cortex ritual --repo MyProject --task "Ship the fix" \
+  --remember-kind discovery --remember-text "Root cause was nil config" --json
+```
+
+Remember is idempotent (same kind+text de-dupes). Consolidate returns explicit
+statuses (`created`, `nothing_to_consolidate`, `duplicate_skip`,
+`blocked_by_governor`).
+
+---
+
+## Packet profiles & control error
+
+```bash
+cortex activate --repo MyProject --task "..." --profile agent --json   # default
+cortex activate --repo MyProject --task "..." --profile debug --json   # full telemetry
+cortex activate --repo MyProject --task "..." --profile minimal --json # evidence + stops
+```
+
+Every packet includes **`control_error`** (⚠) — severity, `must_reverify`,
+`work_allowed`. Read it first. Governor `read_only` prefixes hard STOP
+instructions; ritual will not consolidate as success when re-verify is required
+unless `--force`.
+
+---
+
+## Covenant geometry
+
+Five interlocks must co-agree:
+
+| Axis | Law |
+|---|---|
+| **Authority** | Never self-expand mutation rights |
+| **Evidence** | Source/tests outrank learned memory |
+| **Activation** | Known ≠ active ≠ searchable |
+| **Language** | ARIA never auto-executes |
+| **Economics** | Deferred cost stays visible |
+
+Docs: [`docs/COVENANT.md`](docs/COVENANT.md) · [`docs/BRIGHT_POINT.md`](docs/BRIGHT_POINT.md) · [`docs/STEADY_STATE.md`](docs/STEADY_STATE.md).
+
+---
+
+## Self-audit (conscience loop)
+
+```bash
+cortex transcend-check --json   # ⟡ protocol + red modes + ritual + glow
+cortex mirror --json            # coherence under stress
+cortex contact --json           # mirror + fluency + synthetic foreign matrix
+cortex teach                    # ☰ operator teaching surface
+```
+
+`glow: true` means break_count is zero on declared gates — not AGI, not
+universal production proof. See [`docs/MIRROR.md`](docs/MIRROR.md).
+
+---
+
+## Progress glyphs (capability-free)
+
+ARIA labels for operator speed — **no opcode, no auto-run, no authority**:
+
+```text
+⊛  organism pulse          packet.organism / cortex organism
+⟡  transcend check         cortex transcend-check
+▣  packet profile          --profile agent|debug|minimal
+⚠  control error           packet.control_error
+⌖  retrieval gate          cortex evaluate --mode retrieval
+⟳  ritual idempotent       cortex ritual
+Δ  incremental surprise    efficiency.surprise
+☰  teach surface           cortex teach
+⋈  context weave           constitutional balance
+≋  constitutional potential
+⌁  reversibility burden
+↧  authority descent
+↶  verified recovery
+```
+
+---
+
+## Flow
 
 ```text
 FIRST RUN — VERIFIED ASSIMILATION
@@ -29,154 +176,74 @@ repository
   -> retrieval probes and verification
   -> bootstrap certificate
 
-LATER RUNS — SELECTIVE NEURAL RECALL
+LATER RUNS — SELECTIVE RECALL + ORGANISM BOND
 current task
-  -> manifest drift check
+  -> manifest drift / surprise (Δ)
   -> incremental refresh when required
+  -> Thalamus route + inhibition
   -> lexical + semantic retrieval
-  -> deterministic sparse spreading activation
-  -> structural support-path expansion
-  -> Governor trust control
-  -> bounded evidence packet
-  -> agent work
-  -> episodic events
-  -> Discovery Card consolidation
+  -> sparse neural activation
+  -> Governor + control_error (⚠)
+  -> organism pulse (⊛)
+  -> bounded packet (profile ▣)
+  -> agent work under host authority
+  -> remember → consolidate (ritual ⟳)
 ```
 
-Cortex is local-first, SQLite-backed, dependency-free in its core installation, and designed to integrate with existing repositories without replacing their source, tests, governance, or authorization rules.
+---
 
-## Cortex v3.2: aligned geometry / bright point
+## GCMT (governed continuation)
 
-Cortex v3.2 latches the covenant interlocks into a single geometry: authority,
-evidence, activation, language, and economics must co-agree under mirror stress.
-See [`docs/COVENANT.md`](docs/COVENANT.md), [`docs/BRIGHT_POINT.md`](docs/BRIGHT_POINT.md),
-and [`docs/STEADY_STATE.md`](docs/STEADY_STATE.md).
-
-```bash
-cortex mirror --json
-cortex contact --json
-cortex ritual --repo MyProject --task "Close the loop" --remember-text "fact" --json
-```
-
-Packets carry `agent_protocol` so agents can follow activate → remember →
-consolidate without lore. `cortex contact` is synthetic self/fork stress only
-unless you name another path.
-
-## Cortex v3.1: constitutional homeostasis
-
-Cortex v3.1 implements James Paul Jackson's Governed Continuation Memory Theory
-(GCMT v1.5): memory is regulated transformation with recoverable origin, and
-adaptive continuation remains legitimate only while authority, integrity,
-reversibility, and recovery stay constitutionally bounded.
-
-It adds:
-
-- explicit operational, evidence, and canonical state planes;
-- verified continuation packets with drift, ambiguity, authority, expiry,
-  receipts, and re-anchoring conditions;
-- evidence-gated canonical-memory promotion and rollback;
-- selective aging of learned routing deviation without deleting source evidence;
-- cross-repository retrieval with explicit boundary preservation;
-- SQLite vector buckets for bounded semantic candidate selection;
-- base-versus-learned replay evaluation and regression gates;
-- a read-oriented MCP stdio server and compact operational dashboard.
-- dual-axis uncertainty/integrity classification and an observational
-  constitutional-potential surface;
-- an explicit harmonic balance between preserved context and adjacent
-  conceptualization;
-- authority-monotonic promotion, reversibility-weighted admission, local
-  authority rebinding on continuation import, and staged recovery verification.
+Cortex implements Governed Continuation Memory Theory: memory as regulated
+transformation with recoverable origin. Continuation packets, promotion gates,
+rollback, federation, and constitutional supervision stay **recommend-only**.
 
 ```bash
 cortex continuation --repo MyProject --task "Continue the release investigation" --json
 cortex constitutional --repo MyProject --task "Balance anchored and adjacent context" --json
 cortex federated-query "Where is authentication owned?" --repos Web API Shared --json
 cortex lifecycle --repo MyProject --json
-cortex evaluate examples/evaluation_corpus.json --repo MyProject --json
 cortex dashboard --repo MyProject --json
-cortex mirror --json
 cortex-mcp
 ```
 
-The coherence mirror bootstraps under isolated stress and reports whether
-deferred ARIA economics, wake gates, and authority invariants still hold
-(`glow: true` when break_count is zero). See [`docs/MIRROR.md`](docs/MIRROR.md).
+See [`docs/GCMT.md`](docs/GCMT.md).
 
-Operational relevance and learned confidence remain separate from application
-and promotion authority. Canonical memory is Cortex-owned metadata; these
-commands do not authorize or perform repository source mutation. See
-[`docs/GCMT.md`](docs/GCMT.md).
+---
 
 ## Native ARIA semantic language
 
-Cortex stays Python and now carries a self-contained
-`INTERNAL ARIA META-LANGUAGE` snapshot. It is a squashed subtree rather than a
-submodule, so Cortex has no runtime dependency on another repository. A host's
-own `ARIA-RUNTIME.json`, `ARIA-CONNECT.json`, and `.aria` plans take precedence
-when present.
+Cortex is implemented and executed in **Python**. It ships a self-contained
+`INTERNAL ARIA META-LANGUAGE` snapshot (squashed subtree, not a submodule).
 
-ARIA is the semantic language Cortex always knows. Its internal files occupy a
-separate `internal_aria_substrate` neural region: verified and addressable at
-all times, dormant for unrelated implementation work, and activated for ARIA,
-semantic replay/planning, governed evolution, consent, capability authority,
-handoff, provider-bridge, glyph, and cooperative-mesh tasks. Dormancy removes
-the region from a task's eligible evidence path; it does not unload or forget
-the language.
-
-Bootstrap is substrate-tiered: ARIA identity/anchor files index immediately,
-while bulk language files remain inventory-only (`substrate_deferred`) until an
-ARIA-active task materializes them. That keeps first assimilation proportional
-to host repository work, not language bulk.
-
-Runtime fluency is typed as `language`, `intent`, `continuity`, `consent`,
-`governance`, `coordination`, or `symbolic`. Immutable core cues provide the
-deterministic baseline. Human-reviewed cue proposals may enter a bounded
-per-repository profile only through verified outcomes; subsequent verified
-outcomes tune relevance confidence, never execution or authority.
-
-The bundled alpha.18 vocabulary adds five capability-free executable function
-glyphs:
-
-```text
-⋈  context weave             preservation balanced with adjacency
-≋  constitutional potential  observational instability
-⌁  reversibility burden      proof burden rises with irreversibility
-↧  authority descent         no internal scope expansion
-↶  verified recovery         recovery is staged before commit
-```
-
-They lower to ordinary typed ARIA calls, introduce no opcode or capability, and
-are exercised by `examples/constitutional-homeostasis.aria` inside the bundled
-language.
+- Region: `internal_aria_substrate` — known always, **dormant by default**
+- Bootstrap: anchors index immediately; bulk files stay `substrate_deferred` until wake
+- Fluency cues are typed; false wakes are regression-gated
+- Plans are **never** auto-executed or treated as mutation authority
 
 ```bash
 cortex meta-language --repo MyProject --json
 cortex meta-language --repo MyProject --task "Prepare a semantic replay" --json
-cortex meta-language --repo MyProject \
-  --corpus benchmarks/corpora/aria_fluency.json --json
 ```
 
-Bundled or host ARIA artifacts are never executed automatically, translated
-into Cortex core, or treated as mutation authority. Hidden `.aria/`
-runtime/backups are excluded
-while declared `*.aria` source plans remain indexed. The descriptor is carried
-through environment, context, and GCMT continuation packets. See
-[`docs/ARIA_META_LANGUAGE.md`](docs/ARIA_META_LANGUAGE.md).
+See [`docs/ARIA_META_LANGUAGE.md`](docs/ARIA_META_LANGUAGE.md).
+
+---
 
 ## Thalamus routing
 
-Every normal activation now passes through a local, deterministic Thalamus route plan before retrieval. The plan classifies the task, allocates attention across source, tests, structure, documentation, Git, runtime, and other memory lanes, and records numerical inhibition for generated, duplicate, or out-of-scope evidence. It is an engineering routing analogy—not a biological model—and it cannot grant mutation authority. Inspect a plan with `cortex thalamus --repo <name> --task "<task>" --json`.
+Every normal activation is planned by a local deterministic Thalamus layer:
+intent classification, memory-lane budgets, and auditable inhibition. Engineering
+analogy only — not biology, not authority.
 
-Run the reproducible before/after routing benchmark with `python benchmarks/thalamus_before_after.py --files 250 --runs 5`. Its committed chart and raw results are in [`benchmarks/results/`](benchmarks/results/).
+```bash
+cortex thalamus --repo MyProject --task "Where is rate limiting?" --json
+cortex thalamus-feedback --repo MyProject --memory-id <id> --outcome helpful --json
+```
 
-Run `python -m cortex self-test --json` to clone Cortex as a host, place an
-explicitly labeled `InternalCortexEngine` clone inside it, and verify that the
-internal engine is excluded, matches the source commit/version, and can
-bootstrap and activate the outer Cortex repository.
-
-See [cross-domain analysis](docs/CROSS_DOMAIN_ANALYSIS.md) for the evidence-informed attention/inhibition analogy and the computational-work telemetry reported with every context packet.
-
-Use `cortex thalamus-feedback --repo <repository> --memory-id <id> --outcome helpful --json` to record bounded evidence feedback. Feedback adjusts only future routing priority; it never alters source truth or mutation authority.
+Benchmarks: `python benchmarks/thalamus_before_after.py`  
+Self-host engine check: `python -m cortex self-test --json`  
+Cross-domain notes: [`docs/CROSS_DOMAIN_ANALYSIS.md`](docs/CROSS_DOMAIN_ANALYSIS.md).
 
 ## What changed in the neural edition
 
@@ -242,29 +309,26 @@ The efficiency objective is not to simulate every neuron. It is to avoid scannin
 ## Single-substrate architecture
 
 ```text
-AI agent / Codex / NexusGate
+AI agent (temporary working cortex)
             |
             v
-Cortex activation and Governor
+     organism pulse ⊛  +  Governor / control_error ⚠
             |
-            +--> learned environment profile
-            |
-            +--> hybrid semantic retrieval
-            |
-            +--> sparse neural interlink
-            |       nodes = indexed repository files
-            |       synapses = existing graph relationships
-            |       plasticity = bounded internal association updates
-            |
-            +--> bounded context packet with provenance
+            +--> Thalamus route + inhibition
+            +--> hybrid retrieval + sparse neural interlink
+            +--> ARIA region (dormant | purpose-active)
+            +--> agent_protocol + profiles ▣
             |
             v
-SQLite cortex.db
+bounded packet with provenance
+            |
+            v
+SQLite cortex.db  (one substrate only)
   repositories, files, memories, FTS5, vectors
   symbols, edges, Git telemetry
   sessions, events, Discovery Cards
   environment profiles
-  neural nodes, synapses, activations, ledger
+  neural nodes, synapses, activations, ledger, organism pulses
 ```
 
 ## Requirements
