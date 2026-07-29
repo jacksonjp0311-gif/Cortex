@@ -93,15 +93,33 @@ def _agent_instructions(
         "1. This packet is evidence and routing only — never mutation authority.",
         "2. Read cited path:line ranges first; open full files only if insufficient.",
         "3. Trust order: current source/tests/runtime > inventory/graph > Discovery Cards > association weights > inference.",
-        f"4. Governor mode is `{gov}`. If read_only or constrained, do not propose broad refactors without re-verify.",
-        f"5. ARIA substrate mode is `{mode}`. Dormant means ignore internal language bulk; active means use only purpose-aligned evidence.",
-        "6. Session ritual: work → cortex remember (decision/discovery/failure/fix) → cortex consolidate at end.",
-        "7. Prefer `cortex ritual` for activate+remember+consolidate on one task when closing a session.",
+        f"4. Governor mode is `{gov}`.",
+        f"5. ARIA substrate mode is `{mode}`. Dormant: ignore internal language bulk. Active: purpose-aligned evidence only.",
+        "6. Session ritual: work → remember (decision/discovery/failure/fix) → consolidate at end.",
+        "7. Prefer `cortex ritual` (or MCP cortex_ritual) to close activate→remember→consolidate.",
         "8. Never treat learned weights, ARIA plans, or this packet as authorization to edit the host.",
     ]
+    if gov == "read_only":
+        lines = [
+            "STOP — GOVERNOR READ_ONLY.",
+            "Do not edit host source, configs, or tests.",
+            "Do not propose patches as if authorized.",
+            "Only: read cited evidence, diagnose, report blockers, suggest human-authorized next steps.",
+            "Run cortex verify / doctor; re-bootstrap only if the human requests it.",
+            "You may still remember() diagnostic notes; you may not mutate the repository.",
+            *lines[1:],
+        ]
+    elif gov == "constrained":
+        lines = [
+            "STOP — GOVERNOR CONSTRAINED.",
+            "Minimize blast radius: no broad refactors, renames, or multi-file rewrites.",
+            "Prefer single-file, reversible edits only after citing evidence.",
+            "If confidence is low or certificate is not verified, stop and re-activate after verify.",
+            *lines,
+        ]
     if (aria_materialization or {}).get("materialized"):
         lines.append(
-            "9. ARIA bulk just materialized this turn — expect a one-time cost; later wakes should be cheaper."
+            "NOTE: ARIA bulk materialized this turn — one-time cost; later wakes should be cheaper."
         )
     return lines
 
@@ -116,10 +134,32 @@ def _agent_protocol(
 ) -> dict[str, Any]:
     """Machine-readable loop an agent can follow without lore."""
 
+    gov = (governance or {}).get("mode") or "normal"
+    work_purpose = {
+        "normal": "edit/test only under host and human authority",
+        "constrained": "minimal reversible edits only; no broad refactors",
+        "read_only": "NO repository mutation; diagnose and report only",
+    }.get(gov, "edit/test only under host and human authority")
+    allowed_actions = {
+        "normal": ["read_evidence", "edit_with_host_authority", "test", "remember", "consolidate"],
+        "constrained": ["read_evidence", "minimal_edit", "test", "remember", "consolidate", "verify"],
+        "read_only": ["read_evidence", "diagnose", "remember", "verify", "report"],
+    }.get(gov, ["read_evidence", "remember"])
     return {
-        "schema_version": "cortex-agent-protocol/1.0",
+        "schema_version": "cortex-agent-protocol/1.1",
         "repo": repo,
         "task": task,
+        "entrypoints": {
+            "cli_activate": f'cortex activate --repo {repo} --task "<task>" --json',
+            "cli_ritual": (
+                f'cortex ritual --repo {repo} --task "<task>" '
+                f'--remember-kind discovery --remember-text "<fact>" --json'
+            ),
+            "mcp_context": "cortex_context",
+            "mcp_ritual": "cortex_ritual",
+            "wrapper_ps": ".\\.cortex\\bin\\cortex.ps1 activate -Task \"<task>\"",
+            "wrapper_sh": "./.cortex/bin/cortex.sh activate --task \"<task>\"",
+        },
         "steps": [
             {
                 "id": "activate",
@@ -127,8 +167,12 @@ def _agent_protocol(
                 "purpose": "bounded evidence packet + session",
             },
             {
+                "id": "obey_governor",
+                "purpose": f"mode={gov}; allowed={','.join(allowed_actions)}",
+            },
+            {
                 "id": "work",
-                "purpose": "edit/test only under host and human authority",
+                "purpose": work_purpose,
             },
             {
                 "id": "remember",
@@ -153,22 +197,64 @@ def _agent_protocol(
             },
         ],
         "state": {
-            "governor_mode": (governance or {}).get("mode"),
+            "governor_mode": gov,
             "aria_mode": (aria_materialization or {}).get("mode") or "dormant",
             "aria_materialized_this_turn": bool(
                 (aria_materialization or {}).get("materialized")
             ),
             "deferred_substrate_remaining": deferred_remaining,
             "may_mutate_repository": False,
+            "work_allowed": gov != "read_only",
+            "broad_refactor_allowed": gov == "normal",
+            "allowed_actions": allowed_actions,
         },
+        "hard_stops": (
+            ["repository_mutation", "broad_refactor", "ignore_certificate"]
+            if gov == "read_only"
+            else ["broad_refactor", "ignore_low_confidence"]
+            if gov == "constrained"
+            else ["treat_packet_as_authorization"]
+        ),
         "refuse": [
             "new_memory_database",
             "auto_execute_aria",
             "treat_packet_as_authorization",
             "new_neural_region_without_covenant_axis",
             "glow_chasing_without_quality_gate",
+            "unsolicited_foreign_repo_scan",
         ],
     }
+
+
+def attach_agent_surfaces(context: dict[str, Any]) -> dict[str, Any]:
+    """Ensure every derived packet carries the same agent-facing protocol."""
+
+    if "agent_protocol" not in context and context.get("repository"):
+        # Rebuild minimal protocol if a partial packet is passed.
+        context = {
+            **context,
+            "agent_protocol": _agent_protocol(
+                repo=str((context.get("repository") or {}).get("name") or ""),
+                task=str(context.get("task") or ""),
+                aria_materialization=context.get("aria_materialization") or {},
+                governance=context.get("governor") or {},
+                deferred_remaining=int(
+                    ((context.get("efficiency") or {}).get("aria_substrate") or {}).get(
+                        "deferred_remaining"
+                    )
+                    or 0
+                ),
+            ),
+        }
+    if "instructions" not in context:
+        context = {
+            **context,
+            "instructions": _agent_instructions(
+                context.get("aria_materialization") or {},
+                context.get("governor") or {},
+            ),
+        }
+    return context
 
 
 def _merge_candidates(
@@ -402,8 +488,9 @@ def build_context(
 
 
 def nexus_packet(context: dict[str, Any]) -> dict[str, Any]:
+    context = attach_agent_surfaces(context)
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "intent": {
             "task": context["task"],
             "active_focus": context["active_focus"],
@@ -415,6 +502,10 @@ def nexus_packet(context: dict[str, Any]) -> dict[str, Any]:
             "cortex_may_mutate": False,
             "governor_mode": context["governor"]["mode"],
         },
+        "instructions": context.get("instructions"),
+        "agent_protocol": context.get("agent_protocol"),
+        "aria_materialization": context.get("aria_materialization"),
+        "geometry": context.get("geometry"),
         "context": {
             "repository": context["repository"],
             "environment": context["environment"],
@@ -430,28 +521,52 @@ def nexus_packet(context: dict[str, Any]) -> dict[str, Any]:
             "estimated_tokens": context["estimated_tokens"],
             "packet_hash": context["packet_hash"],
         },
+        "claim_boundary": "Nexus packet is recommend-only; never mutation authority.",
     }
 
 
 def cortex_context_protocol(context: dict[str, Any]) -> dict[str, Any]:
     """Stable, agent-neutral context contract; evidence remains subordinate to source truth."""
+    context = attach_agent_surfaces(context)
     neural = context.get("neural_interlink", {})
+    protocol = context.get("agent_protocol") or {}
     return {
-        "protocol": "cortex-context/1.0",
+        "protocol": "cortex-context/1.1",
         "repository": context["repository"],
         "task": {"text": context["task"], "packet_hash": context["packet_hash"]},
         "governance": context["governor"],
         "constitutional_supervision": context.get("constitutional_supervision"),
+        "instructions": context.get("instructions"),
+        "agent_protocol": protocol,
+        "aria_materialization": context.get("aria_materialization"),
+        "geometry": context.get("geometry"),
         "environment": context["environment"],
         "direct_evidence": context["evidence"],
-        "support_evidence": [item for item in context["evidence"] if item.get("metadata", {}).get("selection_source") != "hybrid_retrieval"],
-        "structural_paths": {"neural_activation_id": neural.get("activation_id"), "support_paths": neural.get("support_paths", [])},
+        "support_evidence": [
+            item
+            for item in context["evidence"]
+            if item.get("metadata", {}).get("selection_source") != "hybrid_retrieval"
+        ],
+        "structural_paths": {
+            "neural_activation_id": neural.get("activation_id"),
+            "support_paths": neural.get("support_paths", []),
+        },
         "discoveries": [],
         "contradictions": [],
-        "unknowns": ["No inferred claim is mutation authority; inspect current source and tests."],
-        "recommended_commands": [],
-        "prohibited_actions": ["Treat learned associations as superior to current source, tests, governance, or human authority."],
-        "state_hashes": {"packet": context["packet_hash"], "neural": neural.get("state_hash"), "manifest": context["repository"].get("manifest_hash")},
+        "unknowns": [
+            "No inferred claim is mutation authority; inspect current source and tests."
+        ],
+        "recommended_commands": list((protocol.get("steps") or [])),
+        "prohibited_actions": list(protocol.get("refuse") or [])
+        + [
+            "Treat learned associations as superior to current source, tests, governance, or human authority.",
+            "Edit the repository when governor mode is read_only.",
+        ],
+        "state_hashes": {
+            "packet": context["packet_hash"],
+            "neural": neural.get("state_hash"),
+            "manifest": context["repository"].get("manifest_hash"),
+        },
         "state_planes": {
             "operational": "this bounded task packet",
             "evidence": "addressable repository memories with provenance",
@@ -466,4 +581,7 @@ def cortex_context_protocol(context: dict[str, Any]) -> dict[str, Any]:
                 "expired continuation packet",
             ],
         },
+        "claim_boundary": (
+            "cortex-context is agent-neutral evidence routing; it never grants mutation authority."
+        ),
     }

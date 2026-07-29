@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.2.3 - Transcend (packet-first agent surfaces)
+
+- **One language every door:** `agent_protocol` + `instructions` on activate,
+  cortex-context/1.1, nexus packets, MCP activate/context/ritual.
+- **Forced red modes:** `read_only` / `constrained` prefix hard STOP rules and
+  machine-checkable `allowed_actions` / `hard_stops`.
+- **MCP:** `cortex_activate`, `cortex_ritual`; refuse text on every tool.
+- **Wrappers:** `ritual` in PowerShell/Bash integration templates.
+- **Teaching:** `docs/TRANSCEND.md` — run from the packet alone.
+- No new organs, no second DB, no auto-ARIA.
+
 ## 3.2.2 - Bright Point
 
 - **Freeze:** `docs/BRIGHT_POINT.md` names the aligned release; self-host only contact.

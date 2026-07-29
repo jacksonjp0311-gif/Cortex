@@ -18,22 +18,27 @@ from .federation import federated_query
 from .governor import Governor
 from .lifecycle import lifecycle_plan
 from .retrieval import query
+from .session_ritual import run_session_ritual
 from .store import Store
 
 MCP_STABLE_VERSION = "2025-11-25"
 MCP_DRAFT_VERSION = "2026-07-28"
 MCP_SUPPORTED_VERSIONS = [MCP_DRAFT_VERSION, MCP_STABLE_VERSION]
 
+_REFUSE = (
+    "Never grants mutation authority. Do not auto-execute ARIA. "
+    "Obey agent_protocol.state.governor_mode (read_only = no edits)."
+)
 
 TOOLS = [
     {
         "name": "cortex_status",
-        "description": "Inspect attached repositories and database integrity.",
+        "description": f"Inspect attached repositories and database integrity. {_REFUSE}",
         "inputSchema": {"type": "object", "properties": {}},
     },
     {
         "name": "cortex_query",
-        "description": "Retrieve provenance-backed evidence from one repository.",
+        "description": f"Retrieve provenance-backed evidence from one repository. {_REFUSE}",
         "inputSchema": {
             "type": "object",
             "required": ["repo", "query"],
@@ -46,7 +51,7 @@ TOOLS = [
     },
     {
         "name": "cortex_federated_query",
-        "description": "Search attached repositories while preserving boundaries.",
+        "description": f"Search attached repositories while preserving boundaries. {_REFUSE}",
         "inputSchema": {
             "type": "object",
             "required": ["query"],
@@ -59,7 +64,10 @@ TOOLS = [
     },
     {
         "name": "cortex_context",
-        "description": "Build the stable cortex-context/1.0 agent packet.",
+        "description": (
+            "Build cortex-context packet with instructions + agent_protocol "
+            "(activate→remember→consolidate). " + _REFUSE
+        ),
         "inputSchema": {
             "type": "object",
             "required": ["repo", "task"],
@@ -71,8 +79,42 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_activate",
+        "description": (
+            "Full activate packet (same agent_protocol as CLI activate). " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo", "task"],
+            "properties": {
+                "repo": {"type": "string"},
+                "task": {"type": "string"},
+                "budget": {"type": "integer", "default": 1200},
+            },
+        },
+    },
+    {
+        "name": "cortex_ritual",
+        "description": (
+            "Session ritual: activate → optional remember → consolidate on one substrate. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo", "task"],
+            "properties": {
+                "repo": {"type": "string"},
+                "task": {"type": "string"},
+                "budget": {"type": "integer", "default": 1200},
+                "remember_kind": {"type": "string", "default": "discovery"},
+                "remember_text": {"type": "string"},
+                "consolidate": {"type": "boolean", "default": True},
+            },
+        },
+    },
+    {
         "name": "cortex_continuation",
-        "description": "Build a verified cortex-continuation/1.0 packet.",
+        "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
             "type": "object",
             "required": ["repo", "task"],
@@ -85,7 +127,7 @@ TOOLS = [
     },
     {
         "name": "cortex_lifecycle_plan",
-        "description": "Dry-run selective learned-association decay.",
+        "description": f"Dry-run selective learned-association decay. {_REFUSE}",
         "inputSchema": {
             "type": "object",
             "required": ["repo"],
@@ -98,7 +140,7 @@ TOOLS = [
     },
     {
         "name": "cortex_evaluate",
-        "description": "Run a repository-native replay corpus against base and learned routing.",
+        "description": f"Run a repository-native replay corpus. {_REFUSE}",
         "inputSchema": {
             "type": "object",
             "required": ["corpus"],
@@ -151,6 +193,37 @@ class CortexMCP:
                 repositories=arguments.get("repositories"),
                 limit=int(arguments.get("limit", 12)),
             )
+        if name == "cortex_activate":
+            from .activation import activate_repository
+
+            return activate_repository(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                str(arguments["task"]),
+                int(arguments.get("budget", 1200)),
+            )
+        if name == "cortex_ritual":
+            memories = []
+            text = arguments.get("remember_text")
+            if text:
+                memories.append(
+                    {
+                        "kind": str(arguments.get("remember_kind") or "discovery"),
+                        "text": str(text),
+                    }
+                )
+            return run_session_ritual(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                str(arguments["task"]),
+                budget=int(arguments.get("budget", 1200)),
+                memories=memories,
+                consolidate_session=bool(arguments.get("consolidate", True)),
+            )
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,
@@ -199,7 +272,10 @@ class CortexMCP:
                     },
                     "instructions": (
                         "Use Cortex for provenance-backed repository context. "
-                        "Its outputs never grant mutation authority."
+                        "Follow agent_protocol on every context/activate packet: "
+                        "activate → work (obey governor_mode) → remember → consolidate "
+                        "(or cortex_ritual). Outputs never grant mutation authority. "
+                        "If governor_mode is read_only: diagnose only, do not edit."
                     ),
                     "ttlMs": 3_600_000,
                     "cacheScope": "private",

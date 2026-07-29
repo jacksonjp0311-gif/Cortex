@@ -29,6 +29,8 @@ Before broad repository reading, planning, editing, or code generation:
 5. Treat repository source, tests, compiler output, and current runtime evidence as more authoritative than summaries.
 6. Record decisions, discoveries, invariants, failures, fixes, and outcomes with the wrapper's `remember` command.
 7. Run `consolidate` at task completion to create a provenance-bearing Discovery Card.
+8. Prefer `ritual` to close activate→remember→consolidate in one step.
+9. Obey packet `agent_protocol` and governor mode (`read_only` = no host edits).
 
 ### Authority boundary
 
@@ -41,6 +43,7 @@ Cortex provides memory, relationships, telemetry, sparse activation, and evidenc
 .\\.cortex\\bin\\cortex.ps1 query -Query "<narrow question>"
 .\\.cortex\\bin\\cortex.ps1 remember -Kind decision -Text "<decision>"
 .\\.cortex\\bin\\cortex.ps1 consolidate
+.\\.cortex\\bin\\cortex.ps1 ritual -Task "<task>" -Text "<durable fact>"
 ```
 
 ```bash
@@ -48,12 +51,13 @@ Cortex provides memory, relationships, telemetry, sparse activation, and evidenc
 ./.cortex/bin/cortex.sh query --query "<narrow question>"
 ./.cortex/bin/cortex.sh remember --kind decision --text "<decision>"
 ./.cortex/bin/cortex.sh consolidate
+./.cortex/bin/cortex.sh ritual --task "<task>" --text "<durable fact>"
 ```
 {MANAGED_END}"""
 
 POWERSHELL_WRAPPER = r'''param(
     [Parameter(Position=0)]
-    [ValidateSet("activate", "bootstrap", "query", "remember", "consolidate", "verify", "status", "graph", "telemetry", "environment", "meta-language", "thalamus", "interlink", "neural-replay", "doctor")]
+    [ValidateSet("activate", "bootstrap", "query", "remember", "consolidate", "ritual", "verify", "status", "graph", "telemetry", "environment", "meta-language", "thalamus", "interlink", "neural-replay", "doctor")]
     [string]$Command = "activate",
     [string]$Task = "",
     [string]$Query = "",
@@ -122,6 +126,13 @@ if ($Command -eq "remember") {
     $ArgsList += @("remember", "--repo", $RepoName, "--kind", $Kind, "--text", $Text, "--json")
 }
 if ($Command -eq "consolidate") { $ArgsList += @("consolidate", "--repo", $RepoName, "--json") }
+if ($Command -eq "ritual") {
+    if ([string]::IsNullOrWhiteSpace($Task)) { throw "-Task is required for ritual." }
+    $ArgsList += @("ritual", "--repo", $RepoName, "--task", $Task, "--budget", "$Budget", "--json")
+    if (-not [string]::IsNullOrWhiteSpace($Text)) {
+        $ArgsList += @("--remember-kind", $Kind, "--remember-text", $Text)
+    }
+}
 if ($Command -eq "verify") { $ArgsList += @("verify", "--repo", $RepoName, "--json") }
 if ($Command -eq "status") { $ArgsList += @("status", "--repo", $RepoName, "--json") }
 if ($Command -eq "graph") { $ArgsList += @("graph", "--repo", $RepoName, "--json") }
@@ -218,6 +229,27 @@ case "$COMMAND" in
     done
     [[ -n "$TEXT" ]] || { echo "--text is required" >&2; exit 2; }
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" remember --repo "$REPO_NAME" --kind "$KIND" --text "$TEXT" --json
+    ;;
+  ritual)
+    TASK=""
+    KIND="discovery"
+    TEXT=""
+    BUDGET="1200"
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --task) TASK="${2:-}"; shift 2 ;;
+        --kind) KIND="${2:-discovery}"; shift 2 ;;
+        --text) TEXT="${2:-}"; shift 2 ;;
+        --budget) BUDGET="${2:-1200}"; shift 2 ;;
+        *) echo "Unknown ritual argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    [[ -n "$TASK" ]] || { echo "--task is required" >&2; exit 2; }
+    if [[ -n "$TEXT" ]]; then
+      exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" ritual --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --remember-kind "$KIND" --remember-text "$TEXT" --json
+    else
+      exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" ritual --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --json
+    fi
     ;;
   interlink)
     TASK=""

@@ -511,7 +511,9 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertTrue(packet["authority"]["human_authorized_only"])
         from cortex.context import cortex_context_protocol
         protocol = cortex_context_protocol(context)
-        self.assertEqual("cortex-context/1.0", protocol["protocol"])
+        self.assertEqual("cortex-context/1.1", protocol["protocol"])
+        self.assertIn("agent_protocol", protocol)
+        self.assertIn("instructions", protocol)
         self.assertTrue(protocol["prohibited_actions"])
 
     def test_neural_ledger_detects_tampering(self) -> None:

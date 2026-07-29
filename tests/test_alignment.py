@@ -163,6 +163,58 @@ class ResonanceContactTests(unittest.TestCase):
         self.assertEqual(field["brightness"], "bright")
 
 
+class TranscendProtocolTests(unittest.TestCase):
+    def test_protocol_and_nexus_carry_agent_protocol(self) -> None:
+        from cortex.context import build_context, cortex_context_protocol, nexus_packet
+
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="tx-")) / "home")
+        repo = Path(tempfile.mkdtemp(prefix="tx-repo-"))
+        (repo / "README.md").write_text("# T\n\n## API\n\nX\n", encoding="utf-8")
+        (repo / "app.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+        store = Store(home / "cortex.db")
+        bootstrap_repository(home, store, repo, "TxHost")
+        ctx = build_context(
+            home, store, Governor(home, store), "TxHost", "Protocol surface", 400
+        )
+        self.assertIn("agent_protocol", ctx)
+        self.assertIn("entrypoints", ctx["agent_protocol"])
+        proto = cortex_context_protocol(ctx)
+        self.assertEqual(proto["protocol"], "cortex-context/1.1")
+        self.assertIn("agent_protocol", proto)
+        self.assertIn("instructions", proto)
+        nexus = nexus_packet(ctx)
+        self.assertIn("agent_protocol", nexus)
+        self.assertIn("instructions", nexus)
+        store.close()
+
+    def test_read_only_instructions_force_stop(self) -> None:
+        from cortex.context import _agent_instructions, _agent_protocol
+
+        lines = _agent_instructions({}, {"mode": "read_only"})
+        self.assertTrue(any("READ_ONLY" in line for line in lines))
+        protocol = _agent_protocol(
+            repo="R",
+            task="t",
+            aria_materialization={},
+            governance={"mode": "read_only"},
+            deferred_remaining=0,
+        )
+        self.assertFalse(protocol["state"]["work_allowed"])
+        self.assertIn("repository_mutation", protocol["hard_stops"])
+        constrained = _agent_instructions({}, {"mode": "constrained"})
+        self.assertTrue(any("CONSTRAINED" in line for line in constrained))
+
+    def test_mcp_exposes_ritual_and_activate_tools(self) -> None:
+        from cortex.mcp import TOOLS
+
+        names = {tool["name"] for tool in TOOLS}
+        self.assertIn("cortex_ritual", names)
+        self.assertIn("cortex_activate", names)
+        self.assertIn("cortex_context", names)
+        for tool in TOOLS:
+            self.assertIn("mutation", tool["description"].casefold())
+
+
 class SessionRitualTests(unittest.TestCase):
     def test_ritual_activate_remember_consolidate(self) -> None:
         from cortex.session_ritual import run_session_ritual

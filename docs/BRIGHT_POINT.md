@@ -1,6 +1,6 @@
 # Bright Point — frozen alignment
 
-**Release:** Cortex v3.2.2 (Bright Point)  
+**Release:** Cortex v3.2.3 (Bright Point + Transcend packet surfaces)  
 **Scope:** This repository only. No external host contact unless the operator names a path.
 
 ## What is frozen as true
