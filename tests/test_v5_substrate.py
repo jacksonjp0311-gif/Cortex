@@ -353,6 +353,48 @@ class V5SubstrateTests(unittest.TestCase):
         self.assertGreaterEqual(result.get("claims_count", 0), 5)
         self.assertIn("ritual", result)
         self.assertIn("observation", result)
+        self.assertIn("resonance", result)
+
+    def test_intelligence_pulse_on_connect(self) -> None:
+        from cortex.activation import activate_repository
+        from cortex.distill_intel import lattice_resonance, pulse_intelligence
+
+        r = lattice_resonance(
+            {
+                "mesh_green": True,
+                "bottlenecks": [],
+                "hnsw": True,
+                "ranker_frozen": False,
+                "ranker_train": 2,
+                "pass_count": 4,
+                "immune_block": False,
+                "xi_spectrum": {
+                    "reset": {"share": 0.1, "rho": 0.1},
+                    "integrate": {"share": 0.4, "rho": 0.7},
+                    "retain": {"share": 0.5, "rho": 0.97},
+                },
+            }
+        )
+        self.assertIn(r["brightness"], {"resonant", "in_phase", "steady", "detuned"})
+        pulse = pulse_intelligence(
+            self.store,
+            self.home,
+            "V5Host",
+            metrics={"immune": {"block": False}},
+            pass_count=2,
+            governor=self.gov,
+        )
+        self.assertIn(pulse.get("beat"), {"doctrine", "seal", "resonate_only", "held_immune"})
+        act = activate_repository(
+            self.home,
+            self.store,
+            self.gov,
+            "V5Host",
+            "pulse intelligence resonate",
+            budget=500,
+        )
+        cp = act.get("connect_pass") or {}
+        self.assertIn("intel_pulse", cp)
 
 
 if __name__ == "__main__":

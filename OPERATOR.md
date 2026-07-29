@@ -15,6 +15,8 @@ python -m cortex activate --repo Cortex --task "heal lattice" --budget 800 --pro
 python -m cortex remember --repo Cortex --kind discovery --text "fact" --json
 python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --contract default --json
 python -m cortex distill --repo Cortex --json
+# intelligence also auto-pulses on connect (doctrine @2, seal @7)
+python -m cortex activate --repo Cortex --task "resonate" --budget 800 --json
 python -m cortex dashboard --repo Cortex --mesh --json
 ```
 

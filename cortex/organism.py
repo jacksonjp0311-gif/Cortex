@@ -100,6 +100,23 @@ def build_organism(
             "connect_pass_count": connect.get("pass_count"),
             "prefetch_paths": len(prediction.get("predicted_paths") or []),
             "distilled": connect.get("distilled_count"),
+            "intel_beat": (connect.get("intel_pulse") or {}).get("beat")
+            if isinstance(connect.get("intel_pulse"), dict)
+            else None,
+            "intel_intensity": (
+                ((connect.get("intel_pulse") or {}).get("resonance") or {}).get(
+                    "intensity"
+                )
+                if isinstance(connect.get("intel_pulse"), dict)
+                else None
+            ),
+            "intel_brightness": (
+                ((connect.get("intel_pulse") or {}).get("resonance") or {}).get(
+                    "brightness"
+                )
+                if isinstance(connect.get("intel_pulse"), dict)
+                else None
+            ),
         },
     }
 

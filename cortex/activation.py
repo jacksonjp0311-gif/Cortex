@@ -220,7 +220,19 @@ def activate_repository(
         "distilled_count": len(connect.get("distilled") or []),
         "causal": connect.get("causal"),
         "decay": connect.get("decay"),
+        "intel_pulse": connect.get("intel_pulse"),
+        "spectral": connect.get("spectral"),
     }
+    # Re-resonate organism nervous mesh with intel pulse (same frequency)
+    if isinstance(organism.get("body"), dict):
+        nervous = organism["body"].setdefault("nervous", {})
+        mesh = nervous.setdefault("mesh", {})
+        ip = connect.get("intel_pulse") or {}
+        mesh["connect_pass_count"] = connect.get("pass_count")
+        mesh["intel_beat"] = ip.get("beat")
+        mesh["intel_intensity"] = (ip.get("resonance") or {}).get("intensity")
+        mesh["intel_brightness"] = (ip.get("resonance") or {}).get("brightness")
+        context["organism"] = organism
 
     full_context = context
     context = project_packet(full_context, profile)

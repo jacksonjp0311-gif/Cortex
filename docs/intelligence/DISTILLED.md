@@ -37,11 +37,18 @@
 ```text
 immune → interconnect/kernels (compact)
       → activate lean (budget 800, profile agent)
+      → connect pulse also: doctrine@2 · distill-seal@7 · resonate always
       → remember durable facts
       → ritual seal
-      → distill intelligence (periodic)
+      → distill intelligence (manual or cadence)
       → prune when weight accumulates
 ```
+
+## Resonance (v6.4)
+
+Lattice resonance is the harmonic of mesh_green, immune open, spectral balance,
+HNSW presence, ranker health, and pulse depth. Brightness:
+`resonant` · `in_phase` · `steady` · `detuned` — telemetry only.
 
 ## Refuse
 

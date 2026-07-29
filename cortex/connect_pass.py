@@ -501,6 +501,23 @@ def persist_connect_pass(
         except Exception as exc:
             decay_result = {"error": f"{type(exc).__name__}: {exc}"}
 
+    # Intelligence pulse at connect frequency (resonate with the mesh beat)
+    intel_pulse: dict[str, Any] | None = None
+    if home is not None and pass_n > 0:
+        try:
+            from .distill_intel import pulse_intelligence
+
+            intel_pulse = pulse_intelligence(
+                store,
+                home,
+                repo,
+                metrics=metrics,
+                pass_count=pass_n,
+                session_id=metrics.get("session_id"),
+            )
+        except Exception as exc:
+            intel_pulse = {"beat": "error", "error": f"{type(exc).__name__}: {exc}"}
+
     try:
         store.append_neural_event(
             repo,
@@ -524,6 +541,10 @@ def persist_connect_pass(
                 "pass_count": graph.get("pass_count"),
                 "distilled": [c["id"] for c in candidates],
                 "causal_verdict": (causal_result or {}).get("verdict"),
+                "intel_beat": (intel_pulse or {}).get("beat"),
+                "intel_intensity": ((intel_pulse or {}).get("resonance") or {}).get(
+                    "intensity"
+                ),
             },
         )
     except Exception:
@@ -535,6 +556,7 @@ def persist_connect_pass(
         "pass_id": metrics.get("pass_id"),
         "pass_count": graph.get("pass_count"),
         "metrics": metrics,
+        "intel_pulse": intel_pulse,
         "metric_graph": {
             "pass_count": graph.get("pass_count"),
             "averages": graph.get("averages"),

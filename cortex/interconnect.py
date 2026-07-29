@@ -47,6 +47,7 @@ def mesh_status(
         kernels = kernels_status(store, repo)
     except Exception as exc:
         kernels = {"error": f"{type(exc).__name__}: {exc}"}
+    intel_pulse = store.get_setting(f"intel_pulse:{repo}", {}) or {}
 
     control: dict[str, Any] = {}
     if governor is not None and home is not None:
@@ -167,6 +168,15 @@ def mesh_status(
             "profile": kernels.get("profile"),
             "clock_neq_memory_neq_decision": True,
         },
+        "intelligence": {
+            "glyph": "☰",
+            "last_pulse": intel_pulse.get("at"),
+            "resonance": intel_pulse.get("resonance"),
+            "pass_count": intel_pulse.get("pass_count"),
+            "version": intel_pulse.get("version"),
+            "pulse_every": 2,
+            "seal_every": 7,
+        },
         "agents": {
             "multi_agent_mode": multi_agent,
             "host_mutate_forbidden": "host.mutate" in FORBIDDEN_SCOPES,
@@ -223,6 +233,8 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "causal": mesh.get("causal"),
         "gates": mesh.get("gates"),
         "immune": mesh.get("immune"),
+        "intelligence": mesh.get("intelligence"),
+        "resonance": (mesh.get("intelligence") or {}).get("resonance"),
         "law": "common_pulse_through_kernel_spectrum",
         "claim_boundary": mesh.get("claim_boundary"),
     }

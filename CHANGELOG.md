@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.4.0 - Intelligence pulse at connect frequency
+
+- **Resonate:** `lattice_resonance` scores mesh · immune · spectral · hnsw · ranker · pulse.
+- **Pulse on connect:** doctrine beat every 2 passes; full `distill` seal every 7 (skipped if immune block).
+- **Organism nervous.mesh** carries intel beat/intensity/brightness.
+- **Interconnect / dashboard --mesh** surface last intelligence resonance.
+- Intelligence rides the same frequency as connect — not a separate organ. Still recommend-only.
+
 ## 6.3.0 - Distill intelligence into the body
 
 - **`cortex distill` / MCP `cortex_distill`:** observe mesh + kernels, fold doctrine claims, ritual-seal into durable cards.
