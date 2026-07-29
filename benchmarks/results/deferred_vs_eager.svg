@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="Deferred vs eager bootstrap">
+  <rect width="640" height="360" fill="#101418"/>
+  <text x="32" y="40" fill="#f0f4f8" font-family="Arial" font-size="20">ARIA substrate: deferred vs eager bootstrap</text>
+  <rect x="140" y="131" width="120" height="149" fill="#22c55e"/>
+  <rect x="360" y="80" width="120" height="200" fill="#a878ff"/>
+  <text x="150" y="310" fill="#d4dce8" font-family="Arial" font-size="14">deferred 0.211s</text>
+  <text x="380" y="310" fill="#d4dce8" font-family="Arial" font-size="14">eager 0.283s</text>
+  <text x="32" y="340" fill="#8b9bb4" font-family="Arial" font-size="12">Controlled synthetic host; engineering telemetry only.</text>
+</svg>

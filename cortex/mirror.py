@@ -162,6 +162,12 @@ def run_mirror(
         "aria_substrate", {}
     )
     mat = actx.get("aria_materialization") or {}
+    evidence_paths = [item.get("path", "") for item in (actx.get("evidence") or [])]
+    aria_evidence = sum(
+        1
+        for path in evidence_paths
+        if str(path).replace("\\", "/").startswith("cortex/aria_meta/vendor/")
+    )
     notes.append(
         {
             "deferred_after_aria": deferred_after_aria,
@@ -169,7 +175,9 @@ def run_mirror(
             "eligible": a_sub.get("eligible_nodes"),
             "materialized_this_turn": mat.get("materialized"),
             "efficiency_aria": (actx.get("efficiency") or {}).get("aria_substrate"),
-            "evidence_count": len(actx.get("evidence") or []),
+            "evidence_count": len(evidence_paths),
+            "aria_evidence_count": aria_evidence,
+            "geometry": actx.get("geometry"),
         }
     )
     if deferred_after_boot >= 50 and deferred_after_aria > 10:
@@ -181,6 +189,15 @@ def run_mirror(
         )
     if a_sub.get("mode") != "active":
         breaks.append({"id": "aria-not-active", "substrate": a_sub})
+    # Evidence floor: awake substrate should contribute purpose-aligned paths.
+    if deferred_after_boot >= 50 and aria_evidence < 2:
+        breaks.append(
+            {
+                "id": "aria-evidence-floor",
+                "aria_evidence_count": aria_evidence,
+                "evidence_sample": evidence_paths[:8],
+            }
+        )
     if deferred_after_boot >= 50 and not mat.get("materialized") and not mat.get(
         "already_ready"
     ):

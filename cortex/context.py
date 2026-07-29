@@ -17,6 +17,56 @@ from .retrieval import materialize_aria_for_task, query, support_hits
 from thalamus import apply_feedback, inhibit, make_request, route
 
 
+def _geometry_surface(
+    *,
+    governance: dict[str, Any],
+    aria_materialization: dict[str, Any],
+    neural_payload: dict[str, Any],
+    deferred_remaining: int,
+) -> dict[str, Any]:
+    """Fold the five covenant axes into one packet-visible interlock map."""
+
+    authority = governance.get("authority") or {}
+    aria = (neural_payload.get("metrics") or {}).get("aria_substrate") or {}
+    mode = aria.get("mode") or aria_materialization.get("mode") or "dormant"
+    return {
+        "schema_version": "cortex-geometry/1.0",
+        "axes": {
+            "authority": {
+                "latched": authority.get("cortex_may_authorize_mutation") is not True,
+                "mode": governance.get("mode"),
+            },
+            "evidence": {
+                "latched": True,
+                "rule": "source_and_tests_outrank_learned_memory",
+            },
+            "activation": {
+                "latched": mode in {"dormant", "active"},
+                "aria_mode": mode,
+                "eligible_aria_nodes": aria.get("eligible_nodes", 0),
+            },
+            "language": {
+                "latched": aria.get("automatic_execution") is not True
+                and aria.get("grants_mutation_authority") is not True,
+                "automatic_execution": bool(aria.get("automatic_execution")),
+            },
+            "economics": {
+                "latched": True,
+                "deferred_remaining": deferred_remaining,
+                "materialized_this_turn": bool(aria_materialization.get("materialized")),
+            },
+        },
+        "zero_point": all(
+            [
+                authority.get("cortex_may_authorize_mutation") is not True,
+                mode in {"dormant", "active"},
+                aria.get("automatic_execution") is not True,
+            ]
+        ),
+        "claim_boundary": "Geometry is local interlock telemetry; it grants no rights.",
+    }
+
+
 def estimate_tokens(text: str) -> int:
     return max(1, (len(text) + 3) // 4)
 
@@ -140,16 +190,35 @@ def build_context(
         }
 
     candidates = _merge_candidates(direct_hits, support, neural_payload)
+    aria_mode = (aria_materialization.get("mode") or "dormant")
+    # When ARIA is awake, cap per-chunk spend so one vendored doc cannot monopolize
+    # the packet and erase the multi-path evidence floor.
+    per_hit_token_cap = max(120, effective_budget // (4 if aria_mode == "active" else 1))
     selected: list[dict[str, Any]] = []
     used_tokens = 0
+    aria_paths_selected = 0
     for hit in candidates:
         prefix = f"[{hit.path}:{hit.start_line}-{hit.end_line}]\n"
-        available_chars = max(0, (effective_budget - used_tokens) * 4 - len(prefix))
+        remaining_budget = effective_budget - used_tokens
+        # Reserve tokens for a second ARIA path when substrate is active.
+        reserve = 0
+        if (
+            aria_mode == "active"
+            and aria_paths_selected < 2
+            and not str(hit.path).replace("\\", "/").startswith("cortex/aria_meta/vendor/")
+        ):
+            reserve = min(180, max(0, remaining_budget // 3))
+        available_chars = max(
+            0, (remaining_budget - reserve) * 4 - len(prefix)
+        )
         if available_chars <= 80:
-            break
-        text = hit.text[:available_chars]
+            continue
+        max_chars = min(available_chars, per_hit_token_cap * 4)
+        text = hit.text[:max_chars]
         token_cost = estimate_tokens(prefix + text)
         if token_cost <= 0:
+            continue
+        if used_tokens + token_cost > effective_budget:
             continue
         selected.append(
             {
@@ -164,6 +233,8 @@ def build_context(
             }
         )
         used_tokens += token_cost
+        if str(hit.path).replace("\\", "/").startswith("cortex/aria_meta/vendor/"):
+            aria_paths_selected += 1
         if used_tokens >= effective_budget:
             break
 
@@ -214,6 +285,12 @@ def build_context(
         neural=neural_payload,
         aria_materialization=aria_materialization,
         deferred_substrate_remaining=deferred_remaining,
+    )
+    payload["geometry"] = _geometry_surface(
+        governance=governance,
+        aria_materialization=aria_materialization,
+        neural_payload=neural_payload,
+        deferred_remaining=deferred_remaining,
     )
     payload["constitutional_supervision"] = assess_context(payload)
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))

@@ -45,6 +45,19 @@ current task
 
 Cortex is local-first, SQLite-backed, dependency-free in its core installation, and designed to integrate with existing repositories without replacing their source, tests, governance, or authorization rules.
 
+## Cortex v3.2: aligned geometry
+
+Cortex v3.2 latches the covenant interlocks into a single geometry: authority,
+evidence, activation, language, and economics must co-agree under mirror stress
+and on foreign hosts. See [`docs/COVENANT.md`](docs/COVENANT.md) and
+[`docs/STEADY_STATE.md`](docs/STEADY_STATE.md).
+
+```bash
+cortex mirror --json
+python benchmarks/foreign_host_matrix.py
+python benchmarks/deferred_vs_eager_benchmark.py
+```
+
 ## Cortex v3.1: constitutional homeostasis
 
 Cortex v3.1 implements James Paul Jackson's Governed Continuation Memory Theory

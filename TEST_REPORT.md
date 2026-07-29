@@ -1,4 +1,20 @@
-# Cortex v3.1.0 Test Report
+# Cortex v3.2.0 Test Report — Aligned Geometry
+
+**Release validation date:** July 28, 2026
+
+## Geometry alignment validation
+
+- `python -m pytest tests -q`: 53 passed
+- `python -m ruff check cortex tests`: passed
+- `python -m cortex mirror --json`: glow true; break_count 0; aria_evidence_count ≥2
+- Fluency corpus 42/42; false_wakes 0; missed_wakes 0
+- Foreign host matrix: 3/3 passed (python, node, docs)
+- Deferred vs eager benchmark artifacts written under `benchmarks/results/`
+- Probe quarantine: ARIA README headings do not materialize deferred bulk
+- Context geometry zero_point true on generic tasks
+- Dashboard 1.1 exposes covenant axes + deferred remaining
+
+## Prior: Cortex v3.1.0 Test Report
 
 **Release validation date:** July 28, 2026
 

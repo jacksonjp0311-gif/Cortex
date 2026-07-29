@@ -131,11 +131,20 @@ def query(
             quality *= 1.25
         if aria_active and is_internal_aria_path(row["path"]):
             # Prefer purpose-aligned substrate evidence once the region is awake.
-            quality *= (
-                1.22
-                if aria_path_supports(row["path"], aria_purposes)
-                else 1.08
-            )
+            # Anchors and purpose hits must outrank ambient host noise after wake.
+            if aria_path_supports(row["path"], aria_purposes):
+                quality *= 1.55
+            else:
+                quality *= 1.18
+            if row["path"].replace("\\", "/").endswith(
+                (
+                    "ARIA-RUNTIME.json",
+                    "ARIA-CONNECT.json",
+                    "README.md",
+                    "semantic-cues.json",
+                )
+            ):
+                quality *= 1.12
         normalized_chunk = " ".join(row["text"].casefold().split())
         if normalized_query and normalized_query in normalized_chunk:
             quality *= 1.35
@@ -160,7 +169,117 @@ def query(
             metadata=metadata,
         ))
     output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
-    return output[:limit]
+    floor = _aria_evidence_floor(store, repo, text, output, limit=limit)
+    return floor
+
+
+def _aria_evidence_floor(
+    store: Any,
+    repo: str,
+    text: str,
+    hits: list[Hit],
+    *,
+    limit: int,
+) -> list[Hit]:
+    """When ARIA is awake, ensure a minimum of substrate evidence in the ranking."""
+
+    aria_profile = load_aria_cue_profile(store, repo)
+    classification = classify_aria_task(text, aria_profile["cues"])
+    if classification["mode"] != "active":
+        return hits
+    purposes = aria_routing_purposes(classification)
+    existing_ids = {hit.memory_id for hit in hits}
+    aria_hits = [hit for hit in hits if is_internal_aria_path(hit.path)]
+    if len(aria_hits) >= 2:
+        return hits[:limit]
+
+    extras: list[Hit] = []
+    # Direct lexical scan with ARIA included (no excluded prefix).
+    lexical_rows = store.lexical(repo, text, 40, excluded_prefixes=())
+    for row in lexical_rows:
+        if row["id"] in existing_ids:
+            continue
+        if not is_internal_aria_path(row["path"]):
+            continue
+        if not aria_path_supports(row["path"], purposes):
+            # Still admit anchors as floor evidence.
+            normalized = row["path"].replace("\\", "/")
+            if not normalized.endswith(
+                (
+                    "ARIA-RUNTIME.json",
+                    "ARIA-CONNECT.json",
+                    "README.md",
+                    "semantic-cues.json",
+                    "AGENTS.md",
+                )
+            ) and "docs/" not in normalized and "plans/" not in normalized:
+                continue
+        full = store.memory(row["id"])
+        if not full:
+            continue
+        metadata = json.loads(full["metadata"] or "{}")
+        metadata["selection_source"] = "aria_evidence_floor"
+        extras.append(
+            Hit(
+                memory_id=full["id"],
+                repo=full["repo"],
+                path=full["path"],
+                start_line=full["start_line"],
+                end_line=full["end_line"],
+                text=full["text"],
+                kind=full["kind"],
+                score=round(0.85 + 0.01 * len(extras), 8),
+                content_hash=full["content_hash"],
+                metadata=metadata,
+            )
+        )
+        existing_ids.add(full["id"])
+        if len(aria_hits) + len(extras) >= 3:
+            break
+    if len(aria_hits) + len(extras) < 2:
+        for file_row in store.files(repo):
+            path = file_row["path"]
+            if file_row["status"] != "indexed" or not is_internal_aria_path(path):
+                continue
+            if not (
+                aria_path_supports(path, purposes)
+                or path.replace("\\", "/").endswith(
+                    (
+                        "ARIA-RUNTIME.json",
+                        "ARIA-CONNECT.json",
+                        "README.md",
+                        "semantic-cues.json",
+                    )
+                )
+            ):
+                continue
+            for full in store.memories_for_path(repo, path)[:1]:
+                if full["id"] in existing_ids:
+                    continue
+                metadata = json.loads(full["metadata"] or "{}")
+                metadata["selection_source"] = "aria_evidence_floor_path"
+                extras.append(
+                    Hit(
+                        memory_id=full["id"],
+                        repo=full["repo"],
+                        path=full["path"],
+                        start_line=full["start_line"],
+                        end_line=full["end_line"],
+                        text=full["text"],
+                        kind=full["kind"],
+                        score=round(0.8 + 0.01 * len(extras), 8),
+                        content_hash=full["content_hash"],
+                        metadata=metadata,
+                    )
+                )
+                existing_ids.add(full["id"])
+                if len(aria_hits) + len(extras) >= 3:
+                    break
+            if len(aria_hits) + len(extras) >= 3:
+                break
+    merged = list(hits) + extras
+    merged.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
+    return merged[:limit]
 
 
 def support_hits(

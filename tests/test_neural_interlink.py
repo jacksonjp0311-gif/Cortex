@@ -135,7 +135,7 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
             / "aria_fluency.json"
         )
         result = evaluate_aria_corpus(load_aria_corpus(corpus))
-        self.assertGreaterEqual(result["cases"], 30)
+        self.assertGreaterEqual(result["cases"], 40)
         self.assertEqual(result["false_wakes"], 0, result)
         self.assertEqual(result["missed_wakes"], 0, result)
         self.assertEqual(result["purpose_misses"], 0, result)

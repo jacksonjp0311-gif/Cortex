@@ -1,5 +1,5 @@
 {
-  "schema_version": "cortex-aria-fluency-corpus/1.1",
+  "schema_version": "cortex-aria-fluency-corpus/1.2",
   "cases": [
     {"id": "dormant-variable", "task": "Rename a Python variable", "expected_mode": "dormant"},
     {"id": "dormant-tests", "task": "Replay the failing unit test", "expected_mode": "dormant"},
@@ -16,6 +16,13 @@
     {"id": "dormant-glyph-icon", "task": "Replace the toolbar glyph icon asset", "expected_mode": "dormant"},
     {"id": "dormant-recovery-disk", "task": "Run disk recovery after the failed backup", "expected_mode": "dormant"},
     {"id": "dormant-governance-oss", "task": "Improve open source project governance docs", "expected_mode": "dormant"},
+    {"id": "dormant-session-timeout", "task": "Increase the HTTP session timeout", "expected_mode": "dormant"},
+    {"id": "dormant-proof-tests", "task": "Add proof that the unit tests cover edge cases", "expected_mode": "dormant"},
+    {"id": "dormant-plan-sprint", "task": "Plan the sprint backlog for next week", "expected_mode": "dormant"},
+    {"id": "dormant-evolution-db", "task": "Evolve the database schema carefully", "expected_mode": "dormant"},
+    {"id": "dormant-provider-aws", "task": "Switch the cloud provider to another region", "expected_mode": "dormant"},
+    {"id": "dormant-memory-leak", "task": "Fix the process memory leak in production", "expected_mode": "dormant"},
+    {"id": "dormant-context-menu", "task": "Add a context menu to the editor", "expected_mode": "dormant"},
     {"id": "language-aria", "task": "Explain ARIA syntax", "expected_mode": "active", "expected_purposes": ["language"]},
     {"id": "language-meta", "task": "Inspect the meta language boundary", "expected_mode": "active", "expected_purposes": ["language"]},
     {"id": "intent-plan", "task": "Draft a semantic plan for the release", "expected_mode": "active", "expected_purposes": ["intent"]},
@@ -31,6 +38,10 @@
     {"id": "coordination-mesh", "task": "Coordinate a cooperative mesh", "expected_mode": "active", "expected_purposes": ["coordination"]},
     {"id": "symbolic-glyph", "task": "Render the verified glyph", "expected_mode": "active", "expected_purposes": ["symbolic"]},
     {"id": "symbolic-glyph-card", "task": "Inspect the glyph card registry", "expected_mode": "active", "expected_purposes": ["symbolic"]},
-    {"id": "combined", "task": "Use ARIA semantic replay with a cooperative mesh", "expected_mode": "active", "expected_purposes": ["language", "continuity", "coordination"]}
+    {"id": "symbolic-memory", "task": "Trace glyph memory kernel behavior", "expected_mode": "active", "expected_purposes": ["symbolic"]},
+    {"id": "governance-homeostasis", "task": "Inspect constitutional homeostasis", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "continuity-semantic-handoff", "task": "Author a semantic handoff packet", "expected_mode": "active", "expected_purposes": ["continuity"]},
+    {"id": "combined", "task": "Use ARIA semantic replay with a cooperative mesh", "expected_mode": "active", "expected_purposes": ["language", "continuity", "coordination"]},
+    {"id": "combined-governance", "task": "ARIA governed evolution with capability authority", "expected_mode": "active", "expected_purposes": ["language", "governance"]}
   ]
 }

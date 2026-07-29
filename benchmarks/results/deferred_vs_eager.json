@@ -1,0 +1,88 @@
+{
+  "schema_version": "cortex-deferred-vs-eager/1.0",
+  "aria_docs": 30,
+  "deferred": {
+    "mode": "deferred",
+    "runs": 2,
+    "median_bootstrap_seconds": 0.2112935,
+    "mean_bootstrap_seconds": 0.2112935,
+    "samples": [
+      {
+        "bootstrap_seconds": 0.209919,
+        "certificate": "verified",
+        "deferred": 30,
+        "indexed_aria": 12,
+        "work_proxy": {
+          "schema_version": "cortex-aria-work-proxy/1.0",
+          "bootstrap_index_ops": 16,
+          "bootstrap_inventory_ops": 30,
+          "wake_materialize_ops_remaining": 30,
+          "aria_deferred_fraction": 0.71428571,
+          "estimated_bootstrap_savings_ratio": 0.61956522,
+          "formula": "W_bootstrap \u2248 |repo\u222aanchors|\u00b7c_index + |aria\\anchors|\u00b7c_inventory; W_wake_once \u2248 remaining_deferred\u00b7c_index"
+        }
+      },
+      {
+        "bootstrap_seconds": 0.212668,
+        "certificate": "verified",
+        "deferred": 30,
+        "indexed_aria": 12,
+        "work_proxy": {
+          "schema_version": "cortex-aria-work-proxy/1.0",
+          "bootstrap_index_ops": 16,
+          "bootstrap_inventory_ops": 30,
+          "wake_materialize_ops_remaining": 30,
+          "aria_deferred_fraction": 0.71428571,
+          "estimated_bootstrap_savings_ratio": 0.61956522,
+          "formula": "W_bootstrap \u2248 |repo\u222aanchors|\u00b7c_index + |aria\\anchors|\u00b7c_inventory; W_wake_once \u2248 remaining_deferred\u00b7c_index"
+        }
+      }
+    ],
+    "certificate_verified": true,
+    "median_deferred": 30.0,
+    "median_indexed_aria": 12.0
+  },
+  "eager": {
+    "mode": "eager",
+    "runs": 2,
+    "median_bootstrap_seconds": 0.2831195,
+    "mean_bootstrap_seconds": 0.2831195,
+    "samples": [
+      {
+        "bootstrap_seconds": 0.27722,
+        "certificate": "verified",
+        "deferred": 0,
+        "indexed_aria": 42,
+        "work_proxy": {
+          "schema_version": "cortex-aria-work-proxy/1.0",
+          "bootstrap_index_ops": 16,
+          "bootstrap_inventory_ops": 0,
+          "wake_materialize_ops_remaining": 0,
+          "aria_deferred_fraction": 0.0,
+          "estimated_bootstrap_savings_ratio": 0.0,
+          "formula": "W_bootstrap \u2248 |repo\u222aanchors|\u00b7c_index + |aria\\anchors|\u00b7c_inventory; W_wake_once \u2248 remaining_deferred\u00b7c_index"
+        }
+      },
+      {
+        "bootstrap_seconds": 0.289019,
+        "certificate": "verified",
+        "deferred": 0,
+        "indexed_aria": 42,
+        "work_proxy": {
+          "schema_version": "cortex-aria-work-proxy/1.0",
+          "bootstrap_index_ops": 16,
+          "bootstrap_inventory_ops": 0,
+          "wake_materialize_ops_remaining": 0,
+          "aria_deferred_fraction": 0.0,
+          "estimated_bootstrap_savings_ratio": 0.0,
+          "formula": "W_bootstrap \u2248 |repo\u222aanchors|\u00b7c_index + |aria\\anchors|\u00b7c_inventory; W_wake_once \u2248 remaining_deferred\u00b7c_index"
+        }
+      }
+    ],
+    "certificate_verified": true,
+    "median_deferred": 0.0,
+    "median_indexed_aria": 42.0
+  },
+  "bootstrap_speedup_eager_over_deferred": 1.339935,
+  "claim_boundary": "Synthetic host comparison of indexing modes only; not universal repository performance or answer quality."
+}

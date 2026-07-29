@@ -1,5 +1,22 @@
 # Build Report
 
+## Cortex v3.2.0 addendum — Aligned Geometry
+
+- Date: July 28, 2026
+- Package: `cortex-memory` **3.2.0**
+- Automated tests: 53 passed
+- Ruff: passed
+- Mirror: `glow: true` (intensity ~0.84)
+- Fluency corpus: 42/42, zero false/missed wakes
+- Foreign host matrix: python / node / docs — 3/3 passed
+- Deferred vs eager synthetic bootstrap: deferred faster; deferred bulk holds
+- ARIA evidence floor on wake: ≥2 substrate paths (measured 4 on self-host)
+- Covenant + steady-state docs frozen
+- CI: fluency + foreign host matrix gates
+
+Geometry packet surface folds five covenant axes into `geometry.zero_point`.
+Release story is interlock alignment, not feature sprawl.
+
 ## Cortex v3.1.0 addendum
 
 - Date: July 28, 2026

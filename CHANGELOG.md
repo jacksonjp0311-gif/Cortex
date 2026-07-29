@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.2.0 - Aligned Geometry
+
+- **Covenant freeze:** `docs/COVENANT.md` locks five interlock axes (authority,
+  evidence, activation, language, economics) as release constitution.
+- **Steady-state discipline:** `docs/STEADY_STATE.md` + CONTRIBUTING vocabulary
+  freeze; new organs only as forced tension reduction.
+- **Geometry packet surface:** context packets expose `geometry` zero-point map.
+- **ARIA evidence floor:** awake substrate contributes purpose-aligned evidence
+  (≥2 paths) after materialization.
+- **Probe quarantine test:** verify headings that mention ARIA cannot erase
+  deferred bulk.
+- **Fluency corpus ≥40** with zero false/missed wakes (adversarial dormant set).
+- **Foreign host matrix:** python / node / docs synthetic hosts must pass organ
+  gates (`benchmarks/foreign_host_matrix.py`, CI).
+- **Deferred vs eager benchmark:** committed work-proxy comparison artifacts.
+- **Dashboard 1.1:** covenant axes + deferred ARIA remaining counters.
+- **CI:** fluency evaluation + foreign host matrix gates.
+- Version alignment: package `3.2.0`.
+
 ## 3.1.0 - Constitutional Homeostasis
 
 - Coherence mirror (`cortex mirror`): stress deferred economics, fluency gates,

@@ -759,20 +759,45 @@ def main(argv: list[str] | None = None) -> None:
             if not repository:
                 raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
             lifecycle = lifecycle_plan(store, args.repo)
+            from .aria_meta.substrate import ARIA_SUBSTRATE_DEFERRED_STATUS, is_internal_aria_path
+
+            files = store.files(args.repo)
+            deferred = sum(1 for row in files if row["status"] == ARIA_SUBSTRATE_DEFERRED_STATUS)
+            aria_indexed = sum(
+                1
+                for row in files
+                if row["status"] == "indexed" and is_internal_aria_path(row["path"])
+            )
             emit(
                 {
-                    "schema_version": "cortex-dashboard/1.0",
+                    "schema_version": "cortex-dashboard/1.1",
                     "version": __version__,
                     "repository": dict(repository),
                     "database_integrity": store.integrity_check(),
                     "governor": governor.evaluate(args.repo),
+                    "covenant": {
+                        "doc": "docs/COVENANT.md",
+                        "geometry_release": "3.2.0-aligned",
+                        "axes": [
+                            "authority",
+                            "evidence",
+                            "activation",
+                            "language",
+                            "economics",
+                        ],
+                    },
                     "inventory": {
-                        "files": len(store.files(args.repo)),
+                        "files": len(files),
                         "memories": store.db.execute(
                             "SELECT COUNT(*) FROM memories WHERE repo=?", (args.repo,)
                         ).fetchone()[0],
                         "nodes": len(store.neural_nodes(args.repo)),
                         "synapses": len(store.neural_synapses(args.repo)),
+                    },
+                    "aria_substrate": {
+                        "deferred_remaining": deferred,
+                        "indexed": aria_indexed,
+                        "indexing_mode_default": "deferred",
                     },
                     "learning": {
                         "activations": len(store.neural_activations(args.repo, 10_000)),
@@ -792,8 +817,12 @@ def main(argv: list[str] | None = None) -> None:
                         "context_protocol": "cortex-context/1.0",
                         "continuation_protocol": "cortex-continuation/1.0",
                         "federation_protocol": "cortex-federation/1.0",
+                        "mirror_command": "cortex mirror --json",
                         "mcp_command": "cortex-mcp",
                     },
+                    "claim_boundary": (
+                        "Dashboard is local operational telemetry; it grants no mutation authority."
+                    ),
                 },
                 args.json,
             )

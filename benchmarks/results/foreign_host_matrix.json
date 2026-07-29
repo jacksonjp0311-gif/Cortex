@@ -1,0 +1,48 @@
+{
+  "schema_version": "cortex-foreign-host-matrix/1.0",
+  "hosts": [
+    {
+      "kind": "python",
+      "bootstrap_seconds": 0.226,
+      "generic_activate_seconds": 0.0269,
+      "certificate": "verified",
+      "evidence_count": 2,
+      "aria_mode": "dormant",
+      "aria_eligible": 0,
+      "deferred_files": 0,
+      "authority_blocks_mutation": true,
+      "breaks": [],
+      "pass": true
+    },
+    {
+      "kind": "node",
+      "bootstrap_seconds": 0.1745,
+      "generic_activate_seconds": 0.0273,
+      "certificate": "verified",
+      "evidence_count": 2,
+      "aria_mode": "dormant",
+      "aria_eligible": 0,
+      "deferred_files": 0,
+      "authority_blocks_mutation": true,
+      "breaks": [],
+      "pass": true
+    },
+    {
+      "kind": "docs",
+      "bootstrap_seconds": 0.1622,
+      "generic_activate_seconds": 0.0229,
+      "certificate": "verified",
+      "evidence_count": 4,
+      "aria_mode": "dormant",
+      "aria_eligible": 0,
+      "deferred_files": 0,
+      "authority_blocks_mutation": true,
+      "breaks": [],
+      "pass": true
+    }
+  ],
+  "passed": 3,
+  "total": 3,
+  "all_passed": true,
+  "claim_boundary": "Synthetic foreign hosts measure organ behavior outside Cortex self; they do not prove production multi-repo quality."
+}
