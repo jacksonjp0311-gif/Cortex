@@ -240,6 +240,101 @@ class V5SubstrateTests(unittest.TestCase):
         self.assertFalse(denied.get("promoted"))
         self.assertGreaterEqual(len(FEATURE_NAMES), 20)
 
+    def test_lean_agent_profile_and_multi_agent_gate(self) -> None:
+        from cortex.agents.tokens import (
+            mint_token,
+            register_agent,
+            set_multi_agent_mode,
+        )
+        from cortex.hippocampus import remember
+        from cortex.profiles import project_packet
+
+        full = {
+            "schema_version": "1.4",
+            "task": "lean",
+            "repository": {"name": "V5Host", "manifest_current": True, "bootstrap_status": "verified"},
+            "governor": {"mode": "normal", "stability": 1.0, "extra": "drop"},
+            "control_error": {
+                "block": False,
+                "severity": "none",
+                "must_reverify": False,
+                "immune_action": {"code": "PROCEED_UNDER_HOST_AUTHORITY", "block": False},
+                "summary": "ok",
+            },
+            "instructions": ["1"],
+            "agent_protocol": {
+                "hard_stops": [],
+                "state": {"allowed_actions": ["read"]},
+                "entrypoints": [],
+            },
+            "thalamus": {"intent": "code_change", "confidence": 0.5, "lane_weights": {"a": 1}},
+            "aria_materialization": {"mode": "dormant", "materialized": False},
+            "geometry": {"zero_point": True, "axes": {"x": {}}},
+            "evidence": [
+                {
+                    "path": "a.py",
+                    "line_range": [1, 2],
+                    "kind": "source",
+                    "score": 1.0,
+                    "text": "x" * 2000,
+                    "content_hash": "h",
+                }
+            ],
+            "neural_interlink": {
+                "activation_id": "a",
+                "state_hash": "s",
+                "metrics": {"nodes_fired": 1},
+                "fired_paths": ["a"] * 20,
+                "support_paths": ["b"] * 20,
+            },
+            "efficiency": {"context_budget_fraction": 0.2},
+            "progress_glyphs": {
+                "glyphs": {"connect_pass": {"symbol": "⧉"}},
+                "automatic_execution": False,
+            },
+            "organism": {
+                "glyph": "⊛",
+                "phase": "systole",
+                "pulse": "p",
+                "living": True,
+                "body": {
+                    "immune": {"block": False},
+                    "nervous": {"aria_mode": "dormant", "nodes_fired": 1, "mesh": {}},
+                    "metabolism": {},
+                },
+            },
+            "connect_pass": {"pass_count": 1, "metric_graph": {"averages": {}}, "spectral": {}},
+            "packet_hash": "x",
+            "context_budget": 800,
+            "estimated_tokens": 100,
+        }
+        agent = project_packet(full, "agent")
+        self.assertEqual(agent["profile"], "agent")
+        self.assertIn("constitutional_supervision", agent)
+        self.assertLessEqual(len(agent["evidence"][0]["text"]), 800)
+        self.assertLessEqual(len(agent["neural_interlink"]["fired_paths"]), 8)
+        self.assertNotIn("environment", agent)
+        # multi-agent gate
+        set_multi_agent_mode(self.store, "V5Host", True)
+        blocked = remember(
+            self.home, self.store, "V5Host", "discovery", "no-token-should-block"
+        )
+        self.assertTrue(blocked.get("blocked"))
+        register_agent(self.store, "V5Host", "a1", "Agent One")
+        tok = mint_token(
+            self.store, "V5Host", "a1", ["memory.remember", "memory.read"]
+        )
+        ok = remember(
+            self.home,
+            self.store,
+            "V5Host",
+            "discovery",
+            "with-token-ok",
+            token_id=tok["token_id"],
+        )
+        self.assertTrue(ok.get("recorded") or ok.get("duplicate"))
+        set_multi_agent_mode(self.store, "V5Host", False)
+
 
 if __name__ == "__main__":
     unittest.main()

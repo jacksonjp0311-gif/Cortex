@@ -57,12 +57,38 @@ def remember(
     text: str,
     session_id: str | None = None,
     metadata: dict[str, Any] | None = None,
+    *,
+    token_id: str | None = None,
+    agent_id: str | None = None,
 ) -> dict[str, Any]:
+    # v6.2 multi-agent gate (opt-in mode only)
+    try:
+        from .agents.tokens import require_scope
+
+        gate = require_scope(
+            store, repo, token_id=token_id, scope="memory.remember"
+        )
+        if gate.get("required") and not gate.get("valid"):
+            return {
+                "recorded": False,
+                "blocked": True,
+                "reason": gate.get("reason") or "token_invalid",
+                "token_gate": gate,
+                "claim_boundary": "Multi-agent remember requires capability token.",
+            }
+        if gate.get("agent_id"):
+            agent_id = agent_id or gate.get("agent_id")
+    except Exception:
+        pass
     active = active_session(home, repo)
     resolved_session = session_id or (active or {}).get("session_id")
     text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
     meta = dict(metadata or {})
     meta.setdefault("text_hash", text_hash)
+    if agent_id:
+        meta["agent_id"] = agent_id
+    if token_id:
+        meta["token_id"] = token_id
     # Idempotent within session: same kind+text_hash is a duplicate skip.
     if resolved_session:
         for event in store.events(repo, resolved_session):

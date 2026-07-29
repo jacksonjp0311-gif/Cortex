@@ -109,6 +109,13 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "ranker freeze", "purpose": "governance"},
     {"phrase": "causal episode", "purpose": "continuity"},
     {"phrase": "aria glyph card", "purpose": "symbolic"},
+    # v6.2 fold/heal + efficiency (multi-word)
+    {"phrase": "lattice fold", "purpose": "coordination"},
+    {"phrase": "heal the mesh", "purpose": "continuity"},
+    {"phrase": "token efficiency", "purpose": "language"},
+    {"phrase": "lean packet", "purpose": "language"},
+    {"phrase": "multi agent mode", "purpose": "coordination"},
+    {"phrase": "capability token", "purpose": "governance"},
 )
 
 

@@ -117,7 +117,7 @@ class RepoConfig:
     engine_module_root: str = ""
     cortex_home: str = ""
     memory_mode: str = "index_first"
-    context_budget: int = 1200
+    context_budget: int = 900  # v6.2 lean default (was 1200); debug may raise
     query_before_action: bool = True
     refresh_on_activation: str = "auto"
     max_file_bytes: int = 2_000_000

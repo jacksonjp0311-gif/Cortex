@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.2.0 - Lattice fold · lean packets · multi-agent tokens
+
+- **Fold:** `DATA_MODEL.md` + `ARCHITECTURE.md` lattice synced to v6.1 reality.
+- **Lean agent profile:** capped evidence (800 chars), symbol-only glyphs, truncated neural/connect — lower token use.
+- **Efficiency:** default activate budget **800**, config `context_budget` **900**, tighter path fan-out.
+- **Mesh compact** glyph symbols only (full registry opt-out).
+- **Multi-agent v6.2:** `agent mode --on|--off`; remember + MCP activate/ritual require tokens when on.
+- **ARIA heal:** `lattice-heal.packet.json` + wake cues (lean packet, multi agent mode, …).
+- Still recommend-only; default single-agent; no host.mutate.
+
 ## 6.1.0 - Spectral kernels · closed loops · mesh dashboard
 
 - **Spectral memory ≋:** reset / integrate / retain kernels; ρ_g = e^{−δ_g}; Ξ spectrum on mesh.

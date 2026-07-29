@@ -1,6 +1,6 @@
 # Evolve plan — execution record (aligned geometry)
 
-Phases executed end-to-end for Cortex **v3.2.0** through **v5.0.0**.
+Phases executed end-to-end for Cortex **v3.2.0** through **v6.1.0** (lattice fold → **v6.2**).
 
 | Phase | Name | Status | Evidence |
 |---|---|---|---|
@@ -18,15 +18,16 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v5.0.0**.
 | 11 | Interconnect mesh plan | designed | `docs/EVOLUTION_V6.md` |
 | 12 | v6.0 mesh + sealed gates | **done** | interconnect, prune, ritual gates, glyphic ARIA, transcend 3.0 |
 | 13 | v6.1 spectral kernels | **done** | kernels, class prune, call-graph lite, mesh dashboard, ranker promote |
+| 14 | v6.2 fold + lean + multi-agent | **done** | docs lattice, lean agent profile, multi_agent mode |
 
-## Forward path (spectral memory mesh)
+## Forward path
 
 Canonical plan: **`docs/EVOLUTION_SPECTRAL.md`**
 
 | Release | Theme | Status |
 |---|---|---|
 | **v6.1** | Spectral kernels + closed loops + mesh dashboard | **done** |
-| **v6.2** | Real multi-agent under tokens | planned |
+| **v6.2** | Lattice fold + lean packets + multi-agent tokens | **done** |
 | **v7.0** | AST/CFG when ID stability proven | planned |
 
 **Principle:** memory is a **spectrum of retention kernels**, not one ρ.

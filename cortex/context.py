@@ -394,7 +394,8 @@ def build_context(
     # the packet and erase the multi-path evidence floor.
     per_hit_token_cap = max(120, effective_budget // (4 if aria_mode == "active" else 1))
     # v6 bottleneck reduction: diversify paths (organism-like fan-out, not monopoly)
-    max_chunks_per_path = 2 if aria_mode == "active" else 3
+    # v6.2 efficiency: tighter path fan-out → fewer tokens, more diversity
+    max_chunks_per_path = 1 if aria_mode == "active" else 2
     selected: list[dict[str, Any]] = []
     used_tokens = 0
     aria_paths_selected = 0

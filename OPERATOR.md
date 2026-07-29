@@ -7,23 +7,14 @@ pip install -e .
 python -m cortex init --json
 python -m cortex bootstrap . --name Cortex --json
 python -m cortex teach --seed --path . --repo Cortex --json
+# lean loop (v6.2 — fewer tokens)
 python -m cortex immune --repo Cortex --json
-# if block: true → diagnose only; no host edits
-python -m cortex organism --repo Cortex --task "interconnect immune first" --json
-# each connect expands metric graph + may distill lessons into body
-python -m cortex metrics --repo Cortex --json
-# work under host/human authority only when immune_action allows
-python -m cortex remember --repo Cortex --kind discovery --text "durable fact" --json
-python -m cortex breathe --repo Cortex --json
-python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --json
-python -m cortex metrics --repo Cortex --json
-python -m cortex vectors build --repo Cortex --json
-python -m cortex ranker status --repo Cortex --json
-python -m cortex predict --repo Cortex --task "interconnect" --json
-python -m cortex compile-interlink --repo Cortex --resolutions file,symbol,basic_block --json
-python -m cortex causal report --repo Cortex --json
-python -m cortex transcend-check --json
-python -m cortex mirror --json
+python -m cortex interconnect --repo Cortex --json
+python -m cortex kernels --repo Cortex --json
+python -m cortex activate --repo Cortex --task "heal lattice" --budget 800 --profile agent --json
+python -m cortex remember --repo Cortex --kind discovery --text "fact" --json
+python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --contract default --json
+python -m cortex dashboard --repo Cortex --mesh --json
 ```
 
 ## v5 surfaces (additive)
@@ -70,8 +61,18 @@ python -m cortex ranker rollback --repo Cortex --json
 | Release | Theme | Status |
 |---|---|---|
 | **v6.1** | Kernel spectrum + closed loops + mesh dashboard | **shipped** |
-| **v6.2** | Multi-agent under tokens | planned |
+| **v6.2** | Fold + lean packets + multi-agent tokens | **shipped** |
 | **v7.0** | AST/CFG when IDs stable | planned |
+
+### Multi-agent (opt-in)
+
+```bash
+python -m cortex agent register --repo Cortex --agent-id a1 --name "Agent" --json
+python -m cortex agent mode --repo Cortex --on --json
+python -m cortex token mint --repo Cortex --agent-id a1 --scope memory.remember --scope packet.activate --json
+python -m cortex remember --repo Cortex --kind discovery --text "x" --token <token_id> --json
+python -m cortex agent mode --repo Cortex --off --json
+```
 
 Principle: **distributed retention kernels**, not one memory scalar.
 

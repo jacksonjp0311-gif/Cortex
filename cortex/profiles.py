@@ -71,8 +71,53 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
             "may_mutate_repository": False,
             "claim_boundary": "Minimal profile: evidence + hard stops only; never mutation authority.",
         }
-    # agent (default) — operational fields only; omits heavy neural records/neighborhood
+    # agent (default) — lean operational packet (v6.2 token efficiency)
     neural = full.get("neural_interlink") or {}
+    metrics = neural.get("metrics") or {}
+    # Cap evidence text already truncated upstream; strip bulky meta here
+    evidence = []
+    for item in (full.get("evidence") or [])[:12]:
+        if not isinstance(item, dict):
+            continue
+        evidence.append(
+            {
+                "path": item.get("path"),
+                "line_range": item.get("line_range"),
+                "kind": item.get("kind"),
+                "score": item.get("score"),
+                "text": (item.get("text") or "")[:800],
+                "content_hash": item.get("content_hash"),
+            }
+        )
+    thalamus = full.get("thalamus") or {}
+    # Keep primary_intent (foreign/integration tests + agents) with lean extras
+    thalamus_lean = {
+        "primary_intent": thalamus.get("primary_intent")
+        or thalamus.get("intent")
+        or thalamus.get("classification"),
+        "intent": thalamus.get("intent") or thalamus.get("primary_intent"),
+        "confidence": thalamus.get("confidence"),
+        "uncertainty": thalamus.get("uncertainty"),
+        "available": thalamus.get("available", True),
+        "lane_weights": thalamus.get("lane_weights"),
+    }
+    glyphs = full.get("progress_glyphs") or {}
+    glyph_symbols = {
+        k: (v.get("symbol") if isinstance(v, dict) else v)
+        for k, v in (glyphs.get("glyphs") or glyphs or {}).items()
+    }
+    # Constitutional: keep key present (organ gates) but strip heavy trees
+    const = full.get("constitutional_supervision") or {}
+    const_lean = {
+        "mode": (const.get("constitutional_potential") or {}).get("mode")
+        or const.get("mode"),
+        "claim_boundary": const.get("claim_boundary")
+        or "Constitutional supervision is observational only.",
+    }
+    if const.get("constitutional_potential"):
+        const_lean["constitutional_potential"] = {
+            "mode": (const.get("constitutional_potential") or {}).get("mode"),
+        }
     return {
         "profile": "agent",
         "schema_version": full.get("schema_version"),
@@ -85,28 +130,37 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         "control_error": full.get("control_error"),
         "instructions": full.get("instructions"),
         "agent_protocol": full.get("agent_protocol"),
-        "constitutional_supervision": full.get("constitutional_supervision"),
-        "thalamus": full.get("thalamus"),
-        "environment": full.get("environment"),
-        "aria_materialization": full.get("aria_materialization"),
-        "geometry": full.get("geometry"),
-        "evidence": full.get("evidence"),
+        "constitutional_supervision": const_lean,
+        "thalamus": thalamus_lean,
+        "aria_materialization": {
+            "mode": (full.get("aria_materialization") or {}).get("mode"),
+            "materialized": (full.get("aria_materialization") or {}).get("materialized"),
+        },
+        "geometry": {
+            "zero_point": (full.get("geometry") or {}).get("zero_point"),
+            "axes": (full.get("geometry") or {}).get("axes"),
+        },
+        "evidence": evidence,
         "active_focus": full.get("active_focus"),
         "context_budget": full.get("context_budget"),
         "estimated_tokens": full.get("estimated_tokens"),
         "neural_interlink": {
             "activation_id": neural.get("activation_id"),
             "state_hash": neural.get("state_hash"),
-            "metrics": neural.get("metrics"),
-            "fired_paths": neural.get("fired_paths"),
-            "support_paths": neural.get("support_paths"),
+            "metrics": {
+                "nodes_fired": metrics.get("nodes_fired"),
+                "nodes_considered": metrics.get("nodes_considered"),
+                "sparse_activation_ratio": metrics.get("sparse_activation_ratio"),
+            },
+            "fired_paths": (neural.get("fired_paths") or [])[:8],
+            "support_paths": (neural.get("support_paths") or [])[:8],
         },
         "efficiency": full.get("efficiency"),
-        "progress_glyphs": full.get("progress_glyphs"),
+        "progress_glyphs": {"symbols": glyph_symbols, "automatic_execution": False},
         "organism": full.get("organism"),
         "connect_pass": full.get("connect_pass"),
         "packet_hash": full.get("packet_hash"),
         "claim_boundary": (
-            "Agent profile is operational evidence routing; never mutation authority."
+            "Agent profile is lean operational routing; never mutation authority."
         ),
     }

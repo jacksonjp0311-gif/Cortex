@@ -1,0 +1,46 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "☰",
+  "title": "Lattice fold, heal, lean workflow",
+  "kind": "lesson",
+  "claims": [
+    {
+      "id": "fold-docs",
+      "text": "When the lattice grows, fold DATA_MODEL and ARCHITECTURE to match code before adding organs.",
+      "evidence": ["docs/DATA_MODEL.md", "docs/ARCHITECTURE.md", "docs/EVOLVE_PLAN.md"]
+    },
+    {
+      "id": "lean-agent-packet",
+      "text": "Agent profile is lean: block first, capped evidence text, symbol-only glyphs, no full neural dumps — saves tokens without losing gates.",
+      "evidence": ["cortex/profiles.py", "OPERATOR.md"]
+    },
+    {
+      "id": "default-budget-800",
+      "text": "Default activate budget is 800 and config context_budget 900; raise only when debug needs depth.",
+      "evidence": ["cortex/cli.py", "cortex/config.py"]
+    },
+    {
+      "id": "multi-agent-opt-in",
+      "text": "multi_agent mode is off by default; when on, remember and MCP activate/ritual require capability tokens — never host.mutate.",
+      "evidence": ["cortex/agents/tokens.py", "cortex/hippocampus.py", "cortex/mcp.py"]
+    },
+    {
+      "id": "aria-heals-doctrine",
+      "text": "Heal gaps with ARIA memory packets and glyph labels, not new databases or auto-execution.",
+      "evidence": ["docs/intelligence/INTERCONNECT.md", "examples/memory-packets/"]
+    },
+    {
+      "id": "workflow-efficient",
+      "text": "Efficient loop: immune → interconnect/kernels (compact) → activate lean → remember → ritual seal → metrics.",
+      "evidence": ["OPERATOR.md"]
+    }
+  ],
+  "refuse": [
+    "second_database_for_docs",
+    "host_mutate",
+    "auto_execute_aria",
+    "fat_agent_packets_by_default"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Lattice heal packet teaches fold and efficiency; never mutation authority."
+}

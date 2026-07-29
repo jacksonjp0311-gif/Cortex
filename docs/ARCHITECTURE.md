@@ -18,6 +18,38 @@ one governed canonical-memory plane
 
 The neural layer may strengthen bounded internal associations. It may not authorize or perform source mutation.
 
+## Lattice (v6.1+)
+
+```text
+Host + Human
+    ▲
+Governor · immune ⚠ · contract
+    ▲
+ranker · prefetch · causal · agents (tokens)
+    ▲
+multi-res graph · HNSW · FTS · kernels ≋ (reset|integrate|retain)
+    ▲
+connect ⧉ · organism ⊛ · ritual ⟳
+    ▲
+one SQLite body
+```
+
+**Clock ≠ memory ≠ decision.** Connect/Thalamus broadcast; kernels filter; Governor/host commit.
+
+| Organ | Module | Role |
+|---|---|---|
+| Connect | `connect_pass` | Gather metrics, distill, spectral annotate |
+| Kernels | `kernels` | ρ_g / Ξ spectrum |
+| Mesh | `interconnect` | Health + dashboard |
+| Prune | `prune` | Class-aware dead-weight removal |
+| Ranker | `ranker` | Verified-only reorder |
+| Prefetch | `predict` | Budgeted evidence proposal |
+| HNSW | `vectors` | Local semantic index |
+| Immune | `immune` / `control_error` | STOP codes agents cannot miss |
+| ARIA | `aria_meta` + glyphs | Wake-gated language medium; never execution |
+
+Operator path: `OPERATOR.md`. Spectral plan: `docs/EVOLUTION_SPECTRAL.md`.
+
 ## Components
 
 ### Thalamus

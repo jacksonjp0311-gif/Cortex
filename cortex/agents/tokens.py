@@ -175,6 +175,56 @@ def validate_token(
     }
 
 
+def multi_agent_enabled(store: Any, repo: str) -> bool:
+    raw = store.get_setting(f"multi_agent:{repo}", {}) or {}
+    return bool(raw.get("enabled"))
+
+
+def set_multi_agent_mode(store: Any, repo: str, enabled: bool) -> dict[str, Any]:
+    store.set_setting(
+        f"multi_agent:{repo}",
+        {"enabled": bool(enabled), "updated_at": time.time()},
+    )
+    try:
+        store.append_neural_event(
+            repo,
+            event_type="multi_agent_mode",
+            entity_id=repo,
+            payload={"enabled": bool(enabled)},
+        )
+    except Exception:
+        pass
+    return {
+        "repo": repo,
+        "multi_agent": bool(enabled),
+        "claim_boundary": "Mode only; still no host.mutate capability.",
+    }
+
+
+def require_scope(
+    store: Any,
+    repo: str,
+    *,
+    token_id: str | None,
+    scope: str,
+) -> dict[str, Any]:
+    """When multi-agent mode is on, require a valid token with scope."""
+
+    if not multi_agent_enabled(store, repo):
+        return {"required": False, "valid": True, "mode": "single_agent"}
+    if not token_id:
+        return {
+            "required": True,
+            "valid": False,
+            "reason": "token_required",
+            "message": "multi_agent mode is on; pass --token / token_id",
+        }
+    result = validate_token(store, repo, token_id, required_scope=scope)
+    result["required"] = True
+    result["mode"] = "multi_agent"
+    return result
+
+
 def resolve_conflict(
     store: Any,
     repo: str,

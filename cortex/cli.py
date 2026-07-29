@@ -88,7 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
     activate = sub.add_parser("activate", help="Refresh memory as needed and emit task context.")
     activate.add_argument("--repo", required=True)
     activate.add_argument("--task", required=True)
-    activate.add_argument("--budget", type=int, default=1200)
+    activate.add_argument(
+        "--budget",
+        type=int,
+        default=800,
+        help="Context token budget (v6.2 lean default 800; raise for debug).",
+    )
     activate.add_argument("--refresh", choices=["auto", "always", "never", "packet-fast", "packet-refresh", "bootstrap-full"], default="auto")
     activate.add_argument(
         "--profile",
@@ -270,6 +275,8 @@ def build_parser() -> argparse.ArgumentParser:
     remember_parser.add_argument("--kind", required=True)
     remember_parser.add_argument("--text", required=True)
     remember_parser.add_argument("--session")
+    remember_parser.add_argument("--token", help="Capability token when multi_agent mode is on.")
+    remember_parser.add_argument("--agent-id", help="Agent principal id (multi_agent).")
     remember_parser.add_argument("--json", action="store_true")
 
     consolidate_parser = sub.add_parser("consolidate", help="Consolidate a session into a Discovery Card.")
@@ -504,11 +511,21 @@ def build_parser() -> argparse.ArgumentParser:
     contract_p.add_argument("--profile", choices=["default", "strict"], default="default")
     contract_p.add_argument("--json", action="store_true")
 
-    agent_p = sub.add_parser("agent", help="Register multi-agent principal (local only).")
-    agent_p.add_argument("action", choices=["register", "list"])
+    agent_p = sub.add_parser("agent", help="Multi-agent principals + mode (local only).")
+    agent_p.add_argument("action", choices=["register", "list", "mode"])
     agent_p.add_argument("--repo", required=True)
     agent_p.add_argument("--agent-id")
     agent_p.add_argument("--name")
+    agent_p.add_argument(
+        "--on",
+        action="store_true",
+        help="For action=mode: enable multi_agent (token required).",
+    )
+    agent_p.add_argument(
+        "--off",
+        action="store_true",
+        help="For action=mode: disable multi_agent (default single-agent).",
+    )
     agent_p.add_argument("--json", action="store_true")
 
     token_p = sub.add_parser("token", help="Mint/revoke capability tokens (no host.mutate).")
@@ -883,7 +900,16 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "remember":
             emit(
-                remember(home, store, args.repo, args.kind, args.text, args.session),
+                remember(
+                    home,
+                    store,
+                    args.repo,
+                    args.kind,
+                    args.text,
+                    args.session,
+                    token_id=getattr(args, "token", None),
+                    agent_id=getattr(args, "agent_id", None),
+                ),
                 args.json,
             )
 
@@ -1267,6 +1293,7 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "agent":
             from .agents import register_agent
+            from .agents.tokens import multi_agent_enabled, set_multi_agent_mode
 
             if args.action == "register":
                 if not args.agent_id or not args.name:
@@ -1275,6 +1302,23 @@ def main(argv: list[str] | None = None) -> None:
                     register_agent(store, args.repo, args.agent_id, args.name),
                     args.json,
                 )
+            elif args.action == "mode":
+                if args.on and args.off:
+                    raise ValueError("Pass only --on or --off")
+                if not args.on and not args.off:
+                    emit(
+                        {
+                            "repo": args.repo,
+                            "multi_agent": multi_agent_enabled(store, args.repo),
+                            "claim_boundary": "Mode query only.",
+                        },
+                        args.json,
+                    )
+                else:
+                    emit(
+                        set_multi_agent_mode(store, args.repo, enabled=bool(args.on)),
+                        args.json,
+                    )
             else:
                 rows = store.db.execute(
                     "SELECT agent_id, display_name, created_at FROM agent_principals WHERE repo=?",
@@ -1284,6 +1328,7 @@ def main(argv: list[str] | None = None) -> None:
                     {
                         "repo": args.repo,
                         "agents": [dict(r) for r in rows],
+                        "multi_agent": multi_agent_enabled(store, args.repo),
                         "claim_boundary": "Agent list is local identity only.",
                     },
                     args.json,

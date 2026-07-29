@@ -27,8 +27,12 @@ def mesh_status(
     *,
     governor: Any | None = None,
     home: Any | None = None,
+    compact: bool = True,
 ) -> dict[str, Any]:
-    """Single-pane mesh health. Telemetry only; never authorization."""
+    """Single-pane mesh health. Telemetry only; never authorization.
+
+    compact=True (default) omits full glyph registry to save tokens.
+    """
 
     graph = load_metric_graph(store, repo)
     ranker = ranker_status(store, repo)
@@ -181,7 +185,17 @@ def mesh_status(
             "contract_constrains_only": True,
             "relevance_never_mutation": True,
         },
-        "progress_glyphs": progress_glyph_registry(),
+        "progress_glyphs": (
+            {
+                "symbols": {
+                    k: v.get("symbol")
+                    for k, v in (progress_glyph_registry().get("glyphs") or {}).items()
+                },
+                "automatic_execution": False,
+            }
+            if compact
+            else progress_glyph_registry()
+        ),
         "claim_boundary": (
             "Interconnect mesh is local operational health; not consciousness "
             "and not host mutation authority."

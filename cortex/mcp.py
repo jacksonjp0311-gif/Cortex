@@ -74,7 +74,8 @@ TOOLS = [
             "properties": {
                 "repo": {"type": "string"},
                 "task": {"type": "string"},
-                "budget": {"type": "integer", "default": 1200},
+                "budget": {"type": "integer", "default": 800},
+                "token_id": {"type": "string"},
             },
         },
     },
@@ -89,7 +90,8 @@ TOOLS = [
             "properties": {
                 "repo": {"type": "string"},
                 "task": {"type": "string"},
-                "budget": {"type": "integer", "default": 1200},
+                "budget": {"type": "integer", "default": 800},
+                "token_id": {"type": "string"},
             },
         },
     },
@@ -105,10 +107,11 @@ TOOLS = [
             "properties": {
                 "repo": {"type": "string"},
                 "task": {"type": "string"},
-                "budget": {"type": "integer", "default": 1200},
+                "budget": {"type": "integer", "default": 800},
                 "remember_kind": {"type": "string", "default": "discovery"},
                 "remember_text": {"type": "string"},
                 "consolidate": {"type": "boolean", "default": True},
+                "token_id": {"type": "string"},
             },
         },
     },
@@ -325,16 +328,43 @@ class CortexMCP:
             )
         if name == "cortex_activate":
             from .activation import activate_repository
+            from .agents.tokens import require_scope
 
+            gate = require_scope(
+                self.store,
+                str(arguments["repo"]),
+                token_id=arguments.get("token_id"),
+                scope="packet.activate",
+            )
+            if gate.get("required") and not gate.get("valid"):
+                return {
+                    "blocked": True,
+                    "token_gate": gate,
+                    "claim_boundary": "Multi-agent mode requires token_id.",
+                }
             return activate_repository(
                 self.home,
                 self.store,
                 self.governor,
                 str(arguments["repo"]),
                 str(arguments["task"]),
-                int(arguments.get("budget", 1200)),
+                int(arguments.get("budget", 800)),
             )
         if name == "cortex_ritual":
+            from .agents.tokens import require_scope
+
+            gate = require_scope(
+                self.store,
+                str(arguments["repo"]),
+                token_id=arguments.get("token_id"),
+                scope="packet.activate",
+            )
+            if gate.get("required") and not gate.get("valid"):
+                return {
+                    "blocked": True,
+                    "token_gate": gate,
+                    "claim_boundary": "Multi-agent mode requires token_id.",
+                }
             memories = []
             text = arguments.get("remember_text")
             if text:
@@ -350,7 +380,7 @@ class CortexMCP:
                 self.governor,
                 str(arguments["repo"]),
                 str(arguments["task"]),
-                budget=int(arguments.get("budget", 1200)),
+                budget=int(arguments.get("budget", 800)),
                 memories=memories,
                 consolidate_session=bool(arguments.get("consolidate", True)),
             )
