@@ -17,7 +17,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.5.0** — **identity continuity** + **ARIA evidence proof** (materialize/re-query, implementation over card monopoly). Intelligence still pulses on connect. See [`OPERATOR.md`](OPERATOR.md).
+**Current release: v6.5.1** — operational tightening on top of **identity continuity** + **ARIA evidence proof**: wrapper `identity`/mesh commands, tests/impl over vendor guides under prove, stable-`CORTEX_HOME` guidance, and **causal probe** for matched recall pairs. Intelligence still pulses on connect. See [`OPERATOR.md`](OPERATOR.md).
 
 ```bash
 pip install -e .

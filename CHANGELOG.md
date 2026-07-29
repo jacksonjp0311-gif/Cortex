@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.5.1 - Operational tightening
+
+- **Wrapper parity:** PowerShell/bash `.cortex/bin` expose `identity`, `distill`, `kernels`, `interconnect`, `immune`, `metrics`, `prune`, `organism`, `breathe`, `causal` (default budget 800).
+- **Proof ranking:** under `prove_implementation`, prefer tests + `cortex/*.py` over vendor guides/cards; do not auto-prove on bare Aria wake (keeps verify heading probes green).
+- **Stable home:** `identity` reports `temporary_home`; troubleshooting + `.cortex` README guide durable `CORTEX_HOME`.
+- **Causal probe:** `causal probe --slot before|after` for matched recall pairs before `evaluate`.
+- Docs badge/release line aligned to 6.5.1. Still recommend-only.
+
 ## 6.5.0 - Identity continuity + ARIA evidence proof
 
 - **Identity ⌖:** `cortex identity --repo|--path` detects same-path/different-name namespaces (e.g. CortexV5CI vs CortexTeach); bootstrap warns; activate surfaces identity.
