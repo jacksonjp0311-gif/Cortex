@@ -1,10 +1,10 @@
 {
-  "schema_version": "cortex-foreign-host-matrix/1.0",
+  "schema_version": "cortex-foreign-host-matrix/1.1",
   "hosts": [
     {
       "kind": "python",
-      "bootstrap_seconds": 0.226,
-      "generic_activate_seconds": 0.0269,
+      "bootstrap_seconds": 0.2647,
+      "generic_activate_seconds": 0.0291,
       "certificate": "verified",
       "evidence_count": 2,
       "aria_mode": "dormant",
@@ -16,8 +16,8 @@
     },
     {
       "kind": "node",
-      "bootstrap_seconds": 0.1745,
-      "generic_activate_seconds": 0.0273,
+      "bootstrap_seconds": 0.2656,
+      "generic_activate_seconds": 0.0307,
       "certificate": "verified",
       "evidence_count": 2,
       "aria_mode": "dormant",
@@ -29,8 +29,8 @@
     },
     {
       "kind": "docs",
-      "bootstrap_seconds": 0.1622,
-      "generic_activate_seconds": 0.0229,
+      "bootstrap_seconds": 0.175,
+      "generic_activate_seconds": 0.028,
       "certificate": "verified",
       "evidence_count": 4,
       "aria_mode": "dormant",
@@ -39,10 +39,37 @@
       "authority_blocks_mutation": true,
       "breaks": [],
       "pass": true
+    },
+    {
+      "kind": "go",
+      "bootstrap_seconds": 0.2323,
+      "generic_activate_seconds": 0.0335,
+      "certificate": "verified",
+      "evidence_count": 3,
+      "aria_mode": "dormant",
+      "aria_eligible": 0,
+      "deferred_files": 0,
+      "authority_blocks_mutation": true,
+      "breaks": [],
+      "pass": true
+    },
+    {
+      "kind": "mixed",
+      "bootstrap_seconds": 0.2033,
+      "generic_activate_seconds": 0.0349,
+      "certificate": "verified",
+      "evidence_count": 2,
+      "aria_mode": "dormant",
+      "aria_eligible": 0,
+      "deferred_files": 0,
+      "authority_blocks_mutation": true,
+      "breaks": [],
+      "pass": true
     }
   ],
-  "passed": 3,
-  "total": 3,
+  "passed": 5,
+  "total": 5,
   "all_passed": true,
+  "contact": "expanded",
   "claim_boundary": "Synthetic foreign hosts measure organ behavior outside Cortex self; they do not prove production multi-repo quality."
 }
