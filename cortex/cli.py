@@ -389,6 +389,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     teach.add_argument("--json", action="store_true")
 
+    organism = sub.add_parser(
+        "organism",
+        help="Emit living organism interlink state for a task (session co-process).",
+    )
+    organism.add_argument("--repo", required=True)
+    organism.add_argument("--task", required=True)
+    organism.add_argument("--budget", type=int, default=800)
+    organism.add_argument(
+        "--profile", choices=["agent", "debug", "minimal"], default="agent"
+    )
+    organism.add_argument("--json", action="store_true")
+
     contact = sub.add_parser(
         "contact",
         help="Strike the tuning fork: mirror + fluency + foreign host resonance.",
@@ -879,18 +891,22 @@ def main(argv: list[str] | None = None) -> None:
             root = Path(__file__).resolve().parents[1]
             transcend_doc = root / "docs" / "TRANSCEND.md"
             bright_doc = root / "docs" / "BRIGHT_POINT.md"
+            organism_doc = root / "docs" / "ORGANISM.md"
             text = ""
+            if organism_doc.is_file():
+                text += organism_doc.read_text(encoding="utf-8")
             if transcend_doc.is_file():
-                text += transcend_doc.read_text(encoding="utf-8")
+                text += "\n\n---\n\n" + transcend_doc.read_text(encoding="utf-8")
             if bright_doc.is_file():
                 text += "\n\n---\n\n" + bright_doc.read_text(encoding="utf-8")
             payload = {
-                "schema_version": "cortex-teach/1.0",
+                "schema_version": "cortex-teach/1.1",
                 "glyph": "☰",
                 "install": [
                     "pip install -e .",
                     "python -m cortex init --json",
                     "python -m cortex bootstrap . --name Cortex --json",
+                    'python -m cortex organism --repo Cortex --task "<task>" --json',
                     'python -m cortex activate --repo Cortex --task "<task>" --profile agent --json',
                     'python -m cortex ritual --repo Cortex --task "<task>" --remember-text "<fact>" --json',
                     "python -m cortex transcend-check --json",
@@ -912,6 +928,32 @@ def main(argv: list[str] | None = None) -> None:
                     print(
                         f"- {glyph['symbol']}  {glyph['spoken']} → `{glyph['maps_to']}`"
                     )
+
+        elif command == "organism":
+            result = activate_repository(
+                home,
+                store,
+                governor,
+                args.repo,
+                args.task,
+                budget=args.budget,
+                profile=args.profile,
+            )
+            emit(
+                {
+                    "schema_version": "cortex-organism-command/1.0",
+                    "activation": result.get("activation"),
+                    "session": result.get("session"),
+                    "organism": result.get("organism"),
+                    "control_error": result.get("control_error"),
+                    "context": result.get("context"),
+                    "claim_boundary": (
+                        "Organism command exposes session co-process state; "
+                        "not consciousness or mutation authority."
+                    ),
+                },
+                args.json,
+            )
 
         elif command == "dashboard":
             repository = store.repo(args.repo)

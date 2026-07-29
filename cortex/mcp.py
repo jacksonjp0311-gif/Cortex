@@ -113,6 +113,23 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_organism",
+        "description": (
+            "Living organism interlink (⊛): shared session body for agent+Cortex co-process. "
+            + _REFUSE
+            + " Not consciousness."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo", "task"],
+            "properties": {
+                "repo": {"type": "string"},
+                "task": {"type": "string"},
+                "budget": {"type": "integer", "default": 800},
+            },
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -224,6 +241,27 @@ class CortexMCP:
                 memories=memories,
                 consolidate_session=bool(arguments.get("consolidate", True)),
             )
+        if name == "cortex_organism":
+            from .activation import activate_repository
+
+            result = activate_repository(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                str(arguments["task"]),
+                int(arguments.get("budget", 800)),
+                profile="agent",
+            )
+            return {
+                "organism": result.get("organism"),
+                "session": result.get("session"),
+                "control_error": result.get("control_error"),
+                "activation": result.get("activation"),
+                "claim_boundary": (
+                    "Organism is session co-process state; not consciousness or authority."
+                ),
+            }
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,
@@ -271,11 +309,11 @@ class CortexMCP:
                         }
                     },
                     "instructions": (
-                        "Use Cortex for provenance-backed repository context. "
-                        "Follow agent_protocol on every context/activate packet: "
-                        "activate → work (obey governor_mode) → remember → consolidate "
-                        "(or cortex_ritual). Outputs never grant mutation authority. "
-                        "If governor_mode is read_only: diagnose only, do not edit."
+                        "You share organism (⊛) session state with Cortex: you are temporary "
+                        "working cortex; Cortex is durable body. Follow agent_protocol and "
+                        "organism.immune first. Loop: activate → work (obey governor) → "
+                        "remember → consolidate (cortex_ritual). Use cortex_organism for the "
+                        "living pulse. Never mutation authority. read_only = diagnose only."
                     ),
                     "ttlMs": 3_600_000,
                     "cacheScope": "private",

@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.4.0 - Organism interlink (⊛)
+
+- **Session co-process:** agent and Cortex share one living `organism` state per
+  activation — identity, nervous, immune, metabolism, memory, intention,
+  conscience, reflexes, pulse chain.
+- **Not consciousness:** separable bond; host authority remains; no mutation grant.
+- **CLI/MCP:** `cortex organism`, MCP `cortex_organism`.
+- **Ledger:** organism pulses append to neural ledger; prior pulse chains.
+- **Packet:** instructions step 0 is the organism bond; profiles carry organism.
+- **Docs:** `docs/ORGANISM.md`. Glyph ⊛ is capability-free.
+
 ## 3.3.0 - Rapid progress (P0–P6)
 
 - **P0 ⟡ transcend-check:** falsifies protocol, red modes, ritual, fluency, mirror glow.

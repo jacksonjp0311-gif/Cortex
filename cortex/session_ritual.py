@@ -93,9 +93,16 @@ def run_session_ritual(
             full.get("evidence") or context.get("evidence") or []
         ),
         "surprise": activation.get("surprise"),
+        "organism": activation.get("organism"),
         "remembered": recorded,
         "consolidate": card,
         "ritual": ["activate", "remember", "consolidate"],
+        "cardiac_cycle": {
+            "systole": "activate+work",
+            "diastole": "remember+consolidate",
+            "pulse": (activation.get("organism") or {}).get("pulse"),
+            "sealed": bool((card or {}).get("created")),
+        },
         "authority": {
             "cortex_may_mutate": False,
             "packet_is_not_authorization": True,

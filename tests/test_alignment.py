@@ -163,6 +163,36 @@ class ResonanceContactTests(unittest.TestCase):
         self.assertEqual(field["brightness"], "bright")
 
 
+class OrganismInterlinkTests(unittest.TestCase):
+    def test_activate_emits_organism_pulse_chain(self) -> None:
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="org-")) / "home")
+        repo = Path(tempfile.mkdtemp(prefix="org-repo-"))
+        (repo / "README.md").write_text("# O\n\n## API\n\nBody.\n", encoding="utf-8")
+        (repo / "core.py").write_text("def core() -> int:\n    return 1\n", encoding="utf-8")
+        store = Store(home / "cortex.db")
+        bootstrap_repository(home, store, repo, "OrgHost")
+        first = activate_repository(
+            home, store, Governor(home, store), "OrgHost", "First pulse", budget=500
+        )
+        org1 = first.get("organism") or {}
+        self.assertEqual(org1.get("glyph"), "⊛")
+        self.assertTrue(org1.get("co_process"))
+        self.assertIn("pulse", org1)
+        self.assertIn("body", org1)
+        self.assertIn("nervous", org1["body"])
+        self.assertIn("immune", org1["body"])
+        self.assertIn("reflexes", org1["body"])
+        ctx = first.get("context") or {}
+        self.assertIn("organism", ctx)
+        second = activate_repository(
+            home, store, Governor(home, store), "OrgHost", "Second pulse", budget=500
+        )
+        org2 = second.get("organism") or {}
+        self.assertEqual(org2.get("prior_pulse"), org1.get("pulse"))
+        self.assertNotEqual(org2.get("pulse"), org1.get("pulse"))
+        store.close()
+
+
 class ProgressStackTests(unittest.TestCase):
     def test_profiles_and_control_error(self) -> None:
         from cortex.control_error import build_control_error

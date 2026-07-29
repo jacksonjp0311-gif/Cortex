@@ -52,6 +52,12 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "TeachSurface",
         "maps_to": "cortex teach",
     },
+    "organism_pulse": {
+        "symbol": "⊛",
+        "spoken": "organism pulse",
+        "target": "OrganismPulse",
+        "maps_to": "packet.organism / cortex organism",
+    },
 }
 
 

@@ -58,8 +58,15 @@ this machine-checkable.
 | ⟳ | ritual idempotent | `cortex ritual` |
 | Δ | incremental surprise | `packet.efficiency.surprise` |
 | ☰ | teach surface | `cortex teach` |
+| ⊛ | organism pulse | `packet.organism` / `cortex organism` |
 
 Capability-free. Never auto-execute. Never authorize mutation.
+
+## Organism bond
+
+See [`ORGANISM.md`](ORGANISM.md). For the session: agent = temporary working
+cortex; Cortex = durable body; host = authority. Share the pulse; never claim
+the host.
 
 ## Self-host checks (this tree)
 

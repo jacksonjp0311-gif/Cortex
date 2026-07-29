@@ -107,11 +107,43 @@ def activate_repository(
     # Attach surprise to efficiency for agent-visible economics.
     if isinstance(context.get("efficiency"), dict):
         context["efficiency"]["surprise"] = surprise
+    session = begin_session(home, store, repo, task)
+    from . import __version__
+    from .organism import (
+        build_organism,
+        load_prior_pulse,
+        persist_organism_pulse,
+        save_prior_pulse,
+    )
     from .profiles import project_packet
+
+    prior = load_prior_pulse(store, repo)
+    organism = build_organism(
+        repo=repo,
+        repository_id=str(repository["repository_id"] or ""),
+        task=task,
+        session=session,
+        context=context,
+        surprise=surprise,
+        prior_pulse=prior,
+        cortex_version=__version__,
+    )
+    context["organism"] = organism
+    # Re-hash packet including organism bond.
+    import hashlib
+    import json as _json
+
+    to_hash = {k: v for k, v in context.items() if k not in {"packet_path", "packet_hash"}}
+    context["packet_hash"] = hashlib.sha256(
+        _json.dumps(to_hash, sort_keys=True, separators=(",", ":"), default=str).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    persist_organism_pulse(store, repo, organism, session_id=session.get("session_id"))
+    save_prior_pulse(store, repo, organism["pulse"])
 
     full_context = context
     context = project_packet(full_context, profile)
-    session = begin_session(home, store, repo, task)
     runtime_path = runtime_directory(root, config) / "context_latest.json"
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(full_context, indent=2) + "\n", encoding="utf-8")
@@ -126,6 +158,7 @@ def activate_repository(
         "refresh": refresh_result,
         "surprise": surprise,
         "control_error": full_context.get("control_error"),
+        "organism": organism,
         "environment": environment,
         "neural_interlink": neural,
         "session": session,

@@ -33,6 +33,7 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
             "structural_neighborhood": full.get("structural_neighborhood"),
             "constitutional_supervision": full.get("constitutional_supervision"),
             "progress_glyphs": full.get("progress_glyphs"),
+            "organism": full.get("organism"),
             "packet_hash": full.get("packet_hash"),
             "claim_boundary": full.get("claim_boundary")
             or "Debug profile is full telemetry; still recommend-only.",
@@ -55,6 +56,8 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
                 }
                 for item in (full.get("evidence") or [])
             ],
+            "organism_pulse": (full.get("organism") or {}).get("pulse"),
+            "organism_glyph": (full.get("organism") or {}).get("glyph"),
             "may_mutate_repository": False,
             "claim_boundary": "Minimal profile: evidence + hard stops only; never mutation authority.",
         }
@@ -87,6 +90,7 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         },
         "efficiency": full.get("efficiency"),
         "progress_glyphs": full.get("progress_glyphs"),
+        "organism": full.get("organism"),
         "packet_hash": full.get("packet_hash"),
         "claim_boundary": (
             "Agent profile is operational evidence routing; never mutation authority."
