@@ -1,21 +1,36 @@
+<!-- TOP CTA: first thing on the README -->
+<p align="center">
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html">
+    <img
+      src="https://img.shields.io/badge/EMBED_ON_DESKTOP-open_live_HUD-a855f7?style=for-the-badge&logo=github&logoColor=white&labelColor=0f172a"
+      alt="Embed on Desktop — open live HUD"
+      height="40"
+    />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/">
+    <img
+      src="https://img.shields.io/badge/STAR_LATTICE-live_chart-0ea5e9?style=for-the-badge&logo=github&logoColor=white&labelColor=0f172a"
+      alt="Star lattice — live chart"
+      height="40"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <b><a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html">→ Embed Cortex on Desktop (live HUD)</a></b>
+  ·
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/">Star lattice</a>
+</p>
+
 <p align="center">
   <img src="assets/cortex-neural-brain.png" alt="Cortex neural interlink brain" width="100%" />
 </p>
 
 <p align="center">
-  <a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html">
-    <img src="https://img.shields.io/badge/◈_EMBED_ON_DESKTOP-live_HUD-a855f7?style=for-the-badge&labelColor=0f172a" alt="Embed Cortex on Desktop" />
-  </a>
-  &nbsp;
-  <a href="https://jacksonjp0311-gif.github.io/Cortex/">
-    <img src="https://img.shields.io/badge/★_STAR_LATTICE-live-0ea5e9?style=for-the-badge&labelColor=0f172a" alt="Star lattice" />
-  </a>
-</p>
-
-<p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
   <img src="https://img.shields.io/badge/version-6.10.0-0ea5e9?style=for-the-badge" alt="v6.10.0" />
-  <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
+  <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/authority-recommend--only-f8fafc?style=for-the-badge&labelColor=111827" alt="Recommend only" />
