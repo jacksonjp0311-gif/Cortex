@@ -87,6 +87,7 @@ DEFAULT_TEXT_EXTENSIONS = [
     ".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
     ".xml", ".html", ".css", ".scss", ".sass", ".less", ".sql", ".graphql",
     ".proto", ".dockerfile", ".gradle", ".properties", ".env.example",
+    ".mod", ".sum",
 ]
 
 SPECIAL_TEXT_FILES = {

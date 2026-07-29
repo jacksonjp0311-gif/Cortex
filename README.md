@@ -54,9 +54,13 @@ and on foreign hosts. See [`docs/COVENANT.md`](docs/COVENANT.md) and
 
 ```bash
 cortex mirror --json
+cortex contact --json
 python benchmarks/foreign_host_matrix.py
 python benchmarks/deferred_vs_eager_benchmark.py
 ```
+
+`cortex contact` strikes the full tuning fork (self-mirror + fluency + five
+foreign host surfaces) and reports multi-string resonance brightness.
 
 ## Cortex v3.1: constitutional homeostasis
 

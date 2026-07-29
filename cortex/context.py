@@ -7,12 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from .config import load_repo_config
-from .constitutional import assess_context
+from .constitutional import assess_context, memory_balance
 from .environment import environment_summary
 from .efficiency import efficiency_telemetry
 from .graph import neighborhood
 from .hippocampus import active_session
 from .neuron import activate_interlink
+from .resonance import clamp
 from .retrieval import materialize_aria_for_task, query, support_hits
 from thalamus import apply_feedback, inhibit, make_request, route
 
@@ -63,6 +64,18 @@ def _geometry_surface(
                 aria.get("automatic_execution") is not True,
             ]
         ),
+        "resonance_hint": {
+            "memory_balance": memory_balance(
+                preserved=1.0 if mode == "dormant" or (aria.get("eligible_nodes") or 0) > 0 else 0.5,
+                adjacent=clamp(
+                    (aria.get("eligible_nodes") or 0)
+                    / max(1, aria.get("total_nodes") or 1)
+                )
+                if mode == "active"
+                else 0.5,
+            ),
+            "fork": "strike cortex contact for full-field brightness",
+        },
         "claim_boundary": "Geometry is local interlock telemetry; it grants no rights.",
     }
 

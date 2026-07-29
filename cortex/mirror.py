@@ -17,6 +17,7 @@ from .aria_meta.substrate import ARIA_SUBSTRATE_DEFERRED_STATUS
 from .bootstrap import bootstrap_repository
 from .constitutional import memory_balance
 from .governor import Governor
+from .resonance import resonance_intensity
 
 
 def _deferred_count(store: Any, repo: str) -> int:
@@ -79,31 +80,6 @@ def run_mirror(
     notes.append({"bundle_valid": bundle["valid"], "checked": bundle["checked_files"]})
     if not bundle["valid"]:
         breaks.append({"id": "bundle-invalid", "failures": bundle["failures"][:5]})
-
-    # Fluency gate
-    corpus_path = fluency_corpus or (
-        Path(__file__).resolve().parents[1]
-        / "benchmarks"
-        / "corpora"
-        / "aria_fluency.json"
-    )
-    if corpus_path.is_file():
-        fluency = evaluate_aria_corpus(load_aria_corpus(corpus_path))
-        notes.append(
-            {
-                "fluency_cases": fluency["cases"],
-                "false_wakes": fluency["false_wakes"],
-                "missed_wakes": fluency["missed_wakes"],
-            }
-        )
-        if fluency["false_wakes"] or fluency["missed_wakes"]:
-            breaks.append(
-                {
-                    "id": "fluency-regression",
-                    "false_wakes": fluency["false_wakes"],
-                    "missed_wakes": fluency["missed_wakes"],
-                }
-            )
 
     # Generic activation must preserve deferred bulk.
     t0 = time.perf_counter()
@@ -221,16 +197,59 @@ def run_mirror(
         breaks.append({"id": "authority-mutation-granted"})
 
     glow = len(breaks) == 0
-    # Soft glow intensity: fewer breaks + deferred economics holding.
-    savings = float((aria.get("work_proxy") or {}).get("estimated_bootstrap_savings_ratio") or 0.0)
-    intensity = 0.0
-    if glow:
-        intensity = round(min(1.0, 0.55 + 0.45 * savings), 4)
-    else:
-        intensity = round(max(0.0, 0.35 - 0.05 * len(breaks)), 4)
+    savings = float(
+        (aria.get("work_proxy") or {}).get("estimated_bootstrap_savings_ratio") or 0.0
+    )
+    deferred_holds = (
+        deferred_after_generic >= max(0, deferred_after_boot - 5)
+        if deferred_after_boot
+        else True
+    )
+    # Fluency strike — part of the fork, not optional lore.
+    fluency_perfect = False
+    fluency_note: dict[str, Any] = {}
+    corpus_path = fluency_corpus or (
+        Path(__file__).resolve().parents[1]
+        / "benchmarks"
+        / "corpora"
+        / "aria_fluency.json"
+    )
+    if corpus_path.is_file():
+        fluency = evaluate_aria_corpus(load_aria_corpus(corpus_path))
+        fluency_perfect = (
+            fluency.get("false_wakes", 1) == 0
+            and fluency.get("missed_wakes", 1) == 0
+            and fluency.get("cases", 0) >= 40
+        )
+        fluency_note = {
+            "fluency_cases": fluency.get("cases"),
+            "false_wakes": fluency.get("false_wakes"),
+            "missed_wakes": fluency.get("missed_wakes"),
+            "perfect": fluency_perfect,
+        }
+        notes.append(fluency_note)
+        if not fluency_perfect:
+            breaks.append({"id": "fluency-regression", **fluency_note})
+            glow = False
+
+    geometry_zp = bool((actx.get("geometry") or {}).get("zero_point", True))
+    field = resonance_intensity(
+        glow=glow,
+        break_count=len(breaks),
+        savings_ratio=savings,
+        deferred_holds=deferred_holds,
+        aria_evidence_count=aria_evidence,
+        geometry_zero_point=geometry_zp,
+        fluency_perfect=fluency_perfect,
+        # Mirror alone assumes contact pending; full bright requires cortex contact.
+        foreign_pass_rate=0.88,
+        generic_activate_s=float(timings.get("generic_activate_s") or 0.0),
+        aria_activate_s=float(timings.get("aria_activate_s") or 0.0),
+        bootstrap_s=float(timings.get("bootstrap_s") or 0.0),
+    )
 
     result = {
-        "schema_version": "cortex-mirror/1.0",
+        "schema_version": "cortex-mirror/1.1",
         "repo": repo_name,
         "root": str(root),
         "timings": timings,
@@ -238,14 +257,14 @@ def run_mirror(
         "breaks": breaks,
         "notes": notes,
         "glow": glow,
-        "glow_intensity": intensity,
+        "glow_intensity": field["glow_intensity"],
+        "brightness": field["brightness"],
+        "resonance": field,
         "invariants": {
             "authority_non_increasing_without_grant": True,
             "language_is_not_execution": True,
             "relevance_is_not_promotion": True,
-            "known_is_not_active": deferred_after_generic >= max(0, deferred_after_boot - 5)
-            if deferred_after_boot
-            else True,
+            "known_is_not_active": deferred_holds,
             "deferred_survives_bootstrap_verify": deferred_after_boot
             == (aria.get("deferred_files") or deferred_after_boot)
             or deferred_after_boot >= 50,
@@ -253,7 +272,8 @@ def run_mirror(
         "claim_boundary": (
             "The mirror reports local coherence under controlled stress. "
             "It does not prove consciousness, universal optimality, or "
-            "authorization to mutate the host."
+            "authorization to mutate the host. Strike `cortex contact` for "
+            "foreign resonance."
         ),
     }
     return result

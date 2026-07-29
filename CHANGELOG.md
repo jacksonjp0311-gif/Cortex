@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.2.1 - Contact Resonance
+
+- **Tuning fork:** `cortex contact` runs mirror + fluency + foreign hosts and
+  reports multi-string `resonance` intensity (economics, evidence, geometry,
+  fluency, contact, timing) with brightness levels ember→steady→glow→bright.
+- **Expanded contact matrix:** go + mixed polyglot hosts (5 foreign surfaces).
+- **Mirror 1.1:** harmonic resonance field; points to contact for full bright.
+- Packet geometry carries a `resonance_hint` (preservation/adjacency balance).
+
 ## 3.2.0 - Aligned Geometry
 
 - **Covenant freeze:** `docs/COVENANT.md` locks five interlock axes (authority,

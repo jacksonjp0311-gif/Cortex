@@ -7,7 +7,13 @@ the closed grammar still holds.
 ```bash
 python -m cortex mirror --json
 python -m cortex mirror /path/to/repo --name MyMirror --json
+python -m cortex contact --json
 ```
+
+`cortex contact` strikes the full tuning fork: self-mirror + fluency corpus +
+expanded foreign host matrix (python, node, docs, go, mixed). Brightness is a
+multi-string resonance score (economics, evidence, geometry, fluency, contact,
+timing) — not savings alone.
 
 ## What it measures
 

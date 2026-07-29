@@ -70,6 +70,53 @@ def _docs_host(root: Path) -> None:
     )
 
 
+def _go_host(root: Path) -> None:
+    (root / "README.md").write_text(
+        "# GoService\n\n## Handlers\n\nHTTP handlers live in main.go.\n",
+        encoding="utf-8",
+    )
+    (root / "go.mod").write_text("module example.com/gosvc\n\ngo 1.22\n", encoding="utf-8")
+    (root / "main.go").write_text(
+        "package main\n\nfunc health() string { return \"ok\" }\n\nfunc main() {}\n",
+        encoding="utf-8",
+    )
+    (root / "main_test.go").write_text(
+        "package main\n\nimport \"testing\"\n\nfunc TestHealth(t *testing.T) {\n"
+        "\tif health() != \"ok\" { t.Fatal(\"bad\") }\n}\n",
+        encoding="utf-8",
+    )
+
+
+def _mixed_host(root: Path) -> None:
+    """Polyglot contact: Python API + TS client + ops docs."""
+
+    (root / "README.md").write_text(
+        "# MixedStack\n\n## Surfaces\n\nAPI, web client, and runbooks.\n",
+        encoding="utf-8",
+    )
+    (root / "api").mkdir()
+    (root / "api" / "app.py").write_text(
+        "def handle(path: str) -> dict:\n    return {'path': path, 'ok': True}\n",
+        encoding="utf-8",
+    )
+    (root / "web").mkdir()
+    (root / "web" / "client.ts").write_text(
+        "export function ping(): string { return 'pong'; }\n",
+        encoding="utf-8",
+    )
+    (root / "ops").mkdir()
+    (root / "ops" / "runbook.md").write_text(
+        "# Runbook\n\nRestart the API before the web tier.\n",
+        encoding="utf-8",
+    )
+    (root / "package.json").write_text(
+        '{"name":"mixed-stack","version":"0.1.0"}\n', encoding="utf-8"
+    )
+    (root / "pyproject.toml").write_text(
+        "[project]\nname='mixed-stack'\nversion='0.1.0'\n", encoding="utf-8"
+    )
+
+
 def _run_host(kind: str, builder) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix=f"foreign-{kind}-") as temporary:
         base = Path(temporary)
@@ -139,14 +186,17 @@ def run_matrix() -> dict[str, Any]:
         ("python", _python_host),
         ("node", _node_host),
         ("docs", _docs_host),
+        ("go", _go_host),
+        ("mixed", _mixed_host),
     ]
     results = [_run_host(kind, builder) for kind, builder in hosts]
     return {
-        "schema_version": "cortex-foreign-host-matrix/1.0",
+        "schema_version": "cortex-foreign-host-matrix/1.1",
         "hosts": results,
         "passed": sum(1 for item in results if item["pass"]),
         "total": len(results),
         "all_passed": all(item["pass"] for item in results),
+        "contact": "expanded",
         "claim_boundary": (
             "Synthetic foreign hosts measure organ behavior outside Cortex self; "
             "they do not prove production multi-repo quality."

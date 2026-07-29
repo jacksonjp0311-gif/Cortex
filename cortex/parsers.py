@@ -62,7 +62,7 @@ def language_for(path: Path) -> str:
         return "aria"
     if suffix in {".sh", ".bash", ".zsh", ".fish"}:
         return "shell"
-    if suffix == ".go":
+    if suffix in {".go", ".mod", ".sum"} or name == "go.mod":
         return "go"
     if suffix == ".rs":
         return "rust"

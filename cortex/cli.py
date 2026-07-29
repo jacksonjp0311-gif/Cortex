@@ -36,6 +36,7 @@ from .indexer import index_repository
 from .neuron import activate_interlink, neural_graph_state
 from .retrieval import query
 from .store import Store
+from .contact import run_contact
 from .mirror import run_mirror
 from .selftest import run_self_test
 from .telemetry import ingest_git
@@ -325,6 +326,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mirror.add_argument("--name", default="CortexMirror")
     mirror.add_argument("--json", action="store_true")
+
+    contact = sub.add_parser(
+        "contact",
+        help="Strike the tuning fork: mirror + fluency + foreign host resonance.",
+    )
+    contact.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Repository root for self-mirror (default: .).",
+    )
+    contact.add_argument(
+        "--skip-foreign",
+        action="store_true",
+        help="Mirror+fluency only (no foreign host matrix).",
+    )
+    contact.add_argument("--json", action="store_true")
 
     return parser
 
@@ -854,6 +872,26 @@ def main(argv: list[str] | None = None) -> None:
                 )
             finally:
                 mirror_store.close()
+
+        elif command == "contact":
+            import tempfile
+
+            contact_home = ensure_home(
+                Path(tempfile.mkdtemp(prefix="cortex-contact-")) / "home"
+            )
+            contact_store = Store(contact_home / "cortex.db")
+            try:
+                emit(
+                    run_contact(
+                        contact_home,
+                        contact_store,
+                        root=Path(args.path).expanduser().resolve(),
+                        include_foreign=not args.skip_foreign,
+                    ),
+                    args.json,
+                )
+            finally:
+                contact_store.close()
 
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
         error = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}

@@ -138,3 +138,26 @@ class ForeignHostMatrixTests(unittest.TestCase):
         payload = run_matrix()
         self.assertTrue(payload["all_passed"], payload)
         self.assertEqual(payload["passed"], payload["total"])
+        self.assertGreaterEqual(payload["total"], 5)
+
+
+class ResonanceContactTests(unittest.TestCase):
+    def test_resonance_bright_when_all_strings_high(self) -> None:
+        from cortex.resonance import resonance_intensity
+
+        field = resonance_intensity(
+            glow=True,
+            break_count=0,
+            savings_ratio=0.65,
+            deferred_holds=True,
+            aria_evidence_count=4,
+            geometry_zero_point=True,
+            fluency_perfect=True,
+            foreign_pass_rate=1.0,
+            generic_activate_s=1.2,
+            aria_activate_s=5.0,
+            bootstrap_s=4.5,
+        )
+        self.assertTrue(field["glow"])
+        self.assertGreaterEqual(field["glow_intensity"], 0.90)
+        self.assertEqual(field["brightness"], "bright")
