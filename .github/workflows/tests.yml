@@ -23,9 +23,15 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
+      # Benchmark scripts may be invoked as files (sys.path[0]=benchmarks/).
+      # Repo-root PYTHONPATH keeps cortex importable without editable install.
       - name: Fluency corpus
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: python benchmarks/aria_fluency_evaluation.py
       - name: Foreign host matrix
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: python benchmarks/foreign_host_matrix.py
       - name: Bash syntax
         if: runner.os != 'Windows'

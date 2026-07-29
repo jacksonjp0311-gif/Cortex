@@ -9,14 +9,19 @@ from __future__ import annotations
 import argparse
 import json
 import statistics
+import sys
 import tempfile
 import time
 from pathlib import Path
 
-from cortex.aria_meta.substrate import is_internal_aria_path
-from cortex.bootstrap import bootstrap_repository
-from cortex.config import RepoConfig, ensure_home, save_repo_config
-from cortex.store import Store
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from cortex.aria_meta.substrate import is_internal_aria_path  # noqa: E402
+from cortex.bootstrap import bootstrap_repository  # noqa: E402
+from cortex.config import RepoConfig, ensure_home, save_repo_config  # noqa: E402
+from cortex.store import Store  # noqa: E402
 
 
 def _build_host(base: Path, *, aria_docs: int = 40) -> Path:

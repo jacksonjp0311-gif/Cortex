@@ -3,16 +3,22 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from cortex.activation import activate_repository
-from cortex.bootstrap import bootstrap_repository
-from cortex.config import ensure_home
-from cortex.governor import Governor
-from cortex.store import Store
+# Script execution puts benchmarks/ on sys.path[0]; repo root must be first.
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from cortex.activation import activate_repository  # noqa: E402
+from cortex.bootstrap import bootstrap_repository  # noqa: E402
+from cortex.config import ensure_home  # noqa: E402
+from cortex.governor import Governor  # noqa: E402
+from cortex.store import Store  # noqa: E402
 
 
 def _python_host(root: Path) -> None:
