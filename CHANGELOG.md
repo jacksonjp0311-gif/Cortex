@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.0.0 - Interconnect mesh · sealed gates · glyphic ARIA · prune
+
+- **Interconnect ⧉:** `cortex interconnect` / MCP `cortex_interconnect` — mesh health, bottlenecks, gates.
+- **Gates seal:** ritual blocks on immune `block` + optional `--contract strict`; promote hard-locks immune/ranker freeze; ranker freezes on unsafe/block/causal regressed.
+- **Connect cadence:** causal micro-episode every 3 passes; weight decay every 5; prefetch precision closed on activate.
+- **ARIA glyphic medium:** expanded mesh/glyph/prune/seal wake cues; progress glyphs for mesh + prune; fluency cases.
+- **Bottlenecks:** path-diversity cap on packet assembly (max chunks/path).
+- **Prune ✂:** `cortex prune` removes weak unused synapses; never evidence; optional decay.
+- **HNSW:** incremental `insert_memory_vector` when index exists.
+- **Organism:** nervous mesh + metabolism bottleneck hints.
+- **Transcend-check 3.0** falsifies v6 gates. Ritual schema 2.0. Still recommend-only; one body.
+
 ## 5.0.0 - Governed local cognition substrate
 
 Seven capabilities on one SQLite body; recommend-only preserved:

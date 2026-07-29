@@ -176,6 +176,22 @@ def activate_repository(
     # Connect pass: gather multi-surface metrics, expand metric graph, distill.
     from .connect_pass import record_connect_pass
 
+    # Close prefetch→precision loop when prediction exists
+    if prediction and prediction.get("trace_id"):
+        try:
+            from .predict import record_prediction_outcome
+
+            used = [
+                str(e.get("path") or "")
+                for e in (context.get("evidence") or [])
+                if e.get("path")
+            ]
+            record_prediction_outcome(
+                store, str(prediction["trace_id"]), used
+            )
+        except Exception:
+            pass
+
     connect = record_connect_pass(
         store,
         home,
@@ -195,6 +211,8 @@ def activate_repository(
         "pass_count": connect.get("pass_count"),
         "metric_graph": connect.get("metric_graph"),
         "distilled_count": len(connect.get("distilled") or []),
+        "causal": connect.get("causal"),
+        "decay": connect.get("decay"),
     }
 
     full_context = context

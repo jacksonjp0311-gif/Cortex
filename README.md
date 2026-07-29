@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-5.0.0-0ea5e9?style=for-the-badge" alt="v5.0.0" />
+  <img src="https://img.shields.io/badge/version-6.0.0-0ea5e9?style=for-the-badge" alt="v6.0.0" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -17,7 +17,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v5.0.0** — governed local cognition substrate: multi-res graph, HNSW, verified-only ranker, prefetch, contracts, multi-agent tokens, causal ledger — on the same organism/immune/connect spine. See [`OPERATOR.md`](OPERATOR.md) and [`docs/ARCHITECTURE_V4.md`](docs/ARCHITECTURE_V4.md).
+**Current release: v6.0.0** — **interconnect mesh** with sealed gates, glyphic ARIA medium, path-diversity bottlenecks relief, and organism-like **graph prune**. Multi-res · HNSW · ranker · prefetch · contracts · agents · causal all couple on one body. See [`OPERATOR.md`](OPERATOR.md) and [`docs/EVOLUTION_V6.md`](docs/EVOLUTION_V6.md).
 
 ```bash
 pip install -e .

@@ -55,6 +55,11 @@
     {"id": "immune-gate-language", "task": "Read immune gate before host mutation", "expected_mode": "active", "expected_purposes": ["governance"]},
     {"id": "distill-substrate", "task": "Distill connect metrics into semantic memory packet claims", "expected_mode": "active", "expected_purposes": ["continuity"]},
     {"id": "dormant-metrics-ui", "task": "Plot the dashboard metrics chart colors", "expected_mode": "dormant"},
-    {"id": "organism-breathe-aria", "task": "Breathe with organism pulse and semantic continuity", "expected_mode": "active", "expected_purposes": ["continuity"]}
+    {"id": "organism-breathe-aria", "task": "Breathe with organism pulse and semantic continuity", "expected_mode": "active", "expected_purposes": ["continuity"]},
+    {"id": "mesh-interconnect", "task": "Inspect interconnect mesh bottlenecks", "expected_mode": "active", "expected_purposes": ["coordination"]},
+    {"id": "glyphic-medium", "task": "Speak in glyphic medium progress glyph labels", "expected_mode": "active", "expected_purposes": ["symbolic"]},
+    {"id": "graph-prune", "task": "Run graph prune weight decay on unused synapses", "expected_mode": "active", "expected_purposes": ["coordination"]},
+    {"id": "gates-sealed", "task": "Confirm gates sealed under immune gate policy", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "dormant-glyph-font", "task": "Change the UI glyph font size in CSS", "expected_mode": "dormant"}
   ]
 }

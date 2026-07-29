@@ -323,6 +323,11 @@ def promote(
         "recovery": normalized.get("rollback", 1.0) >= requirements["recovery"],
         "authority_level": authority_level >= requirements["authority_level"],
     }
+    # Immune / ranker freeze / strict contract gates (v6 seal)
+    immune_block = bool(authority.get("immune_block") or authority.get("block"))
+    ranker_frozen = bool(
+        (store.get_setting(f"ranker_frozen:{repo}", {}) or {}).get("frozen")
+    ) if state_key.startswith("ranker:") else False
     hard_locks = {
         "source": bool(evidence) and all(item.get("content_hash") for item in evidence),
         "authority": bool(authority.get("promotion_authorized")),
@@ -331,6 +336,8 @@ def promote(
         "rollback": True,
         "authority_monotonicity": authority_transition["admissible"],
         "reversibility": all(reversibility_checks.values()),
+        "immune_open": not immune_block,
+        "ranker_not_frozen": not ranker_frozen,
     }
     accepted = score >= threshold and all(hard_locks.values())
     if not accepted:
@@ -340,6 +347,13 @@ def promote(
             "quality_score": round(score, 8),
             "threshold": threshold,
             "hard_locks": hard_locks,
+            "gate": (
+                "immune_block"
+                if immune_block
+                else "ranker_frozen"
+                if ranker_frozen
+                else "gcm_t_locks"
+            ),
             "constitutional": {
                 "authority": authority_transition,
                 "reversibility": {

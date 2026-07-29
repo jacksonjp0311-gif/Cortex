@@ -45,6 +45,7 @@ from .selftest import run_self_test
 from .transcend import run_transcend_check
 from .immune import inspect_immune
 from .connect_pass import metric_graph_report
+from .interconnect import mesh_status
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
 from .verify import verify_repository
@@ -300,6 +301,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["agent", "debug", "minimal"],
         default="agent",
     )
+    ritual.add_argument(
+        "--contract",
+        choices=["default", "strict", "off"],
+        default="default",
+        help="Seal gate contract profile (v6); strict fail-closed without --force.",
+    )
     ritual.add_argument("--json", action="store_true")
 
     verify = sub.add_parser("verify", help="Verify assimilation and issue a certificate.")
@@ -506,6 +513,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma list: file,symbol,basic_block",
     )
     compile_il.add_argument("--json", action="store_true")
+
+    interconnect_p = sub.add_parser(
+        "interconnect",
+        help="Mesh health (⧉): fold organs into one read-only status.",
+    )
+    interconnect_p.add_argument("--repo", required=True)
+    interconnect_p.add_argument("--json", action="store_true")
+
+    prune_p = sub.add_parser(
+        "prune",
+        help="Prune weak unused synapses (organism-like); never deletes evidence.",
+    )
+    prune_p.add_argument("--repo", required=True)
+    prune_p.add_argument("--dry-run", action="store_true")
+    prune_p.add_argument("--min-weight", type=float, default=0.08)
+    prune_p.add_argument("--decay", action="store_true", help="Also decay unused weights.")
+    prune_p.add_argument("--json", action="store_true")
 
     contact = sub.add_parser(
         "contact",
@@ -861,6 +885,7 @@ def main(argv: list[str] | None = None) -> None:
                     consolidate_session=not args.no_consolidate,
                     profile=args.profile,
                     force=args.force,
+                    contract=getattr(args, "contract", "default"),
                 ),
                 args.json,
             )
@@ -1256,6 +1281,22 @@ def main(argv: list[str] | None = None) -> None:
                 r.strip() for r in str(args.resolutions).split(",") if r.strip()
             )
             emit(compile_interlink(store, args.repo, resolutions=res or ("file", "symbol")), args.json)
+
+        elif command == "interconnect":
+            emit(mesh_status(store, args.repo, governor=governor, home=home), args.json)
+
+        elif command == "prune":
+            from .prune import decay_unused_weights, prune_graph
+
+            result = prune_graph(
+                store,
+                args.repo,
+                min_weight=args.min_weight,
+                dry_run=args.dry_run,
+            )
+            if args.decay and not args.dry_run:
+                result["decay"] = decay_unused_weights(store, args.repo)
+            emit(result, args.json)
 
         elif command == "dashboard":
             repository = store.repo(args.repo)

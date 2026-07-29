@@ -195,6 +195,31 @@ class V5SubstrateTests(unittest.TestCase):
         report = causal_report(self.store, "V5Host")
         self.assertGreaterEqual(report["counts"]["total"], 1)
 
+    def test_mesh_and_prune_and_ritual_gates(self) -> None:
+        from cortex.interconnect import mesh_status
+        from cortex.prune import prune_graph
+        from cortex.session_ritual import run_session_ritual
+
+        mesh = mesh_status(
+            self.store, "V5Host", governor=self.gov, home=self.home
+        )
+        self.assertEqual(mesh.get("glyph"), "⧉")
+        self.assertIn("gates", mesh)
+        self.assertTrue(mesh["gates"]["relevance_never_mutation"])
+        dry = prune_graph(self.store, "V5Host", dry_run=True)
+        self.assertIn("candidates", dry)
+        ritual = run_session_ritual(
+            self.home,
+            self.store,
+            self.gov,
+            "V5Host",
+            "seal under default contract",
+            memories=[{"kind": "discovery", "text": "mesh-gate-fact"}],
+            contract="default",
+        )
+        self.assertIn("gates_sealed", ritual)
+        self.assertIn(ritual.get("contract"), {"default", "strict", "off"})
+
 
 if __name__ == "__main__":
     unittest.main()

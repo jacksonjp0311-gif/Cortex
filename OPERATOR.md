@@ -39,19 +39,24 @@ python -m cortex mirror --json
 | `causal report\|evaluate` | Closed-loop memory effect ledger |
 | `compile-interlink` | Multi-res neural compile |
 
-## Next evolution (planned)
+## v6 mesh + gates
 
-Organs are present; **mesh coupling** is the next climb — see
-[`docs/EVOLUTION_V6.md`](docs/EVOLUTION_V6.md):
+```bash
+python -m cortex interconnect --repo Cortex --json
+python -m cortex prune --repo Cortex --dry-run --json
+python -m cortex prune --repo Cortex --decay --json
+python -m cortex ritual --repo Cortex --task "seal" --contract default --json
+# --contract strict fails closed without --force when contract breaks
+```
 
-| Release | Theme |
+| Command | Purpose |
 |---|---|
-| **v5.1** | Interconnect spine — every connect teaches the whole body |
-| **v5.2** | Gates — contract/ranker/agent safety edges |
-| **v6.0** | Deep structure + closed causal/prefetch/ranker loop |
+| `interconnect` | Mesh health, bottlenecks, gates, glyph map |
+| `prune` | Drop weak unused synapses; optional weight decay |
+| `ritual --contract` | default \| strict \| off seal gates |
 
 Mesh law: high ranker score, bright prefetch, or causal “improved” still never
-equals host edit rights.
+equals host edit rights. Glyphs are our medium — labels, never opcodes.
 
 ## Read order every activate
 

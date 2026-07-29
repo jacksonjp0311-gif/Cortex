@@ -219,7 +219,14 @@ def train_from_outcome(
     if status not in {"verified", "helpful", "failed", "unsafe", "irrelevant"}:
         return {"trained": False, "reason": "status_not_trainable"}
     if status == "unsafe":
-        return {"trained": False, "reason": "unsafe_freezes_ranker"}
+        store.set_setting(
+            f"ranker_frozen:{repo}",
+            {"frozen": True, "reason": "unsafe_outcome", "at": time.time()},
+        )
+        return {"trained": False, "reason": "unsafe_freezes_ranker", "frozen": True}
+    frozen = store.get_setting(f"ranker_frozen:{repo}", {}) or {}
+    if frozen.get("frozen"):
+        return {"trained": False, "reason": "ranker_frozen", "frozen": True}
 
     model = ensure_ranker(store, repo)
     label = 1.0 if status in {"verified", "helpful"} else -1.0
@@ -296,6 +303,7 @@ def train_from_outcome(
 
 def ranker_status(store: Any, repo: str) -> dict[str, Any]:
     model = ensure_ranker(store, repo)
+    frozen = store.get_setting(f"ranker_frozen:{repo}", {}) or {}
     return {
         "schema_version": SCHEMA,
         "repo": repo,
@@ -303,5 +311,38 @@ def ranker_status(store: Any, repo: str) -> dict[str, Any]:
         "train_count": model["train_count"],
         "feature_count": len(model["feature_names"]),
         "bias": model["bias"],
+        "frozen": bool(frozen.get("frozen")),
+        "freeze_reason": frozen.get("reason"),
         "claim_boundary": "Ranker status is operational telemetry; not host rights.",
+    }
+
+
+def freeze_ranker(store: Any, repo: str, *, reason: str = "manual") -> dict[str, Any]:
+    store.set_setting(
+        f"ranker_frozen:{repo}",
+        {"frozen": True, "reason": reason, "at": time.time()},
+    )
+    return {"frozen": True, "repo": repo, "reason": reason}
+
+
+def unfreeze_ranker(store: Any, repo: str) -> dict[str, Any]:
+    store.set_setting(
+        f"ranker_frozen:{repo}",
+        {"frozen": False, "reason": "unfrozen", "at": time.time()},
+    )
+    return {"frozen": False, "repo": repo}
+
+
+def snapshot_ranker(store: Any, repo: str) -> dict[str, Any]:
+    """Operational snapshot for GCMT promote of ranker weights."""
+
+    model = ensure_ranker(store, repo)
+    return {
+        "schema_version": "cortex-ranker-snapshot/1.0",
+        "model_id": model["model_id"],
+        "weights": model["weights"],
+        "bias": model["bias"],
+        "train_count": model["train_count"],
+        "feature_names": model["feature_names"],
+        "claim_boundary": "Snapshot is promotable canonical candidate only under GCMT.",
     }

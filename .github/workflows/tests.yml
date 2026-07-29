@@ -53,6 +53,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/smoke_v5_substrate.py
+      - name: Interconnect mesh smoke (this repo only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/smoke_interconnect_mesh.py
       - name: Bash syntax
         if: runner.os != 'Windows'
         run: bash -n cortex.sh cortex-all-one.sh scripts/bash/*.sh

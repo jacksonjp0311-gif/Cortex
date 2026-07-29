@@ -81,6 +81,8 @@ def build_organism(
         ),
     }
 
+    connect = context.get("connect_pass") or {}
+    prediction = context.get("prediction") or {}
     nervous = {
         "thalamus_available": bool(thalamus.get("available", thalamus)),
         "route_intent": thalamus.get("intent") or thalamus.get("classification"),
@@ -89,9 +91,16 @@ def build_organism(
         "neural_state_hash": neural.get("state_hash"),
         "nodes_fired": metrics.get("nodes_fired"),
         "nodes_considered": metrics.get("nodes_considered"),
+        "sparse_activation_ratio": metrics.get("sparse_activation_ratio"),
         "aria_mode": aria.get("mode") or (metrics.get("aria_substrate") or {}).get("mode"),
         "aria_eligible": (metrics.get("aria_substrate") or {}).get("eligible_nodes"),
         "aria_materialized_this_turn": bool(aria.get("materialized")),
+        "glyphic_medium": True,
+        "mesh": {
+            "connect_pass_count": connect.get("pass_count"),
+            "prefetch_paths": len(prediction.get("predicted_paths") or []),
+            "distilled": connect.get("distilled_count"),
+        },
     }
 
     immune = {
@@ -118,6 +127,13 @@ def build_organism(
             "deferred_remaining"
         ),
         "node_scan_fraction": efficiency.get("node_scan_fraction"),
+        "bottleneck": (
+            "high_scan_low_fire"
+            if float(efficiency.get("node_scan_fraction") or 0) > 0.5
+            and float(metrics.get("sparse_activation_ratio") or 1) < 0.05
+            else "steady"
+        ),
+        "prune_hint": "cortex prune --repo <name> when unused weight accumulates",
     }
 
     memory = {

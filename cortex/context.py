@@ -393,10 +393,16 @@ def build_context(
     # When ARIA is awake, cap per-chunk spend so one vendored doc cannot monopolize
     # the packet and erase the multi-path evidence floor.
     per_hit_token_cap = max(120, effective_budget // (4 if aria_mode == "active" else 1))
+    # v6 bottleneck reduction: diversify paths (organism-like fan-out, not monopoly)
+    max_chunks_per_path = 2 if aria_mode == "active" else 3
     selected: list[dict[str, Any]] = []
     used_tokens = 0
     aria_paths_selected = 0
+    path_chunk_counts: dict[str, int] = {}
     for hit in candidates:
+        path_key = str(hit.path or "").replace("\\", "/")
+        if path_chunk_counts.get(path_key, 0) >= max_chunks_per_path:
+            continue
         prefix = f"[{hit.path}:{hit.start_line}-{hit.end_line}]\n"
         remaining_budget = effective_budget - used_tokens
         # Reserve tokens for a second ARIA path when substrate is active.
@@ -404,7 +410,7 @@ def build_context(
         if (
             aria_mode == "active"
             and aria_paths_selected < 2
-            and not str(hit.path).replace("\\", "/").startswith("cortex/aria_meta/vendor/")
+            and not path_key.startswith("cortex/aria_meta/vendor/")
         ):
             reserve = min(180, max(0, remaining_budget // 3))
         available_chars = max(
@@ -432,7 +438,8 @@ def build_context(
             }
         )
         used_tokens += token_cost
-        if str(hit.path).replace("\\", "/").startswith("cortex/aria_meta/vendor/"):
+        path_chunk_counts[path_key] = path_chunk_counts.get(path_key, 0) + 1
+        if path_key.startswith("cortex/aria_meta/vendor/"):
             aria_paths_selected += 1
         if used_tokens >= effective_budget:
             break

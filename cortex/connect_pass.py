@@ -387,13 +387,24 @@ def persist_connect_pass(
     *,
     home: Any | None = None,
     auto_distill: bool = True,
+    causal_every: int = 3,
+    auto_decay: bool = True,
 ) -> dict[str, Any]:
-    """Write ledger event, expand metric graph, optionally distill to memory."""
+    """Write ledger event, expand metric graph, distill, causal cadence, light decay."""
 
     graph = expand_metric_graph(load_metric_graph(store, repo), metrics)
     candidates = distill_candidates(metrics, graph) if auto_distill else []
     remembered: list[dict[str, Any]] = []
     distill_ids: list[str] = list(graph.get("distilled_claim_ids") or [])
+
+    # Immune block freezes ranker (seal the gate)
+    if (metrics.get("immune") or {}).get("block"):
+        try:
+            from .ranker.model import freeze_ranker
+
+            freeze_ranker(store, repo, reason="immune_block_on_connect")
+        except Exception:
+            pass
 
     if auto_distill and candidates and home is not None:
         try:
@@ -435,6 +446,45 @@ def persist_connect_pass(
     except Exception:
         pass
 
+    causal_result: dict[str, Any] | None = None
+    pass_n = int(graph.get("pass_count") or 0)
+    if causal_every > 0 and pass_n > 0 and pass_n % causal_every == 0:
+        try:
+            from .causal.ledger import evaluate_causal_episode, open_episode
+
+            open_episode(
+                store,
+                repo,
+                f"connect_cadence_{pass_n}",
+                treatment={
+                    "kind": "connect_pass_cadence",
+                    "pass_count": pass_n,
+                    "block": (metrics.get("immune") or {}).get("block"),
+                },
+            )
+            # Proxy: block rate change as soft effect (inconclusive without recall)
+            av = graph.get("averages") or {}
+            causal_result = evaluate_causal_episode(
+                store,
+                repo,
+                metrics_after={"metric_graph": av, "pass_count": pass_n},
+            )
+            if causal_result.get("verdict") == "regressed":
+                from .ranker.model import freeze_ranker
+
+                freeze_ranker(store, repo, reason="causal_regressed")
+        except Exception as exc:
+            causal_result = {"error": f"{type(exc).__name__}: {exc}"}
+
+    decay_result: dict[str, Any] | None = None
+    if auto_decay and pass_n > 0 and pass_n % 5 == 0:
+        try:
+            from .prune import decay_unused_weights
+
+            decay_result = decay_unused_weights(store, repo, factor=0.98)
+        except Exception as exc:
+            decay_result = {"error": f"{type(exc).__name__}: {exc}"}
+
     try:
         store.append_neural_event(
             repo,
@@ -453,9 +503,11 @@ def persist_connect_pass(
                 "aria_materialized": (metrics.get("aria") or {}).get(
                     "materialized_this_turn"
                 ),
+                "prefetch_paths": (metrics.get("prediction") or {}).get("paths"),
                 "organism_pulse": metrics.get("organism_pulse"),
                 "pass_count": graph.get("pass_count"),
                 "distilled": [c["id"] for c in candidates],
+                "causal_verdict": (causal_result or {}).get("verdict"),
             },
         )
     except Exception:
@@ -488,6 +540,8 @@ def persist_connect_pass(
             "immune_codes": graph.get("immune_codes"),
         },
         "distilled": remembered,
+        "causal": causal_result,
+        "decay": decay_result,
         "claim_boundary": metrics.get("claim_boundary"),
     }
 

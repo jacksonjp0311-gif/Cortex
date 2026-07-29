@@ -96,6 +96,19 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "distill connect", "purpose": "continuity"},
     {"phrase": "organism pulse", "purpose": "continuity"},
     {"phrase": "semantic continuity", "purpose": "continuity"},
+    # Glyphic medium + mesh (v6) — multi-word; reduce false wakes
+    {"phrase": "interconnect mesh", "purpose": "coordination"},
+    {"phrase": "glyphic medium", "purpose": "symbolic"},
+    {"phrase": "progress glyph", "purpose": "symbolic"},
+    {"phrase": "graph prune", "purpose": "coordination"},
+    {"phrase": "weight decay", "purpose": "coordination"},
+    {"phrase": "mesh bottleneck", "purpose": "coordination"},
+    {"phrase": "seal the gate", "purpose": "governance"},
+    {"phrase": "gates sealed", "purpose": "governance"},
+    {"phrase": "hnsw vector", "purpose": "language"},
+    {"phrase": "ranker freeze", "purpose": "governance"},
+    {"phrase": "causal episode", "purpose": "continuity"},
+    {"phrase": "aria glyph card", "purpose": "symbolic"},
 )
 
 

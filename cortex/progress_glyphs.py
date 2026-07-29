@@ -106,6 +106,18 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "CausalLedger",
         "maps_to": "cortex causal",
     },
+    "interconnect_mesh": {
+        "symbol": "⧉",
+        "spoken": "interconnect mesh",
+        "target": "InterconnectMesh",
+        "maps_to": "cortex interconnect",
+    },
+    "graph_prune": {
+        "symbol": "✂",
+        "spoken": "graph prune",
+        "target": "GraphPrune",
+        "maps_to": "cortex prune",
+    },
 }
 
 

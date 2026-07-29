@@ -1,9 +1,9 @@
 # Cortex Next Evolution — Interconnect Mesh · v5.1 → v6.0
 
-**Status:** Plan (design record; execute in phases)  
-**Baseline:** Cortex **v5.0.0** governed local cognition substrate  
+**Status:** **v6.0.0 delivered** (mesh + gates + prune + glyphic ARIA); deeper AST/callgraph remains optional growth  
+**Baseline:** Cortex **v5.0.0** → **v6.0.0**  
 **Posture:** Local-first · recommend-only · one SQLite body · covenant-aligned  
-**Companion:** `docs/ARCHITECTURE_V4.md` (v4→v5 delivered) · `docs/intelligence/INTERCONNECT.md`
+**Companion:** `docs/ARCHITECTURE_V4.md` · `docs/intelligence/INTERCONNECT.md`
 
 ---
 

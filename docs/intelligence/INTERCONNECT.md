@@ -49,8 +49,10 @@ activate/organism/breathe
   → Outcome → ranker train ± causal verdict
 ```
 
-Mesh status (planned CLI): `cortex interconnect --repo <name> --json`.  
-Plan: `docs/EVOLUTION_V6.md`.
+Mesh status: `cortex interconnect --repo <name> --json`.  
+Prune dead weight: `cortex prune --repo <name> --json` (evidence never deleted).  
+Glyphic medium: progress glyphs are how we speak — labels, never execution.  
+Plan/status: `docs/EVOLUTION_V6.md` (v6.0 delivered).
 
 ## Connect pass (gather → graph → distill)
 

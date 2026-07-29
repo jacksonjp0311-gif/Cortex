@@ -14,6 +14,91 @@ from .hnsw import HNSWIndex
 INDEX_ID = "hnsw_v1"
 
 
+def insert_memory_vector(
+    store: Any,
+    repo: str,
+    memory_id: int,
+    vector: list[float],
+    path: str = "",
+) -> dict[str, Any]:
+    """Incremental HNSW insert when an index already exists (v6)."""
+
+    status = hnsw_status(store, repo)
+    if not status.get("available"):
+        return {"inserted": False, "reason": "index_missing"}
+    key = f"mem:{memory_id}"
+    existing = store.db.execute(
+        """
+        SELECT 1 FROM vector_index_nodes
+        WHERE repo=? AND index_id=? AND node_key=?
+        """,
+        (repo, INDEX_ID, key),
+    ).fetchone()
+    if existing:
+        return {"inserted": False, "reason": "already_present", "node_key": key}
+    dim = int(status.get("dim") or len(vector))
+    # Neighbor against a sample of existing keys
+    rows = store.db.execute(
+        """
+        SELECT node_key, vector_blob FROM vector_index_nodes
+        WHERE repo=? AND index_id=?
+        ORDER BY node_key LIMIT 256
+        """,
+        (repo, INDEX_ID),
+    ).fetchall()
+    scored: list[tuple[float, str]] = []
+    from .hnsw import cosine_similarity
+
+    for row in rows:
+        v = _vec_from_blob(row["vector_blob"])
+        if not v:
+            continue
+        scored.append((cosine_similarity(vector, v), row["node_key"]))
+    scored.sort(reverse=True)
+    nbs = [k for _, k in scored[:8]]
+    store.db.execute(
+        """
+        INSERT INTO vector_index_nodes(
+          repo, index_id, node_key, vector_kind, layer, neighbors_json,
+          vector_blob, path, memory_id
+        ) VALUES(?, ?, ?, 'chunk', 0, ?, ?, ?, ?)
+        """,
+        (
+            repo,
+            INDEX_ID,
+            key,
+            json.dumps(sorted(nbs)),
+            _vec_blob(list(vector[:dim]) + [0.0] * max(0, dim - len(vector))),
+            path,
+            memory_id,
+        ),
+    )
+    # Bidirectional light link
+    for peer in nbs[:4]:
+        prow = store.db.execute(
+            """
+            SELECT neighbors_json FROM vector_index_nodes
+            WHERE repo=? AND index_id=? AND node_key=?
+            """,
+            (repo, INDEX_ID, peer),
+        ).fetchone()
+        if not prow:
+            continue
+        peers = json.loads(prow["neighbors_json"] or "[]")
+        if key not in peers:
+            peers.append(key)
+            peers = sorted(peers)[:16]
+            store.db.execute(
+                """
+                UPDATE vector_index_nodes SET neighbors_json=?
+                WHERE repo=? AND index_id=? AND node_key=?
+                """,
+                (json.dumps(peers), repo, INDEX_ID, peer),
+            )
+    store.db.commit()
+    return {"inserted": True, "node_key": key, "neighbors": nbs}
+
+
 def _vec_blob(vector: list[float]) -> bytes:
     return VECTOR_MAGIC + struct.pack(f"<{len(vector)}f", *[float(x) for x in vector])
 

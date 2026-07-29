@@ -15,15 +15,16 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v5.0.0**.
 | 8 | Connect metric graph | done | v3.6.0 connect_pass gather → graph → distill |
 | 9 | Architecture v4–v5 | designed | `docs/ARCHITECTURE_V4.md` |
 | 10 | v5.0 substrate | **done** | multi-res + HNSW + ranker + prefetch + contracts + agents + causal |
-| 11 | Interconnect mesh plan | **planned** | `docs/EVOLUTION_V6.md` (v5.1 → v6.0) |
+| 11 | Interconnect mesh plan | designed | `docs/EVOLUTION_V6.md` |
+| 12 | v6.0 mesh + sealed gates | **done** | interconnect, prune, ritual gates, glyphic ARIA, transcend 3.0 |
 
-## Forward path (not yet executed)
+## Forward path (optional depth after v6.0)
 
-| Release | Theme | Plan section |
+| Release | Theme | Notes |
 |---|---|---|
-| **v5.1** | Interconnect spine — couple organs on every connect | EVOLUTION_V6 §4 |
-| **v5.2** | Gates and govern — contract/ranker/agent safety edges | EVOLUTION_V6 §4 |
-| **v6.0** | Deep structure + closed loop — AST/callgraph/HNSW delta | EVOLUTION_V6 §4 |
+| **v6.1+** | Full AST CFG / dataflow SSA | ID stability first |
+| **v6.1+** | Ranker GCMT promote CLI polish | snapshot path exists |
+| **v6.1+** | Multi-agent MCP token mode default opt-in | still no host.mutate |
 
 ## Verbs used as design motions
 

@@ -170,10 +170,11 @@ def run_transcend_check(
     if len(glyphs.get("glyphs") or {}) < 7:
         breaks.append({"id": "progress_glyphs_incomplete"})
 
-    # v5 capability surface falsification (local unit-level; no host mutation)
+    # v5/v6 capability surface falsification (local unit-level; no host mutation)
     try:
         from .agents.tokens import ALLOWED_SCOPES, FORBIDDEN_SCOPES
         from .contract.check import DEFAULT_CONTRACT, STRICT_CONTRACT, check_contract
+        from .prune import prune_graph
         from .ranker.model import FEATURE_NAMES, default_weights, score_features
         from .vectors.hnsw import HNSWIndex
 
@@ -209,7 +210,22 @@ def run_transcend_check(
         default_ok = check_contract(ok_pkt, contract=DEFAULT_CONTRACT)
         if not default_ok.get("passed"):
             breaks.append({"id": "v5_default_contract_should_pass", "breaks": default_ok.get("breaks")})
-        notes.append({"v5_surfaces": "ok"})
+        # v6 gates: immune block STOP codes + prune dry-run pure
+        stop = build_control_error(
+            certificate={"status": "verified"},
+            governance={"mode": "read_only"},
+            manifest_current=True,
+            retrieval_confidence=0.9,
+            aria_materialization={"mode": "dormant"},
+        )
+        if not stop.get("block"):
+            breaks.append({"id": "v6_immune_block_missing"})
+        dry = prune_graph(store, "TranscendHost", dry_run=True)
+        if "candidates" not in dry:
+            breaks.append({"id": "v6_prune_surface"})
+        if not (glyphs.get("glyphs") or {}).get("connect_pass"):
+            breaks.append({"id": "v6_glyph_medium_incomplete"})
+        notes.append({"v5_surfaces": "ok", "v6_gates": "ok"})
     except Exception as exc:
         breaks.append({"id": "v5_surface_exception", "error": f"{type(exc).__name__}: {exc}"})
 
@@ -241,7 +257,7 @@ def run_transcend_check(
 
     passed = len(breaks) == 0
     return {
-        "schema_version": "cortex-transcend-check/2.0",
+        "schema_version": "cortex-transcend-check/3.0",
         "glyph": "⟡",
         "passed": passed,
         "break_count": len(breaks),
@@ -257,9 +273,9 @@ def run_transcend_check(
             else None
         ),
         "definition": (
-            "Agent can run from packet alone, obey immune_action, close with ritual, "
-            "mirror stays bright; v5 ranker/HNSW/contracts/agent scopes falsify safely; "
-            "no host.mutate path; no unsolicited foreign hosts."
+            "Agent runs from packet; immune/contract gates seal; glyphic ARIA medium "
+            "is labels only; mesh organs couple without host.mutate; prune is topology "
+            "hygiene; mirror stays bright; no unsolicited foreign hosts."
         ),
         "claim_boundary": (
             "Transcend-check is local operational falsification; not consciousness "

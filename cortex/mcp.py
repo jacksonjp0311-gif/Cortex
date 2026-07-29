@@ -220,6 +220,18 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_interconnect",
+        "description": (
+            "Interconnect mesh health (⧉): bottlenecks, gates, glyphic medium. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -407,6 +419,15 @@ class CortexMCP:
             from .causal import causal_report
 
             return causal_report(self.store, str(arguments["repo"]))
+        if name == "cortex_interconnect":
+            from .interconnect import mesh_status
+
+            return mesh_status(
+                self.store,
+                str(arguments["repo"]),
+                governor=self.governor,
+                home=self.home,
+            )
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,
