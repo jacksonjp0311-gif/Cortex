@@ -143,6 +143,30 @@ def activate_repository(
     persist_organism_pulse(store, repo, organism, session_id=session.get("session_id"))
     save_prior_pulse(store, repo, organism["pulse"])
 
+    # Connect pass: gather multi-surface metrics, expand metric graph, distill.
+    from .connect_pass import record_connect_pass
+
+    connect = record_connect_pass(
+        store,
+        home,
+        repo=repo,
+        task=task,
+        session_id=session.get("session_id"),
+        surface="breathe" if refresh == "never" else "activate",
+        context=context,
+        surprise=surprise,
+        organism=organism,
+        activation="ready" if certificate["status"] == "verified" else "read_only",
+        block=bool((context.get("control_error") or {}).get("block")),
+        auto_distill=True,
+    )
+    context["connect_pass"] = {
+        "pass_id": connect.get("pass_id"),
+        "pass_count": connect.get("pass_count"),
+        "metric_graph": connect.get("metric_graph"),
+        "distilled_count": len(connect.get("distilled") or []),
+    }
+
     full_context = context
     context = project_packet(full_context, profile)
     runtime_path = runtime_directory(root, config) / "context_latest.json"
@@ -163,6 +187,7 @@ def activate_repository(
         "block": bool(control.get("block")),
         "immune_action": control.get("immune_action"),
         "control_error": control,
+        "connect_pass": connect,
         "organism": organism,
         "environment": environment,
         "neural_interlink": neural,

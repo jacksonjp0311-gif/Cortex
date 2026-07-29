@@ -1,6 +1,6 @@
 # Evolve plan — execution record (aligned geometry)
 
-Phases executed end-to-end for Cortex **v3.2.0**.
+Phases executed end-to-end for Cortex **v3.2.0** through **v3.6.0**.
 
 | Phase | Name | Status | Evidence |
 |---|---|---|---|
@@ -9,6 +9,10 @@ Phases executed end-to-end for Cortex **v3.2.0**.
 | 2 | Foreign host proof | done | `benchmarks/foreign_host_matrix.py` 3/3 |
 | 3 | Zero-point release | done | version 3.2.0, geometry surface, CI gates |
 | 4 | Steady-state | done | `docs/STEADY_STATE.md` cadence |
+| 5 | Living organism | done | v3.5.0 mid-session pulse / breathe / seal |
+| 6 | Teach body | done | v3.5.1 ARIA memory packets + teach --seed |
+| 7 | Immune adherence | done | v3.5.2–3.5.4 immune_action, cortex immune, packet block |
+| 8 | Connect metric graph | done | v3.6.0 connect_pass gather → graph → distill |
 
 ## Verbs used as design motions
 

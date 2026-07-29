@@ -10,10 +10,13 @@ python -m cortex teach --seed --path . --repo Cortex --json
 python -m cortex immune --repo Cortex --json
 # if block: true → diagnose only; no host edits
 python -m cortex organism --repo Cortex --task "interconnect immune first" --json
+# each connect expands metric graph + may distill lessons into body
+python -m cortex metrics --repo Cortex --json
 # work under host/human authority only when immune_action allows
 python -m cortex remember --repo Cortex --kind discovery --text "durable fact" --json
 python -m cortex breathe --repo Cortex --json
 python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --json
+python -m cortex metrics --repo Cortex --json
 python -m cortex transcend-check --json
 python -m cortex mirror --json
 ```

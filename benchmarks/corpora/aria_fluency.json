@@ -50,6 +50,11 @@
     {"id": "dormant-profile-page", "task": "Update the user profile page styles", "expected_mode": "dormant"},
     {"id": "teach-seed", "task": "Run teach seed for memory packets", "expected_mode": "active", "expected_purposes": ["language"]},
     {"id": "interconnect-intel", "task": "Recall interconnect intelligence co-process", "expected_mode": "active", "expected_purposes": ["coordination", "continuity"]},
-    {"id": "memory-packet", "task": "Build an ARIA memory packet claim", "expected_mode": "active", "expected_purposes": ["continuity"]}
+    {"id": "memory-packet", "task": "Build an ARIA memory packet claim", "expected_mode": "active", "expected_purposes": ["continuity"]},
+    {"id": "connect-metrics", "task": "Inspect connect pass metric graph for coactivation", "expected_mode": "active", "expected_purposes": ["coordination"]},
+    {"id": "immune-gate-language", "task": "Read immune gate before host mutation", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "distill-substrate", "task": "Distill connect metrics into semantic memory packet claims", "expected_mode": "active", "expected_purposes": ["continuity"]},
+    {"id": "dormant-metrics-ui", "task": "Plot the dashboard metrics chart colors", "expected_mode": "dormant"},
+    {"id": "organism-breathe-aria", "task": "Breathe with organism pulse and semantic continuity", "expected_mode": "active", "expected_purposes": ["continuity"]}
   ]
 }

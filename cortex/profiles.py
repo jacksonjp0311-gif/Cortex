@@ -40,6 +40,7 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
             "constitutional_supervision": full.get("constitutional_supervision"),
             "progress_glyphs": full.get("progress_glyphs"),
             "organism": full.get("organism"),
+            "connect_pass": full.get("connect_pass"),
             "packet_hash": full.get("packet_hash"),
             "claim_boundary": full.get("claim_boundary")
             or "Debug profile is full telemetry; still recommend-only.",
@@ -103,6 +104,7 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         "efficiency": full.get("efficiency"),
         "progress_glyphs": full.get("progress_glyphs"),
         "organism": full.get("organism"),
+        "connect_pass": full.get("connect_pass"),
         "packet_hash": full.get("packet_hash"),
         "claim_boundary": (
             "Agent profile is operational evidence routing; never mutation authority."

@@ -160,6 +160,20 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_metrics",
+        "description": (
+            "Connect metric graph (⧉): rollups and co-activations grown each connect. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+            },
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -312,6 +326,10 @@ class CortexMCP:
                 self.governor,
                 str(arguments["repo"]),
             )
+        if name == "cortex_metrics":
+            from .connect_pass import metric_graph_report
+
+            return metric_graph_report(self.store, str(arguments["repo"]))
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,

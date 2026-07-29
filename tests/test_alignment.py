@@ -407,6 +407,37 @@ class TranscendProtocolTests(unittest.TestCase):
         self.assertIn("code", gate["immune_action"])
         names = {t["name"] for t in TOOLS}
         self.assertIn("cortex_immune", names)
+        self.assertIn("cortex_metrics", names)
+        store.close()
+
+    def test_connect_pass_grows_metric_graph(self) -> None:
+        from cortex.connect_pass import metric_graph_report
+
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="cp-")) / "home")
+        repo = Path(tempfile.mkdtemp(prefix="cp-repo-"))
+        (repo / "README.md").write_text(
+            "# Connect Host\n\n## Architecture\n\nCore loop.\n",
+            encoding="utf-8",
+        )
+        (repo / "svc.py").write_text("def run() -> str:\n    return 'ok'\n", encoding="utf-8")
+        store = Store(home / "cortex.db")
+        bootstrap_repository(home, store, repo, "ConnectHost")
+        gov = Governor(home, store)
+        first = activate_repository(
+            home, store, gov, "ConnectHost", "first connect pass gather", budget=400
+        )
+        second = activate_repository(
+            home, store, gov, "ConnectHost", "second connect pass expand graph", budget=400
+        )
+        self.assertIn("connect_pass", first)
+        self.assertIn("connect_pass", second)
+        c1 = int((first.get("connect_pass") or {}).get("pass_count") or 0)
+        c2 = int((second.get("connect_pass") or {}).get("pass_count") or 0)
+        self.assertGreaterEqual(c2, c1)
+        self.assertGreaterEqual(c2, 2)
+        report = metric_graph_report(store, "ConnectHost")
+        self.assertGreaterEqual((report.get("graph") or {}).get("pass_count", 0), 2)
+        self.assertIn("averages", report.get("graph") or {})
         store.close()
 
     def test_mcp_exposes_ritual_and_activate_tools(self) -> None:

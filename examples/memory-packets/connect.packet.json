@@ -1,0 +1,41 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⧉",
+  "title": "Connect pass metric graph law",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "connect-pass",
+      "text": "Each activate/organism/breathe/ritual is a connect pass that gathers immune, efficiency, surprise, neural, thalamus, and ARIA metrics into one substrate.",
+      "evidence": ["cortex/connect_pass.py", "cortex/activation.py"]
+    },
+    {
+      "id": "metric-graph-grows",
+      "text": "The metric graph expands every pass: path co-activations strengthen, immune codes accumulate, rolling averages update — more signal next connect.",
+      "evidence": ["cortex/connect_pass.py", "docs/intelligence/INTERCONNECT.md"]
+    },
+    {
+      "id": "distill-on-threshold",
+      "text": "High-signal connect metrics distill into episodic memory (constraints, discoveries, lessons) without a second database or mutation grant.",
+      "evidence": ["cortex/connect_pass.py", "cortex/hippocampus.py"]
+    },
+    {
+      "id": "inspect-metrics",
+      "text": "Use cortex metrics --repo <name> or MCP cortex_metrics to read the accumulated graph and recent connect_pass ledger events.",
+      "evidence": ["cortex/cli.py", "cortex/mcp.py"]
+    },
+    {
+      "id": "one-substrate-metrics",
+      "text": "Connect metrics live in neural_ledger (connect_pass events) and settings metric_graph:{repo}; never invent a second metrics database.",
+      "evidence": ["docs/DATA_MODEL.md", "cortex/store.py"]
+    }
+  ],
+  "refuse": [
+    "second_metrics_database",
+    "treat_metrics_as_authorization",
+    "auto_execute_aria",
+    "claim_consciousness"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Connect packet teaches gather→graph→distill; never host authority."
+}

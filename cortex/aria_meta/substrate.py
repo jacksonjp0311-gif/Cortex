@@ -86,6 +86,16 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "interconnect intelligence", "purpose": "coordination"},
     {"phrase": "teach seed", "purpose": "language"},
     {"phrase": "co-process", "purpose": "continuity"},
+    # Connect pass / metric graph / immune gate (multi-word; avoid common singles)
+    {"phrase": "connect pass", "purpose": "coordination"},
+    {"phrase": "metric graph", "purpose": "coordination"},
+    {"phrase": "path coactivation", "purpose": "coordination"},
+    {"phrase": "immune gate", "purpose": "governance"},
+    {"phrase": "control error vector", "purpose": "governance"},
+    {"phrase": "semantic memory packet", "purpose": "continuity"},
+    {"phrase": "distill connect", "purpose": "continuity"},
+    {"phrase": "organism pulse", "purpose": "continuity"},
+    {"phrase": "semantic continuity", "purpose": "continuity"},
 )
 
 

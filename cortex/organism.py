@@ -375,16 +375,43 @@ def persist_organism_pulse(
                 "pulse": organism.get("pulse"),
                 "pulse_chain": organism.get("pulse_chain"),
                 "prior_pulse": organism.get("prior_pulse"),
+                "phase": organism.get("phase")
+                or organism.get("body", {}).get("identity", {}).get("phase"),
                 "governor_mode": organism.get("body", {})
                 .get("immune", {})
                 .get("governor_mode"),
                 "aria_mode": organism.get("body", {}).get("nervous", {}).get("aria_mode"),
+                "nodes_fired": organism.get("body", {})
+                .get("nervous", {})
+                .get("nodes_fired"),
+                "nodes_considered": organism.get("body", {})
+                .get("nervous", {})
+                .get("nodes_considered"),
                 "evidence_count": organism.get("body", {})
                 .get("memory", {})
                 .get("evidence_count"),
                 "control_severity": organism.get("body", {})
                 .get("immune", {})
                 .get("control_severity"),
+                "block": organism.get("body", {}).get("immune", {}).get("block"),
+                "immune_code": (
+                    (organism.get("body", {}).get("immune", {}) or {}).get(
+                        "immune_action"
+                    )
+                    or {}
+                ).get("code"),
+                "surprise_ratio": (
+                    (organism.get("body", {}).get("metabolism", {}) or {}).get(
+                        "surprise"
+                    )
+                    or {}
+                ).get("surprise_ratio"),
+                "node_scan_fraction": (
+                    (organism.get("body", {}).get("metabolism", {}) or {}).get(
+                        "efficiency"
+                    )
+                    or {}
+                ).get("node_scan_fraction"),
             },
         )
     except Exception:

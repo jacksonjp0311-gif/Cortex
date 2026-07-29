@@ -1,0 +1,35 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⚠",
+  "title": "Immune gate first",
+  "kind": "constraint",
+  "claims": [
+    {
+      "id": "read-immune-first",
+      "text": "Read cortex immune / control_error.immune_action and block before any host work.",
+      "evidence": ["cortex/immune.py", "cortex/control_error.py", "OPERATOR.md"]
+    },
+    {
+      "id": "stop-codes",
+      "text": "STOP_NO_HOST_MUTATION and STOP_REVERIFY_REQUIRED set block true; only diagnose, remember, verify, report.",
+      "evidence": ["cortex/control_error.py", "tests/test_alignment.py"]
+    },
+    {
+      "id": "packet-top-level-block",
+      "text": "Every activate and agent/debug/minimal profile carries top-level block, immune_action, and read_first.",
+      "evidence": ["cortex/profiles.py", "cortex/activation.py"]
+    },
+    {
+      "id": "proceed-still-host",
+      "text": "PROCEED_UNDER_HOST_AUTHORITY still forbids treat_packet_as_authorization; host and human remain controlling.",
+      "evidence": ["cortex/control_error.py", "docs/COVENANT.md"]
+    }
+  ],
+  "refuse": [
+    "ignore_immune_block",
+    "edit_host_when_blocked",
+    "treat_packet_as_authorization"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Immune packet teaches stop surfaces; never mutation authority."
+}

@@ -23,7 +23,23 @@ Host + human = authority.
 | Governor | Work | read_only = no host mutation |
 | Organism ⊛ | Session | Pulse continues on remember; seal on consolidate |
 | Breathe ∽ | Mid-session | Rebind without full re-assimilate |
+| Connect ⧉ | Metric graph | Each pass gathers + expands rollups; distills high-signal |
 | Mirror / ⟡ | Conscience | Falsify glow; no vanity metrics |
+
+## Connect pass (gather → graph → distill)
+
+Every full connect (activate / organism / breathe / ritual) does three things on
+the **same SQLite body**:
+
+1. **Gather** — immune, efficiency, surprise Δ, neural sparse metrics, thalamus
+   intent, ARIA materialization, evidence paths.
+2. **Expand** — `metric_graph:{repo}` grows path co-activations, immune-code
+   frequencies, rolling averages, surface counts.
+3. **Distill** — thresholded lessons enter episodic memory (`remember`) so the
+   next retrieval pass can cite them as Discovery Card material after seal.
+
+Inspect with `cortex metrics --repo <name> --json` or MCP `cortex_metrics`.
+Ledger event type: `connect_pass`.
 
 ## Memory packet contract
 
@@ -50,7 +66,7 @@ Ritual writes these into the durable body as Discovery Cards.
 
 ## Glyph keys
 
-⊛ organism · ∽ breathe · ⟳ ritual · ⚠ control_error · ⟡ transcend · ▣ profile · ⌖ retrieval · Δ surprise · ☰ teach
+⊛ organism · ∽ breathe · ⟳ ritual · ⚠ control_error · ⧉ connect · ⟡ transcend · ▣ profile · ⌖ retrieval · Δ surprise · ☰ teach
 
 ## Claim boundary
 

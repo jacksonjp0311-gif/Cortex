@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.6.0 - Connect pass · metric graph · distill
+
+- **Connect ⧉:** each activate/organism/breathe gathers multi-surface metrics into one pass vector.
+- **Metric graph grows:** `settings.metric_graph:{repo}` expands path co-activations, immune codes, rolling averages every connect.
+- **Distill into substrate:** high-signal lessons `remember` into episodic memory (same SQLite body).
+- **Ledger:** `connect_pass` neural_ledger events; richer organism_pulse payload.
+- **CLI/MCP:** `cortex metrics`, `cortex_metrics`.
+- **ARIA expand:** wake cues for connect/metric/immune/organism; memory packets `connect` + `immune`; fluency cases.
+- **CI:** `scripts/ci/smoke_connect_metrics.py`. Still recommend-only; still self-host only.
+
 ## 3.5.4 - Unmissable packet block
 
 - **Profiles:** every agent/debug/minimal packet carries top-level `block` + `immune_action` + `read_first`.

@@ -34,6 +34,12 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "ImmuneGate",
         "maps_to": "cortex immune / packet.control_error.immune_action",
     },
+    "connect_pass": {
+        "symbol": "⧉",
+        "spoken": "connect pass",
+        "target": "ConnectPass",
+        "maps_to": "cortex metrics / packet.connect_pass",
+    },
     "retrieval_gate": {
         "symbol": "⌖",
         "spoken": "retrieval gate",

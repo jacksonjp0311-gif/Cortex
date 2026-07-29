@@ -44,6 +44,7 @@ from .session_ritual import run_session_ritual
 from .selftest import run_self_test
 from .transcend import run_transcend_check
 from .immune import inspect_immune
+from .connect_pass import metric_graph_report
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
 from .verify import verify_repository
@@ -432,6 +433,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     immune.add_argument("--repo", required=True)
     immune.add_argument("--json", action="store_true")
+
+    metrics = sub.add_parser(
+        "metrics",
+        help="Inspect connect-pass metric graph (⧉): rollups grown each connect.",
+    )
+    metrics.add_argument("--repo", required=True)
+    metrics.add_argument("--json", action="store_true")
 
     contact = sub.add_parser(
         "contact",
@@ -959,7 +967,9 @@ def main(argv: list[str] | None = None) -> None:
                         "python -m cortex init --json",
                         "python -m cortex bootstrap . --name Cortex --json",
                         "python -m cortex teach --seed --path . --repo Cortex --json",
+                        "python -m cortex immune --repo Cortex --json",
                         'python -m cortex organism --repo Cortex --task "interconnect" --json',
+                        "python -m cortex metrics --repo Cortex --json",
                         'python -m cortex activate --repo Cortex --task "<task>" --profile agent --json',
                         'python -m cortex ritual --repo Cortex --task "<task>" --remember-text "<fact>" --json',
                         "python -m cortex transcend-check --json",
@@ -1026,6 +1036,9 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "immune":
             emit(inspect_immune(home, store, governor, args.repo), args.json)
+
+        elif command == "metrics":
+            emit(metric_graph_report(store, args.repo), args.json)
 
         elif command == "dashboard":
             repository = store.repo(args.repo)

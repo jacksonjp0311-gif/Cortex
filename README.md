@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-3.5.4-0ea5e9?style=for-the-badge" alt="v3.5.4" />
+  <img src="https://img.shields.io/badge/version-3.6.0-0ea5e9?style=for-the-badge" alt="v3.6.0" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -17,18 +17,20 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v3.5.4** — living organism + taught body + unmissable packet **`block`** / **`cortex immune`** + CI teach/retrieval/immune gates. See [`OPERATOR.md`](OPERATOR.md).
+**Current release: v3.6.0** — each **connect pass** gathers metrics, expands the metric graph, and **distills** high-signal lessons into the substrate. Living organism + immune gate + ARIA teaching mass. See [`OPERATOR.md`](OPERATOR.md).
 
 ```bash
 pip install -e .
 python -m cortex bootstrap . --name MyProject --json
 python -m cortex immune --repo MyProject --json
 python -m cortex organism --repo MyProject --task "Map the auth surface" --json
+python -m cortex metrics --repo MyProject --json
 python -m cortex remember --repo MyProject --kind discovery --text "fact" --json
 python -m cortex breathe --repo MyProject --json
 python -m cortex ritual --repo MyProject --task "Close the loop" \
   --remember-text "Auth lives in middleware" --json
 python -m cortex teach --seed --repo Cortex --json
+python -m cortex metrics --repo Cortex --json
 python -m cortex transcend-check --json
 ```
 
@@ -43,6 +45,7 @@ not chat lore. Cortex is SQLite-backed, dependency-free in core install, and **r
 | Surface | Purpose |
 |---|---|
 | **Immune ⚠** | `cortex immune` — read `block` + `immune_action` before host work |
+| **Connect ⧉** | Each connect gathers metrics; metric graph grows; distill into body |
 | **Packet** | Evidence + `instructions` + `agent_protocol` + `control_error` |
 | **Organism ⊛** | Session co-process: shared living state (not consciousness) |
 | **Ritual ⟳** | `activate → remember → consolidate` on one substrate |
@@ -159,6 +162,7 @@ ARIA labels for operator speed — **no opcode, no auto-run, no authority**:
 
 ```text
 ⊛  organism pulse          packet.organism / cortex organism
+⧉  connect pass            cortex metrics / packet.connect_pass
 ∽  organism breathe        cortex breathe (mid-session rebind)
 ⟡  transcend check         cortex transcend-check
 ▣  packet profile          --profile agent|debug|minimal
