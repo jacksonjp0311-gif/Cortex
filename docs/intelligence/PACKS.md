@@ -1,8 +1,8 @@
 # Binary-intel packs ▣
 
-**Version:** v6.9  
+**Version:** v6.9.1 (taught pack v1.1)  
 **Schema:** `cortex.binary-intel-pack/1.0`  
-**CLI:** `cortex packs …`
+**CLI:** `cortex packs …` · teach: `cortex teach --seed`
 
 Portable intelligence packages that extend Cortex memory: **zero-in** by domain
 binary geometry, **expand** cards when mass coheres. Works for any user home —
@@ -40,6 +40,22 @@ task → domain_route (binary + keywords)
      → expand into packet when score ≥ threshold
      → agent sees packet.packs (top_domain, expand)
 ```
+
+## Teach / enter / connect
+
+Taught intelligence lives in **cards** (operators + doctrine), not in LLM weight dumps.
+`cortex teach --seed` installs `packs/cortex-core-intel-v1`, indexes it, and seals
+memory packets (including binary-intel claims) via ritual.
+
+```text
+enter   activate → stream rebind → domain zero-in → expand
+connect mesh pulse (⧉) already rides activate
+teach   cards + reinstall + optional distill
+evolve  harness/evolve after verified work only
+```
+
+Core pack v1.1 domains add **interconnect** and **evolution** with operator cards
+`06-teach` … `09-agent-operating-loop`.
 
 ## Claim boundary
 

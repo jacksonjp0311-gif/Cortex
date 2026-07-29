@@ -264,6 +264,7 @@ def activate_repository(
         block=bool((context.get("control_error") or {}).get("block")),
         auto_distill=True,
     )
+    metrics_in = connect.get("metrics") or {}
     context["connect_pass"] = {
         "pass_id": connect.get("pass_id"),
         "pass_count": connect.get("pass_count"),
@@ -273,6 +274,13 @@ def activate_repository(
         "decay": connect.get("decay"),
         "intel_pulse": connect.get("intel_pulse"),
         "spectral": connect.get("spectral"),
+        # Pack interconnection on the connect pulse (enter→connect)
+        "pack_top_domain": metrics_in.get("pack_top_domain")
+        or (context.get("packs") or {}).get("top_domain"),
+        "pack_expand": metrics_in.get("pack_expand")
+        if "pack_expand" in metrics_in
+        else (context.get("packs") or {}).get("expand"),
+        "pack_evidence_paths": metrics_in.get("pack_evidence_paths"),
     }
     # Re-resonate organism nervous mesh with intel pulse (same frequency)
     if isinstance(organism.get("body"), dict):

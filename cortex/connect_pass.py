@@ -61,6 +61,8 @@ def gather_connect_metrics(
         if isinstance(item, dict) and item.get("path")
     ]
     paths = [p for p in paths if p][:12]
+    packs = context.get("packs") or {}
+    pack_paths = sum(1 for p in paths if "cortex-packs/" in p.replace("\\", "/"))
 
     if block is None:
         block = bool(control.get("block"))
@@ -73,6 +75,9 @@ def gather_connect_metrics(
         "session_id": session_id,
         "surface": surface,
         "activation": activation,
+        "pack_top_domain": packs.get("top_domain"),
+        "pack_expand": bool(packs.get("expand")),
+        "pack_evidence_paths": pack_paths,
         "ts": round(time.time(), 3),
         "pass_id": _h(
             {

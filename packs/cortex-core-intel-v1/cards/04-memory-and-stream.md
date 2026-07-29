@@ -1,9 +1,14 @@
-# Memory and stream
+# Memory and stream (taught)
 
-**Memory domain:** remember, recall, episodic vs durable, stream rebind.
+## Dual memory
+- **Episodic:** session bond ⊛ — temporary working cortex; ends on ritual/seal.
+- **Durable:** body + stream 〰 — frames rebind across sessions.
+- **Packs ▣:** portable distillates; indexed as `cortex-packs/…`.
 
-Cortex stream 〰 continues across session seals. Pack memory cards teach the
-protocol; SQLite + pack index store searchable distillates.
+## Operator
+1. On enter/activate: rebind stream; read recent frames if present.
+2. Work → remember durable facts → ritual seal (bond ends, stream continues).
+3. Recall: query host + pack cards; prefer source over cards for code truth.
 
-Binary domain prototypes help zero-in on memory tasks without loading full
-repositories. Expand pulls these cards; evolve ⟲ measures whether expand helped.
+## Stream doctrine
+Not always-on mind. Operational continuity only. `always_on_mind: false`.

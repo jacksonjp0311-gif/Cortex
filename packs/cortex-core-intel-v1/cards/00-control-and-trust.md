@@ -1,12 +1,18 @@
-# Control and trust
+# Control and trust (taught)
 
-Cortex binary-intel packs extend memory. They do not authorize host mutation.
+## Law
+Cortex binary-intel packs extend **memory**. They do not authorize host mutation.
 
-Trust order remains:
+## Trust order (always)
+1. Current repository **source, tests, runtime**
+2. Pack **cards** and domain expand (this text)
+3. Binary domain geometry (routing only — CORTEXBF1)
+4. Association weights, ranker, inference
 
-1. Current repository source, tests, and runtime evidence
-2. Pack cards and domain expand
-3. Binary domain geometry (routing only)
-4. Association weights and inference
+## Operating rule
+- **Recommend-only.** Glyphs ▣ ⚠ ⊛ 〰 ⟲ never grant `host.mutate`.
+- If immune **blocks** or governor is **read_only**: diagnose, do not edit host.
+- If governor is **constrained**: narrow, reversible edits only after citing evidence.
 
-Recommend-only. Glyphs and packs never grant `host.mutate`.
+## Refuse
+Second brain · pack as truth · auto-ARIA execution · silent pack promote · treating expand as proof.

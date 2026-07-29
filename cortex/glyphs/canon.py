@@ -365,6 +365,27 @@ PHRASEBOOK: dict[str, dict[str, Any]] = {
         "spoken": "pack domain memory, stream, ritual",
         "use": "Memory / knowledge pack.",
     },
+    "domain_interconnect": {
+        "keys": ["connect_pass", "organism_pulse", "packet_profile"],
+        "spoken": "connect, organism, pack domain",
+        "use": "Enter mesh / interconnect teach.",
+    },
+    "domain_evolution": {
+        "keys": ["signal_loop", "causal", "packet_profile"],
+        "spoken": "signal loop, causal, pack domain",
+        "use": "Evolve / harness / measure.",
+    },
+    "enter_connect_teach": {
+        "keys": [
+            "immune_gate",
+            "consciousness_stream",
+            "packet_profile",
+            "connect_pass",
+            "distill_intel",
+        ],
+        "spoken": "immune, stream, pack, connect, distill",
+        "use": "Full teach enter-connect loop.",
+    },
 }
 
 

@@ -69,11 +69,20 @@ class PacksTests(unittest.TestCase):
         self.assertGreaterEqual(listed["count"], 1)
 
         idx = index_packs_into_repo(self.store, self.home, "PackHost")
-        self.assertGreater(idx["chunks_indexed"], 0)
+        self.assertGreaterEqual(idx["chunks_indexed"], 10)
 
         route = domain_route(self.home, "geometry triangle circle proof")
         self.assertEqual(route["top_domain"], "geometry")
         self.assertTrue(route["expand"] or route["top_score"] >= 0.75)
+
+        interconnect = domain_route(
+            self.home, "interconnect mesh connect pulse lattice resonate enter"
+        )
+        self.assertEqual(interconnect["top_domain"], "interconnect")
+        evolution = domain_route(
+            self.home, "evolve harness ranker plasticity signal loop improve"
+        )
+        self.assertEqual(evolution["top_domain"], "evolution")
 
         packet = activate_repository(
             self.home,

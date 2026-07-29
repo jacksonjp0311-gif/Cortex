@@ -1,3 +1,10 @@
+## 6.9.1 - Teach enter/connect/evolve into packs
+
+- Core pack **v1.1**: taught operator cards (teach, interconnect, evolution, agent loop) + domains interconnect/evolution.
+- `teach --seed` installs `cortex-core-intel-v1`, indexes into repo memory, seals pack claims via ritual.
+- Memory packet `binary-intel-packs.packet.json`; phrasebook: `enter_connect_teach`, domain_interconnect/evolution.
+- Same portable CORTEX_HOME install; still recommend-only.
+
 ## 6.9.0 - Binary-intel packs ▣ (portable domain memory branch)
 
 - **Packs:** `cortex.binary-intel-pack/1.0` — manifest + cards + CORTEXBF1 domain field.

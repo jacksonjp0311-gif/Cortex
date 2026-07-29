@@ -1,0 +1,34 @@
+{
+  "schema": "cortex-memory-packet/1.0",
+  "title": "Binary-intel packs as Cortex memory branch",
+  "glyph": "▣",
+  "kind": "invariant",
+  "ritual_seed": true,
+  "claims": [
+    {
+      "id": "pack-branch",
+      "text": "Binary-intel packs are a Cortex memory branch: install under CORTEX_HOME/packs, zero-in by domain, expand cards when mass coheres.",
+      "evidence": ["docs/intelligence/PACKS.md", "packs/cortex-core-intel-v1/manifest.json"]
+    },
+    {
+      "id": "teach-not-weights",
+      "text": "Teaching fills pack cards and rebuilds CORTEXBF1 routing; it does not copy LLM weights into binary or claim consciousness.",
+      "evidence": ["packs/cortex-core-intel-v1/cards/06-teach-and-distill.md"]
+    },
+    {
+      "id": "enter-connect",
+      "text": "Enter = activate rebind stream + domain zero-in; connect = mesh pulse. Packs feed the same body, not a second mind.",
+      "evidence": ["packs/cortex-core-intel-v1/cards/07-interconnect-and-enter.md"]
+    },
+    {
+      "id": "evolve-measure",
+      "text": "Evolution closes as probe-outcome-ranker-probe-causal; packs evolve by better cards and reinstall, never silent self-promote.",
+      "evidence": ["packs/cortex-core-intel-v1/cards/08-evolution-and-signal-loop.md"]
+    },
+    {
+      "id": "agent-loop",
+      "text": "Agent loop: enter → zero-in → evidence → work → remember → seal → optional evolve. Trust source/tests over pack prose.",
+      "evidence": ["packs/cortex-core-intel-v1/cards/09-agent-operating-loop.md"]
+    }
+  ]
+}

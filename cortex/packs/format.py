@@ -183,12 +183,14 @@ def score_task_against_domains(
         aliases = {
             "math": ("math", "mathematics", "algebra", "calculus", "equation"),
             "geometry": ("geometry", "triangle", "circle", "polygon", "spatial"),
-            "dialogue": ("conversation", "dialogue", "chat", "speak", "language"),
+            "dialogue": ("conversation", "dialogue", "chat", "speak", "language", "teach"),
             "memory": ("memory", "remember", "recall", "stream", "episodic"),
             "code": ("code", "python", "function", "bug", "test", "implement"),
             "governance": ("govern", "authority", "policy", "immune", "safety"),
             "understanding": ("understand", "comprehend", "meaning", "semantic"),
-            "knowledge": ("knowledge", "know", "fact", "learn", "domain"),
+            "knowledge": ("knowledge", "know", "fact", "learn", "domain", "distill"),
+            "interconnect": ("interconnect", "mesh", "connect", "lattice", "pulse", "resonate"),
+            "evolution": ("evolve", "evolution", "harness", "ranker", "plasticity", "signal"),
             "general": ("general", "help", "task"),
         }
         for alias in aliases.get(d, ()):

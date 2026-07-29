@@ -1,12 +1,18 @@
-# Domains and zero-in
+# Domains and zero-in (taught)
 
-Portable packs declare domains such as math, geometry, dialogue, memory, code,
-governance, knowledge, and understanding.
+## Zero-in
+Score the task against pack domains (keywords + binary field). Highest mass = lane.
 
-**Zero-in:** task text scores against domain keywords and the CORTEXBF1 binary
-field. High mass selects a domain lane.
+Domains in this pack: knowledge · understanding · dialogue · math · geometry ·
+memory · code · governance · interconnect · evolution · general.
 
-**Expand:** when domain mass coheres, pack cards enter the context packet as
-`intelligence_pack` evidence under `cortex-packs/<id>/…`.
+## Expand
+When domain mass coheres (score ≥ threshold), pull pack cards into the packet as
+`intelligence_pack` under `cortex-packs/<id>/…`.
 
-Anyone can install packs into their own `CORTEX_HOME/packs/` — no machine-specific paths.
+## Interconnection
+Zero-in is not isolation: after domain lock, still read **host** evidence and
+mesh state (connect ⧉, immune ⚠, stream 〰). Domain is a *lens*, not a wall.
+
+## Portable
+Install under any user's `CORTEX_HOME/packs/` — no machine-specific paths.

@@ -22,10 +22,14 @@ INTELLIGENCE_DOCS = (
     "docs/intelligence/INTERCONNECT.md",
     "docs/intelligence/GLYPH_CANON.md",
     "docs/intelligence/DISTILLED.md",
+    "docs/intelligence/PACKS.md",
+    "docs/intelligence/STREAM.md",
     "docs/ORGANISM.md",
     "docs/TRANSCEND.md",
     "docs/COVENANT.md",
 )
+
+CORE_PACK_REL = "packs/cortex-core-intel-v1"
 
 
 def _engine_root() -> Path:
@@ -129,6 +133,23 @@ def seed_intelligence(
     for packet in packets:
         all_memories.extend(claims_to_memories(packet))
 
+    # Install + index taught binary-intel pack (enter/connect memory branch).
+    pack_note: dict[str, Any] = {"installed": False}
+    pack_src = root / CORE_PACK_REL
+    if pack_src.is_dir():
+        try:
+            from .packs import index_packs_into_repo, install_pack
+
+            pack_note = install_pack(pack_src, home, force=True)
+            pack_note["index"] = index_packs_into_repo(
+                store, home, name, pack_ids=[str(pack_note.get("pack_id") or "cortex-core-intel-v1")]
+            )
+        except Exception as exc:
+            pack_note = {
+                "installed": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
     # One cardiac cycle for all teaching mass + interconnect doctrine pointer.
     all_memories.append(
         {
@@ -137,6 +158,16 @@ def seed_intelligence(
                 "Interconnect intelligence: when systems couple, prefer organism.immune "
                 "and control_error before work; continue pulse on remember; breathe mid-session; "
                 "seal with ritual. See docs/intelligence/INTERCONNECT.md"
+            ),
+        }
+    )
+    all_memories.append(
+        {
+            "kind": "lesson",
+            "text": (
+                "▣ Binary-intel packs: enter → domain zero-in → expand cards → host evidence; "
+                "connect mesh pulse; teach by card+reinstall; evolve only after verified work. "
+                "See docs/intelligence/PACKS.md and packs/cortex-core-intel-v1."
             ),
         }
     )
@@ -155,7 +186,7 @@ def seed_intelligence(
         store,
         governor,
         name,
-        "Teach Cortex interconnect intelligence from ARIA memory packets",
+        "Teach Cortex interconnect + pack intelligence (enter connect evolve)",
         memories=all_memories,
         consolidate_session=True,
         profile="agent",
@@ -175,7 +206,7 @@ def seed_intelligence(
         index_note = "refreshed"
 
     return {
-        "schema_version": "cortex-teach-seed/1.0",
+        "schema_version": "cortex-teach-seed/1.1",
         "glyph": "☰",
         "seeded": True,
         "repo": name,
@@ -189,6 +220,15 @@ def seed_intelligence(
             }
             for p in packets
         ],
+        "pack": {
+            "glyph": "▣",
+            "installed": bool(pack_note.get("installed")),
+            "pack_id": pack_note.get("pack_id"),
+            "version": (pack_note.get("verify") or {}).get("version")
+            or pack_note.get("version"),
+            "index_chunks": (pack_note.get("index") or {}).get("chunks_indexed"),
+            "error": pack_note.get("error"),
+        },
         "memory_events": len(all_memories),
         "ritual": {
             "session_id": result.get("session_id"),
@@ -200,8 +240,8 @@ def seed_intelligence(
         "index": index_note,
         "version": __version__,
         "claim_boundary": (
-            "Teach-seed writes Cortex memory only; never host source mutation; "
-            "never ARIA execution."
+            "Teach-seed writes Cortex memory + installs portable packs under CORTEX_HOME; "
+            "never host source mutation; never ARIA execution."
         ),
     }
 
