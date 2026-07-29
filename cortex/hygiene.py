@@ -50,10 +50,13 @@ def body_hygiene(
     advice: list[str] = []
     if temporary:
         advice.append("bind_stable_CORTEX_HOME")
-    if nodes >= 800:
-        advice.append("consider_prune_dry_run")
+    # Large graphs need prune *attention* only if weak dead weight exists.
     if weak >= 50:
         advice.append("prune_weak_unused_synapses")
+    elif nodes >= 800 and weak == 0:
+        advice.append("graph_large_but_healthy_weights")
+    elif nodes >= 800:
+        advice.append("consider_prune_dry_run")
     if int(ranker.get("train_count") or 0) == 0:
         advice.append("run_signal_harness_or_evolve")
     if not advice:
