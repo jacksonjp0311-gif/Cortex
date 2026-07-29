@@ -177,6 +177,12 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         },
         "organism": full.get("organism"),
         "stream": _lean_stream(full.get("stream")),
+        "packs": full.get("packs")
+        or {
+            "glyph": "▣",
+            "top_domain": (full.get("pack_surface") or {}).get("top_domain"),
+            "expand": (full.get("pack_surface") or {}).get("expand"),
+        },
         "connect_pass": full.get("connect_pass"),
         "packet_hash": full.get("packet_hash"),
         "claim_boundary": (

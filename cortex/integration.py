@@ -63,7 +63,7 @@ POWERSHELL_WRAPPER = r'''param(
         "thalamus", "interlink", "neural-replay", "doctor",
         "identity", "distill", "kernels", "interconnect", "immune", "metrics",
         "prune", "organism", "breathe", "causal", "glyphs", "evolve", "stream",
-        "harness", "hygiene"
+        "harness", "hygiene", "packs"
     )]
     [string]$Command = "activate",
     [string]$Task = "",
@@ -228,6 +228,17 @@ if ($Command -eq "harness") {
 }
 if ($Command -eq "hygiene") {
     $ArgsList += @("hygiene", "--repo", $RepoName, "--json")
+}
+if ($Command -eq "packs") {
+    $PackAction = if (-not [string]::IsNullOrWhiteSpace($Action)) { $Action } else { "list" }
+    if ($PackAction -eq "index") {
+        $ArgsList += @("packs", "index", "--repo", $RepoName, "--json")
+    } elseif ($PackAction -eq "probe") {
+        $Probe = if (-not [string]::IsNullOrWhiteSpace($Task)) { $Task } else { $Query }
+        $ArgsList += @("packs", "probe", "--task", $Probe, "--json")
+    } else {
+        $ArgsList += @("packs", "list", "--json")
+    }
 }
 if ($Command -eq "evolve") {
     if ([string]::IsNullOrWhiteSpace($Text)) {

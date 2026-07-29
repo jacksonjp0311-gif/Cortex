@@ -149,6 +149,14 @@ DOCTRINE_CLAIMS: list[dict[str, str]] = [
             "harness runs matched evolve; hygiene watches graph mass and home. Measure first."
         ),
     },
+    {
+        "kind": "invariant",
+        "text": (
+            "[intel] Binary-intel packs are a Cortex memory branch: portable install under "
+            "CORTEX_HOME/packs, domain zero-in via CORTEXBF1, expand cards when mass coheres. "
+            "Anyone can use them — not customized to one machine."
+        ),
+    },
 ]
 
 

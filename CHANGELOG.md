@@ -1,4 +1,12 @@
-# Changelog
+## 6.9.0 - Binary-intel packs ▣ (portable domain memory branch)
+
+- **Packs:** `cortex.binary-intel-pack/1.0` — manifest + cards + CORTEXBF1 domain field.
+- **CLI:** `packs list|install|verify|index|probe|status` → install under any user's `CORTEX_HOME/packs/`.
+- **Memory:** cards indexed as `intelligence_pack` at `cortex-packs/<id>/…`; domain zero-in + expand into packets.
+- **Agent surface:** `packet.packs` / activate root `packs` (top_domain, expand) — feels native to Cortex.
+- **Shipped pack:** `packs/cortex-core-intel-v1` (knowledge, dialogue, math, geometry, memory, code, governance).
+- Glyph phrases: `domain_core`, `domain_math`, `domain_geometry`, `domain_dialogue`, `domain_memory`.
+- Still recommend-only; packs never host.mutate or auto-execute.
 
 ## 6.8.0 - Signal validation + ARIA phrasebook
 

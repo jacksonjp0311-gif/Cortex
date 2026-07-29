@@ -354,6 +354,7 @@ def activate_repository(
         ),
         "stream": stream_env,
         "aria_language": aria_language,
+        "packs": full_context.get("packs") or context.get("packs"),
         "connect_pass": connect,
         "prediction": prediction,
         "organism": organism,

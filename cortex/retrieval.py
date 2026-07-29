@@ -294,6 +294,23 @@ def query(
     floor = _aria_evidence_floor(
         store, repo, text, output, limit=limit, prove=prove
     )
+    # Binary-intel pack domain boost (zero-in) — operational only.
+    try:
+        from .config import cortex_home
+        from .packs.memory import boost_hits_for_domains, domain_route
+
+        route = domain_route(cortex_home(), text)
+        if route.get("packs"):
+            floor = boost_hits_for_domains(floor, route)
+            for hit in floor:
+                try:
+                    meta = hit.metadata if hasattr(hit, "metadata") else None
+                    if isinstance(meta, dict):
+                        meta["domain_route_top"] = route.get("top_domain")
+                except Exception:
+                    pass
+    except Exception:
+        pass
     return floor
 
 

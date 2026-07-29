@@ -430,6 +430,46 @@ def build_context(
             "metrics": {},
         }
 
+    # Binary-intel packs: domain zero-in / expand surface (Cortex memory branch).
+    pack_surface: dict[str, Any] = {}
+    try:
+        from .packs.memory import pack_surface_for_packet
+
+        pack_surface = pack_surface_for_packet(home, store, repo, task)
+        if pack_surface.get("expand") and pack_surface.get("expanded_cards"):
+            # Inject expanded pack card texts as synthetic high-signal candidates
+            from .models import Hit
+
+            extra_hits: list[Any] = []
+            for i, card in enumerate(pack_surface.get("expanded_cards") or []):
+                extra_hits.append(
+                    Hit(
+                        memory_id=-(i + 1),
+                        repo=repo,
+                        path=str(card.get("path") or f"cortex-packs/expand/{i}"),
+                        start_line=1,
+                        end_line=max(1, str(card.get("text") or "").count("\n") + 1),
+                        text=str(card.get("text") or ""),
+                        kind="intelligence_pack",
+                        score=0.92 - 0.01 * i,
+                        content_hash=str(i),
+                        metadata={
+                            "selection_source": "binary_intel_expand",
+                            "pack_id": card.get("pack_id"),
+                            "domain": card.get("domain"),
+                            "prove_implementation": False,
+                        },
+                    )
+                )
+            if extra_hits:
+                direct_hits = list(extra_hits) + list(direct_hits)
+    except Exception as exc:
+        pack_surface = {
+            "glyph": "▣",
+            "error": f"{type(exc).__name__}: {exc}",
+            "expand": False,
+        }
+
     candidates = _merge_candidates(direct_hits, support, neural_payload)
     aria_mode = (aria_materialization.get("mode") or "dormant")
     # When ARIA is awake, cap per-chunk spend so one vendored doc cannot monopolize
@@ -567,7 +607,23 @@ def build_context(
         "instructions": instructions,
         "agent_protocol": protocol,
         "progress_glyphs": progress_glyph_registry(),
+        "packs": {
+            "glyph": "▣",
+            "top_domain": pack_surface.get("top_domain"),
+            "top_score": pack_surface.get("top_score"),
+            "expand": pack_surface.get("expand"),
+            "domains": (pack_surface.get("domains") or [])[:6],
+            "expanded_count": len(pack_surface.get("expanded_cards") or []),
+            "indexed": pack_surface.get("indexed"),
+            "doctrine": pack_surface.get("doctrine"),
+            "claim_boundary": pack_surface.get("claim_boundary"),
+        }
+        if pack_surface
+        else {"glyph": "▣", "expand": False, "indexed": False},
     }
+    # Keep full pack surface for debug / domain expand consumers
+    if pack_surface:
+        payload["pack_surface"] = pack_surface
     payload["efficiency"] = efficiency_telemetry(
         direct_candidates=len(direct_hits),
         context_tokens=used_tokens,

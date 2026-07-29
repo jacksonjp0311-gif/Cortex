@@ -177,6 +177,14 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "medium",
         "kernel": "integrate",
     },
+    "binary_intel_pack": {
+        "symbol": "▣",
+        "spoken": "binary intel pack",
+        "aria_id": "BinaryIntelPack",
+        "maps_to": "cortex packs / packet.packs",
+        "role": "medium",
+        "kernel": "retain",
+    },
     "transcend_check": {
         "symbol": "⟡",
         "spoken": "transcend check",
@@ -331,6 +339,31 @@ PHRASEBOOK: dict[str, dict[str, Any]] = {
         "keys": ["graph_prune", "spectral_kernels", "identity"],
         "spoken": "prune, kernels, identity",
         "use": "Graph mass / home stability check.",
+    },
+    "domain_core": {
+        "keys": ["packet_profile", "consciousness_stream", "connect_pass"],
+        "spoken": "pack domain, stream, connect",
+        "use": "Binary-intel pack zero-in active.",
+    },
+    "domain_math": {
+        "keys": ["packet_profile", "prove_implementation"],
+        "spoken": "pack domain math, prove",
+        "use": "Math domain pack expand.",
+    },
+    "domain_geometry": {
+        "keys": ["packet_profile", "spectral_kernels"],
+        "spoken": "pack domain geometry, kernels",
+        "use": "Geometry domain pack expand.",
+    },
+    "domain_dialogue": {
+        "keys": ["packet_profile", "organism_pulse"],
+        "spoken": "pack domain dialogue, organism",
+        "use": "Conversation / understanding pack.",
+    },
+    "domain_memory": {
+        "keys": ["packet_profile", "consciousness_stream", "ritual_idempotent"],
+        "spoken": "pack domain memory, stream, ritual",
+        "use": "Memory / knowledge pack.",
     },
 }
 

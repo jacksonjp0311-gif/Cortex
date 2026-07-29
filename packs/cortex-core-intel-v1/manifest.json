@@ -1,0 +1,43 @@
+{
+  "schema": "cortex.binary-intel-pack/1.0",
+  "id": "cortex-core-intel-v1",
+  "version": "1.0.0",
+  "name": "Cortex Core Intelligence",
+  "glyph_phrase": "domain_core",
+  "domains": [
+    "knowledge",
+    "understanding",
+    "dialogue",
+    "math",
+    "geometry",
+    "memory",
+    "code",
+    "governance",
+    "general"
+  ],
+  "domain_keywords": {
+    "math": ["math", "equation", "algebra", "number", "proof", "calculate"],
+    "geometry": ["geometry", "triangle", "circle", "angle", "spatial", "shape"],
+    "dialogue": ["conversation", "dialogue", "speak", "language", "chat"],
+    "understanding": ["understand", "meaning", "semantic", "comprehend"],
+    "knowledge": ["knowledge", "know", "fact", "learn", "domain"],
+    "memory": ["memory", "remember", "recall", "stream", "episodic"],
+    "code": ["code", "python", "function", "test", "implement", "bug"],
+    "governance": ["govern", "authority", "immune", "policy", "safety", "recommend-only"]
+  },
+  "cards": [
+    "cards/00-control-and-trust.md",
+    "cards/01-domains-and-zero-in.md",
+    "cards/02-math-and-geometry.md",
+    "cards/03-dialogue-and-understanding.md",
+    "cards/04-memory-and-stream.md",
+    "cards/05-code-and-governance.md"
+  ],
+  "binary": {
+    "path": "field.cortexbf1",
+    "format": "CORTEXBF1",
+    "role": "domain_geometry_sidecar",
+    "optional": true
+  },
+  "claim_boundary": "Pack is portable domain intelligence for Cortex retrieval and expand; never host mutation authority, never auto-execute."
+}

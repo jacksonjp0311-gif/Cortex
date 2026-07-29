@@ -25,6 +25,7 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v6.1.0** (lattice fol
 | 18 | v6.6 Glyph Canon + signal loop | **done** | ◈ canon, `cortex evolve`, path-featured ranker |
 | 19 | v6.7 consciousness stream | **done** | 〰 durable frames; session bond ends, stream continues |
 | 20 | v6.8 signal validation + surface parity | **done** | phrasebook, harness, hygiene, activate envelope |
+| 21 | v6.9 binary-intel packs | **done** | portable domain packs, zero-in/expand memory branch |
 
 ## Forward path
 

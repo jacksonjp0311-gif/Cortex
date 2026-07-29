@@ -215,7 +215,7 @@ def cortex_home() -> Path:
 
 def ensure_home(path: Path | None = None) -> Path:
     home = (path or cortex_home()).expanduser().resolve()
-    for child in ["cards", "packets", "logs", "certificates", "sessions"]:
+    for child in ["cards", "packets", "logs", "certificates", "sessions", "packs"]:
         (home / child).mkdir(parents=True, exist_ok=True)
     return home
 

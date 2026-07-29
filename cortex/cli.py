@@ -605,6 +605,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     glyphs_p.add_argument("--json", action="store_true")
 
+    packs_p = sub.add_parser(
+        "packs",
+        help="Binary-intel packs ▣ — portable domain intelligence memory branch.",
+    )
+    packs_p.add_argument(
+        "action",
+        choices=["list", "install", "verify", "index", "probe", "status"],
+        help="list|install|verify|index|probe|status",
+    )
+    packs_p.add_argument(
+        "path",
+        nargs="?",
+        help="Pack directory (install/verify) or pack id (status).",
+    )
+    packs_p.add_argument("--repo", help="Repository for index/probe.")
+    packs_p.add_argument("--task", help="Task text for domain probe.")
+    packs_p.add_argument("--force", action="store_true")
+    packs_p.add_argument("--json", action="store_true")
+
     harness_p = sub.add_parser(
         "harness",
         help="Matched signal-loop harness ⟲ (WP-A validation suite).",
@@ -1556,6 +1575,47 @@ def main(argv: list[str] | None = None) -> None:
                 reg = glyph_canon_registry(optimized=not args.full)
                 reg["phrasebook_keys"] = list(phrasebook().get("phrases") or {})
                 emit(reg, args.json)
+
+        elif command == "packs":
+            from .packs import (
+                domain_route,
+                index_packs_into_repo,
+                install_pack,
+                list_packs,
+                verify_pack,
+            )
+            from .packs.store import installed_pack_dir, load_pack
+
+            if args.action == "list":
+                emit(list_packs(home), args.json)
+            elif args.action == "install":
+                if not args.path:
+                    raise ValueError("packs install requires path to pack directory")
+                emit(
+                    install_pack(
+                        Path(args.path), home, force=bool(args.force)
+                    ),
+                    args.json,
+                )
+            elif args.action == "verify":
+                if not args.path:
+                    raise ValueError("packs verify requires path or installed pack id")
+                p = Path(args.path)
+                if not p.is_dir():
+                    p = installed_pack_dir(home, args.path)
+                emit(verify_pack(p), args.json)
+            elif args.action == "index":
+                if not args.repo:
+                    raise ValueError("--repo required for packs index")
+                emit(index_packs_into_repo(store, home, args.repo), args.json)
+            elif args.action == "probe":
+                task = args.task or "general domain probe"
+                emit(domain_route(home, task), args.json)
+            else:  # status
+                if args.path:
+                    emit(load_pack(home, args.path), args.json)
+                else:
+                    emit(list_packs(home), args.json)
 
         elif command == "harness":
             from .signal_harness import run_signal_harness
