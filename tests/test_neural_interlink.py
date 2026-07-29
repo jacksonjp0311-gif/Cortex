@@ -152,7 +152,10 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
             json.dumps({"schema": "aria-connect", "version": "test"}),
             encoding="utf-8",
         )
-        (native / "README.md").write_text("# ARIA\n", encoding="utf-8")
+        (native / "README.md").write_text(
+            "# Agent\n\n## Native ARIA semantic language\n\nBody.\n",
+            encoding="utf-8",
+        )
         (native / "grammar" / "semantic-cues.json").write_text(
             json.dumps({"format": "test", "cues": []}),
             encoding="utf-8",
@@ -173,22 +176,43 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         deep_rel = "cortex/aria_meta/vendor/docs/semantic-replay-handoff.md"
         row = self.store.file("AgentRepo", deep_rel)
         self.assertEqual(row["status"], "substrate_deferred")
-        # Certificate still verifies with deferred bulk.
+        # Certificate still verifies with deferred bulk — probes must not materialize.
         self.assertEqual(result["certificate"]["status"], "verified")
         self.assertEqual(
             result["certificate"]["coverage"]["deferred_substrate_count"],
             aria["deferred_files"],
         )
-        # Wake materializes deferred evidence into searchable memory.
+        deferred_after_cert = sum(
+            1
+            for item in self.store.files("AgentRepo")
+            if item["status"] == "substrate_deferred"
+        )
+        self.assertEqual(deferred_after_cert, aria["deferred_files"])
+        # Intentional wake materializes deferred evidence into searchable memory.
         hits = query(
             self.store,
             "AgentRepo",
             "Use ARIA semantic replay for cooperative mesh session handoff",
             limit=24,
+            materialize_substrate=True,
         )
         self.assertIn(deep_rel, {hit.path for hit in hits})
         materialized = self.store.file("AgentRepo", deep_rel)
         self.assertEqual(materialized["status"], "indexed")
+
+    def test_context_exposes_aria_materialization_surface(self) -> None:
+        packet = build_context(
+            self.home,
+            self.store,
+            Governor(self.home, self.store),
+            "AgentRepo",
+            "Fix the Python planner bridge",
+            budget=400,
+        )
+        self.assertIn("aria_materialization", packet)
+        self.assertEqual(packet["aria_materialization"]["mode"], "dormant")
+        self.assertIn("aria_substrate", packet["efficiency"])
+        self.assertIn("constitutional_supervision", packet)
 
     def test_verified_outcome_admits_and_tunes_bounded_aria_cue(self) -> None:
         task = "Use ARIA to define a mother tongue continuity boundary"
@@ -307,6 +331,7 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
             "AgentRepo",
             "Use ARIA semantic replay for cooperative mesh session handoff",
             limit=24,
+            materialize_substrate=True,
         )
         self.assertIn(relative, {hit.path for hit in aria_hits})
         awakened = activate_interlink(

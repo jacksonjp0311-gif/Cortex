@@ -30,15 +30,17 @@ def reciprocal_rank_fusion(
     return dict(scores)
 
 
-def _materialize_aria_if_needed(store: Any, repo: str, text: str) -> None:
-    """On ARIA wake, materialize deferred substrate before hybrid retrieval."""
+def materialize_aria_for_task(store: Any, repo: str, text: str) -> dict[str, Any]:
+    """Explicitly materialize deferred ARIA bulk when a task wakes the region.
 
-    aria_profile = load_aria_cue_profile(store, repo)
-    if classify_aria_task(text, aria_profile["cues"])["mode"] != "active":
-        return
+    Must not be called from certificate retrieval probes: README headings that
+    mention ARIA would otherwise eagerly index the entire language substrate
+    during bootstrap verification and erase deferred-tier economics.
+    """
+
     repository = store.repo(repo)
     if not repository:
-        return
+        return {"mode": "unknown", "materialized": False, "reason": "repo_missing"}
     try:
         from .config import load_repo_config
         from .graph import resolve_graph
@@ -51,12 +53,24 @@ def _materialize_aria_if_needed(store: Any, repo: str, text: str) -> None:
             resolve_graph(store, repo)
             if config.neural_interlink_enabled:
                 compile_interlink(store, repo)
+        return result
     except FileNotFoundError:
-        return
+        return {"mode": "unknown", "materialized": False, "reason": "config_missing"}
 
 
-def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
-    _materialize_aria_if_needed(store, repo, text)
+def query(
+    store: Any,
+    repo: str,
+    text: str,
+    limit: int = 8,
+    semantic_scan_limit: int = 5000,
+    *,
+    materialize_substrate: bool = False,
+) -> list[Hit]:
+    """Hybrid retrieval. Substrate materialization is opt-in (activation/CLI)."""
+
+    if materialize_substrate:
+        materialize_aria_for_task(store, repo, text)
     aria_profile = load_aria_cue_profile(store, repo)
     aria_classification = classify_aria_task(text, aria_profile["cues"])
     aria_active = aria_classification["mode"] == "active"
@@ -115,6 +129,13 @@ def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit:
         quality = 1.0
         if metadata.get("authoritative"):
             quality *= 1.25
+        if aria_active and is_internal_aria_path(row["path"]):
+            # Prefer purpose-aligned substrate evidence once the region is awake.
+            quality *= (
+                1.22
+                if aria_path_supports(row["path"], aria_purposes)
+                else 1.08
+            )
         normalized_chunk = " ".join(row["text"].casefold().split())
         if normalized_query and normalized_query in normalized_chunk:
             quality *= 1.35

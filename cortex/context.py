@@ -10,11 +10,10 @@ from .config import load_repo_config
 from .constitutional import assess_context
 from .environment import environment_summary
 from .efficiency import efficiency_telemetry
-from .graph import neighborhood, resolve_graph
+from .graph import neighborhood
 from .hippocampus import active_session
-from .indexer import ensure_aria_substrate_materialized
-from .neuron import activate_interlink, compile_interlink
-from .retrieval import query, support_hits
+from .neuron import activate_interlink
+from .retrieval import materialize_aria_for_task, query, support_hits
 from thalamus import apply_feedback, inhibit, make_request, route
 
 
@@ -68,12 +67,9 @@ def build_context(
         raise ValueError(f"Unknown repository: {repo}")
     root = Path(repository["path"])
     config = load_repo_config(root)
-    # Certificate-deferred ARIA bulk materializes only when the task wakes the region.
-    aria_materialization = ensure_aria_substrate_materialized(store, repo, config, task)
-    if aria_materialization.get("materialized"):
-        resolve_graph(store, repo)
-        if config.neural_interlink_enabled:
-            compile_interlink(store, repo)
+    # Certificate-deferred ARIA bulk materializes only on intentional activation,
+    # never as a side effect of verify/probe queries.
+    aria_materialization = materialize_aria_for_task(store, repo, task)
     active = active_session(home, repo)
     if config.thalamus_enabled:
         request = make_request(
@@ -194,6 +190,7 @@ def build_context(
         "environment": environment,
         "thalamus": route_plan.to_dict() if route_plan else {"available": False, "reason": "disabled"},
         "neural_interlink": neural_payload,
+        "aria_materialization": aria_materialization,
         "evidence": selected,
         "structural_neighborhood": graph_context,
         "instructions": [
@@ -202,13 +199,21 @@ def build_context(
             "Open full files only when a cited line range is insufficient.",
             "Repository source, current tests, and compiler/runtime evidence outrank generated memory.",
             "Record durable decisions, discoveries, failures, and outcomes before consolidation.",
+            "Inspect aria_materialization and efficiency.work_proxy for substrate economics.",
         ],
     }
+    deferred_remaining = sum(
+        1
+        for row in store.files(repo)
+        if row["status"] == "substrate_deferred"
+    )
     payload["efficiency"] = efficiency_telemetry(
         direct_candidates=len(direct_hits),
         context_tokens=used_tokens,
         context_budget=effective_budget,
         neural=neural_payload,
+        aria_materialization=aria_materialization,
+        deferred_substrate_remaining=deferred_remaining,
     )
     payload["constitutional_supervision"] = assess_context(payload)
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))

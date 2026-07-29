@@ -77,8 +77,13 @@ cortex federated-query "Where is authentication owned?" --repos Web API Shared -
 cortex lifecycle --repo MyProject --json
 cortex evaluate examples/evaluation_corpus.json --repo MyProject --json
 cortex dashboard --repo MyProject --json
+cortex mirror --json
 cortex-mcp
 ```
+
+The coherence mirror bootstraps under isolated stress and reports whether
+deferred ARIA economics, wake gates, and authority invariants still hold
+(`glow: true` when break_count is zero). See [`docs/MIRROR.md`](docs/MIRROR.md).
 
 Operational relevance and learned confidence remain separate from application
 and promotion authority. Canonical memory is Cortex-owned metadata; these

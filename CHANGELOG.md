@@ -2,6 +2,13 @@
 
 ## 3.1.0 - Constitutional Homeostasis
 
+- Coherence mirror (`cortex mirror`): stress deferred economics, fluency gates,
+  packet surfaces, and authority invariants; reports `glow` / `glow_intensity`.
+- Fixed probe-side ARIA materialization: certificate retrieval no longer wakes
+  and eagerly indexes the full language substrate when README headings mention
+  ARIA. Materialization is intentional (activation / CLI query only).
+- Context packets expose `aria_materialization` and efficiency substrate
+  counters so agents can see wake economics.
 - Bootstrap-tiered ARIA substrate indexing: inventory always, fully index
   anchors, defer bulk language files until ARIA-active materialization, with
   explicit work-proxy savings telemetry.

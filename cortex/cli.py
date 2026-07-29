@@ -36,6 +36,7 @@ from .indexer import index_repository
 from .neuron import activate_interlink, neural_graph_state
 from .retrieval import query
 from .store import Store
+from .mirror import run_mirror
 from .selftest import run_self_test
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
@@ -312,6 +313,19 @@ def build_parser() -> argparse.ArgumentParser:
     self_test.add_argument("--skip-tests", action="store_true")
     self_test.add_argument("--json", action="store_true")
 
+    mirror = sub.add_parser(
+        "mirror",
+        help="Run the coherence mirror: deferred economics, wake gates, packet surfaces.",
+    )
+    mirror.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Repository root to bootstrap under temporary mirror stress (default: .).",
+    )
+    mirror.add_argument("--name", default="CortexMirror")
+    mirror.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -379,7 +393,14 @@ def main(argv: list[str] | None = None) -> None:
             if not repository:
                 raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")
             config = load_repo_config(Path(repository["path"]))
-            hits = query(store, args.repo, args.query, args.limit, config.semantic_scan_limit)
+            hits = query(
+                store,
+                args.repo,
+                args.query,
+                args.limit,
+                config.semantic_scan_limit,
+                materialize_substrate=True,
+            )
             if config.thalamus_enabled:
                 plan = route(make_request(repository, args.query, config.context_budget))
                 hits = apply_feedback(store, args.repo, hits)
@@ -785,6 +806,25 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "self-test":
             emit(run_self_test(run_tests=not args.skip_tests), args.json)
+
+        elif command == "mirror":
+            # Isolated home so mirror stress never mutates the operator's live DB.
+            import tempfile
+
+            mirror_home = ensure_home(Path(tempfile.mkdtemp(prefix="cortex-mirror-")) / "home")
+            mirror_store = Store(mirror_home / "cortex.db")
+            try:
+                emit(
+                    run_mirror(
+                        mirror_home,
+                        mirror_store,
+                        root=Path(args.path).expanduser().resolve(),
+                        repo_name=args.name,
+                    ),
+                    args.json,
+                )
+            finally:
+                mirror_store.close()
 
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
         error = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
