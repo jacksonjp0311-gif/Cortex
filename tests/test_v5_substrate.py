@@ -408,6 +408,55 @@ class V5SubstrateTests(unittest.TestCase):
         self.assertIn("causal)", BASH_WRAPPER)
         self.assertIn("probe)", BASH_WRAPPER)
 
+    def test_mirror_restores_host_binding_and_phases(self) -> None:
+        import json
+        import tempfile
+        from cortex.config import ensure_home
+        from cortex.mirror import run_mirror
+        from cortex.store import Store
+
+        # Seed a production-like host binding on the test repo path.
+        cortex_dir = self.repo / ".cortex"
+        cortex_dir.mkdir(parents=True, exist_ok=True)
+        production_cfg = {
+            "schema_version": "1.0",
+            "repository_name": "V5Host",
+            "repository_id": "test-id",
+            "cortex_home": str(self.home),
+            "integration_mode": "internal",
+            "agent_protocol_mode": "preserve",
+        }
+        cfg_path = cortex_dir / "config.json"
+        cfg_path.write_text(json.dumps(production_cfg, indent=2), encoding="utf-8")
+        before = cfg_path.read_text(encoding="utf-8")
+
+        m_temp = tempfile.TemporaryDirectory()
+        m_home = ensure_home(Path(m_temp.name) / "home")
+        m_store = Store(m_home / "cortex.db")
+        try:
+            report = run_mirror(
+                m_home, m_store, root=self.repo, repo_name="CortexMirror"
+            )
+            self.assertIn("phases", report)
+            self.assertEqual(report["phases"]["generic"]["expected"], "aria_dormant")
+            self.assertEqual(
+                report["phases"]["aria_wake"]["expected"],
+                "aria_active_with_proof_evidence",
+            )
+            self.assertTrue(report["host_binding"]["snapshot_taken"])
+            self.assertTrue(report["host_binding"]["restored"])
+            self.assertTrue(report["host_binding"]["reverify_boundary"])
+            after = cfg_path.read_text(encoding="utf-8")
+            self.assertEqual(json.loads(after)["repository_name"], "V5Host")
+            self.assertEqual(json.loads(after)["cortex_home"], str(self.home))
+            # Binding content restored (ignore whitespace-only drift)
+            self.assertEqual(json.loads(before), json.loads(after))
+            for br in report.get("breaks") or []:
+                self.assertIn("phase", br)
+        finally:
+            m_store.close()
+            m_temp.cleanup()
+
     def test_prove_prefers_tests_over_vendor_docs(self) -> None:
         from cortex.retrieval import Hit, _aria_evidence_floor
         from cortex import retrieval as retrieval_mod

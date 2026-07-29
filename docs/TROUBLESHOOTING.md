@@ -54,6 +54,19 @@ python -m cortex bootstrap . --name MyProject --json
 
 Re-run bootstrap so `.cortex/bin/cortex.ps1` / `cortex.sh` are regenerated. Current wrappers expose `identity`, `distill`, `kernels`, `interconnect`, `immune`, `metrics`, `prune`, `organism`, `breathe`, and `causal` (including `causal probe`).
 
+## Health shows drift right after `mirror` or `contact`
+
+Mirror and contact use an isolated Cortex home and now restore host `.cortex/config.json` after the run. Mid-run health queries can still show transient `manifest_drift` / read-only because stress bootstraps a parallel name into a temp DB.
+
+Treat the end of mirror as a re-verification boundary:
+
+```powershell
+python -m cortex activate --repo CortexTeach --task "post-mirror re-verify" --json
+python -m cortex health --repo CortexTeach --json
+```
+
+Mirror reports `host_binding.restored` and `phases.generic` vs `phases.aria_wake` so dormant-mode notes are not read as Aria failures.
+
 ## Causal evaluate returns `missing_recall_pair`
 
 That is intentional restraint: resonance and structural health are not proof of retrieval improvement. Capture a matched pair:

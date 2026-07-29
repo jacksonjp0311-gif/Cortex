@@ -25,6 +25,7 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
         command = f"cortex migrate-vectors --repo {repo} --json"
     gov = governor.evaluate(repo, manifest_current=current, certificate=certificate)
     from .control_error import build_control_error
+    from .identity import home_looks_temporary
     from .progress_glyphs import progress_glyph_registry
 
     control = build_control_error(
@@ -36,8 +37,22 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
     )
     if control.get("must_reverify"):
         command = f"cortex verify --repo {repo} --json"
+    temporary_home = home_looks_temporary(home) or home_looks_temporary(
+        getattr(config, "cortex_home", None)
+    )
+    binding_notes: list[str] = []
+    if temporary_home:
+        binding_notes.append(
+            "cortex_home_looks_temporary — re-bootstrap with stable CORTEX_HOME "
+            "(e.g. ~/.cortex) for cross-process continuity"
+        )
+    if control.get("must_reverify") or not current:
+        binding_notes.append(
+            "reverify_boundary — after mirror/contact stress or manifest drift, "
+            "run activate or verify before treating health as steady-state"
+        )
     return {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "repo": repo,
         "certificate_status": certificate["status"],
         "governor": gov,
@@ -46,8 +61,15 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
         "control_error": control,
         "drift": {"classification": drift, "manifest_current": current, "volatile_surfaces_excluded": True},
         "vectors": vectors,
+        "home": {
+            "path": str(home),
+            "temporary": temporary_home,
+            "config_cortex_home": getattr(config, "cortex_home", None),
+        },
+        "binding_notes": binding_notes,
         "progress_glyphs": progress_glyph_registry(),
         "recommended_next_command": command,
+        "identity": f"cortex identity --repo {repo} --json",
         "immune": f"cortex immune --repo {repo} --json",
         "teach": "cortex teach",
         "transcend_check": "cortex transcend-check --json",

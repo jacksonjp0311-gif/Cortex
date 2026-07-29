@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.5.2 - Ops durability (stable home + honest mirror)
+
+- **Mirror host binding:** snapshot/restore `.cortex/config.json`; external bootstrap so stress does not leave production pointed at `%TEMP%`.
+- **Phase-labeled breaks:** `generic` (expect Aria dormant) vs `aria_wake` (expect active + proof evidence); claim boundary documents the distinction.
+- **Evidence floor:** counts vendor substrate + `cortex/*.py` + tests (prove path), not vendor docs alone.
+- **Health 1.3:** surfaces temporary home + re-verify boundary notes.
+- Operator re-bind to durable `~/.cortex` is the production path. Still recommend-only.
+
 ## 6.5.1 - Operational tightening
 
 - **Wrapper parity:** PowerShell/bash `.cortex/bin` expose `identity`, `distill`, `kernels`, `interconnect`, `immune`, `metrics`, `prune`, `organism`, `breathe`, `causal` (default budget 800).
