@@ -357,7 +357,7 @@ class V5SubstrateTests(unittest.TestCase):
 
     def test_identity_continuity_boundary(self) -> None:
         from cortex.bootstrap import stable_repository_id
-        from cortex.identity import continuity_check, warn_on_attach
+        from cortex.identity import continuity_check, home_looks_temporary, warn_on_attach
 
         rid = stable_repository_id(self.repo)
         # Second name on same path with different synthetic id is a split
@@ -367,6 +367,164 @@ class V5SubstrateTests(unittest.TestCase):
         warns = warn_on_attach(self.store, "ThirdHost", rid, self.repo)
         self.assertTrue(any("path_already_bound" in w or "split" in w for w in warns)
                         or report["warnings"])
+        self.assertTrue(home_looks_temporary(r"C:\Users\x\AppData\Local\Temp\scratch\home"))
+        self.assertTrue(home_looks_temporary("/tmp/cortex-ci/home"))
+        self.assertFalse(home_looks_temporary(Path.home() / ".cortex"))
+        temp_report = continuity_check(
+            store=self.store,
+            repo="V5Host",
+            cortex_home=self.home,
+        )
+        # test homes live under tempfile → temporary_home warning expected
+        self.assertTrue(temp_report["continuity"]["temporary_home"])
+        self.assertTrue(
+            any("temporary" in w for w in temp_report["warnings"])
+        )
+
+    def test_causal_probe_recall_pair(self) -> None:
+        from cortex.causal import evaluate_causal_episode, probe_recall
+
+        before = probe_recall(
+            self.store, "V5Host", "architecture core loop memory", k=4, slot="before"
+        )
+        self.assertIn("recall_at_k", before)
+        self.assertEqual(before["slot"], "before")
+        after = probe_recall(
+            self.store, "V5Host", "architecture core loop memory", k=4, slot="after"
+        )
+        self.assertEqual(after["slot"], "after")
+        verdict = evaluate_causal_episode(self.store, "V5Host")
+        self.assertNotIn("missing_recall_pair", verdict.get("confounds") or [])
+        self.assertIn(verdict["verdict"], {"improved", "regressed", "inconclusive"})
+        self.assertIn("recall_at_k", verdict.get("delta") or {})
+
+    def test_wrapper_exposes_identity_and_causal(self) -> None:
+        from cortex.integration import BASH_WRAPPER, POWERSHELL_WRAPPER
+
+        self.assertIn('"identity"', POWERSHELL_WRAPPER)
+        self.assertIn('"causal"', POWERSHELL_WRAPPER)
+        self.assertIn('"distill"', POWERSHELL_WRAPPER)
+        self.assertIn("identity)", BASH_WRAPPER)
+        self.assertIn("causal)", BASH_WRAPPER)
+        self.assertIn("probe)", BASH_WRAPPER)
+
+    def test_prove_prefers_tests_over_vendor_docs(self) -> None:
+        from cortex.retrieval import Hit, _aria_evidence_floor
+        from cortex import retrieval as retrieval_mod
+
+        # Synthetic rebalance: when prove=True and enough ARIA hits exist,
+        # tests/impl should sort ahead of vendor docs and cards.
+        hits = [
+            Hit(
+                memory_id=1,
+                repo="V5Host",
+                path="cortex/aria_meta/vendor/docs/guide.md",
+                start_line=1,
+                end_line=10,
+                text="vendor guide",
+                kind="documentation",
+                score=0.99,
+                content_hash="a",
+                metadata={},
+            ),
+            Hit(
+                memory_id=2,
+                repo="V5Host",
+                path="tests/test_event_spine.py",
+                start_line=1,
+                end_line=20,
+                text="test aria event spine",
+                kind="test",
+                score=0.5,
+                content_hash="b",
+                metadata={},
+            ),
+            Hit(
+                memory_id=3,
+                repo="V5Host",
+                path="cortex/retrieval.py",
+                start_line=1,
+                end_line=30,
+                text="prove implementation",
+                kind="source",
+                score=0.6,
+                content_hash="c",
+                metadata={},
+            ),
+            Hit(
+                memory_id=4,
+                repo="V5Host",
+                path="cortex/aria_meta/vendor/ARIA-RUNTIME.json",
+                start_line=1,
+                end_line=5,
+                text="{}",
+                kind="source",
+                score=0.7,
+                content_hash="d",
+                metadata={},
+            ),
+            Hit(
+                memory_id=6,
+                repo="V5Host",
+                path="cortex/aria_meta/vendor/ARIA-CONNECT.json",
+                start_line=1,
+                end_line=5,
+                text="{}",
+                kind="source",
+                score=0.68,
+                content_hash="f",
+                metadata={},
+            ),
+            Hit(
+                memory_id=5,
+                repo="V5Host",
+                path=".cortex/cards/old.md",
+                start_line=1,
+                end_line=5,
+                text="card",
+                kind="discovery_card",
+                score=0.95,
+                content_hash="e",
+                metadata={},
+            ),
+        ]
+        originals = {
+            "classify_aria_task": retrieval_mod.classify_aria_task,
+            "load_aria_cue_profile": retrieval_mod.load_aria_cue_profile,
+            "aria_routing_purposes": retrieval_mod.aria_routing_purposes,
+            "is_internal_aria_path": retrieval_mod.is_internal_aria_path,
+        }
+        try:
+            retrieval_mod.classify_aria_task = lambda text, cues: {  # type: ignore[assignment]
+                "mode": "active",
+                "purposes": ["semantic_replay"],
+                "matched_cues": ["aria"],
+            }
+            retrieval_mod.load_aria_cue_profile = lambda store, repo: {"cues": {}}  # type: ignore[assignment]
+            retrieval_mod.aria_routing_purposes = lambda c: ["semantic_replay"]  # type: ignore[assignment]
+            retrieval_mod.is_internal_aria_path = (  # type: ignore[assignment]
+                lambda p: "aria_meta/vendor" in str(p).replace("\\", "/")
+            )
+            ordered = _aria_evidence_floor(
+                self.store,
+                "V5Host",
+                "ARIA implementation proof",
+                hits,
+                limit=6,
+                prove=True,
+            )
+            paths = [h.path for h in ordered]
+            self.assertLess(
+                paths.index("tests/test_event_spine.py"),
+                paths.index("cortex/aria_meta/vendor/docs/guide.md"),
+            )
+            self.assertLess(
+                paths.index("cortex/retrieval.py"),
+                paths.index(".cortex/cards/old.md"),
+            )
+        finally:
+            for name, value in originals.items():
+                setattr(retrieval_mod, name, value)
 
     def test_intelligence_pulse_on_connect(self) -> None:
         from cortex.activation import activate_repository

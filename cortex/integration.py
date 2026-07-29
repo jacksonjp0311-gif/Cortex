@@ -57,14 +57,31 @@ Cortex provides memory, relationships, telemetry, sparse activation, and evidenc
 
 POWERSHELL_WRAPPER = r'''param(
     [Parameter(Position=0)]
-    [ValidateSet("activate", "bootstrap", "query", "remember", "consolidate", "ritual", "verify", "status", "graph", "telemetry", "environment", "meta-language", "thalamus", "interlink", "neural-replay", "doctor")]
+    [ValidateSet(
+        "activate", "bootstrap", "query", "remember", "consolidate", "ritual",
+        "verify", "status", "graph", "telemetry", "environment", "meta-language",
+        "thalamus", "interlink", "neural-replay", "doctor",
+        "identity", "distill", "kernels", "interconnect", "immune", "metrics",
+        "prune", "organism", "breathe", "causal"
+    )]
     [string]$Command = "activate",
     [string]$Task = "",
     [string]$Query = "",
     [string]$Kind = "discovery",
     [string]$Text = "",
-    [int]$Budget = 1200,
-    [switch]$Learn
+    [string]$Path = "",
+    [string]$Action = "status",
+    [string]$Profile = "agent",
+    [ValidateSet("before", "after")]
+    [string]$Slot = "before",
+    [int]$Budget = 800,
+    [int]$K = 8,
+    [switch]$Learn,
+    [switch]$DryRun,
+    [switch]$NoSeal,
+    [switch]$DoctrineOnly,
+    [switch]$Annotate,
+    [switch]$Decay
 )
 
 $ErrorActionPreference = "Stop"
@@ -150,6 +167,50 @@ if ($Command -eq "interlink") {
     $ArgsList += @("interlink", "--repo", $RepoName, "--task", $Task, "--json")
     if ($Learn) { $ArgsList += "--learn" }
 }
+if ($Command -eq "identity") {
+    $ArgsList += @("identity", "--json")
+    if (-not [string]::IsNullOrWhiteSpace($RepoName)) { $ArgsList += @("--repo", $RepoName) }
+    if (-not [string]::IsNullOrWhiteSpace($Path)) { $ArgsList += @("--path", $Path) }
+}
+if ($Command -eq "distill") {
+    $ArgsList += @("distill", "--repo", $RepoName, "--json")
+    if ($NoSeal) { $ArgsList += "--no-seal" }
+    if ($DoctrineOnly) { $ArgsList += "--doctrine-only" }
+}
+if ($Command -eq "kernels") {
+    $ArgsList += @("kernels", "--repo", $RepoName, "--json")
+    if ($Annotate) { $ArgsList += "--annotate" }
+}
+if ($Command -eq "interconnect") { $ArgsList += @("interconnect", "--repo", $RepoName, "--json") }
+if ($Command -eq "immune") { $ArgsList += @("immune", "--repo", $RepoName, "--json") }
+if ($Command -eq "metrics") { $ArgsList += @("metrics", "--repo", $RepoName, "--json") }
+if ($Command -eq "prune") {
+    $ArgsList += @("prune", "--repo", $RepoName, "--json")
+    if ($DryRun) { $ArgsList += "--dry-run" }
+    if ($Decay) { $ArgsList += "--decay" }
+}
+if ($Command -eq "organism") {
+    if ([string]::IsNullOrWhiteSpace($Task)) { throw "-Task is required for organism." }
+    $ArgsList += @("organism", "--repo", $RepoName, "--task", $Task, "--budget", "$Budget", "--profile", $Profile, "--json")
+}
+if ($Command -eq "breathe") {
+    $ArgsList += @("breathe", "--repo", $RepoName, "--budget", "$Budget", "--profile", $Profile, "--json")
+    if (-not [string]::IsNullOrWhiteSpace($Task)) { $ArgsList += @("--task", $Task) }
+}
+if ($Command -eq "causal") {
+    $ValidCausal = @("status", "report", "evaluate", "probe")
+    if ($ValidCausal -notcontains $Action) {
+        throw "-Action for causal must be one of: status, report, evaluate, probe"
+    }
+    $ArgsList += @("causal", $Action, "--repo", $RepoName, "--json")
+    if ($Action -eq "probe") {
+        if ([string]::IsNullOrWhiteSpace($Task) -and [string]::IsNullOrWhiteSpace($Query)) {
+            throw "-Task or -Query is required for causal probe."
+        }
+        $ProbeText = if (-not [string]::IsNullOrWhiteSpace($Task)) { $Task } else { $Query }
+        $ArgsList += @("--task", $ProbeText, "--slot", $Slot, "--k", "$K")
+    }
+}
 
 & $ResolvedPython @ArgsList
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -192,11 +253,11 @@ REPO_NAME="$("$ENGINE_PYTHON" -c 'import json,sys; print(json.load(open(sys.argv
 case "$COMMAND" in
   activate)
     TASK=""
-    BUDGET="1200"
+    BUDGET="800"
     while [[ $# -gt 0 ]]; do
       case "$1" in
         --task) TASK="${2:-}"; shift 2 ;;
-        --budget) BUDGET="${2:-1200}"; shift 2 ;;
+        --budget) BUDGET="${2:-800}"; shift 2 ;;
         *) echo "Unknown activate argument: $1" >&2; exit 2 ;;
       esac
     done
@@ -234,13 +295,13 @@ case "$COMMAND" in
     TASK=""
     KIND="discovery"
     TEXT=""
-    BUDGET="1200"
+    BUDGET="800"
     while [[ $# -gt 0 ]]; do
       case "$1" in
         --task) TASK="${2:-}"; shift 2 ;;
         --kind) KIND="${2:-discovery}"; shift 2 ;;
         --text) TEXT="${2:-}"; shift 2 ;;
-        --budget) BUDGET="${2:-1200}"; shift 2 ;;
+        --budget) BUDGET="${2:-800}"; shift 2 ;;
         *) echo "Unknown ritual argument: $1" >&2; exit 2 ;;
       esac
     done
@@ -266,18 +327,122 @@ case "$COMMAND" in
     ;;
   thalamus)
     TASK=""
-    BUDGET="1200"
+    BUDGET="800"
     while [[ $# -gt 0 ]]; do
       case "$1" in
         --task) TASK="${2:-}"; shift 2 ;;
-        --budget) BUDGET="${2:-1200}"; shift 2 ;;
+        --budget) BUDGET="${2:-800}"; shift 2 ;;
         *) echo "Unknown thalamus argument: $1" >&2; exit 2 ;;
       esac
     done
     [[ -n "$TASK" ]] || { echo "--task is required" >&2; exit 2; }
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" thalamus --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --json
     ;;
-  consolidate|verify|status|graph|telemetry|environment|meta-language|neural-replay|doctor)
+  identity)
+    REPO_ARG=()
+    PATH_ARG=()
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --repo) REPO_ARG=(--repo "${2:-}"); shift 2 ;;
+        --path) PATH_ARG=(--path "${2:-}"); shift 2 ;;
+        *) echo "Unknown identity argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    if [[ ${#REPO_ARG[@]} -eq 0 ]]; then REPO_ARG=(--repo "$REPO_NAME"); fi
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" identity "${REPO_ARG[@]}" "${PATH_ARG[@]}" --json
+    ;;
+  distill)
+    EXTRA=()
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --no-seal) EXTRA+=(--no-seal); shift ;;
+        --doctrine-only) EXTRA+=(--doctrine-only); shift ;;
+        *) echo "Unknown distill argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" distill --repo "$REPO_NAME" "${EXTRA[@]}" --json
+    ;;
+  kernels)
+    EXTRA=()
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --annotate) EXTRA+=(--annotate); shift ;;
+        *) echo "Unknown kernels argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" kernels --repo "$REPO_NAME" "${EXTRA[@]}" --json
+    ;;
+  prune)
+    EXTRA=()
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --dry-run) EXTRA+=(--dry-run); shift ;;
+        --decay) EXTRA+=(--decay); shift ;;
+        *) echo "Unknown prune argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" prune --repo "$REPO_NAME" "${EXTRA[@]}" --json
+    ;;
+  organism)
+    TASK=""
+    BUDGET="800"
+    PROFILE="agent"
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --task) TASK="${2:-}"; shift 2 ;;
+        --budget) BUDGET="${2:-800}"; shift 2 ;;
+        --profile) PROFILE="${2:-agent}"; shift 2 ;;
+        *) echo "Unknown organism argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    [[ -n "$TASK" ]] || { echo "--task is required" >&2; exit 2; }
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" organism --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --profile "$PROFILE" --json
+    ;;
+  breathe)
+    TASK=""
+    BUDGET="800"
+    PROFILE="agent"
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --task) TASK="${2:-}"; shift 2 ;;
+        --budget) BUDGET="${2:-800}"; shift 2 ;;
+        --profile) PROFILE="${2:-agent}"; shift 2 ;;
+        *) echo "Unknown breathe argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    if [[ -n "$TASK" ]]; then
+      exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" breathe --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --profile "$PROFILE" --json
+    else
+      exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" breathe --repo "$REPO_NAME" --budget "$BUDGET" --profile "$PROFILE" --json
+    fi
+    ;;
+  causal)
+    ACTION="${1:-status}"
+    if [[ $# -gt 0 ]]; then shift; fi
+    case "$ACTION" in
+      status|report|evaluate)
+        exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" causal "$ACTION" --repo "$REPO_NAME" --json
+        ;;
+      probe)
+        TASK=""
+        SLOT="before"
+        K="8"
+        while [[ $# -gt 0 ]]; do
+          case "$1" in
+            --task) TASK="${2:-}"; shift 2 ;;
+            --query) TASK="${2:-}"; shift 2 ;;
+            --slot) SLOT="${2:-before}"; shift 2 ;;
+            --k) K="${2:-8}"; shift 2 ;;
+            *) echo "Unknown causal probe argument: $1" >&2; exit 2 ;;
+          esac
+        done
+        [[ -n "$TASK" ]] || { echo "--task is required for causal probe" >&2; exit 2; }
+        exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" causal probe --repo "$REPO_NAME" --task "$TASK" --slot "$SLOT" --k "$K" --json
+        ;;
+      *) echo "Unknown causal action: $ACTION (status|report|evaluate|probe)" >&2; exit 2 ;;
+    esac
+    ;;
+  consolidate|verify|status|graph|telemetry|environment|meta-language|neural-replay|doctor|interconnect|immune|metrics)
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" "$COMMAND" --repo "$REPO_NAME" --json
     ;;
   *) echo "Unknown command: $COMMAND" >&2; exit 2 ;;
@@ -293,7 +458,39 @@ This directory is the explicitly labeled, repository-local integration surface f
 - `bin/cortex.ps1` and `bin/cortex.sh` are stable entry points for Codex and other agents.
 - `runtime/` contains generated context and learned-environment packets and is intentionally ignored by Git.
 
+## Stable CORTEX_HOME (production)
+
+Cross-process identity and memory continuity require a durable home, not a temp directory.
+
+- Prefer a fixed path such as `~/.cortex` (or another long-lived directory you control).
+- Avoid binding `cortex_home` in `config.json` to OS temp paths (`%TEMP%`, `/tmp`, `TemporaryDirectory`, CI scratch).
+- If `config.json` points at a temp home, re-bootstrap with an explicit stable home:
+
+```powershell
+$env:CORTEX_HOME = Join-Path $env:USERPROFILE ".cortex"
+python -m cortex bootstrap . --name YourRepo --json
+```
+
+```bash
+export CORTEX_HOME="$HOME/.cortex"
+python -m cortex bootstrap . --name YourRepo --json
+```
+
+Then verify with the wrapper:
+
+```powershell
+.\\bin\\cortex.ps1 identity
+```
+
+```bash
+./bin/cortex.sh identity
+```
+
 Cortex's global database normally lives at `~/.cortex/cortex.db`. The neural interlink shares that database and never creates a competing memory authority. Repository source remains authoritative.
+
+### Operator commands on the wrapper
+
+Beyond activate/query/remember, the installed wrappers also expose: `identity`, `distill`, `kernels`, `interconnect`, `immune`, `metrics`, `prune`, `organism`, `breathe`, and `causal` (including `causal probe` for matched recall pairs).
 """
 
 GITIGNORE = """runtime/

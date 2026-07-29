@@ -566,9 +566,40 @@ def build_parser() -> argparse.ArgumentParser:
     token_p.add_argument("--ttl", type=int, default=28800)
     token_p.add_argument("--json", action="store_true")
 
-    causal_p = sub.add_parser("causal", help="Causal outcome ledger report/evaluate.")
-    causal_p.add_argument("action", choices=["status", "report", "evaluate"])
+    causal_p = sub.add_parser(
+        "causal",
+        help="Causal outcome ledger (status|report|evaluate|probe).",
+    )
+    causal_p.add_argument(
+        "action", choices=["status", "report", "evaluate", "probe"]
+    )
     causal_p.add_argument("--repo", required=True)
+    causal_p.add_argument(
+        "--task",
+        help="Task text for action=probe (matched recall@k snapshot).",
+    )
+    causal_p.add_argument(
+        "--slot",
+        choices=["before", "after"],
+        default="before",
+        help="Probe slot for matched before/after pairs (default: before).",
+    )
+    causal_p.add_argument(
+        "--k",
+        type=int,
+        default=8,
+        help="Top-k for causal probe recall measurement.",
+    )
+    causal_p.add_argument(
+        "--recall-before",
+        type=float,
+        help="Explicit recall@k before score for evaluate (optional).",
+    )
+    causal_p.add_argument(
+        "--recall-after",
+        type=float,
+        help="Explicit recall@k after score for evaluate (optional).",
+    )
     causal_p.add_argument("--json", action="store_true")
 
     compile_il = sub.add_parser(
@@ -1270,6 +1301,7 @@ def main(argv: list[str] | None = None) -> None:
                     store,
                     repo=args.repo,
                     path=args.path,
+                    cortex_home=home,
                 ),
                 args.json,
             )
@@ -1446,13 +1478,42 @@ def main(argv: list[str] | None = None) -> None:
                 emit(validate_token(store, args.repo, args.token_id), args.json)
 
         elif command == "causal":
-            from .causal import causal_report, evaluate_causal_episode, open_episode
+            from .causal import (
+                causal_report,
+                evaluate_causal_episode,
+                open_episode,
+                probe_recall,
+            )
 
             if args.action == "report" or args.action == "status":
                 emit(causal_report(store, args.repo), args.json)
+            elif args.action == "probe":
+                if not args.task:
+                    raise ValueError("--task is required for causal probe")
+                emit(
+                    probe_recall(
+                        store,
+                        args.repo,
+                        args.task,
+                        k=max(1, int(args.k or 8)),
+                        slot=args.slot or "before",
+                    ),
+                    args.json,
+                )
             else:
-                open_episode(store, args.repo, "cli_evaluate")
-                emit(evaluate_causal_episode(store, args.repo), args.json)
+                # evaluate: use open episode + optional probe slots / explicit floats
+                opened = store.get_setting(f"causal_open:{args.repo}", None)
+                if not isinstance(opened, dict) or opened.get("closed"):
+                    open_episode(store, args.repo, "cli_evaluate")
+                emit(
+                    evaluate_causal_episode(
+                        store,
+                        args.repo,
+                        recall_before=args.recall_before,
+                        recall_after=args.recall_after,
+                    ),
+                    args.json,
+                )
 
         elif command == "compile-interlink":
             from .neuron import compile_interlink

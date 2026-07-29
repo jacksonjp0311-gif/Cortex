@@ -70,8 +70,10 @@ def query(
 ) -> list[Hit]:
     """Hybrid retrieval. Substrate materialization is opt-in (activation/CLI).
 
-    prove_implementation: when ARIA-active, prefer substrate + cortex source
-    over discovery-card monopoly (evidence selection, not authority).
+    prove_implementation: prefer substrate + cortex source/tests over discovery-card
+    monopoly and vendor-guide domination (evidence selection, not authority).
+    Activation enables this when ARIA is awake; bare verify probes do not, so
+    host heading evidence (e.g. README) is not reordered away by prove mode.
     """
 
     if materialize_substrate:
@@ -80,7 +82,10 @@ def query(
     aria_classification = classify_aria_task(text, aria_profile["cues"])
     aria_active = aria_classification["mode"] == "active"
     aria_purposes = aria_routing_purposes(aria_classification)
-    prove = bool(prove_implementation or aria_active)
+    # Full prove reordering is opt-in (activation/CLI). ARIA-active alone still
+    # boosts purpose-aligned substrate and runs the evidence floor, but does not
+    # bury exact host matches used by bootstrap/verify heading probes.
+    prove = bool(prove_implementation)
     excluded_prefixes = () if aria_active else (INTERNAL_ARIA_PREFIX,)
     lexical_rows = store.lexical(
         repo, text, 60, excluded_prefixes=excluded_prefixes
@@ -152,6 +157,13 @@ def query(
             quality *= 1.25
             if prove:
                 quality *= 1.08
+            # Exact authoritative match stays competitive even when ARIA substrate
+            # is awake (verify probes + host claims).
+            if (
+                normalized_query
+                and normalized_query in " ".join(row["text"].casefold().split())
+            ):
+                quality *= 1.20
         # Teaching mass: interconnect doctrine and memory packets rank up for
         # organism / protocol / teach tasks without becoming authority.
         path_norm = row["path"].replace("\\", "/")
@@ -184,11 +196,39 @@ def query(
         if row["kind"] == "discovery_card":
             # Cards are retain-class memory; when proving ARIA/implementation,
             # do not let cards monopolize the packet over substrate source.
-            quality *= 0.95 if prove else 1.12
-        if prove and path_norm.startswith("cortex/") and path_norm.endswith(".py"):
-            # Implementation proof lane (still not mutation authority).
-            quality *= 1.24
-            metadata["selection_source"] = metadata.get("selection_source") or "implementation_proof"
+            quality *= 0.88 if prove else 1.12
+        # Implementation + test proof lanes (still not mutation authority).
+        if prove:
+            is_test_path = (
+                "/tests/" in path_norm
+                or path_norm.startswith("tests/")
+                or "/test_" in path_norm
+                or path_norm.endswith(("_test.py", ".test.js", ".spec.ts", ".spec.js"))
+                or row["kind"] == "test"
+            )
+            is_cortex_impl = (
+                path_norm.startswith("cortex/")
+                and path_norm.endswith((".py", ".pyi"))
+                and not path_norm.startswith("cortex/aria_meta/vendor/")
+            )
+            if is_test_path:
+                quality *= 1.32
+                metadata["selection_source"] = (
+                    metadata.get("selection_source") or "implementation_test_proof"
+                )
+            elif is_cortex_impl:
+                quality *= 1.26
+                metadata["selection_source"] = (
+                    metadata.get("selection_source") or "implementation_proof"
+                )
+            # Prefer host source over vendor guides when proving.
+            if path_norm.startswith("cortex/aria_meta/vendor/"):
+                if "/docs/" in path_norm or "/plans/" in path_norm:
+                    quality *= 0.78
+                elif path_norm.endswith(".md") and not path_norm.endswith(
+                    ("AGENTS.md",)
+                ):
+                    quality *= 0.86
         if aria_active and is_internal_aria_path(row["path"]):
             # Prefer purpose-aligned substrate evidence once the region is awake.
             # Anchors and purpose hits must outrank ambient host noise after wake.
@@ -200,14 +240,16 @@ def query(
                 (
                     "ARIA-RUNTIME.json",
                     "ARIA-CONNECT.json",
-                    "README.md",
                     "semantic-cues.json",
-                    "AGENTS.md",
                 )
             ):
-                quality *= 1.15
+                quality *= 1.18
+            elif path_norm.endswith(("README.md", "AGENTS.md")):
+                # Anchors remain useful, but under prove they yield to tests/impl.
+                quality *= 1.05 if prove else 1.15
             if "/docs/" in path_norm or "/plans/" in path_norm:
-                quality *= 1.10 if prove else 1.0
+                # Vendor guides inform; they must not outrank tests/impl when proving.
+                quality *= 0.82 if prove else 1.0
             metadata["selection_source"] = metadata.get("selection_source") or "aria_substrate"
         normalized_chunk = " ".join(row["text"].casefold().split())
         if normalized_query and normalized_query in normalized_chunk:
@@ -278,11 +320,41 @@ def _aria_evidence_floor(
     if len(aria_hits) >= min_aria and not prove:
         return hits[:limit]
     if prove and len(aria_hits) >= min_aria:
-        # Still rebalance: interleave substrate near the top
-        non_aria = [h for h in hits if not is_internal_aria_path(h.path)]
-        cards = [h for h in non_aria if h.kind == "discovery_card"]
-        other = [h for h in non_aria if h.kind != "discovery_card"]
-        ordered = list(aria_hits[:3]) + other + cards + aria_hits[3:]
+        # Rebalance under prove: tests/impl → anchors → other → vendor docs → cards
+        def _proof_rank(h: Hit) -> int:
+            p = h.path.replace("\\", "/")
+            if (
+                "/tests/" in p
+                or p.startswith("tests/")
+                or "/test_" in p
+                or p.endswith(("_test.py", ".test.js", ".spec.ts", ".spec.js"))
+                or h.kind == "test"
+            ):
+                return 0
+            if (
+                p.startswith("cortex/")
+                and p.endswith((".py", ".pyi"))
+                and "aria_meta/vendor" not in p
+            ):
+                return 1
+            if is_internal_aria_path(h.path) and p.endswith(
+                ("ARIA-RUNTIME.json", "ARIA-CONNECT.json", "semantic-cues.json")
+            ):
+                return 2
+            if is_internal_aria_path(h.path) and (
+                "/docs/" in p or "/plans/" in p or p.endswith(".md")
+            ):
+                return 5
+            if h.kind == "discovery_card":
+                return 6
+            if is_internal_aria_path(h.path):
+                return 3
+            return 4
+
+        ordered = sorted(
+            hits,
+            key=lambda h: (_proof_rank(h), -float(h.score), h.path, h.start_line),
+        )
         return ordered[:limit]
 
     extras: list[Hit] = []

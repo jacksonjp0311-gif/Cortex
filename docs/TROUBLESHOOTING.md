@@ -28,6 +28,45 @@ Re-run bootstrap from the current engine. The wrapper bindings in `.cortex/confi
 
 Current wrappers are bound to the Cortex home and Python engine recorded during bootstrap. Re-run bootstrap when intentionally moving the database or engine. Unrelated inherited `CORTEX_HOME` or `CORTEX_PYTHON` values will not override an already bound repository wrapper.
 
+## Identity continuity vs temporary CORTEX_HOME
+
+`python -m cortex identity --repo MyProject --json` reports whether multiple names share a path and whether the bound home looks temporary.
+
+- Same filesystem path + same `repository_id` ⇒ one body (name aliases are fine).
+- Same path + different `repository_id` (e.g. CI name vs teach name in **different** homes) ⇒ separate durable namespaces; do not merge without an explicit check.
+- `continuity.temporary_home: true` means `.cortex/config.json` points at OS/CI temp storage. Memory is correct **inside** that home but will not survive across sessions.
+
+Production pattern:
+
+```powershell
+$env:CORTEX_HOME = Join-Path $env:USERPROFILE ".cortex"
+python -m cortex bootstrap . --name MyProject --json
+.\.cortex\bin\cortex.ps1 identity
+```
+
+```bash
+export CORTEX_HOME="$HOME/.cortex"
+python -m cortex bootstrap . --name MyProject --json
+./.cortex/bin/cortex.sh identity
+```
+
+## Wrapper rejects `identity` (or other lean-era commands)
+
+Re-run bootstrap so `.cortex/bin/cortex.ps1` / `cortex.sh` are regenerated. Current wrappers expose `identity`, `distill`, `kernels`, `interconnect`, `immune`, `metrics`, `prune`, `organism`, `breathe`, and `causal` (including `causal probe`).
+
+## Causal evaluate returns `missing_recall_pair`
+
+That is intentional restraint: resonance and structural health are not proof of retrieval improvement. Capture a matched pair:
+
+```bash
+python -m cortex causal probe --repo MyProject --task "ARIA implementation proof" --slot before --json
+# ... apply change or re-index ...
+python -m cortex causal probe --repo MyProject --task "ARIA implementation proof" --slot after --json
+python -m cortex causal evaluate --repo MyProject --json
+```
+
+Or pass explicit scores: `--recall-before 0.4 --recall-after 0.7`.
+
 ## Activation is read-only
 
 Inspect:

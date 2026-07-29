@@ -11,6 +11,120 @@ from ..connect_pass import load_metric_graph
 from ..ranker.model import ranker_status
 
 
+def _is_proof_path(path: str, kind: str = "", metadata: dict[str, Any] | None = None) -> bool:
+    p = (path or "").replace("\\", "/")
+    meta = metadata or {}
+    if meta.get("prove_implementation") or meta.get("selection_source") in {
+        "implementation_proof",
+        "implementation_test_proof",
+        "aria_evidence_floor",
+        "aria_substrate",
+    }:
+        return True
+    if (
+        "/tests/" in p
+        or p.startswith("tests/")
+        or "/test_" in p
+        or p.endswith(("_test.py", ".test.js", ".spec.ts", ".spec.js"))
+        or kind == "test"
+    ):
+        return True
+    if (
+        p.startswith("cortex/")
+        and p.endswith((".py", ".pyi"))
+        and "aria_meta/vendor" not in p
+    ):
+        return True
+    return False
+
+
+def probe_recall(
+    store: Any,
+    repo: str,
+    task: str,
+    *,
+    k: int = 8,
+    materialize_substrate: bool = True,
+    slot: str = "before",
+) -> dict[str, Any]:
+    """Measure a single recall@k snapshot for a matched before/after pair.
+
+    Stores the score on the open causal episode (or opens one). Use twice —
+    once before a change (`slot=before`) and once after (`slot=after`) — then
+    call evaluate_causal_episode so the verdict is not missing_recall_pair.
+    """
+
+    from ..retrieval import query
+
+    hits = query(
+        store,
+        repo,
+        task,
+        limit=k,
+        materialize_substrate=materialize_substrate,
+        prove_implementation=True,
+    )
+    proof_hits = sum(
+        1
+        for h in hits
+        if _is_proof_path(h.path, h.kind, h.metadata if isinstance(h.metadata, dict) else {})
+    )
+    card_hits = sum(1 for h in hits if h.kind == "discovery_card")
+    vendor_doc_hits = sum(
+        1
+        for h in hits
+        if "aria_meta/vendor" in h.path.replace("\\", "/")
+        and (
+            "/docs/" in h.path.replace("\\", "/")
+            or h.path.replace("\\", "/").endswith(".md")
+        )
+    )
+    score = round(proof_hits / max(1, len(hits) or k), 6)
+    opened = store.get_setting(f"causal_open:{repo}", None)
+    if not isinstance(opened, dict) or opened.get("closed"):
+        open_episode(
+            store,
+            repo,
+            task_family=f"recall_probe:{task[:80]}",
+            treatment={"probe_task": task, "k": k},
+        )
+        opened = store.get_setting(f"causal_open:{repo}", {}) or {}
+    key = "recall_before" if slot != "after" else "recall_after"
+    metrics_key = "metrics_before" if slot != "after" else "metrics_after_probe"
+    opened = dict(opened)
+    opened[key] = score
+    metrics = dict(opened.get(metrics_key) or {})
+    metrics["recall_at_k"] = score
+    metrics["probe"] = {
+        "task": task,
+        "k": k,
+        "hits": len(hits),
+        "proof_hits": proof_hits,
+        "card_hits": card_hits,
+        "vendor_doc_hits": vendor_doc_hits,
+        "paths": [h.path for h in hits[:k]],
+    }
+    opened[metrics_key] = metrics
+    store.set_setting(f"causal_open:{repo}", opened)
+    return {
+        "schema_version": "cortex-causal-probe/1.0",
+        "repo": repo,
+        "slot": "before" if slot != "after" else "after",
+        "task": task,
+        "k": k,
+        "recall_at_k": score,
+        "proof_hits": proof_hits,
+        "card_hits": card_hits,
+        "vendor_doc_hits": vendor_doc_hits,
+        "hit_paths": [h.path for h in hits[:k]],
+        "episode_id": opened.get("episode_id"),
+        "claim_boundary": (
+            "Probe measures proof-bearing hit share, not host correctness. "
+            "A matched before/after pair is required for causal verdicts."
+        ),
+    }
+
+
 def _fingerprint(store: Any, repo: str) -> str:
     graph = load_metric_graph(store, repo)
     ranker = ranker_status(store, repo)
@@ -80,11 +194,20 @@ def evaluate_causal_episode(
         opened = open_episode(store, repo, "ad_hoc")
         opened = store.get_setting(f"causal_open:{repo}", opened)
 
-    metrics_before = opened.get("metrics_before") or {}
+    metrics_before = dict(opened.get("metrics_before") or {})
     after = metrics_after or {
         "metric_graph": load_metric_graph(store, repo).get("averages") or {},
         "ranker_train_count": ranker_status(store, repo).get("train_count"),
     }
+    after = dict(after)
+    # Prefer explicit CLI floats, then probe slots stored on the open episode.
+    if recall_before is None and opened.get("recall_before") is not None:
+        recall_before = float(opened["recall_before"])
+    if recall_after is None and opened.get("recall_after") is not None:
+        recall_after = float(opened["recall_after"])
+    probe_after = opened.get("metrics_after_probe") or {}
+    if recall_after is None and probe_after.get("recall_at_k") is not None:
+        recall_after = float(probe_after["recall_at_k"])
     if recall_before is not None:
         metrics_before = {**metrics_before, "recall_at_k": recall_before}
     if recall_after is not None:
@@ -98,6 +221,11 @@ def evaluate_causal_episode(
         delta["recall_at_k"] = round(float(ra) - float(rb), 6)
     else:
         confounds.append("missing_recall_pair")
+        confounds.append(
+            "hint:run_causal_probe_before_and_after — "
+            "python -m cortex causal probe --repo REPO --task \"...\" "
+            "then probe again with --slot after, then evaluate"
+        )
 
     bb = (metrics_before.get("metric_graph") or {}).get("block_rate")
     ba = (after.get("metric_graph") or {}).get("block_rate")

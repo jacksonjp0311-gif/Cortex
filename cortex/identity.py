@@ -12,6 +12,31 @@ from typing import Any
 SCHEMA = "cortex-identity/1.0"
 GLYPH = "⌖"
 
+# Path markers that indicate a non-durable Cortex home (CI scratch, OS temp).
+_TEMP_HOME_MARKERS = (
+    "/temp/",
+    "\\temp\\",
+    "/tmp/",
+    "\\tmp\\",
+    "/tmpdir",
+    "\\tmpdir",
+    "appdata\\local\\temp",
+    "appdata/local/temp",
+    "/var/folders/",  # macOS temp
+    "temporarydirectory",
+    "/pytest-",
+    "\\pytest-",
+)
+
+
+def home_looks_temporary(home: Path | str | None) -> bool:
+    """True when home path is likely OS/CI temporary storage."""
+
+    if not home:
+        return False
+    normalized = str(Path(home).expanduser()).replace("\\", "/").casefold()
+    return any(marker in normalized for marker in _TEMP_HOME_MARKERS)
+
 
 def _row_dict(row: Any) -> dict[str, Any]:
     if row is None:
@@ -33,6 +58,7 @@ def continuity_check(
     *,
     repo: str | None = None,
     path: Path | str | None = None,
+    cortex_home: Path | str | None = None,
 ) -> dict[str, Any]:
     """Report identity aliases and continuity boundaries for a repo or path."""
 
@@ -63,6 +89,18 @@ def continuity_check(
     ids_on_path = {a.get("repository_id") for a in path_aliases}
     split_identity = multi_name_same_path and len(ids_on_path) > 1
 
+    home_path: str | None = None
+    if cortex_home is not None:
+        home_path = str(Path(cortex_home).expanduser())
+    else:
+        try:
+            home_path = str(getattr(store, "home", None) or "")
+            if not home_path:
+                home_path = None
+        except Exception:
+            home_path = None
+    temporary_home = home_looks_temporary(home_path)
+
     warnings: list[str] = []
     if multi_name_same_path:
         warnings.append(
@@ -78,6 +116,11 @@ def continuity_check(
         warnings.append(
             "alias_names_same_id — names share repository_id; still treat as one body"
         )
+    if temporary_home:
+        warnings.append(
+            "cortex_home_looks_temporary — cross-process memory continuity depends on "
+            "this home surviving; prefer a stable CORTEX_HOME (e.g. ~/.cortex) and re-bootstrap"
+        )
 
     return {
         "schema_version": SCHEMA,
@@ -87,9 +130,11 @@ def continuity_check(
         "primary": _row_dict(primary) if primary else None,
         "path_aliases": path_aliases,
         "id_aliases": id_aliases,
+        "cortex_home": home_path,
         "continuity": {
             "multi_name_same_path": multi_name_same_path,
             "split_identity": split_identity,
+            "temporary_home": temporary_home,
             "safe_to_assume_same_memory": (
                 not multi_name_same_path
                 or (len(ids_on_path) == 1 and not split_identity)
