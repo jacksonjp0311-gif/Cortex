@@ -34,7 +34,10 @@ jobs:
           cp assets/star-lattice.html _site/index.html
           cp assets/star-lattice.html _site/star-lattice.html
 
+      # Creates the Pages site if missing (Settings → Pages was never set).
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
