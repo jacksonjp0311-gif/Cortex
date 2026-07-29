@@ -46,12 +46,21 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
         latest = store.latest_session(repo)
         resolved_session = latest["session_id"] if latest else None
     if not resolved_session:
-        return {"created": False, "reason": "no session available"}
+        return {
+            "created": False,
+            "status": "no_session",
+            "reason": "no session available",
+        }
 
     events = store.events(repo, resolved_session)
     body = summarize_events(events)
     if not body:
-        return {"created": False, "reason": "no consolidatable events", "session_id": resolved_session}
+        return {
+            "created": False,
+            "status": "nothing_to_consolidate",
+            "reason": "no consolidatable events",
+            "session_id": resolved_session,
+        }
 
     session = store.session(resolved_session)
     task = session["task"] if session else "Unknown task"
@@ -70,6 +79,15 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
     card_hash = hashlib.sha256(card.encode("utf-8")).hexdigest()
     filename = f"{repo}-{resolved_session}-{card_hash[:10]}.md".replace("/", "_")
     path = home / "cards" / filename
+    if path.exists():
+        return {
+            "created": False,
+            "status": "duplicate_skip",
+            "reason": "identical discovery card already exists",
+            "session_id": resolved_session,
+            "path": str(path),
+            "card_hash": card_hash,
+        }
     path.write_text(card, encoding="utf-8")
 
     embedder = get_embedder()
@@ -99,6 +117,7 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
         clear_active(home, repo)
     return {
         "created": True,
+        "status": "created",
         "repo": repo,
         "session_id": resolved_session,
         "path": str(path),

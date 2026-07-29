@@ -23,6 +23,7 @@ def activate_repository(
     task: str,
     budget: int = 1200,
     refresh: str = "auto",
+    profile: str = "agent",
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -33,8 +34,36 @@ def activate_repository(
     manifest_current = observed_manifest == (repository["manifest_hash"] or "")
     refresh_result: dict[str, Any] | None = None
 
+    surprise: dict[str, Any] = {
+        "schema_version": "cortex-surprise/1.0",
+        "glyph": "Δ",
+        "refreshed": False,
+        "manifest_current_before": manifest_current,
+        "files_reindexed": 0,
+        "files_unchanged": 0,
+        "surprise_ratio": 0.0,
+        "claim_boundary": "Surprise is an incremental work proxy, not biological prediction error.",
+    }
     if refresh == "always" or (refresh == "auto" and not manifest_current):
         refresh_result = index_repository(store, repo, config, force=False)
+        reindexed = int(refresh_result.get("indexed_files_this_run") or 0)
+        unchanged = int(refresh_result.get("unchanged_files") or 0)
+        denom = max(1, reindexed + unchanged)
+        surprise = {
+            "schema_version": "cortex-surprise/1.0",
+            "glyph": "Δ",
+            "refreshed": True,
+            "manifest_current_before": False,
+            "files_reindexed": reindexed,
+            "files_unchanged": unchanged,
+            "deferred_files": int(
+                (refresh_result.get("aria_substrate") or {}).get("deferred_files") or 0
+            ),
+            "surprise_ratio": round(reindexed / denom, 6),
+            "claim_boundary": (
+                "Surprise is an incremental work proxy, not biological prediction error."
+            ),
+        }
         resolve_graph(store, repo)
         ingest_git(store, repo, root, config.git_commit_limit)
         environment = (
@@ -75,21 +104,32 @@ def activate_repository(
         manifest_current=manifest_current,
         certificate=certificate,
     )
+    # Attach surprise to efficiency for agent-visible economics.
+    if isinstance(context.get("efficiency"), dict):
+        context["efficiency"]["surprise"] = surprise
+    from .profiles import project_packet
+
+    full_context = context
+    context = project_packet(full_context, profile)
     session = begin_session(home, store, repo, task)
     runtime_path = runtime_directory(root, config) / "context_latest.json"
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
-    runtime_path.write_text(json.dumps(context, indent=2) + "\n", encoding="utf-8")
+    runtime_path.write_text(json.dumps(full_context, indent=2) + "\n", encoding="utf-8")
 
     return {
         "activation": "ready" if certificate["status"] == "verified" else "read_only",
         "repo": repo,
         "task": task,
+        "profile": profile,
         "bootstrap_status": certificate["status"],
         "manifest_current": manifest_current,
         "refresh": refresh_result,
+        "surprise": surprise,
+        "control_error": full_context.get("control_error"),
         "environment": environment,
         "neural_interlink": neural,
         "session": session,
         "context": context,
+        "context_full": full_context if profile != "debug" else None,
         "runtime_packet": str(runtime_path),
     }

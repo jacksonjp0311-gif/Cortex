@@ -1,0 +1,47 @@
+{
+  "schema_version": "cortex-retrieval-corpus/1.0",
+  "repo_hint": "Cortex",
+  "claim_boundary": "Self-host path-recall regression only; not universal answer quality.",
+  "cases": [
+    {
+      "id": "governor",
+      "query": "Governor evaluate stability mode read_only",
+      "expected_paths": ["cortex/governor.py"]
+    },
+    {
+      "id": "thalamus",
+      "query": "Thalamus route plan inhibit memory lanes",
+      "expected_paths": ["docs/THALAMUS.md", "thalamus/router.py", "thalamus/__init__.py"]
+    },
+    {
+      "id": "ritual",
+      "query": "session ritual activate remember consolidate",
+      "expected_paths": ["cortex/session_ritual.py", "docs/TRANSCEND.md", "docs/BRIGHT_POINT.md"]
+    },
+    {
+      "id": "mirror",
+      "query": "coherence mirror glow intensity",
+      "expected_paths": ["cortex/mirror.py", "docs/MIRROR.md"]
+    },
+    {
+      "id": "deferred-aria",
+      "query": "substrate_deferred ARIA indexing tier",
+      "expected_paths": ["cortex/indexer.py", "docs/ARIA_META_LANGUAGE.md", "cortex/aria_meta/substrate.py"]
+    },
+    {
+      "id": "covenant",
+      "query": "covenant five axes authority evidence activation",
+      "expected_paths": ["docs/COVENANT.md"]
+    },
+    {
+      "id": "mcp",
+      "query": "MCP stdio cortex_context tools",
+      "expected_paths": ["cortex/mcp.py"]
+    },
+    {
+      "id": "profiles",
+      "query": "packet profile agent debug minimal",
+      "expected_paths": ["cortex/profiles.py", "docs/TRANSCEND.md"]
+    }
+  ]
+}

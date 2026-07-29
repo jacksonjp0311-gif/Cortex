@@ -60,18 +60,44 @@ def remember(
 ) -> dict[str, Any]:
     active = active_session(home, repo)
     resolved_session = session_id or (active or {}).get("session_id")
-    store.add_event(resolved_session, repo, kind, text, metadata)
+    text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    meta = dict(metadata or {})
+    meta.setdefault("text_hash", text_hash)
+    # Idempotent within session: same kind+text_hash is a duplicate skip.
+    if resolved_session:
+        for event in store.events(repo, resolved_session):
+            if event["kind"] != kind:
+                continue
+            existing_meta = event["metadata"]
+            if isinstance(existing_meta, str):
+                try:
+                    existing_meta = json.loads(existing_meta or "{}")
+                except json.JSONDecodeError:
+                    existing_meta = {}
+            if (existing_meta or {}).get("text_hash") == text_hash or event["text"] == text:
+                return {
+                    "recorded": False,
+                    "duplicate": True,
+                    "status": "duplicate_skip",
+                    "repo": repo,
+                    "session_id": resolved_session,
+                    "kind": kind,
+                    "text_hash": text_hash,
+                }
+    store.add_event(resolved_session, repo, kind, text, meta)
     if active:
         active["updated_at"] = time.time()
         active["last_event_kind"] = kind
-        active["last_event_hash"] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        active["last_event_hash"] = text_hash
         _active_path(home, repo).write_text(json.dumps(active, indent=2) + "\n", encoding="utf-8")
     return {
         "recorded": True,
+        "duplicate": False,
+        "status": "recorded",
         "repo": repo,
         "session_id": resolved_session,
         "kind": kind,
-        "text_hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "text_hash": text_hash,
     }
 
 

@@ -20,6 +20,62 @@ def load_corpus(path: Path) -> dict[str, Any]:
     return payload
 
 
+def evaluate_retrieval_corpus(
+    store: Any,
+    corpus: dict[str, Any],
+    *,
+    default_repo: str | None = None,
+    limit: int = 8,
+    top_k: int = 3,
+) -> dict[str, Any]:
+    """Path-recall regression: expected paths must appear in top-k hits."""
+
+    results: list[dict[str, Any]] = []
+    hits_at_k = 0
+    for index, case in enumerate(corpus.get("cases") or [], 1):
+        repo = str(case.get("repo") or default_repo or "")
+        if not repo or not store.repo(repo):
+            raise ValueError(f"Retrieval case {index} has no attached repository")
+        query_text = str(case.get("query") or case.get("task") or "").strip()
+        expected = [str(path) for path in case.get("expected_paths", [])]
+        if not query_text or not expected:
+            raise ValueError(f"Retrieval case {index} needs query and expected_paths")
+        hits = query(store, repo, query_text, limit=limit)
+        paths = [hit.path.replace("\\", "/") for hit in hits[:top_k]]
+        expected_norm = [path.replace("\\", "/") for path in expected]
+        found = any(
+            any(path == exp or path.endswith(exp) or exp.endswith(path) for exp in expected_norm)
+            for path in paths
+        )
+        if found:
+            hits_at_k += 1
+        results.append(
+            {
+                "id": case.get("id") or f"case-{index}",
+                "query": query_text,
+                "expected_paths": expected_norm,
+                "returned_paths": paths,
+                "hit_at_k": found,
+            }
+        )
+    total = max(1, len(results))
+    recall = hits_at_k / total
+    return {
+        "schema_version": "cortex-retrieval-eval/1.0",
+        "glyph": "⌖",
+        "top_k": top_k,
+        "cases": len(results),
+        "hits_at_k": hits_at_k,
+        "recall_at_k": round(recall, 6),
+        "passed": recall >= float(corpus.get("minimum_recall_at_k", 0.5)),
+        "results": results,
+        "claim_boundary": (
+            corpus.get("claim_boundary")
+            or "Path-recall regression only; not universal answer quality."
+        ),
+    }
+
+
 def _rank(paths: list[str], expected: set[str]) -> int | None:
     for index, path in enumerate(paths, 1):
         if path in expected:

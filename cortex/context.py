@@ -8,11 +8,13 @@ from typing import Any
 
 from .config import load_repo_config
 from .constitutional import assess_context, memory_balance
+from .control_error import build_control_error
 from .environment import environment_summary
 from .efficiency import efficiency_telemetry
 from .graph import neighborhood
 from .hippocampus import active_session
 from .neuron import activate_interlink
+from .progress_glyphs import progress_glyph_registry
 from .resonance import clamp
 from .retrieval import materialize_aria_for_task, query, support_hits
 from thalamus import apply_feedback, inhibit, make_request, route
@@ -433,9 +435,38 @@ def build_context(
         for row in store.files(repo)
         if row["status"] == "substrate_deferred"
     )
+    control_error = build_control_error(
+        certificate=certificate,
+        governance=governance,
+        manifest_current=manifest_current,
+        retrieval_confidence=confidence,
+        aria_materialization=aria_materialization,
+        task=task,
+    )
+    instructions = _agent_instructions(aria_materialization, governance)
+    if control_error.get("errors"):
+        instructions = [
+            f"CONTROL_ERROR ({control_error['severity']}): {control_error['summary']}",
+            "Read control_error first. Obey must_reverify and work_allowed.",
+            *instructions,
+        ]
+    protocol = _agent_protocol(
+        repo=repo,
+        task=task,
+        aria_materialization=aria_materialization,
+        governance=governance,
+        deferred_remaining=deferred_remaining,
+    )
+    protocol["state"]["must_reverify"] = bool(control_error.get("must_reverify"))
+    protocol["state"]["control_severity"] = control_error.get("severity")
+    if control_error.get("must_reverify"):
+        protocol["hard_stops"] = list(
+            dict.fromkeys([*(protocol.get("hard_stops") or []), "ignore_control_error"])
+        )
     payload: dict[str, Any] = {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "generated_at": time.time(),
+        "control_error": control_error,
         "repository": {
             "name": repo,
             "repository_id": repository["repository_id"],
@@ -455,14 +486,9 @@ def build_context(
         "aria_materialization": aria_materialization,
         "evidence": selected,
         "structural_neighborhood": graph_context,
-        "instructions": _agent_instructions(aria_materialization, governance),
-        "agent_protocol": _agent_protocol(
-            repo=repo,
-            task=task,
-            aria_materialization=aria_materialization,
-            governance=governance,
-            deferred_remaining=deferred_remaining,
-        ),
+        "instructions": instructions,
+        "agent_protocol": protocol,
+        "progress_glyphs": progress_glyph_registry(),
     }
     payload["efficiency"] = efficiency_telemetry(
         direct_candidates=len(direct_hits),

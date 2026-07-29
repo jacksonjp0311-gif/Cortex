@@ -75,6 +75,13 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "glyph card", "purpose": "symbolic"},
     {"phrase": "glyph memory", "purpose": "symbolic"},
     {"phrase": "context weave", "purpose": "symbolic"},
+    {"phrase": "transcend check", "purpose": "governance"},
+    {"phrase": "packet profile", "purpose": "language"},
+    {"phrase": "control error", "purpose": "governance"},
+    {"phrase": "retrieval gate", "purpose": "language"},
+    {"phrase": "ritual idempotent", "purpose": "continuity"},
+    {"phrase": "incremental surprise", "purpose": "language"},
+    {"phrase": "teach surface", "purpose": "language"},
 )
 
 

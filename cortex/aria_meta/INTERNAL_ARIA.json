@@ -6,7 +6,7 @@
   "activation_policy": "task_gated_dormant_by_default",
   "runtime_fluency": {
     "typed_purposes": 7,
-    "immutable_core_cues": 26,
+    "immutable_core_cues": 33,
     "learned_cue_limit": 32,
     "wake_threshold": 0.65,
     "adaptation": "verified_relevance_only",

@@ -163,6 +163,85 @@ class ResonanceContactTests(unittest.TestCase):
         self.assertEqual(field["brightness"], "bright")
 
 
+class ProgressStackTests(unittest.TestCase):
+    def test_profiles_and_control_error(self) -> None:
+        from cortex.control_error import build_control_error
+        from cortex.profiles import project_packet
+
+        err = build_control_error(
+            certificate={"status": "verified"},
+            governance={"mode": "read_only"},
+            manifest_current=True,
+            retrieval_confidence=0.9,
+            aria_materialization={"mode": "dormant"},
+        )
+        self.assertFalse(err["work_allowed"])
+        self.assertTrue(err["must_reverify"])
+        full = {
+            "schema_version": "1.3",
+            "task": "t",
+            "repository": {"name": "R"},
+            "governor": {"mode": "normal"},
+            "control_error": err,
+            "instructions": ["1"],
+            "agent_protocol": {"hard_stops": [], "state": {"allowed_actions": ["read"]}},
+            "evidence": [{"path": "a.py", "line_range": [1, 2], "kind": "source", "score": 1.0}],
+            "aria_materialization": {"mode": "dormant", "materialized": False},
+            "geometry": {"zero_point": True, "axes": {}},
+            "efficiency": {},
+            "packet_hash": "x",
+        }
+        agent = project_packet(full, "agent")
+        minimal = project_packet(full, "minimal")
+        debug = project_packet(full, "debug")
+        self.assertEqual(agent["profile"], "agent")
+        self.assertIn("control_error", agent)
+        self.assertIn("governor", agent)
+        self.assertEqual(minimal["profile"], "minimal")
+        self.assertIn("evidence", minimal)
+        self.assertEqual(debug["profile"], "debug")
+
+    def test_remember_idempotent(self) -> None:
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="idem-")) / "home")
+        repo = Path(tempfile.mkdtemp(prefix="idem-repo-"))
+        (repo / "README.md").write_text("# I\n\n## API\n\nx\n", encoding="utf-8")
+        (repo / "a.py").write_text("def a():\n    return 1\n", encoding="utf-8")
+        store = Store(home / "cortex.db")
+        bootstrap_repository(home, store, repo, "IdemHost")
+        from cortex.session_ritual import run_session_ritual
+
+        once = run_session_ritual(
+            home,
+            store,
+            Governor(home, store),
+            "IdemHost",
+            "idempotent ritual",
+            memories=[{"kind": "discovery", "text": "same-fact-twice"}],
+            consolidate_session=True,
+        )
+        self.assertTrue(
+            once["consolidate"].get("created")
+            or once["consolidate"].get("status") == "created"
+        )
+        from cortex.hippocampus import remember
+
+        # After consolidate, open a new session and verify de-dupe within it.
+        activate_repository(
+            home, store, Governor(home, store), "IdemHost", "retry session", budget=400
+        )
+        remember(home, store, "IdemHost", "discovery", "unique-once")
+        third = remember(home, store, "IdemHost", "discovery", "unique-once")
+        self.assertTrue(third.get("duplicate") or third.get("status") == "duplicate_skip")
+        store.close()
+
+    def test_progress_glyphs_registry(self) -> None:
+        from cortex.progress_glyphs import progress_glyph_registry
+
+        reg = progress_glyph_registry()
+        self.assertGreaterEqual(len(reg["glyphs"]), 7)
+        self.assertFalse(reg["automatic_execution"])
+
+
 class TranscendProtocolTests(unittest.TestCase):
     def test_protocol_and_nexus_carry_agent_protocol(self) -> None:
         from cortex.context import build_context, cortex_context_protocol, nexus_packet

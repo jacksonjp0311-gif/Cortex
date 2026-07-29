@@ -42,6 +42,11 @@
     {"id": "governance-homeostasis", "task": "Inspect constitutional homeostasis", "expected_mode": "active", "expected_purposes": ["governance"]},
     {"id": "continuity-semantic-handoff", "task": "Author a semantic handoff packet", "expected_mode": "active", "expected_purposes": ["continuity"]},
     {"id": "combined", "task": "Use ARIA semantic replay with a cooperative mesh", "expected_mode": "active", "expected_purposes": ["language", "continuity", "coordination"]},
-    {"id": "combined-governance", "task": "ARIA governed evolution with capability authority", "expected_mode": "active", "expected_purposes": ["language", "governance"]}
+    {"id": "combined-governance", "task": "ARIA governed evolution with capability authority", "expected_mode": "active", "expected_purposes": ["language", "governance"]},
+    {"id": "progress-transcend", "task": "Run transcend check on the bright point", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "progress-profile", "task": "Select a packet profile for the agent", "expected_mode": "active", "expected_purposes": ["language"]},
+    {"id": "progress-control", "task": "Inspect the control error vector", "expected_mode": "active", "expected_purposes": ["governance"]},
+    {"id": "dormant-error-handling", "task": "Improve error handling in the API", "expected_mode": "dormant"},
+    {"id": "dormant-profile-page", "task": "Update the user profile page styles", "expected_mode": "dormant"}
   ]
 }

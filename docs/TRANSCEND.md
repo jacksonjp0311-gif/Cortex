@@ -47,12 +47,28 @@ this machine-checkable.
 - glow-chasing without gates  
 - unsolicited foreign repo scan  
 
+## Progress glyphs (ARIA labels → Cortex surfaces)
+
+| Glyph | Spoken | Maps to |
+|---|---|---|
+| ⟡ | transcend check | `cortex transcend-check` |
+| ▣ | packet profile | `cortex activate --profile agent\|debug\|minimal` |
+| ⚠ | control error | `packet.control_error` (read first) |
+| ⌖ | retrieval gate | `cortex evaluate --mode retrieval` |
+| ⟳ | ritual idempotent | `cortex ritual` |
+| Δ | incremental surprise | `packet.efficiency.surprise` |
+| ☰ | teach surface | `cortex teach` |
+
+Capability-free. Never auto-execute. Never authorize mutation.
+
 ## Self-host checks (this tree)
 
 ```bash
 python -m pytest tests -q
+python -m cortex transcend-check --json
 python -m cortex mirror --json
 python -m cortex contact --json
+python -m cortex teach
 ```
 
 ## Claim boundary

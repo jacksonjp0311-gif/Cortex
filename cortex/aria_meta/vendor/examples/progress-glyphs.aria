@@ -1,0 +1,20 @@
+// Capability-free progress glyphs — labels only, no execution authority.
+// Cortex maps these to ordinary CLI/MCP surfaces.
+// ⟡ TranscendCheck
+// ▣ PacketProfile
+// ⚠ ControlError
+// ⌖ RetrievalGate
+// ⟳ RitualIdempotent
+// Δ SurpriseMetric
+// ☰ TeachSurface
+
+fn main() {
+  // Observational: these names document operator speed, not privileges.
+  let _ = TranscendCheck();
+  let _ = PacketProfile();
+  let _ = ControlError();
+  let _ = RetrievalGate();
+  let _ = RitualIdempotent();
+  let _ = SurpriseMetric();
+  let _ = TeachSurface();
+}

@@ -23,13 +23,30 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
         command = "cortex activate --repo {0} --task \"<task>\" --refresh packet-refresh --json".format(repo)
     elif vectors["legacy_or_invalid"]:
         command = f"cortex migrate-vectors --repo {repo} --json"
+    gov = governor.evaluate(repo, manifest_current=current, certificate=certificate)
+    from .control_error import build_control_error
+    from .progress_glyphs import progress_glyph_registry
+
+    control = build_control_error(
+        certificate=certificate,
+        governance=gov,
+        manifest_current=current,
+        retrieval_confidence=0.0,
+        aria_materialization={},
+    )
+    if control.get("must_reverify"):
+        command = f"cortex verify --repo {repo} --json"
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "repo": repo,
         "certificate_status": certificate["status"],
-        "governor": governor.evaluate(repo, manifest_current=current, certificate=certificate),
+        "governor": gov,
+        "control_error": control,
         "drift": {"classification": drift, "manifest_current": current, "volatile_surfaces_excluded": True},
         "vectors": vectors,
+        "progress_glyphs": progress_glyph_registry(),
         "recommended_next_command": command,
+        "teach": "cortex teach",
+        "transcend_check": "cortex transcend-check --json",
         "claim_boundary": "Health is local operational telemetry; it grants no mutation authority.",
     }

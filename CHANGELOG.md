@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.3.0 - Rapid progress (P0–P6)
+
+- **P0 ⟡ transcend-check:** falsifies protocol, red modes, ritual, fluency, mirror glow.
+- **P1 ▣ packet profiles:** `agent` | `debug` | `minimal` via `--profile`.
+- **P2 ⚠ control_error:** single error vector agents read first; must_reverify coupling.
+- **P3 ⌖ retrieval corpus:** path-recall eval (`cortex evaluate --mode retrieval`).
+- **P4 ⟳ ritual idempotency:** remember de-dupe; consolidate statuses; block on control error.
+- **P5 Δ surprise:** incremental reindex ratio on activate refresh.
+- **P6 ☰ teach + doctor:** `cortex teach`; health exposes control_error + glyph map.
+- ARIA progress glyphs (capability-free labels only).
+- Self-host only unless operator names a path.
+
 ## 3.2.3 - Transcend (packet-first agent surfaces)
 
 - **One language every door:** `agent_protocol` + `instructions` on activate,

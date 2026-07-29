@@ -37,9 +37,12 @@ from .neuron import activate_interlink, neural_graph_state
 from .retrieval import query
 from .store import Store
 from .contact import run_contact
+from .evaluation import evaluate_retrieval_corpus
 from .mirror import run_mirror
+from .progress_glyphs import progress_glyph_registry
 from .session_ritual import run_session_ritual
 from .selftest import run_self_test
+from .transcend import run_transcend_check
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
 from .verify import verify_repository
@@ -84,6 +87,12 @@ def build_parser() -> argparse.ArgumentParser:
     activate.add_argument("--task", required=True)
     activate.add_argument("--budget", type=int, default=1200)
     activate.add_argument("--refresh", choices=["auto", "always", "never", "packet-fast", "packet-refresh", "bootstrap-full"], default="auto")
+    activate.add_argument(
+        "--profile",
+        choices=["agent", "debug", "minimal"],
+        default="agent",
+        help="Packet disclosure profile (HCI progressive disclosure).",
+    )
     activate.add_argument("--json", action="store_true")
 
     index = sub.add_parser("index", help="Incrementally index an attached repository.")
@@ -273,6 +282,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Activate and remember only; skip Discovery Card.",
     )
+    ritual.add_argument(
+        "--force",
+        action="store_true",
+        help="Consolidate even when control_error.must_reverify is set.",
+    )
+    ritual.add_argument(
+        "--profile",
+        choices=["agent", "debug", "minimal"],
+        default="agent",
+    )
     ritual.add_argument("--json", action="store_true")
 
     verify = sub.add_parser("verify", help="Verify assimilation and issue a certificate.")
@@ -311,10 +330,17 @@ def build_parser() -> argparse.ArgumentParser:
     lifecycle.add_argument("--json", action="store_true")
 
     evaluate = sub.add_parser(
-        "evaluate", help="Run a repository-native replay corpus against base and learned routing."
+        "evaluate",
+        help="Run replay or retrieval corpus evaluation.",
     )
     evaluate.add_argument("corpus")
     evaluate.add_argument("--repo")
+    evaluate.add_argument(
+        "--mode",
+        choices=["replay", "retrieval"],
+        default="replay",
+        help="replay=base/learned neural; retrieval=path-recall top-k gate",
+    )
     evaluate.add_argument("--json", action="store_true")
 
     dashboard = sub.add_parser(
@@ -343,6 +369,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mirror.add_argument("--name", default="CortexMirror")
     mirror.add_argument("--json", action="store_true")
+
+    transcend = sub.add_parser(
+        "transcend-check",
+        help="Falsify operational transcendence: protocol, red modes, ritual, glow.",
+    )
+    transcend.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Repository root for mirror glow (default: .).",
+    )
+    transcend.add_argument("--skip-mirror", action="store_true")
+    transcend.add_argument("--json", action="store_true")
+
+    teach = sub.add_parser(
+        "teach",
+        help="Print packet-first operator teaching surface (TRANSCEND + glyphs).",
+    )
+    teach.add_argument("--json", action="store_true")
 
     contact = sub.add_parser(
         "contact",
@@ -409,6 +454,7 @@ def main(argv: list[str] | None = None) -> None:
                 args.task,
                 budget=args.budget,
                 refresh=refresh,
+                profile=args.profile,
             )
             result["requested_mode"] = args.refresh
             emit(result, args.json)
@@ -694,6 +740,8 @@ def main(argv: list[str] | None = None) -> None:
                     budget=args.budget,
                     memories=memories,
                     consolidate_session=not args.no_consolidate,
+                    profile=args.profile,
+                    force=args.force,
                 ),
                 args.json,
             )
@@ -800,14 +848,70 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "evaluate":
             corpus_path = Path(args.corpus).expanduser().resolve()
+            corpus = load_corpus(corpus_path)
+            if args.mode == "retrieval":
+                emit(
+                    evaluate_retrieval_corpus(
+                        store, corpus, default_repo=args.repo
+                    ),
+                    args.json,
+                )
+            else:
+                emit(
+                    evaluate_corpus(
+                        store,
+                        corpus,
+                        default_repo=args.repo,
+                    ),
+                    args.json,
+                )
+
+        elif command == "transcend-check":
             emit(
-                evaluate_corpus(
-                    store,
-                    load_corpus(corpus_path),
-                    default_repo=args.repo,
+                run_transcend_check(
+                    root=Path(args.path).expanduser().resolve(),
+                    run_mirror_glow=not args.skip_mirror,
                 ),
                 args.json,
             )
+
+        elif command == "teach":
+            root = Path(__file__).resolve().parents[1]
+            transcend_doc = root / "docs" / "TRANSCEND.md"
+            bright_doc = root / "docs" / "BRIGHT_POINT.md"
+            text = ""
+            if transcend_doc.is_file():
+                text += transcend_doc.read_text(encoding="utf-8")
+            if bright_doc.is_file():
+                text += "\n\n---\n\n" + bright_doc.read_text(encoding="utf-8")
+            payload = {
+                "schema_version": "cortex-teach/1.0",
+                "glyph": "☰",
+                "install": [
+                    "pip install -e .",
+                    "python -m cortex init --json",
+                    "python -m cortex bootstrap . --name Cortex --json",
+                    'python -m cortex activate --repo Cortex --task "<task>" --profile agent --json',
+                    'python -m cortex ritual --repo Cortex --task "<task>" --remember-text "<fact>" --json',
+                    "python -m cortex transcend-check --json",
+                    "python -m cortex mirror --json",
+                ],
+                "progress_glyphs": progress_glyph_registry(),
+                "markdown": text,
+                "claim_boundary": "Teaching surface only; never mutation authority.",
+            }
+            if args.json:
+                emit(payload, True)
+            else:
+                print(text)
+                print("\n## Install\n")
+                for line in payload["install"]:
+                    print(f"- `{line}`")
+                print("\n## Progress glyphs (ARIA labels, not execution)\n")
+                for key, glyph in progress_glyph_registry()["glyphs"].items():
+                    print(
+                        f"- {glyph['symbol']}  {glyph['spoken']} → `{glyph['maps_to']}`"
+                    )
 
         elif command == "dashboard":
             repository = store.repo(args.repo)
