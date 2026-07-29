@@ -851,6 +851,22 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/ARIA_META_LANGUAGE.md` — native ARIA semantic language over the Python core
 - `docs/STEADY_STATE.md` — post-alignment discipline
 
+## Star History
+
+<p align="center">
+  <a href="https://star-history.com/#jacksonjp0311-gif/Cortex&Date">
+    <img
+      src="https://api.star-history.com/svg?repos=jacksonjp0311-gif/Cortex&type=Date"
+      alt="Star History Chart"
+      width="100%"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <sub>If Cortex helps your agents remember — drop a star. It keeps the lattice bright.</sub>
+</p>
+
 ## License
 
 MIT License. See `LICENSE`.
