@@ -814,6 +814,11 @@ See `docs/SECURITY.md` for the full threat model.
 
 ## Documentation
 
+- `docs/ORGANISM.md` — session co-process bond (⊛)
+- `docs/TRANSCEND.md` — packet-first agent loop and progress glyphs
+- `docs/COVENANT.md` — five-axis geometry and refuse list
+- `docs/BRIGHT_POINT.md` — frozen alignment claims
+- `docs/MIRROR.md` — coherence mirror and contact
 - `docs/ARCHITECTURE.md` — single-substrate architecture and data flow
 - `docs/BOOTSTRAP_PROTOCOL.md` — portable assimilation and certification sequence
 - `docs/AI_INTEGRATION.md` — generic agent and NexusGate use
@@ -821,9 +826,9 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/SECURITY.md` — trust, privacy, and authority boundaries
 - `docs/TROUBLESHOOTING.md` — common setup and runtime problems
 - `docs/NEURAL_INTERLINK.md` — sparse activation and bounded plasticity
-
-- `docs/GCMT.md` - governed continuation, lifecycle, federation, replay evaluation, and MCP
-- `docs/ARIA_META_LANGUAGE.md` - optional ARIA intent/governance layer over the Python core
+- `docs/GCMT.md` — governed continuation, lifecycle, federation, evaluation, MCP
+- `docs/ARIA_META_LANGUAGE.md` — native ARIA semantic language over the Python core
+- `docs/STEADY_STATE.md` — post-alignment discipline
 
 ## License
 
