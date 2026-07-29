@@ -885,7 +885,7 @@ python -m http.server 8765 --directory assets
 # then open http://127.0.0.1:8765/star-lattice.html
 ```
 
-> GitHub README markdown cannot execute JavaScript, so the image above is a committed SVG kept current by `.github/workflows/star-lattice.yml`. True pull-on-reload is the live HTML (`assets/star-lattice.html`), hosted first-party on GitHub Pages after the pages workflow runs (repo **Settings → Pages → GitHub Actions**).
+> GitHub README markdown cannot execute JavaScript, so the image above is a committed SVG kept current by `.github/workflows/star-lattice.yml`. The live page cannot call `api.github.com` stargazers from the browser (401 without a token); Actions/`gh` write `assets/star-metrics.json` and Pages serves it same-origin for fetch-on-reload.
 
 <p align="center">
   <sub>If Cortex helps your agents remember — drop a star. It keeps the lattice bright.</sub>
