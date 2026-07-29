@@ -62,7 +62,8 @@ POWERSHELL_WRAPPER = r'''param(
         "verify", "status", "graph", "telemetry", "environment", "meta-language",
         "thalamus", "interlink", "neural-replay", "doctor",
         "identity", "distill", "kernels", "interconnect", "immune", "metrics",
-        "prune", "organism", "breathe", "causal", "glyphs", "evolve", "stream"
+        "prune", "organism", "breathe", "causal", "glyphs", "evolve", "stream",
+        "harness", "hygiene"
     )]
     [string]$Command = "activate",
     [string]$Task = "",
@@ -221,6 +222,12 @@ if ($Command -eq "stream") {
     } else {
         $ArgsList += @("stream", "status", "--repo", $RepoName, "--json")
     }
+}
+if ($Command -eq "harness") {
+    $ArgsList += @("harness", "--repo", $RepoName, "--budget", "$Budget", "--json")
+}
+if ($Command -eq "hygiene") {
+    $ArgsList += @("hygiene", "--repo", $RepoName, "--json")
 }
 if ($Command -eq "evolve") {
     if ([string]::IsNullOrWhiteSpace($Text)) {
@@ -476,6 +483,19 @@ case "$COMMAND" in
         ;;
       *) echo "Unknown stream action: $SACTION (status|seal)" >&2; exit 2 ;;
     esac
+    ;;
+  harness)
+    BUDGET="500"
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --budget) BUDGET="${2:-500}"; shift 2 ;;
+        *) echo "Unknown harness argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" harness --repo "$REPO_NAME" --budget "$BUDGET" --json
+    ;;
+  hygiene)
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" hygiene --repo "$REPO_NAME" --json
     ;;
   evolve)
     ACT=""

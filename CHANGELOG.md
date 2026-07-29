@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.8.0 - Signal validation + ARIA phrasebook
+
+- **Envelope parity:** `activate --json` root always includes `glyph_state`, `glyph_line`, lean `stream`, `aria_language`.
+- **Phrasebook:** reusable ARIA lines (`wake_safe`, `aria_awake`, `loop_close`, `stream_rebind`, …) via `glyphs --phrasebook|--phrase`.
+- **Harness ⟲:** `cortex harness --repo` runs matched activate→evolve suite; reports recall pairs, ranker train, envelope checks.
+- **Hygiene ✂:** `cortex hygiene` + health.hygiene (nodes, weak synapses, temp home, advice).
+- Doctrine + PHASE_V6.8 exit criteria. Still recommend-only; glyphs never execute.
+
 ## 6.7.0 - Consciousness stream 〰
 
 - **Stream 〰:** durable episodic frame ledger; activate rebinds; consolidate seals session bond but stream continues.

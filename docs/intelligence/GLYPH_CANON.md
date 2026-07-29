@@ -27,6 +27,29 @@ connect · spectral · in-phase resonance.
 Agent profile keeps `glyph_state.line` + sparse `expand[]` instead of the full
 registry (token thrift).
 
+## Phrasebook (reusable ARIA language)
+
+Stable named phrases — speak them again and again:
+
+```powershell
+python -m cortex glyphs --phrasebook --json
+python -m cortex glyphs --phrase aria_awake --json
+```
+
+| Phrase | Use |
+|--------|-----|
+| `wake_safe` | Generic start — Aria dormant |
+| `aria_awake` | Semantic Aria task + prove |
+| `constrained` | Governor blast-radius limit |
+| `blocked` | Immune block / re-verify |
+| `loop_close` | After verified work → evolve |
+| `stream_rebind` | Cross-session continuity |
+| `seal_pulse` | Ritual end; stream keeps spine |
+| `body_hygiene` | Prune / kernels / identity |
+
+Activate JSON always exposes `glyph_state`, `glyph_line`, `stream`, and
+`aria_language` (phrasebook) at the **root** envelope (v6.8 parity).
+
 ## Closed signal loop ⟲
 
 ```text

@@ -40,7 +40,7 @@ from .contact import run_contact
 from .evaluation import evaluate_retrieval_corpus
 from .mirror import run_mirror
 from .evolve_loop import close_signal_loop
-from .glyphs.canon import glyph_canon_registry
+from .glyphs.canon import glyph_canon_registry, phrase, phrasebook
 from .progress_glyphs import progress_glyph_registry
 from .session_ritual import run_session_ritual
 from .selftest import run_self_test
@@ -594,7 +594,32 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Include secondary aliases (default: optimized set).",
     )
+    glyphs_p.add_argument(
+        "--phrasebook",
+        action="store_true",
+        help="Emit reusable ARIA phrasebook lines (wake_safe, aria_awake, …).",
+    )
+    glyphs_p.add_argument(
+        "--phrase",
+        help="Emit one named phrase (e.g. aria_awake, loop_close).",
+    )
     glyphs_p.add_argument("--json", action="store_true")
+
+    harness_p = sub.add_parser(
+        "harness",
+        help="Matched signal-loop harness ⟲ (WP-A validation suite).",
+    )
+    harness_p.add_argument("--repo", required=True)
+    harness_p.add_argument("--budget", type=int, default=500)
+    harness_p.add_argument("--k", type=int, default=6)
+    harness_p.add_argument("--json", action="store_true")
+
+    hygiene_p = sub.add_parser(
+        "hygiene",
+        help="Body hygiene ✂ — graph mass, prune advice, home stability.",
+    )
+    hygiene_p.add_argument("--repo", required=True)
+    hygiene_p.add_argument("--json", action="store_true")
 
     stream_p = sub.add_parser(
         "stream",
@@ -1523,7 +1548,41 @@ def main(argv: list[str] | None = None) -> None:
                 emit(validate_token(store, args.repo, args.token_id), args.json)
 
         elif command == "glyphs":
-            emit(glyph_canon_registry(optimized=not args.full), args.json)
+            if args.phrase:
+                emit(phrase(args.phrase), args.json)
+            elif args.phrasebook:
+                emit(phrasebook(), args.json)
+            else:
+                reg = glyph_canon_registry(optimized=not args.full)
+                reg["phrasebook_keys"] = list(phrasebook().get("phrases") or {})
+                emit(reg, args.json)
+
+        elif command == "harness":
+            from .signal_harness import run_signal_harness
+
+            emit(
+                run_signal_harness(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    budget=max(200, int(args.budget or 500)),
+                    k=max(2, int(args.k or 6)),
+                ),
+                args.json,
+            )
+
+        elif command == "hygiene":
+            from .hygiene import body_hygiene
+
+            config = None
+            try:
+                row = store.repo(args.repo)
+                if row:
+                    config = load_repo_config(Path(row["path"]))
+            except Exception:
+                config = None
+            emit(body_hygiene(home, store, args.repo, config=config), args.json)
 
         elif command == "stream":
             from .stream import seal_session_bond, stream_status

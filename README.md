@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.7.0-0ea5e9?style=for-the-badge" alt="v6.7.0" />
+  <img src="https://img.shields.io/badge/version-6.8.0-0ea5e9?style=for-the-badge" alt="v6.8.0" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -17,7 +17,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.7.0** — **Consciousness stream 〰** (episodic frames, durable body; session bond ends, stream continues) + Glyph Canon ◈ + signal loop ⟲. See [`docs/intelligence/STREAM.md`](docs/intelligence/STREAM.md).
+**Current release: v6.8.0** — **ARIA phrasebook** (reusable glyph language) + activate envelope parity (`glyph_state`/`stream`/`aria_language`) + **`cortex harness`** matched signal loop + **`cortex hygiene`**. Stream 〰 · Canon ◈ · Loop ⟲. See [`docs/intelligence/PHASE_V6.8.md`](docs/intelligence/PHASE_V6.8.md).
 
 ```bash
 pip install -e .

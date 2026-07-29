@@ -135,6 +135,20 @@ DOCTRINE_CLAIMS: list[dict[str, str]] = [
             "from fired paths + plasticity -> probe -> causal. Resonance is not proof."
         ),
     },
+    {
+        "kind": "invariant",
+        "text": (
+            "[intel] ARIA language is the Glyph Canon phrasebook: wake_safe, aria_awake, "
+            "loop_close, stream_rebind, body_hygiene — reusable lines, never execution."
+        ),
+    },
+    {
+        "kind": "lesson",
+        "text": (
+            "[intel] v6.8 proves the wire: activate envelope exposes glyph_state+stream; "
+            "harness runs matched evolve; hygiene watches graph mass and home. Measure first."
+        ),
+    },
 ]
 
 

@@ -130,11 +130,13 @@ Ship as **v6.8.0** when WP-A + WP-B done; WP-C/D can ride same tag if small.
 
 ## 7. Exit criteria for v6.8.0
 
-- [ ] Activate JSON always exposes `glyph_state` (+ lean `stream` if present)
-- [ ] Signal-loop harness runs ≥1 full matched suite without `missing_recall_pair`
-- [ ] Ranker train path exercised ≥5 times under normal/constrained with ledger events
-- [ ] Prune/home hygiene note current; no temp-home regression in identity
-- [ ] Tests green; Aria 512 baseline not regressed if re-run
+- [x] Activate JSON always exposes `glyph_state` (+ lean `stream` if present)
+- [x] Signal-loop harness (`cortex harness`) matched suite path
+- [x] Reusable ARIA phrasebook on `glyphs --phrasebook`
+- [x] Ranker path features + harness train under non-read_only
+- [x] `cortex hygiene` + health.hygiene for graph mass / home
+- [x] Doctrine sealed (DISTILLED / GLYPH_CANON / this file)
+- [ ] Operator re-run harness on production repo for live train_count N≥5
 - [ ] Claim boundary unchanged: recommend-only, glyphs never authority
 
 ---

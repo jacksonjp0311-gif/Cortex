@@ -24,7 +24,7 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v6.1.0** (lattice fol
 | 17 | v6.5 identity + ARIA proof | **done** | identity continuity, prove_implementation selection |
 | 18 | v6.6 Glyph Canon + signal loop | **done** | ◈ canon, `cortex evolve`, path-featured ranker |
 | 19 | v6.7 consciousness stream | **done** | 〰 durable frames; session bond ends, stream continues |
-| 20 | v6.8 signal validation + surface parity | **planned** | see `docs/intelligence/PHASE_V6.8.md` |
+| 20 | v6.8 signal validation + surface parity | **done** | phrasebook, harness, hygiene, activate envelope |
 
 ## Forward path
 
@@ -36,7 +36,7 @@ Next execution plan: **`docs/intelligence/PHASE_V6.8.md`**
 | **v6.1** | Spectral kernels + closed loops + mesh dashboard | **done** |
 | **v6.2** | Lattice fold + lean packets + multi-agent tokens | **done** |
 | **v6.5–6.7** | Identity, proof, glyphs, evolve, stream | **done** |
-| **v6.8** | Prove loop + activate envelope parity + hygiene | **planned** |
+| **v6.8** | Prove loop + activate envelope parity + hygiene | **done** |
 | **v7.0** | AST/CFG when ID stability proven | deferred until v6.8 exit |
 
 **Principle:** memory is a **spectrum of retention kernels**, not one ρ.

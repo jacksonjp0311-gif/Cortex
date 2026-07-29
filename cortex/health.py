@@ -51,8 +51,18 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
             "reverify_boundary — after mirror/contact stress or manifest drift, "
             "run activate or verify before treating health as steady-state"
         )
+    hygiene: dict[str, Any] | None = None
+    try:
+        from .hygiene import body_hygiene
+
+        hygiene = body_hygiene(home, store, repo, config=config)
+        for tip in hygiene.get("advice") or []:
+            if tip not in {"hold_course"} and tip not in binding_notes:
+                binding_notes.append(f"hygiene:{tip}")
+    except Exception:
+        hygiene = None
     return {
-        "schema_version": "1.3",
+        "schema_version": "1.4",
         "repo": repo,
         "certificate_status": certificate["status"],
         "governor": gov,
@@ -66,11 +76,14 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
             "temporary": temporary_home,
             "config_cortex_home": getattr(config, "cortex_home", None),
         },
+        "hygiene": hygiene,
         "binding_notes": binding_notes,
         "progress_glyphs": progress_glyph_registry(),
         "recommended_next_command": command,
         "identity": f"cortex identity --repo {repo} --json",
         "immune": f"cortex immune --repo {repo} --json",
+        "hygiene_cmd": f"cortex hygiene --repo {repo} --json",
+        "harness": f"cortex harness --repo {repo} --json",
         "teach": "cortex teach",
         "transcend_check": "cortex transcend-check --json",
         "claim_boundary": "Health is local operational telemetry; it grants no mutation authority.",

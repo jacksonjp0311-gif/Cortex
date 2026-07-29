@@ -289,6 +289,95 @@ def speak(key: str) -> str:
     return str(entry.get("spoken") or key)
 
 
+# Reusable ARIA language: named phrases operators/agents can speak again and again.
+# Keys are stable; compact lines are the medium; maps_to stays capability-free.
+PHRASEBOOK: dict[str, dict[str, Any]] = {
+    "wake_safe": {
+        "keys": ["immune_gate", "dormant", "organism_pulse", "consciousness_stream", "connect_pass"],
+        "spoken": "immune open, aria dormant, organism bond, stream, connect",
+        "use": "Generic task start — keep Aria silent.",
+    },
+    "aria_awake": {
+        "keys": ["immune_gate", "awake", "organism_pulse", "consciousness_stream", "connect_pass", "prove_implementation"],
+        "spoken": "immune open, aria awake, organism bond, stream, connect, prove",
+        "use": "ARIA-semantic task — expect substrate + proof ranking.",
+    },
+    "constrained": {
+        "keys": ["control_error", "organism_pulse", "connect_pass"],
+        "spoken": "control constrained, organism bond, connect",
+        "use": "Governor constrained — narrow blast radius.",
+    },
+    "blocked": {
+        "keys": ["block", "control_error", "immune_gate"],
+        "spoken": "block, control error, immune",
+        "use": "Immune block — re-verify before work.",
+    },
+    "loop_close": {
+        "keys": ["signal_loop", "causal", "ranker"],
+        "spoken": "signal loop, causal, ranker",
+        "use": "After verified work — run cortex evolve.",
+    },
+    "stream_rebind": {
+        "keys": ["consciousness_stream", "organism_pulse", "ritual_idempotent"],
+        "spoken": "stream, organism bond, ritual",
+        "use": "Cross-session continuity — bond ends, stream continues.",
+    },
+    "seal_pulse": {
+        "keys": ["ritual_idempotent", "distill_intel", "consciousness_stream"],
+        "spoken": "ritual seal, distill, stream",
+        "use": "End cardiac cycle; keep stream spine.",
+    },
+    "body_hygiene": {
+        "keys": ["graph_prune", "spectral_kernels", "identity"],
+        "spoken": "prune, kernels, identity",
+        "use": "Graph mass / home stability check.",
+    },
+}
+
+
+def phrasebook() -> dict[str, Any]:
+    """Stable reusable phrases for ARIA/agent language (capability-free)."""
+
+    out: dict[str, Any] = {}
+    for name, meta in PHRASEBOOK.items():
+        keys = list(meta.get("keys") or [])
+        line = compact_line(keys)
+        out[name] = {
+            "name": name,
+            "line": line,
+            "keys": keys,
+            "spoken": meta.get("spoken"),
+            "use": meta.get("use"),
+            "expand": expand_line(line),
+        }
+    return {
+        "schema_version": "cortex-aria-phrasebook/1.0",
+        "glyph": CANON_GLYPH,
+        "phrases": out,
+        "count": len(out),
+        "automatic_execution": False,
+        "claim_boundary": (
+            "Phrasebook lines are reusable ARIA-facing labels; never execute plans."
+        ),
+    }
+
+
+def speak_line(line: str) -> list[str]:
+    """Spoken sequence for a compact glyph line."""
+
+    return [item.get("spoken") or item.get("symbol") or "" for item in expand_line(line)]
+
+
+def phrase(name: str) -> dict[str, Any]:
+    """Lookup one reusable phrase by name."""
+
+    book = phrasebook()
+    phrases = book.get("phrases") or {}
+    if name not in phrases:
+        raise KeyError(f"Unknown phrase: {name}. Known: {sorted(phrases)}")
+    return phrases[name]
+
+
 def compact_line(keys: list[str] | tuple[str, ...]) -> str:
     """Ultra-lean glyph stream for agent packets (meta role)."""
 

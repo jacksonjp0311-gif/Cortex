@@ -299,6 +299,41 @@ def activate_repository(
         identity_report = continuity_check(store, repo=repo)
     except Exception:
         identity_report = None
+    # Envelope parity (v6.8): glyph_state + stream always on activate JSON root.
+    glyph_state = full_context.get("glyph_state") or context.get("glyph_state")
+    stream_env = full_context.get("stream") or context.get("stream")
+    if isinstance(stream_env, dict):
+        stream_env = {
+            "glyph": stream_env.get("glyph") or "〰",
+            "stream_id": stream_env.get("stream_id"),
+            "alive": stream_env.get("alive"),
+            "frame_count": stream_env.get("frame_count"),
+            "last_task": stream_env.get("last_task"),
+            "glyph_line": stream_env.get("glyph_line"),
+            "continuity": stream_env.get("continuity"),
+            "recent_frames": (stream_env.get("recent_frames") or [])[-4:],
+        }
+    aria_language: dict[str, Any] | None = None
+    try:
+        from .glyphs.canon import phrasebook, speak_line
+
+        g_line = (
+            (glyph_state or {}).get("line") if isinstance(glyph_state, dict) else None
+        )
+        aria_language = {
+            "medium": "glyph_canon",
+            "glyph": "◈",
+            "line": g_line,
+            "spoken": speak_line(g_line or "") if g_line else [],
+            "phrasebook": phrasebook(),
+            "automatic_execution": False,
+            "claim_boundary": (
+                "ARIA language here is reusable glyph phrases only; never opcodes "
+                "or host mutation authority."
+            ),
+        }
+    except Exception:
+        aria_language = None
     return {
         "activation": "ready" if certificate["status"] == "verified" else "read_only",
         "repo": repo,
@@ -313,6 +348,12 @@ def activate_repository(
         "immune_action": control.get("immune_action"),
         "control_error": control,
         "identity": identity_report,
+        "glyph_state": glyph_state,
+        "glyph_line": (
+            (glyph_state or {}).get("line") if isinstance(glyph_state, dict) else None
+        ),
+        "stream": stream_env,
+        "aria_language": aria_language,
         "connect_pass": connect,
         "prediction": prediction,
         "organism": organism,
