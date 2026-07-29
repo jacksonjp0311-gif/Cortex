@@ -68,6 +68,20 @@ def bootstrap_repository(
     if embedded_relative and embedded_relative != "." and embedded_relative not in config.exclude:
         config.exclude.append(embedded_relative)
     run_id = f"bootstrap-{int(time.time())}-{uuid.uuid4().hex[:8]}"
+    identity_warnings: list[str] = []
+    try:
+        from .identity import continuity_check, warn_on_attach
+
+        identity_warnings = warn_on_attach(
+            store, repository_name, repository_id, root
+        )
+        continuity = continuity_check(store, path=root)
+        if continuity.get("continuity", {}).get("split_identity"):
+            identity_warnings.append(
+                "split_identity_on_path: durable namespaces must not be merged silently"
+            )
+    except Exception:
+        continuity = None
     store.attach(repository_name, repository_id, root)
     store.begin_bootstrap(run_id, repository_name)
 
@@ -127,6 +141,15 @@ def bootstrap_repository(
             "neural_interlink": neural,
             "hnsw": hnsw_build,
             "certificate": certificate,
+            "identity": {
+                "warnings": identity_warnings,
+                "continuity": (continuity or {}).get("continuity") if continuity else None,
+                "path_aliases": (continuity or {}).get("path_aliases") if continuity else None,
+                "claim_boundary": (
+                    "Same filesystem path with different repo names are separate "
+                    "memory namespaces unless explicitly checked."
+                ),
+            },
             "next_command": {
                 "powershell": (
                     f'python -m cortex --home "{home}" activate --repo "{repository_name}" '

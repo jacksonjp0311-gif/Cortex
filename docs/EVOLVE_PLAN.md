@@ -21,6 +21,7 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v6.1.0** (lattice fol
 | 14 | v6.2 fold + lean + multi-agent | **done** | docs lattice, lean agent profile, multi_agent mode |
 | 15 | v6.3 distill intelligence | **done** | cortex distill, DISTILLED.md, doctrine→body |
 | 16 | v6.4 intelligence pulse | **done** | pulse_on_connect, lattice_resonance, mesh intel surface |
+| 17 | v6.5 identity + ARIA proof | **done** | identity continuity, prove_implementation selection |
 
 ## Forward path
 

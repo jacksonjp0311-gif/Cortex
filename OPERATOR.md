@@ -8,10 +8,12 @@ python -m cortex init --json
 python -m cortex bootstrap . --name Cortex --json
 python -m cortex teach --seed --path . --repo Cortex --json
 # lean loop (v6.2 — fewer tokens)
+python -m cortex identity --repo Cortex --path . --json
+# same path + different names = separate memory namespaces
 python -m cortex immune --repo Cortex --json
 python -m cortex interconnect --repo Cortex --json
 python -m cortex kernels --repo Cortex --json
-python -m cortex activate --repo Cortex --task "heal lattice" --budget 800 --profile agent --json
+python -m cortex activate --repo Cortex --task "ARIA semantic interconnect" --budget 800 --profile agent --json
 python -m cortex remember --repo Cortex --kind discovery --text "fact" --json
 python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --contract default --json
 python -m cortex distill --repo Cortex --json

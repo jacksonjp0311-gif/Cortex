@@ -385,6 +385,17 @@ def build_parser() -> argparse.ArgumentParser:
     kernels_p.add_argument("--annotate", action="store_true")
     kernels_p.add_argument("--json", action="store_true")
 
+    identity_p = sub.add_parser(
+        "identity",
+        help="Identity continuity check (same path ≠ same memory namespace).",
+    )
+    identity_p.add_argument("--repo", help="Repository name to inspect.")
+    identity_p.add_argument(
+        "--path",
+        help="Filesystem path to scan for alias repo names.",
+    )
+    identity_p.add_argument("--json", action="store_true")
+
     distill_p = sub.add_parser(
         "distill",
         help="Distill mesh observation + doctrine into durable body (☰).",
@@ -1248,6 +1259,20 @@ def main(argv: list[str] | None = None) -> None:
             if args.annotate:
                 annotate_synapses(store, args.repo)
             emit(kernels_status(store, args.repo), args.json)
+
+        elif command == "identity":
+            from .identity import continuity_check
+
+            if not args.repo and not args.path:
+                raise ValueError("Pass --repo and/or --path")
+            emit(
+                continuity_check(
+                    store,
+                    repo=args.repo,
+                    path=args.path,
+                ),
+                args.json,
+            )
 
         elif command == "distill":
             if args.doctrine_only:

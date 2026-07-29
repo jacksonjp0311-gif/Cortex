@@ -105,6 +105,22 @@ DOCTRINE_CLAIMS: list[dict[str, str]] = [
             "lean packets in phase — not louder metrics or new organs."
         ),
     },
+    {
+        "kind": "invariant",
+        "text": (
+            "[intel] Identity continuity: same filesystem path with different repo "
+            "names (e.g. CortexV5CI vs CortexTeach) are separate durable namespaces — "
+            "never merge teaching mass without cortex identity check."
+        ),
+    },
+    {
+        "kind": "lesson",
+        "text": (
+            "[intel] Integrity can hold while evidence selection fails: ARIA-active "
+            "passes must materialize substrate and prove implementation (cortex/*.py + "
+            "vendor anchors), not only rank Discovery Cards."
+        ),
+    },
 ]
 
 

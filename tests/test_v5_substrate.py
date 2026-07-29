@@ -355,6 +355,19 @@ class V5SubstrateTests(unittest.TestCase):
         self.assertIn("observation", result)
         self.assertIn("resonance", result)
 
+    def test_identity_continuity_boundary(self) -> None:
+        from cortex.bootstrap import stable_repository_id
+        from cortex.identity import continuity_check, warn_on_attach
+
+        rid = stable_repository_id(self.repo)
+        # Second name on same path with different synthetic id is a split
+        self.store.attach("AliasHost", rid + "x", self.repo)
+        report = continuity_check(store=self.store, path=self.repo)
+        self.assertTrue(report["continuity"]["multi_name_same_path"])
+        warns = warn_on_attach(self.store, "ThirdHost", rid, self.repo)
+        self.assertTrue(any("path_already_bound" in w or "split" in w for w in warns)
+                        or report["warnings"])
+
     def test_intelligence_pulse_on_connect(self) -> None:
         from cortex.activation import activate_repository
         from cortex.distill_intel import lattice_resonance, pulse_intelligence

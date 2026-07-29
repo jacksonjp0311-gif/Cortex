@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.4.0-0ea5e9?style=for-the-badge" alt="v6.4.0" />
+  <img src="https://img.shields.io/badge/version-6.5.0-0ea5e9?style=for-the-badge" alt="v6.5.0" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -17,7 +17,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.4.0** — intelligence **pulses on connect** (resonate · doctrine@2 · seal@7). Distill + lean lattice + spectral kernels. See [`OPERATOR.md`](OPERATOR.md) and [`docs/intelligence/DISTILLED.md`](docs/intelligence/DISTILLED.md).
+**Current release: v6.5.0** — **identity continuity** + **ARIA evidence proof** (materialize/re-query, implementation over card monopoly). Intelligence still pulses on connect. See [`OPERATOR.md`](OPERATOR.md).
 
 ```bash
 pip install -e .

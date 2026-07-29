@@ -241,6 +241,13 @@ def activate_repository(
     runtime_path.write_text(json.dumps(full_context, indent=2) + "\n", encoding="utf-8")
 
     control = full_context.get("control_error") or {}
+    identity_report: dict[str, Any] | None = None
+    try:
+        from .identity import continuity_check
+
+        identity_report = continuity_check(store, repo=repo)
+    except Exception:
+        identity_report = None
     return {
         "activation": "ready" if certificate["status"] == "verified" else "read_only",
         "repo": repo,
@@ -254,6 +261,7 @@ def activate_repository(
         "block": bool(control.get("block")),
         "immune_action": control.get("immune_action"),
         "control_error": control,
+        "identity": identity_report,
         "connect_pass": connect,
         "prediction": prediction,
         "organism": organism,

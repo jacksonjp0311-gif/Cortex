@@ -50,10 +50,20 @@ Lattice resonance is the harmonic of mesh_green, immune open, spectral balance,
 HNSW presence, ranker health, and pulse depth. Brightness:
 `resonant` · `in_phase` · `steady` · `detuned` — telemetry only.
 
+## Identity and evidence (v6.5 observation)
+
+Integrity can be green while **evidence selection** fails: ARIA-active passes that
+only surface Discovery Cards have not *proven* substrate implementation.
+
+- **Identity:** `CortexV5CI` vs `CortexTeach` on one path are separate durable
+  namespaces — use `cortex identity` before merging teaching mass.
+- **Proof:** ARIA-active activation re-materializes when ARIA paths sparse, and
+  ranks substrate + `cortex/*.py` above card monopoly.
+
 ## Refuse
 
 Second DB · auto-ARIA · packet-as-authorization · host.mutate from relevance ·
-foreign auto-scan · glow without mesh falsification
+foreign auto-scan · glow without mesh falsification · silent namespace merge
 
 ## Claim boundary
 

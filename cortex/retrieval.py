@@ -66,8 +66,13 @@ def query(
     semantic_scan_limit: int = 5000,
     *,
     materialize_substrate: bool = False,
+    prove_implementation: bool = False,
 ) -> list[Hit]:
-    """Hybrid retrieval. Substrate materialization is opt-in (activation/CLI)."""
+    """Hybrid retrieval. Substrate materialization is opt-in (activation/CLI).
+
+    prove_implementation: when ARIA-active, prefer substrate + cortex source
+    over discovery-card monopoly (evidence selection, not authority).
+    """
 
     if materialize_substrate:
         materialize_aria_for_task(store, repo, text)
@@ -75,6 +80,7 @@ def query(
     aria_classification = classify_aria_task(text, aria_profile["cues"])
     aria_active = aria_classification["mode"] == "active"
     aria_purposes = aria_routing_purposes(aria_classification)
+    prove = bool(prove_implementation or aria_active)
     excluded_prefixes = () if aria_active else (INTERNAL_ARIA_PREFIX,)
     lexical_rows = store.lexical(
         repo, text, 60, excluded_prefixes=excluded_prefixes
@@ -144,6 +150,8 @@ def query(
         quality = 1.0
         if metadata.get("authoritative"):
             quality *= 1.25
+            if prove:
+                quality *= 1.08
         # Teaching mass: interconnect doctrine and memory packets rank up for
         # organism / protocol / teach tasks without becoming authority.
         path_norm = row["path"].replace("\\", "/")
@@ -172,36 +180,48 @@ def query(
                 "aria",
             )
             if any(term in text.casefold() for term in teach_terms):
-                quality *= 1.28
+                quality *= 1.28 if not prove else 1.12
         if row["kind"] == "discovery_card":
-            quality *= 1.12
+            # Cards are retain-class memory; when proving ARIA/implementation,
+            # do not let cards monopolize the packet over substrate source.
+            quality *= 0.95 if prove else 1.12
+        if prove and path_norm.startswith("cortex/") and path_norm.endswith(".py"):
+            # Implementation proof lane (still not mutation authority).
+            quality *= 1.24
+            metadata["selection_source"] = metadata.get("selection_source") or "implementation_proof"
         if aria_active and is_internal_aria_path(row["path"]):
             # Prefer purpose-aligned substrate evidence once the region is awake.
             # Anchors and purpose hits must outrank ambient host noise after wake.
             if aria_path_supports(row["path"], aria_purposes):
-                quality *= 1.55
+                quality *= 1.65 if prove else 1.55
             else:
-                quality *= 1.18
-            if row["path"].replace("\\", "/").endswith(
+                quality *= 1.22 if prove else 1.18
+            if path_norm.endswith(
                 (
                     "ARIA-RUNTIME.json",
                     "ARIA-CONNECT.json",
                     "README.md",
                     "semantic-cues.json",
+                    "AGENTS.md",
                 )
             ):
-                quality *= 1.12
+                quality *= 1.15
+            if "/docs/" in path_norm or "/plans/" in path_norm:
+                quality *= 1.10 if prove else 1.0
+            metadata["selection_source"] = metadata.get("selection_source") or "aria_substrate"
         normalized_chunk = " ".join(row["text"].casefold().split())
         if normalized_query and normalized_query in normalized_chunk:
             quality *= 1.35
         if row["kind"] in {"discovery_card", "telemetry", "runtime_evidence"}:
-            quality *= 1.04
+            quality *= 0.98 if prove else 1.04
         telemetry = store.file_telemetry(repo, row["path"])
         if telemetry:
             frequency = telemetry[0]["commit_count"]
             quality *= 1.0 + min(0.12, math.log1p(frequency) / 30.0)
         score = base_score * quality
         metadata["semantic_similarity"] = round(semantic_lookup.get(memory_id, 0.0), 6)
+        if prove:
+            metadata["prove_implementation"] = True
         output.append(Hit(
             memory_id=memory_id,
             repo=row["repo"],
@@ -229,7 +249,9 @@ def query(
         )
     except Exception:
         pass
-    floor = _aria_evidence_floor(store, repo, text, output, limit=limit)
+    floor = _aria_evidence_floor(
+        store, repo, text, output, limit=limit, prove=prove
+    )
     return floor
 
 
@@ -240,6 +262,7 @@ def _aria_evidence_floor(
     hits: list[Hit],
     *,
     limit: int,
+    prove: bool = False,
 ) -> list[Hit]:
     """When ARIA is awake, ensure a minimum of substrate evidence in the ranking."""
 
@@ -250,8 +273,17 @@ def _aria_evidence_floor(
     purposes = aria_routing_purposes(classification)
     existing_ids = {hit.memory_id for hit in hits}
     aria_hits = [hit for hit in hits if is_internal_aria_path(hit.path)]
-    if len(aria_hits) >= 2:
+    # When proving implementation, require stronger substrate floor (not cards alone).
+    min_aria = 3 if prove else 2
+    if len(aria_hits) >= min_aria and not prove:
         return hits[:limit]
+    if prove and len(aria_hits) >= min_aria:
+        # Still rebalance: interleave substrate near the top
+        non_aria = [h for h in hits if not is_internal_aria_path(h.path)]
+        cards = [h for h in non_aria if h.kind == "discovery_card"]
+        other = [h for h in non_aria if h.kind != "discovery_card"]
+        ordered = list(aria_hits[:3]) + other + cards + aria_hits[3:]
+        return ordered[:limit]
 
     extras: list[Hit] = []
     # Direct lexical scan with ARIA included (no excluded prefix).
@@ -296,6 +328,18 @@ def _aria_evidence_floor(
         existing_ids.add(full["id"])
         if len(aria_hits) + len(extras) >= 3:
             break
+    # Prefer substrate anchors + purpose docs when proving ARIA.
+    extras.sort(
+        key=lambda h: (
+            0
+            if h.path.replace("\\", "/").endswith(
+                ("ARIA-RUNTIME.json", "ARIA-CONNECT.json", "semantic-cues.json")
+            )
+            else 1
+            if "/docs/" in h.path.replace("\\", "/")
+            else 2
+        )
+    )
     if len(aria_hits) + len(extras) < 2:
         for file_row in store.files(repo):
             path = file_row["path"]

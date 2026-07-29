@@ -332,7 +332,48 @@ def build_context(
         route_plan = None
 
     # Every standard context retrieval is planned by Thalamus before candidates are read.
-    direct_hits = query(store, repo, task, limit=24, semantic_scan_limit=config.semantic_scan_limit)
+    # If ARIA just materialized (or is active/ready), query with substrate included.
+    aria_mode_pre = (aria_materialization.get("mode") or "dormant")
+    direct_hits = query(
+        store,
+        repo,
+        task,
+        limit=24,
+        semantic_scan_limit=config.semantic_scan_limit,
+        materialize_substrate=False,
+        prove_implementation=(aria_mode_pre == "active"),
+    )
+    # Second chance: active but sparse ARIA evidence → force materialize once more
+    # then re-query (evidence selection gap: cards without substrate proof).
+    aria_paths = sum(
+        1
+        for h in direct_hits
+        if str(getattr(h, "path", "")).replace("\\", "/").startswith(
+            "cortex/aria_meta/"
+        )
+    )
+    if aria_mode_pre == "active" and aria_paths < 2:
+        from .indexer import ensure_aria_substrate_materialized
+
+        retry = ensure_aria_substrate_materialized(store, repo, config, task)
+        if retry.get("materialized") or retry.get("already_ready"):
+            if retry.get("materialized"):
+                from .graph import resolve_graph
+                from .neuron import compile_interlink
+
+                resolve_graph(store, repo)
+                if config.neural_interlink_enabled:
+                    compile_interlink(store, repo)
+            aria_materialization = {**aria_materialization, **retry, "evidence_retry": True}
+            direct_hits = query(
+                store,
+                repo,
+                task,
+                limit=24,
+                semantic_scan_limit=config.semantic_scan_limit,
+                materialize_substrate=False,
+                prove_implementation=True,
+            )
     if route_plan:
         direct_hits = apply_feedback(store, repo, direct_hits)
         direct_hits = inhibit(

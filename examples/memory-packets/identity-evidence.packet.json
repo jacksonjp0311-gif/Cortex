@@ -1,0 +1,36 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⌖",
+  "title": "Identity continuity and ARIA evidence proof",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "namespace-boundary",
+      "text": "Same path under different repo names (CortexV5CI vs CortexTeach) are separate durable memory namespaces; check with cortex identity before merging doctrine.",
+      "evidence": ["cortex/identity.py", "docs/DATA_MODEL.md"]
+    },
+    {
+      "id": "integrity-vs-selection",
+      "text": "Bootstrap verified and block false do not mean evidence selection is strong; ARIA-active tasks must materialize deferred substrate and surface implementation proof.",
+      "evidence": ["cortex/retrieval.py", "cortex/context.py", "cortex/indexer.py"]
+    },
+    {
+      "id": "cards-not-monopoly",
+      "text": "Discovery Cards teach interconnect law but must not monopolize ARIA-active packets over ARIA-RUNTIME/CONNECT, purpose docs, and cortex/*.py implementation.",
+      "evidence": ["cortex/retrieval.py", "docs/intelligence/INTERCONNECT.md"]
+    },
+    {
+      "id": "aria-dormant-default",
+      "text": "ARIA remains dormant on generic tasks; only typed wake materializes bulk — still never auto-executes plans or grants mutation rights.",
+      "evidence": ["docs/ARIA_META_LANGUAGE.md", "cortex/aria_meta/substrate.py"]
+    }
+  ],
+  "refuse": [
+    "silent_namespace_merge",
+    "card_only_aria_proof",
+    "auto_execute_aria",
+    "host_mutate"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Identity and evidence-selection doctrine; never mutation authority."
+}

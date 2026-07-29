@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.5.0 - Identity continuity + ARIA evidence proof
+
+- **Identity ⌖:** `cortex identity --repo|--path` detects same-path/different-name namespaces (e.g. CortexV5CI vs CortexTeach); bootstrap warns; activate surfaces identity.
+- **Evidence selection:** ARIA-active `prove_implementation` boosts substrate + `cortex/*.py`, dampens card monopoly; re-materialize+re-query when ARIA paths sparse.
+- **Doctrine:** identity + evidence-proof packets/claims for teach-seed and distill.
+- Integrity was already holding — this heals selection and continuity boundaries. Still recommend-only.
+
 ## 6.4.0 - Intelligence pulse at connect frequency
 
 - **Resonate:** `lattice_resonance` scores mesh · immune · spectral · hnsw · ranker · pulse.
