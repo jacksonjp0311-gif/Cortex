@@ -3,6 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bust stale GH Pages / browser caches of the pre-metrics (401) build -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="cortex-lattice-build" content="metrics-json-v2" />
   <title>CORTEX // STAR LATTICE</title>
   <style>
     :root {
@@ -98,9 +103,9 @@
 <body>
   <h1>CORTEX // STAR LATTICE</h1>
   <p class="sub">
-    First-party live chart. On every load (and every auto-refresh) this page pulls
-    <code>star-metrics.json</code> published by Cortex CLI/Actions — no browser token,
-    no third-party chart host.
+    First-party live chart (build <strong>metrics-json-v2</strong>). On every load
+    (and every auto-refresh) this page pulls <code>star-metrics.json</code> published
+    by Cortex CLI/Actions — no browser token, no third-party chart host.
   </p>
   <div id="stage"><span style="color:#64748b;font-size:12px">SYNCING LATTICE…</span></div>
   <div class="status">
