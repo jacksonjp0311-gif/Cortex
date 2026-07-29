@@ -851,17 +851,23 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/ARIA_META_LANGUAGE.md` — native ARIA semantic language over the Python core
 - `docs/STEADY_STATE.md` — post-alignment discipline
 
-## Star History
+## Star Lattice
+
+First-party chart — no third-party hosts. Built from `gh` stargazer timestamps.
 
 <p align="center">
-  <a href="https://star-history.com/#jacksonjp0311-gif/Cortex&Date">
-    <img
-      src="https://api.star-history.com/svg?repos=jacksonjp0311-gif/Cortex&type=Date"
-      alt="Star History Chart"
-      width="100%"
-    />
-  </a>
+  <img
+    src="assets/star-lattice.svg"
+    alt="Cortex star lattice — cumulative stargazers"
+    width="100%"
+  />
 </p>
+
+```bash
+# regenerate (requires GitHub CLI auth)
+python scripts/build_star_lattice.py
+# optional: --repo owner/name  --out path/to.svg
+```
 
 <p align="center">
   <sub>If Cortex helps your agents remember — drop a star. It keeps the lattice bright.</sub>
