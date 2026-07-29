@@ -109,6 +109,69 @@ def resolve_graph(store: Any, repo: str) -> dict[str, Any]:
                     "evidence": "filename affinity",
                 })
 
+    # Call-graph lite (v6.1): resolved imports become calls edges (decoder links).
+    # Also name-based dataflow_use when symbol name matches another file stem.
+    store.clear_edges(repo, ["calls", "dataflow_use"])
+    call_edges = 0
+    for row in store.edges(repo, limit=100_000):
+        if row["relation"] != "resolves_to":
+            continue
+        src = row["source"].split("::", 1)[0]
+        tgt = row["target"].split("::", 1)[0]
+        if src == tgt or src not in paths or tgt not in paths:
+            continue
+        store.add_edge(
+            repo,
+            {
+                "source": src,
+                "target": tgt,
+                "relation": "calls",
+                "confidence": 0.55,
+                "evidence": f"resolves_to:{row['evidence']}",
+                "metadata": {"kernel_class": "integrate", "derived": "callgraph_lite"},
+            },
+        )
+        call_edges += 1
+    # Symbol-name dataflow hints (def file -> using file via stem in qualified name)
+    try:
+        symbols = store.symbols(repo)
+    except Exception:
+        symbols = []
+    defined: dict[str, str] = {}
+    for sym in symbols:
+        name = str(sym["name"] or "").casefold()
+        path = str(sym["path"] or "").replace("\\", "/")
+        if name and path in paths and str(sym["symbol_kind"] or "") in {
+            "function",
+            "method",
+            "class",
+            "def",
+        }:
+            defined.setdefault(name, path)
+    flow_edges = 0
+    for sym in symbols:
+        name = str(sym["name"] or "").casefold()
+        path = str(sym["path"] or "").replace("\\", "/")
+        if not name or path not in paths:
+            continue
+        # Cross-file: if another path's stem matches this symbol's home... skip heavy scan
+        home = defined.get(name)
+        if home and home != path:
+            store.add_edge(
+                repo,
+                {
+                    "source": path,
+                    "target": home,
+                    "relation": "dataflow_use",
+                    "confidence": 0.40,
+                    "evidence": f"symbol_name:{name}",
+                    "metadata": {"kernel_class": "integrate", "derived": "name_dataflow"},
+                },
+            )
+            flow_edges += 1
+            if flow_edges >= 5000:
+                break
+
     store.commit()
     relation_counts: dict[str, int] = defaultdict(int)
     for row in store.edges(repo, limit=100_000):

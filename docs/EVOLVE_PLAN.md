@@ -17,19 +17,20 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v5.0.0**.
 | 10 | v5.0 substrate | **done** | multi-res + HNSW + ranker + prefetch + contracts + agents + causal |
 | 11 | Interconnect mesh plan | designed | `docs/EVOLUTION_V6.md` |
 | 12 | v6.0 mesh + sealed gates | **done** | interconnect, prune, ritual gates, glyphic ARIA, transcend 3.0 |
+| 13 | v6.1 spectral kernels | **done** | kernels, class prune, call-graph lite, mesh dashboard, ranker promote |
 
-## Forward path (spectral memory mesh — plan)
+## Forward path (spectral memory mesh)
 
 Canonical plan: **`docs/EVOLUTION_SPECTRAL.md`**
 
-| Release | Theme | Priority content |
+| Release | Theme | Status |
 |---|---|---|
-| **v6.1** | Deeper structure + closed loops + mesh dashboard | **Spectral kernels** (reset/integrate/retain), class-aware prune, call-graph, prefetch→ranker→causal, ranker promote CLI, mesh dashboard |
-| **v6.2** | Real multi-agent under tokens | multi_agent mode, conflict receipts, per-agent kernel telemetry; no host.mutate |
-| **v7.0** | AST/CFG when ID stability proven | AST/CFG/dataflow, multi-mode kernels, coverage, transcend 4.0 |
+| **v6.1** | Spectral kernels + closed loops + mesh dashboard | **done** |
+| **v6.2** | Real multi-agent under tokens | planned |
+| **v7.0** | AST/CFG when ID stability proven | planned |
 
-**High-priority principle:** memory is a **spectrum of retention kernels**, not one ρ.
-Clock ≠ memory ≠ decision. Common connect pulse → distributed filters → gated commit.
+**Principle:** memory is a **spectrum of retention kernels**, not one ρ.
+Clock ≠ memory ≠ decision.
 
 ## Verbs used as design motions
 

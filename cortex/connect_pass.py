@@ -148,6 +148,10 @@ def gather_connect_metrics(
             "agents": True,
             "causal": True,
         },
+        "spectral": {
+            "kernels": True,
+            "regimes": ["reset", "integrate", "retain"],
+        },
         "claim_boundary": (
             "Connect metrics are local operational telemetry; not consciousness "
             "and not mutation authority."
@@ -393,6 +397,18 @@ def persist_connect_pass(
     """Write ledger event, expand metric graph, distill, causal cadence, light decay."""
 
     graph = expand_metric_graph(load_metric_graph(store, repo), metrics)
+    # Spectral kernels: annotate + retention spectrum on each connect
+    spectral: dict[str, Any] | None = None
+    try:
+        from .kernels import annotate_synapses, retention_by_class
+
+        annotate_synapses(store, repo)
+        spectral = retention_by_class(store, repo, metrics=metrics)
+        graph["retention_by_class"] = spectral.get("spectrum")
+        graph["dominant_kernel"] = spectral.get("dominant")
+    except Exception as exc:
+        spectral = {"error": f"{type(exc).__name__}: {exc}"}
+
     candidates = distill_candidates(metrics, graph) if auto_distill else []
     remembered: list[dict[str, Any]] = []
     distill_ids: list[str] = list(graph.get("distilled_claim_ids") or [])
@@ -542,6 +558,7 @@ def persist_connect_pass(
         "distilled": remembered,
         "causal": causal_result,
         "decay": decay_result,
+        "spectral": spectral,
         "claim_boundary": metrics.get("claim_boundary"),
     }
 

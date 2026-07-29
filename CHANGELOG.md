@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.1.0 - Spectral kernels · closed loops · mesh dashboard
+
+- **Spectral memory ≋:** reset / integrate / retain kernels; ρ_g = e^{−δ_g}; Ξ spectrum on mesh.
+- **Connect:** annotates synapses, `retention_by_class` each pass; clock ≠ memory ≠ decision.
+- **Prune/decay:** class-aware (protect retain hierarchy; faster reset decay).
+- **Closed loops:** prefetch_hit on evidence → ranker features; ranker promote/rollback/unfreeze CLI.
+- **Call-graph lite:** `calls` + `dataflow_use` edges from resolves_to / symbol names.
+- **Bootstrap:** kernel profile + HNSW build attempt after compile.
+- **Dashboard --mesh** / `cortex kernels` / MCP `cortex_kernels`.
+- Teaching packet `spectral-memory.packet.json`. Still recommend-only.
+
 ## 6.0.0 - Interconnect mesh · sealed gates · glyphic ARIA · prune
 
 - **Interconnect ⧉:** `cortex interconnect` / MCP `cortex_interconnect` — mesh health, bottlenecks, gates.

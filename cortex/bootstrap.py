@@ -95,6 +95,23 @@ def bootstrap_repository(
             if config.neural_interlink_enabled
             else {"available": False, "disabled": True}
         )
+        # Spectral annotate + optional HNSW (v6.1) — local only
+        hnsw_build: dict[str, Any] | None = None
+        try:
+            from .kernels import annotate_synapses, load_kernel_profile
+
+            load_kernel_profile(store, repository_name)
+            if config.neural_interlink_enabled:
+                annotate_synapses(store, repository_name)
+        except Exception:
+            pass
+        try:
+            from .vectors import build_hnsw_index
+
+            # Always attempt light HNSW after bootstrap so semantic decoder exists
+            hnsw_build = build_hnsw_index(store, repository_name)
+        except Exception as exc:
+            hnsw_build = {"built": False, "error": f"{type(exc).__name__}: {exc}"}
         certificate = verify_repository(home, store, repository_name, config, write_certificate=True)
         store.finish_bootstrap(run_id, certificate["status"], index["manifest_hash"], certificate)
         return {
@@ -108,6 +125,7 @@ def bootstrap_repository(
             "telemetry": telemetry,
             "environment": environment,
             "neural_interlink": neural,
+            "hnsw": hnsw_build,
             "certificate": certificate,
             "next_command": {
                 "powershell": (

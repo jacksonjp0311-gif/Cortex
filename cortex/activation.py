@@ -186,6 +186,13 @@ def activate_repository(
                 for e in (context.get("evidence") or [])
                 if e.get("path")
             ]
+            pred_set = set(prediction.get("predicted_paths") or [])
+            # Mark prefetch hits on evidence metadata for ranker features
+            for item in context.get("evidence") or []:
+                if isinstance(item, dict) and item.get("path") in pred_set:
+                    meta = item.get("metadata") or {}
+                    meta = {**meta, "prefetch_hit": True}
+                    item["metadata"] = meta
             record_prediction_outcome(
                 store, str(prediction["trace_id"]), used
             )

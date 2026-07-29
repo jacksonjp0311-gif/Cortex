@@ -1,6 +1,6 @@
 # Cortex Evolution Plan — Spectral Memory Mesh
 
-**Status:** Design plan (post-**v6.0.0**)  
+**Status:** **v6.1.0 delivered** (kernels · class prune · call-graph lite · mesh dashboard · ranker promote); v6.2/v7.0 remain forward  
 **Baseline:** Mesh sealed · glyphic ARIA medium · prune · gates · seven organs  
 **Posture:** Local-first · recommend-only · one SQLite body · covenant-aligned  
 **Theory loan (not identity):** Spectral retention kernels inspired by transcript

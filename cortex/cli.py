@@ -362,7 +362,20 @@ def build_parser() -> argparse.ArgumentParser:
         "dashboard", help="Show compact GCMT, learning, lifecycle, and repository readiness."
     )
     dashboard.add_argument("--repo", required=True)
+    dashboard.add_argument(
+        "--mesh",
+        action="store_true",
+        help="Spectral mesh dashboard (Ξ spectrum + bottlenecks + gates).",
+    )
     dashboard.add_argument("--json", action="store_true")
+
+    kernels_p = sub.add_parser(
+        "kernels",
+        help="Spectral memory kernel spectrum (reset|integrate|retain).",
+    )
+    kernels_p.add_argument("--repo", required=True)
+    kernels_p.add_argument("--annotate", action="store_true")
+    kernels_p.add_argument("--json", action="store_true")
 
     benchmark = sub.add_parser("benchmark", help="Verify committed controlled-workload benchmark thresholds.")
     benchmark.add_argument("--verify", action="store_true")
@@ -462,9 +475,19 @@ def build_parser() -> argparse.ArgumentParser:
     vectors.add_argument("--k", type=int, default=12)
     vectors.add_argument("--json", action="store_true")
 
-    ranker = sub.add_parser("ranker", help="Tiny local ranker status (verified-only training).")
-    ranker.add_argument("action", choices=["status"], default="status", nargs="?")
+    ranker = sub.add_parser("ranker", help="Tiny local ranker (status|promote|rollback|unfreeze).")
+    ranker.add_argument(
+        "action",
+        choices=["status", "promote", "rollback", "unfreeze"],
+        default="status",
+        nargs="?",
+    )
     ranker.add_argument("--repo", required=True)
+    ranker.add_argument(
+        "--authorize-promote",
+        action="store_true",
+        help="Human-authorized GCMT promote of ranker snapshot (required for promote).",
+    )
     ranker.add_argument("--json", action="store_true")
 
     predict = sub.add_parser("predict", help="Proactive evidence prediction (recommend-only).")
@@ -1152,9 +1175,35 @@ def main(argv: list[str] | None = None) -> None:
                 )
 
         elif command == "ranker":
-            from .ranker import ranker_status
+            from .ranker.model import (
+                promote_ranker_snapshot,
+                ranker_status,
+                rollback_ranker_snapshot,
+                unfreeze_ranker,
+            )
 
-            emit(ranker_status(store, args.repo), args.json)
+            if args.action == "promote":
+                emit(
+                    promote_ranker_snapshot(
+                        store,
+                        args.repo,
+                        promotion_authorized=bool(args.authorize_promote),
+                    ),
+                    args.json,
+                )
+            elif args.action == "rollback":
+                emit(rollback_ranker_snapshot(store, args.repo), args.json)
+            elif args.action == "unfreeze":
+                emit(unfreeze_ranker(store, args.repo), args.json)
+            else:
+                emit(ranker_status(store, args.repo), args.json)
+
+        elif command == "kernels":
+            from .kernels import annotate_synapses, kernels_status
+
+            if args.annotate:
+                annotate_synapses(store, args.repo)
+            emit(kernels_status(store, args.repo), args.json)
 
         elif command == "predict":
             from .predict import predict_context
@@ -1299,6 +1348,14 @@ def main(argv: list[str] | None = None) -> None:
             emit(result, args.json)
 
         elif command == "dashboard":
+            if getattr(args, "mesh", False):
+                from .interconnect import mesh_dashboard
+
+                emit(
+                    mesh_dashboard(store, args.repo, governor=governor, home=home),
+                    args.json,
+                )
+                return
             repository = store.repo(args.repo)
             if not repository:
                 raise ValueError(f"Unknown repository: {args.repo}. Run cortex bootstrap first.")

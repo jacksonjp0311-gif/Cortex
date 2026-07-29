@@ -232,6 +232,17 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_kernels",
+        "description": (
+            "Spectral memory kernels (≋): reset/integrate/retain spectrum. " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -428,6 +439,10 @@ class CortexMCP:
                 governor=self.governor,
                 home=self.home,
             )
+        if name == "cortex_kernels":
+            from .kernels import kernels_status
+
+            return kernels_status(self.store, str(arguments["repo"]))
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,

@@ -220,6 +220,26 @@ class V5SubstrateTests(unittest.TestCase):
         self.assertIn("gates_sealed", ritual)
         self.assertIn(ritual.get("contract"), {"default", "strict", "off"})
 
+    def test_spectral_kernels_and_dashboard(self) -> None:
+        from cortex.interconnect import mesh_dashboard
+        from cortex.kernels import annotate_synapses, kernels_status, rho_from_delta
+        from cortex.ranker.model import FEATURE_NAMES, promote_ranker_snapshot
+
+        self.assertAlmostEqual(rho_from_delta(2.3), 0.10, delta=0.02)
+        ann = annotate_synapses(self.store, "V5Host")
+        self.assertIn("counts", ann)
+        ks = kernels_status(self.store, "V5Host")
+        self.assertIn("retention", ks)
+        self.assertIn("reset", ks["retention"] or {})
+        dash = mesh_dashboard(
+            self.store, "V5Host", governor=self.gov, home=self.home
+        )
+        self.assertIn("xi_spectrum", dash)
+        self.assertTrue(dash.get("law", "").startswith("common_pulse"))
+        denied = promote_ranker_snapshot(self.store, "V5Host", promotion_authorized=False)
+        self.assertFalse(denied.get("promoted"))
+        self.assertGreaterEqual(len(FEATURE_NAMES), 20)
+
 
 if __name__ == "__main__":
     unittest.main()

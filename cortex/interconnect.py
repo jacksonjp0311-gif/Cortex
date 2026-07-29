@@ -12,6 +12,7 @@ from .agents.tokens import ALLOWED_SCOPES, FORBIDDEN_SCOPES
 from .causal.ledger import causal_report
 from .connect_pass import load_metric_graph
 from .control_error import build_control_error
+from .kernels import kernels_status
 from .progress_glyphs import progress_glyph_registry
 from .ranker.model import ranker_status
 from .vectors.index import hnsw_status
@@ -38,6 +39,10 @@ def mesh_status(
         (store.get_setting(f"multi_agent:{repo}", {}) or {}).get("enabled")
     )
     last_prune = store.get_setting(f"prune:{repo}", {}) or {}
+    try:
+        kernels = kernels_status(store, repo)
+    except Exception as exc:
+        kernels = {"error": f"{type(exc).__name__}: {exc}"}
 
     control: dict[str, Any] = {}
     if governor is not None and home is not None:
@@ -150,6 +155,14 @@ def mesh_status(
             "last_prune": last_prune,
         },
         "causal": causal.get("counts"),
+        "spectral": {
+            "glyph": "≋",
+            "dominant": kernels.get("dominant"),
+            "retention": kernels.get("retention")
+            or (graph.get("retention_by_class")),
+            "profile": kernels.get("profile"),
+            "clock_neq_memory_neq_decision": True,
+        },
         "agents": {
             "multi_agent_mode": multi_agent,
             "host_mutate_forbidden": "host.mutate" in FORBIDDEN_SCOPES,
@@ -173,4 +186,29 @@ def mesh_status(
             "Interconnect mesh is local operational health; not consciousness "
             "and not host mutation authority."
         ),
+    }
+
+
+def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: Any | None = None) -> dict[str, Any]:
+    """One-screen mesh + spectral Ξ field for operators."""
+
+    mesh = mesh_status(store, repo, governor=governor, home=home)
+    spectrum = (mesh.get("spectral") or {}).get("retention") or {}
+    return {
+        "schema_version": "cortex-mesh-dashboard/1.0",
+        "glyph": "⧉",
+        "repo": repo,
+        "mesh_green": mesh.get("mesh_green"),
+        "bottlenecks": mesh.get("bottlenecks"),
+        "xi_spectrum": spectrum,
+        "dominant_kernel": (mesh.get("spectral") or {}).get("dominant"),
+        "connect_pass_count": (mesh.get("connect") or {}).get("pass_count"),
+        "ranker": mesh.get("ranker"),
+        "hnsw": mesh.get("hnsw"),
+        "graph": mesh.get("graph"),
+        "causal": mesh.get("causal"),
+        "gates": mesh.get("gates"),
+        "immune": mesh.get("immune"),
+        "law": "common_pulse_through_kernel_spectrum",
+        "claim_boundary": mesh.get("claim_boundary"),
     }

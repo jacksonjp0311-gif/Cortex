@@ -22,10 +22,12 @@ def prune_graph(
     max_unused_age_updates: int = 0,
     dry_run: bool = False,
     keep_hierarchical: bool = True,
+    protect_retain: bool = True,
 ) -> dict[str, Any]:
     """Prune synapses with very low weight and zero plasticity updates.
 
-    Hierarchical contains/child_of edges are kept by default (structure).
+    Hierarchical contains/child_of and retain-class edges protected by default.
+    Prefer pruning reset-class dead weight (spectral organism hygiene).
     """
 
     synapses = store.neural_synapses(repo)
@@ -35,14 +37,24 @@ def prune_graph(
         relation = str(row["relation"] or "")
         weight = float(row["weight"] or 0)
         updates = int(row["update_count"] or 0)
+        meta = json.loads(row["metadata"] or "{}")
         hierarchical = relation in {"contains", "child_of"} or bool(
-            json.loads(row["metadata"] or "{}").get("hierarchical")
+            meta.get("hierarchical")
+        )
+        kernel_class = meta.get("kernel_class") or (
+            "retain" if hierarchical else "reset"
         )
         if keep_hierarchical and hierarchical:
             kept += 1
             continue
-        # Dead weight: near floor and never plasticized
-        if weight <= min_weight and updates <= max_unused_age_updates:
+        if protect_retain and kernel_class == "retain":
+            kept += 1
+            continue
+        # Dead weight: near floor and never plasticized; reset first
+        threshold = min_weight if kernel_class == "reset" else min_weight * 0.5
+        if kernel_class == "integrate":
+            threshold = min_weight * 0.75
+        if weight <= threshold and updates <= max_unused_age_updates:
             candidates.append(
                 {
                     "synapse_id": row["synapse_id"],
@@ -51,6 +63,7 @@ def prune_graph(
                     "relation": relation,
                     "weight": weight,
                     "update_count": updates,
+                    "kernel_class": kernel_class,
                 }
             )
         else:
@@ -115,21 +128,32 @@ def decay_unused_weights(
     factor: float = 0.97,
     floor: float = 0.05,
 ) -> dict[str, Any]:
-    """Gentle organism-like decay on non-hierarchical synapses with no updates."""
+    """Spectral decay: faster on reset, milder on integrate, skip retain hierarchy."""
 
     factor = max(0.5, min(0.999, float(factor)))
     floor = max(0.01, min(0.5, float(floor)))
+    # Class-specific factors (higher decay = lower factor)
+    class_factor = {
+        "reset": min(factor, 0.94),
+        "integrate": factor,
+        "retain": 0.995,  # almost no decay even if misclassified
+    }
     synapses = store.neural_synapses(repo)
     touched = 0
+    by_class = {"reset": 0, "integrate": 0, "retain": 0}
     with store.transaction() as conn:
         for row in synapses:
             meta = json.loads(row["metadata"] or "{}")
             if meta.get("hierarchical") or row["relation"] in {"contains", "child_of"}:
                 continue
-            if int(row["update_count"] or 0) > 0:
+            klass = str(meta.get("kernel_class") or "reset")
+            if klass == "retain":
                 continue
+            if int(row["update_count"] or 0) > 0 and klass == "integrate":
+                continue
+            f = class_factor.get(klass, factor)
             w = float(row["weight"] or 0)
-            nw = max(floor, min(float(row["maximum_weight"] or 0.98), w * factor))
+            nw = max(floor, min(float(row["maximum_weight"] or 0.98), w * f))
             if abs(nw - w) < 1e-9:
                 continue
             conn.execute(
@@ -140,21 +164,28 @@ def decay_unused_weights(
                 (round(nw, 6), time.time(), repo, row["synapse_id"]),
             )
             touched += 1
+            by_class[klass] = by_class.get(klass, 0) + 1
     if touched:
         try:
             store.append_neural_event(
                 repo,
                 event_type="weight_decay",
                 entity_id=repo,
-                payload={"touched": touched, "factor": factor, "floor": floor},
+                payload={
+                    "touched": touched,
+                    "factor": factor,
+                    "floor": floor,
+                    "by_class": by_class,
+                },
             )
         except Exception:
             pass
     return {
-        "schema_version": "cortex-weight-decay/1.0",
+        "schema_version": "cortex-weight-decay/1.1",
         "repo": repo,
         "touched": touched,
+        "by_class": by_class,
         "factor": factor,
         "floor": floor,
-        "claim_boundary": "Decay is topology hygiene; not authority change.",
+        "claim_boundary": "Spectral decay is topology hygiene; not authority change.",
     }

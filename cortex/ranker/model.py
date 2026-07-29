@@ -28,6 +28,12 @@ FEATURE_NAMES: tuple[str, ...] = (
     "prior_score",
     "recency",
     "evidence_kind_card",
+    # v6.1 spectral / closed-loop features
+    "prefetch_hit",
+    "hnsw_lane",
+    "coact_strength",
+    "kernel_retain",
+    "kernel_integrate",
 )
 
 
@@ -50,6 +56,11 @@ def default_weights() -> list[float]:
         "path_depth": -0.05,
         "immune_block": -0.20,
         "aria_deferred": -0.15,
+        "prefetch_hit": 0.20,
+        "hnsw_lane": 0.15,
+        "coact_strength": 0.18,
+        "kernel_retain": 0.12,
+        "kernel_integrate": 0.08,
     }
     for i, name in enumerate(FEATURE_NAMES):
         w[i] = mapping.get(name, 0.0)
@@ -63,13 +74,28 @@ def ensure_ranker(store: Any, repo: str) -> dict[str, Any]:
     ).fetchone()
     now = time.time()
     if row:
+        names = json.loads(row["feature_names_json"])
+        weights = json.loads(row["weights_json"])
+        # Pad/truncate if feature schema evolved (v6.1)
+        if len(weights) < len(FEATURE_NAMES):
+            defaults = default_weights()
+            weights = list(weights) + defaults[len(weights) :]
+            names = list(FEATURE_NAMES)
+            store.db.execute(
+                """
+                UPDATE ranker_models SET feature_names_json=?, weights_json=?, updated_at=?
+                WHERE repo=? AND model_id=?
+                """,
+                (json.dumps(names), json.dumps(weights), now, repo, MODEL_ID),
+            )
+            store.db.commit()
         return {
             "model_id": row["model_id"],
             "schema_version": row["schema_version"],
-            "weights": json.loads(row["weights_json"]),
+            "weights": weights,
             "bias": float(row["bias"]),
             "train_count": int(row["train_count"]),
-            "feature_names": json.loads(row["feature_names_json"]),
+            "feature_names": names,
         }
     weights = default_weights()
     store.db.execute(
@@ -110,6 +136,8 @@ def features_from_hit(
     immune_block: bool = False,
     neural_support: bool = False,
     thalamus_lane: float = 0.5,
+    prefetch_hit: bool = False,
+    coact_strength: float = 0.0,
 ) -> list[float]:
     path = ""
     kind = ""
@@ -132,6 +160,12 @@ def features_from_hit(
     is_source = 1.0 if kind in {"source", "code", ""} and not is_test and not is_doc else 0.0
     vec_sim = float(meta.get("semantic_similarity") or meta.get("vector_sim") or 0.0)
     fts = 1.0 / (1.0 + rank)
+    hnsw = 1.0 if str(meta.get("source") or meta.get("selection_source") or "") == "hnsw_v1" else 0.0
+    if meta.get("hnsw_lane"):
+        hnsw = 1.0
+    kernel = str(meta.get("kernel_class") or "")
+    if not kernel and kind == "discovery_card":
+        kernel = "retain"
     feats = {
         "thalamus_lane": thalamus_lane,
         "fts_rank": fts,
@@ -149,6 +183,11 @@ def features_from_hit(
         "prior_score": min(1.0, max(0.0, score)),
         "recency": float(meta.get("recency") or 0.5),
         "evidence_kind_card": 1.0 if kind == "discovery_card" else 0.0,
+        "prefetch_hit": 1.0 if prefetch_hit or meta.get("prefetch_hit") else 0.0,
+        "hnsw_lane": hnsw,
+        "coact_strength": _clip(float(coact_strength or meta.get("coact_strength") or 0.0), 0.0, 1.0),
+        "kernel_retain": 1.0 if kernel == "retain" else 0.0,
+        "kernel_integrate": 1.0 if kernel == "integrate" else 0.0,
     }
     return [_clip(feats[name], -1.0, 1.0) for name in FEATURE_NAMES]
 
@@ -346,3 +385,97 @@ def snapshot_ranker(store: Any, repo: str) -> dict[str, Any]:
         "feature_names": model["feature_names"],
         "claim_boundary": "Snapshot is promotable canonical candidate only under GCMT.",
     }
+
+
+def apply_ranker_snapshot(store: Any, repo: str, snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Restore weights from a promoted/rolled-back snapshot (operational plane)."""
+
+    weights = snapshot.get("weights")
+    if not isinstance(weights, list):
+        return {"applied": False, "reason": "invalid_snapshot"}
+    bias = float(snapshot.get("bias") or 0.0)
+    names = snapshot.get("feature_names") or list(FEATURE_NAMES)
+    now = time.time()
+    ensure_ranker(store, repo)
+    store.db.execute(
+        """
+        UPDATE ranker_models SET weights_json=?, bias=?, feature_names_json=?, updated_at=?
+        WHERE repo=? AND model_id=?
+        """,
+        (json.dumps(weights), bias, json.dumps(names), now, repo, MODEL_ID),
+    )
+    store.db.commit()
+    return {"applied": True, "model_id": MODEL_ID, "train_count": snapshot.get("train_count")}
+
+
+def promote_ranker_snapshot(
+    store: Any,
+    repo: str,
+    *,
+    promotion_authorized: bool = False,
+) -> dict[str, Any]:
+    """Promote current ranker into canonical via GCMT-style receipt when authorized."""
+
+    if not promotion_authorized:
+        return {
+            "promoted": False,
+            "reason": "promotion_not_authorized",
+            "claim_boundary": "Human/host must authorize; ranker never self-promotes.",
+        }
+    frozen = store.get_setting(f"ranker_frozen:{repo}", {}) or {}
+    if frozen.get("frozen"):
+        return {"promoted": False, "reason": "ranker_frozen"}
+    snap = snapshot_ranker(store, repo)
+    from hashlib import sha256
+
+    receipt_id = "rr_" + sha256(f"{repo}|ranker|{time.time()}".encode()).hexdigest()[:20]
+    # Store as canonical_states via store API if available
+    try:
+        store.promote_canonical_state(
+            repo,
+            receipt_id=receipt_id,
+            state_key="ranker:linear_v1",
+            candidate=snap,
+            evidence=[{"path": "cortex/ranker/model.py", "content_hash": "ranker_snapshot"}],
+            verification={"repeatable": True, "bounded": True},
+            authority={
+                "promotion_authorized": True,
+                "level": 3,
+                "immune_block": False,
+            },
+        )
+        promoted = True
+        detail = {"receipt_id": receipt_id}
+    except Exception:
+        # Fallback: settings-backed retain snapshot
+        store.set_setting(f"ranker_canonical:{repo}", {**snap, "receipt_id": receipt_id})
+        promoted = True
+        detail = {"receipt_id": receipt_id, "via": "settings_fallback"}
+    try:
+        store.append_neural_event(
+            repo,
+            event_type="ranker_promoted",
+            entity_id=MODEL_ID,
+            payload=detail,
+        )
+    except Exception:
+        pass
+    return {"promoted": promoted, **detail, "snapshot": snap}
+
+
+def rollback_ranker_snapshot(store: Any, repo: str) -> dict[str, Any]:
+    """Restore last canonical ranker snapshot if present."""
+
+    canon = store.get_setting(f"ranker_canonical:{repo}", None)
+    if not isinstance(canon, dict) or not canon.get("weights"):
+        # try canonical_states table
+        try:
+            row = store.canonical_state(repo, "ranker:linear_v1")
+            if row:
+                canon = json.loads(row["value_json"])
+        except Exception:
+            canon = None
+    if not isinstance(canon, dict) or not canon.get("weights"):
+        return {"rolled_back": False, "reason": "no_canonical_snapshot"}
+    applied = apply_ranker_snapshot(store, repo, canon)
+    return {"rolled_back": bool(applied.get("applied")), **applied}

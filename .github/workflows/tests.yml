@@ -57,6 +57,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/smoke_interconnect_mesh.py
+      - name: Spectral kernels smoke (this repo only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/smoke_spectral_kernels.py
       - name: Bash syntax
         if: runner.os != 'Windows'
         run: bash -n cortex.sh cortex-all-one.sh scripts/bash/*.sh

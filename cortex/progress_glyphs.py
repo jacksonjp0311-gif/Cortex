@@ -118,6 +118,12 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "GraphPrune",
         "maps_to": "cortex prune",
     },
+    "spectral_kernels": {
+        "symbol": "≋",
+        "spoken": "spectral kernels",
+        "target": "SpectralKernels",
+        "maps_to": "cortex kernels",
+    },
 }
 
 
