@@ -1,8 +1,9 @@
 # Binary-intel packs ▣
 
-**Version:** v6.9.1 (taught pack v1.1)  
+**Version:** v6.9.2 (taught pack **v1.2**)  
 **Schema:** `cortex.binary-intel-pack/1.0`  
-**CLI:** `cortex packs …` · teach: `cortex teach --seed`
+**CLI:** `cortex packs …` · teach: `cortex teach --seed`  
+**Glyph:** ❖ taught intelligence · phrase `grow_seal`
 
 Portable intelligence packages that extend Cortex memory: **zero-in** by domain
 binary geometry, **expand** cards when mass coheres. Works for any user home —

@@ -69,7 +69,7 @@ class PacksTests(unittest.TestCase):
         self.assertGreaterEqual(listed["count"], 1)
 
         idx = index_packs_into_repo(self.store, self.home, "PackHost")
-        self.assertGreaterEqual(idx["chunks_indexed"], 10)
+        self.assertGreaterEqual(idx["chunks_indexed"], 16)
 
         route = domain_route(self.home, "geometry triangle circle proof")
         self.assertEqual(route["top_domain"], "geometry")

@@ -1,3 +1,10 @@
+## 6.9.2 - Grow cards · enter · distill · seal
+
+- Core pack **v1.2**: +6 taught cards (evidence, falsification, sparse doctrine, abstain, enter-exit-seal, priority map); domain `evidence`.
+- Glyph **❖** `taught_intelligence`; phrasebook `grow_seal`, `falsify_first`.
+- Card priority tiers in manifest (`high` / `medium` / `lower`).
+- Same portable pack install path. Still recommend-only.
+
 ## 6.9.1 - Teach enter/connect/evolve into packs
 
 - Core pack **v1.1**: taught operator cards (teach, interconnect, evolution, agent loop) + domains interconnect/evolution.

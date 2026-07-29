@@ -189,8 +189,18 @@ def score_task_against_domains(
             "governance": ("govern", "authority", "policy", "immune", "safety"),
             "understanding": ("understand", "comprehend", "meaning", "semantic"),
             "knowledge": ("knowledge", "know", "fact", "learn", "domain", "distill"),
-            "interconnect": ("interconnect", "mesh", "connect", "lattice", "pulse", "resonate"),
+            "interconnect": ("interconnect", "mesh", "connect", "lattice", "pulse", "resonate", "enter"),
             "evolution": ("evolve", "evolution", "harness", "ranker", "plasticity", "signal"),
+            "evidence": (
+                "evidence",
+                "uncertainty",
+                "confidence",
+                "cite",
+                "falsify",
+                "counterexample",
+                "unknown",
+                "verify",
+            ),
             "general": ("general", "help", "task"),
         }
         for alias in aliases.get(d, ()):

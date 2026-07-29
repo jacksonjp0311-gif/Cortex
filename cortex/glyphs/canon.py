@@ -185,6 +185,23 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "medium",
         "kernel": "retain",
     },
+    "taught_intelligence": {
+        "symbol": "❖",
+        "spoken": "taught intelligence",
+        "aria_id": "TaughtIntelligence",
+        "maps_to": "packs cards / teach --seed / distill",
+        "role": "medium",
+        "kernel": "retain",
+    },
+    "enter_seal": {
+        "symbol": "⟳",
+        "spoken": "enter seal cycle",
+        "aria_id": "EnterSealCycle",
+        "maps_to": "activate → ritual seal",
+        "role": "pulse",
+        "kernel": "retain",
+        "secondary": True,
+    },
     "transcend_check": {
         "symbol": "⟡",
         "spoken": "transcend check",
@@ -385,6 +402,22 @@ PHRASEBOOK: dict[str, dict[str, Any]] = {
         ],
         "spoken": "immune, stream, pack, connect, distill",
         "use": "Full teach enter-connect loop.",
+    },
+    "grow_seal": {
+        "keys": [
+            "taught_intelligence",
+            "binary_intel_pack",
+            "distill_intel",
+            "ritual_idempotent",
+            "consciousness_stream",
+        ],
+        "spoken": "taught intelligence, pack, distill, ritual, stream",
+        "use": "Grow cards → enter → distill → seal.",
+    },
+    "falsify_first": {
+        "keys": ["retrieval_gate", "control_error", "taught_intelligence"],
+        "spoken": "retrieval, control, taught intelligence",
+        "use": "Evidence and falsification posture.",
     },
 }
 
