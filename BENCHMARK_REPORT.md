@@ -1,5 +1,43 @@
 # Sparse Activation Benchmark Report
 
+## Cortex v3.1 / constitutional homeostasis validation (July 28, 2026)
+
+The v3.1 evolution models memory as a bounded balance between context
+preservation and adjacent conceptualization. The implemented balance uses the
+harmonic mean, so either a lost anchor or uncontrolled adjacency lowers the
+score rather than being hidden by a high value on the other axis.
+
+| Measure | Result |
+|---|---:|
+| Context preservation input | 0.09090909 |
+| Adjacent conceptualization input | 0.90909091 |
+| Harmonic memory balance | 0.16528926 |
+| Constitutional potential | 0.11663 (shadow / observational) |
+| Failure quadrant | uncertain / healthy |
+| Continuation protocol | 1.1 |
+| Rebound local scope | `cortex.canonical.read` |
+| Imported packet grants authority | false |
+| Python tests | 46/46 |
+| ARIA constitutional lattice | 12/12 |
+| ARIA full conformance | 512/512 |
+| ARIA strict doctor / manifest | pass / 301 of 301 |
+
+The native ARIA example executed these outputs through the verified compiler
+and VM:
+
+| Glyph | Meaning | Observed result |
+|---|---|---:|
+| `⋈` | context weave / memory balance | 0.685714285714286 |
+| `≋` | constitutional potential | 0.0875 |
+| `⌁` | reversibility burden | 0.880 |
+| `↧` | authority descent | false ungranted / true granted |
+| `↶` | verified recovery | true for the valid staged candidate |
+
+All five glyphs lower to typed functions and ordinary `CALL` instructions.
+These measurements validate deterministic behavior for the declared examples
+and controlled thresholds; they are not universal memory-quality or safety
+claims.
+
 ## Cortex v3 / Aria real-repository validation (July 28, 2026)
 
 ### INTERNAL ARIA phase change

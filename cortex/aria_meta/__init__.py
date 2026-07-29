@@ -11,9 +11,12 @@ from .substrate import (
     adapt_aria_cues,
     aria_runtime_status,
     classify_aria_task,
+    is_aria_anchor_path,
     is_internal_aria_path,
     load_aria_cue_profile,
     native_semantic_registry,
+    should_defer_aria_indexing,
+    substrate_work_proxy,
 )
 
 
@@ -73,8 +76,11 @@ __all__ = [
     "bundle_identity",
     "bundle_root",
     "classify_aria_task",
+    "is_aria_anchor_path",
     "is_internal_aria_path",
     "load_aria_cue_profile",
     "native_semantic_registry",
+    "should_defer_aria_indexing",
+    "substrate_work_proxy",
     "verify_bundle",
 ]

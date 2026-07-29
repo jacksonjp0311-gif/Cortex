@@ -108,6 +108,12 @@ it for ARIA semantics, planning, continuity, coordination, consent, capability,
 or governance work. Activation packets report the region's known/active state
 and eligible, considered, and fired node counts.
 
+Bootstrap uses tiered substrate indexing: ARIA identity/anchor files are fully
+indexed immediately, while bulk vendored language files remain
+`substrate_deferred` (inventory + skeletal neural nodes) until an ARIA-active
+task materializes them. This keeps host assimilation proportional to repository
+work rather than language bulk.
+
 `cortex.aria_meta.substrate` connects ARIA's bundled semantic-cue registry to a
 typed Cortex routing layer. Nineteen immutable wake cues map tasks into seven
 purposes. A repository may hold at most 32 learned cues; each must be explicitly

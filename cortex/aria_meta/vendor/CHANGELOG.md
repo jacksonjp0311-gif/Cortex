@@ -2,6 +2,18 @@
 
 All notable changes to ARIA are recorded here. The compiler, language specification, and container contract are versioned independently.
 
+## Constitutional Homeostasis alpha.18
+
+- Added five verified capability-free function glyphs for context weave,
+  constitutional potential, reversibility burden, authority descent, and
+  staged recovery.
+- Lowered every new glyph into an ordinary typed function call without adding
+  opcodes, effects, or authority.
+- Added an executable GCMT v1.5 example, governed plan, documentation, and a
+  twelve-gate conformance lattice.
+- Made preservation/adjacency balance explicit while keeping constitutional
+  potential observational and hard violations non-compensable.
+
 ## Cooperative Agent Mesh alpha.17
 
 - Added `aria.cooperative-mesh/1` records over one shared state, distinct member artifacts, and unique provider-bridge identities.

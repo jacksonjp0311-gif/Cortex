@@ -1,3 +1,37 @@
+# Cortex v3.1.0 Test Report
+
+**Release validation date:** July 28, 2026
+
+## Constitutional homeostasis / GCMT v1.5 validation
+
+- `python -m pytest tests -q`: 47 passed
+- `python -m ruff check cortex tests`: passed
+- `python -m cortex benchmark --verify --json`: passed all five controlled
+  thresholds
+- ARIA strict doctor: passed; system ready
+- ARIA full conformance: 512/512 gates coherent
+- Constitutional ARIA lattice: 12/12 gates coherent
+- Bundled ARIA manifest: 301/301 files verified
+- Source distribution and wheel build: passed
+- Real ARIA execution verified all five glyph lowerings through ordinary typed
+  functions and existing `CALL` bytecode; no privileged opcode or capability
+  was introduced
+- Continuation protocol 1.1 verified that imported packets are metadata-only,
+  authority is rebound locally, and source packets grant no authority
+- Promotion tests verified that authority growth requires a content-addressed
+  external grant and that rollback admits only a staged, verified recovery
+  candidate
+- Deferred ARIA substrate: non-anchor vendor files remain `substrate_deferred`
+  through verified bootstrap; ARIA-active query materializes them once
+- Fluency corpus expansion: false-friend cases (semver, glyph icon, bridge
+  modules, etc.) stay dormant; multi-token ARIA cues still wake correctly
+
+The new checks establish the declared repository-local invariants. They do not
+prove general intelligence, universal safety, or correctness outside the
+tested workloads.
+
+The v3.0 report below is retained as release lineage.
+
 # Cortex v3.0.0 Test Report
 
 **Release validation date:** July 28, 2026

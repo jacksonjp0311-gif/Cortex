@@ -44,6 +44,32 @@ that region for ordinary implementation tasks.
   `neural_interlink.metrics.aria_substrate`;
 - activation exposes evidence only—it never executes ARIA or grants authority.
 
+## Bootstrap-tiered substrate indexing
+
+Internal ARIA is large enough that eager full indexing on every bootstrap taxes
+host assimilation and nested self-host latency. Cortex therefore splits the
+region into tiers:
+
+| Tier | What | When |
+|---|---|---|
+| Inventory | Every vendored path + content hash | Always (manifest integrity) |
+| Anchors | Runtime/policy/cue registry files | Fully indexed at bootstrap |
+| Deferred bulk | Specs, plans, modules, deep docs | `substrate_deferred` until ARIA wake |
+| Materialized | Deferred files after first active task | Indexed once, then incremental |
+
+Work-proxy math (file-ops, not wall-clock):
+
+```text
+W_bootstrap ≈ |repo ∪ anchors| · c_index + |aria \ anchors| · c_inventory
+W_wake_once ≈ remaining_deferred · c_index
+savings_ratio ≈ 1 - W_deferred_units / W_eager_units
+```
+
+`index.aria_substrate.work_proxy` and certificate
+`coverage.deferred_substrate_count` expose these counters. Set
+`aria_substrate_indexing: "eager"` in repository config to restore legacy
+full-index bootstrap (diagnostics only).
+
 ## Runtime fluency and adaptation
 
 Cortex maps admitted cues into typed purposes:
@@ -56,12 +82,55 @@ Cortex maps admitted cues into typed purposes:
 - `coordination`;
 - `symbolic`.
 
-The 19 core cues are immutable. Learned cues are repository-scoped, inspectable
-through `cortex meta-language`, limited to 32, and admitted at confidence 0.65
-only when a verified outcome carries an explicit human-reviewed proposal.
-Verification-backed outcomes may adjust a matched learned cue between 0.35 and
-0.90. Falling below 0.65 makes that cue dormant. Core cues, Python execution,
-and authority are never modified.
+The 26 core cues are immutable. Single-token common English is avoided; `aria`
+is the only intentional single-token wake. Learned cues must be multi-token
+(except `aria`), repository-scoped, inspectable through `cortex meta-language`,
+limited to 32, and admitted at confidence 0.65 only when a verified outcome
+carries an explicit human-reviewed proposal. Verification-backed outcomes may
+adjust a matched learned cue between 0.35 and 0.90. Falling below 0.65 makes
+that cue dormant. Core cues, Python execution, and authority are never modified.
+
+The fluency corpus under `benchmarks/corpora/aria_fluency.json` is a regression
+gate: false wakes and missed wakes must remain zero.
+
+## Vendor snapshot bump ritual
+
+Do not hand-edit `cortex/aria_meta/vendor` mixed into unrelated Cortex core
+commits. Bump the snapshot deliberately:
+
+```powershell
+.\scripts\powershell\Bump-AriaSnapshot.ps1 `
+  -Source C:\path\to\ARIA `
+  -SourceCommit <sha> `
+  -SourceRelease <label> `
+  -EvolutionLabel <evolution-name>
+```
+
+```bash
+./scripts/bash/bump-aria-snapshot.sh /path/to/ARIA <sha> <release> <evolution>
+```
+
+That script mirrors the source tree, regenerates `MANIFEST.sha256`, refreshes
+`INTERNAL_ARIA.json`, and runs `verify_bundle()`. Prefer a dedicated
+`chore: bump INTERNAL ARIA snapshot` commit before Cortex core work that depends
+on the new language surface.
+
+## Constitutional glyph vocabulary
+
+The internal alpha.18 language adds five executable function aliases:
+
+| Glyph | Function | Runtime meaning |
+|---|---|---|
+| `⋈` | `MemoryBalance` | Harmonic balance of preserved and adjacent context |
+| `≋` | `ConstitutionalPotential` | Observational instability |
+| `⌁` | `ReversibilityBurden` | Increasing proof burden |
+| `↧` | `AuthorityAdmissible` | Monotonic authority admission |
+| `↶` | `RecoveryAdmissible` | Verified staged recovery |
+
+Every glyph lowers into an ordinary function call before semantic analysis.
+The cards are pure, deterministic, capability-free, and covered by the same
+bytecode verifier and VM as textual calls. They describe Cortex supervision but
+do not execute Cortex or grant authority.
 
 ```bash
 cortex outcome --repo MyProject --activation-id act_... \

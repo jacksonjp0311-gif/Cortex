@@ -320,7 +320,244 @@
                                     "reducer purity is proven by deterministic effect graph"
                                 ],
                       "digest":  "sha256:7b1a8f4ce8b6cc509be7425511d57398d04cd77f2ad40f7e81aa14b06d6512be"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "memory.balance",
+                      "symbol":  "⋈",
+                      "spoken":  "context weave",
+                      "family":  "intelligence",
+                      "category":  "context-balance",
+                      "fixity":  "prefix",
+                      "arity":  2,
+                      "inputs":  [
+                                     {
+                                         "name":  "preserved",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "adjacent",
+                                         "type":  "Number"
+                                     }
+                                 ],
+                      "output":  "Number",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "MemoryBalance"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "harmonic context balance is bounded and deterministic",
+                                    "glyph and textual function calls lower to equal bytecode",
+                                    "neither preservation nor adjacency is authority"
+                                ],
+                      "digest":  "sha256:15cf8506cb39904130f6862ae8de1839f0f48bedaac220b2ab584967a8cdbf2e"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "governance.constitutional-potential",
+                      "symbol":  "≋",
+                      "spoken":  "constitutional potential",
+                      "family":  "intelligence",
+                      "category":  "supervision",
+                      "fixity":  "prefix",
+                      "arity":  8,
+                      "inputs":  [
+                                     {
+                                         "name":  "drift",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "uncertainty",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "authorityPressure",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "illegitimacy",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "integrityLoss",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "evidenceLoss",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "debt",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "recoveryLoss",
+                                         "type":  "Number"
+                                     }
+                                 ],
+                      "output":  "Number",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "ConstitutionalPotential"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "potential remains observational and capability-free",
+                                    "glyph and textual function calls lower to equal bytecode",
+                                    "hard constraints remain outside the weighted score"
+                                ],
+                      "digest":  "sha256:698bf7368b6e510df3dff95891ef5ddbdc004dd4d4b295421797b21cb6f9db00"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "governance.reversibility-burden",
+                      "symbol":  "⌁",
+                      "spoken":  "reversibility burden",
+                      "family":  "authority",
+                      "category":  "admission-threshold",
+                      "fixity":  "prefix",
+                      "arity":  1,
+                      "inputs":  [
+                                     {
+                                         "name":  "irreversibility",
+                                         "type":  "Number"
+                                     }
+                                 ],
+                      "output":  "Number",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "ReversibilityBurden"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "burden rises monotonically with irreversibility",
+                                    "glyph and textual function calls lower to equal bytecode",
+                                    "the glyph grants no mutation capability"
+                                ],
+                      "digest":  "sha256:0fa27abe3895fbf31fad378e0b6e80074020013ef8d7898a2a8031ca1fe09a90"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "authority.monotonic-descent",
+                      "symbol":  "↧",
+                      "spoken":  "authority descent",
+                      "family":  "authority",
+                      "category":  "scope-admission",
+                      "fixity":  "prefix",
+                      "arity":  3,
+                      "inputs":  [
+                                     {
+                                         "name":  "currentLevel",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "requestedLevel",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "grantVerified",
+                                         "type":  "Bool"
+                                     }
+                                 ],
+                      "output":  "Bool",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "AuthorityAdmissible"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "authority growth is rejected without a verified grant",
+                                    "glyph and textual function calls lower to equal bytecode",
+                                    "the glyph records admission logic but grants no authority"
+                                ],
+                      "digest":  "sha256:5b2b27742da071807d97a5c5b5aa719f6e46f5b82fb8e7a19f11edeb6b46aa46"
+                  },
+                  {
+                      "format":  "aria.glyph-card",
+                      "version":  1,
+                      "id":  "recovery.verified-candidate",
+                      "symbol":  "↶",
+                      "spoken":  "verified recovery",
+                      "family":  "control",
+                      "category":  "recovery-admission",
+                      "fixity":  "prefix",
+                      "arity":  4,
+                      "inputs":  [
+                                     {
+                                         "name":  "beforeDrift",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "afterDrift",
+                                         "type":  "Number"
+                                     },
+                                     {
+                                         "name":  "integrityHealthy",
+                                         "type":  "Bool"
+                                     },
+                                     {
+                                         "name":  "triggerResolved",
+                                         "type":  "Bool"
+                                     }
+                                 ],
+                      "output":  "Bool",
+                      "purity":  "pure",
+                      "deterministic":  true,
+                      "effects":  [
+
+                                  ],
+                      "capabilities":  [
+
+                                       ],
+                      "lowering":  {
+                                       "kind":  "alias",
+                                       "target":  "RecoveryAdmissible"
+                                   },
+                      "status":  "verified",
+                      "tests":  [
+                                    "recovery requires reduced drift and healthy integrity",
+                                    "glyph and textual function calls lower to equal bytecode",
+                                    "a recovery attempt is not treated as a committed recovery"
+                                ],
+                      "digest":  "sha256:72f4bd074d577b9a41323b670bc1c84d7b15477c3067aaef654f4d4058aae87b"
                   }
               ],
-    "digest":  "sha256:76fa342aeffc5fd6e6dd3662dabb7eb79b4e89c523bc7830a799deb02d1ce76e"
+    "digest":  "sha256:3df7e19fc58fb7c3b6de9fee0ff9edb6354d3ff5682840c553ca9c63b0bb4045"
 }

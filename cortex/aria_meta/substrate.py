@@ -13,6 +13,13 @@ INTERNAL_ARIA_REGION = "internal_aria_substrate"
 REPOSITORY_REGION = "repository"
 ARIA_CUE_THRESHOLD = 0.65
 ARIA_MAX_LEARNED_CUES = 32
+# Bootstrap indexes only anchors; the remaining substrate is certificate-deferred
+# until an ARIA-active task materializes it. Work proxy:
+#   W_bootstrap ≈ |repo ∪ anchors| · c_index + |aria \ anchors| · c_inventory
+#   W_wake_once  ≈ |aria \ anchors| · c_index   (amortized over later runs as 0)
+ARIA_SUBSTRATE_DEFERRED_STATUS = "substrate_deferred"
+ARIA_INDEXING_DEFERRED = "deferred"
+ARIA_INDEXING_EAGER = "eager"
 ARIA_PURPOSES = (
     "language",
     "intent",
@@ -23,6 +30,24 @@ ARIA_PURPOSES = (
     "symbolic",
 )
 
+# Always fully indexed on bootstrap: identity, policy, and cue registry.
+ARIA_SUBSTRATE_ANCHORS: tuple[str, ...] = (
+    "cortex/aria_meta/vendor/ARIA-RUNTIME.json",
+    "cortex/aria_meta/vendor/ARIA-CONNECT.json",
+    "cortex/aria_meta/vendor/AGENTS.md",
+    "cortex/aria_meta/vendor/README.md",
+    "cortex/aria_meta/vendor/VERSION",
+    "cortex/aria_meta/vendor/MANIFEST.sha256",
+    "cortex/aria_meta/vendor/aria.policy.json",
+    "cortex/aria_meta/vendor/aria.lock.json",
+    "cortex/aria_meta/vendor/grammar/semantic-cues.json",
+    "cortex/aria_meta/vendor/grammar/glyphs.json",
+    "cortex/aria_meta/vendor/grammar/glyph-cards.json",
+    "cortex/aria_meta/vendor/grammar/opcodes.json",
+)
+
+# Immutable core cues. Single-token common English is avoided to cut false wakes;
+# "aria" is the only intentional single-token language wake.
 CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "aria", "purpose": "language"},
     {"phrase": "meta-language", "purpose": "language"},
@@ -39,10 +64,17 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "capability authority", "purpose": "governance"},
     {"phrase": "governed evolution", "purpose": "governance"},
     {"phrase": "governance contract", "purpose": "governance"},
+    {"phrase": "constitutional homeostasis", "purpose": "governance"},
+    {"phrase": "authority monotonicity", "purpose": "governance"},
+    {"phrase": "reversibility burden", "purpose": "governance"},
+    {"phrase": "verified recovery", "purpose": "governance"},
     {"phrase": "provider bridge", "purpose": "coordination"},
     {"phrase": "cooperative mesh", "purpose": "coordination"},
     {"phrase": "agent mesh", "purpose": "coordination"},
-    {"phrase": "glyph", "purpose": "symbolic"},
+    {"phrase": "verified glyph", "purpose": "symbolic"},
+    {"phrase": "glyph card", "purpose": "symbolic"},
+    {"phrase": "glyph memory", "purpose": "symbolic"},
+    {"phrase": "context weave", "purpose": "symbolic"},
 )
 
 
@@ -56,6 +88,64 @@ def _setting_key(repo: str) -> str:
 
 def is_internal_aria_path(path: str) -> bool:
     return path.replace("\\", "/").startswith(INTERNAL_ARIA_PREFIX)
+
+
+def is_aria_anchor_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    return normalized in ARIA_SUBSTRATE_ANCHORS
+
+
+def should_defer_aria_indexing(path: str, indexing_mode: str = ARIA_INDEXING_DEFERRED) -> bool:
+    """Return True when path belongs to the deferred ARIA indexing tier."""
+
+    mode = (indexing_mode or ARIA_INDEXING_DEFERRED).casefold()
+    if mode == ARIA_INDEXING_EAGER:
+        return False
+    return is_internal_aria_path(path) and not is_aria_anchor_path(path)
+
+
+def substrate_work_proxy(
+    *,
+    repository_indexed: int,
+    aria_anchors_indexed: int,
+    aria_deferred: int,
+    aria_materialized: int = 0,
+) -> dict[str, Any]:
+    """Expose the bootstrap/wake work split as measurable counters.
+
+    Cost units are file-ops (inventory vs full index). Absolute times vary by
+    machine; ratios are the portable engineering signal.
+    """
+
+    bootstrap_index_ops = repository_indexed + aria_anchors_indexed
+    bootstrap_inventory_ops = aria_deferred
+    wake_materialize_ops = max(0, aria_deferred - aria_materialized)
+    aria_total = aria_anchors_indexed + aria_deferred
+    deferred_fraction = (
+        round(aria_deferred / aria_total, 8) if aria_total else 0.0
+    )
+    # Relative bootstrap work vs eager full ARIA index:
+    # eager ≈ repo + aria_total; deferred ≈ repo + anchors + inventory(aria_deferred)
+    # inventory is treated as ~0.05 of a full index op for the ratio signal.
+    eager_units = float(repository_indexed + aria_total)
+    deferred_units = float(bootstrap_index_ops) + 0.05 * float(bootstrap_inventory_ops)
+    savings_ratio = (
+        round(max(0.0, 1.0 - (deferred_units / eager_units)), 8)
+        if eager_units
+        else 0.0
+    )
+    return {
+        "schema_version": "cortex-aria-work-proxy/1.0",
+        "bootstrap_index_ops": bootstrap_index_ops,
+        "bootstrap_inventory_ops": bootstrap_inventory_ops,
+        "wake_materialize_ops_remaining": wake_materialize_ops,
+        "aria_deferred_fraction": deferred_fraction,
+        "estimated_bootstrap_savings_ratio": savings_ratio,
+        "formula": (
+            "W_bootstrap ≈ |repo∪anchors|·c_index + |aria\\anchors|·c_inventory; "
+            "W_wake_once ≈ remaining_deferred·c_index"
+        ),
+    }
 
 
 def aria_purposes_for_path(path: str) -> tuple[str, ...]:
@@ -72,6 +162,9 @@ def aria_purposes_for_path(path: str) -> tuple[str, ...]:
             "capability",
             "gate",
             "execution-evidence",
+            "homeostasis",
+            "recovery",
+            "reversibility",
         ),
         "coordination": (
             "bridge",
@@ -80,7 +173,7 @@ def aria_purposes_for_path(path: str) -> tuple[str, ...]:
             "connection",
             "transmission",
         ),
-        "symbolic": ("glyph", "alchemy", "semantic-cues"),
+        "symbolic": ("glyph", "alchemy", "semantic-cues", "context-weave"),
     }
     for purpose, keywords in keyword_map.items():
         if any(keyword in normalized for keyword in keywords):
@@ -154,6 +247,18 @@ def load_aria_cue_profile(store: Any, repo: str) -> dict[str, Any]:
     }
 
 
+def _cue_is_admissible_phrase(phrase: str) -> bool:
+    """Reject under-specified learned cues that would reintroduce false wakes."""
+
+    tokens = phrase.split()
+    if not tokens or len(tokens) > 6:
+        return False
+    # Single-token learned cues are high false-wake risk unless they are "aria".
+    if len(tokens) == 1:
+        return tokens[0] == "aria"
+    return 2 <= len(tokens) <= 6
+
+
 def classify_aria_task(
     task: str, learned_cues: Iterable[dict[str, Any]] = ()
 ) -> dict[str, Any]:
@@ -178,6 +283,7 @@ def classify_aria_task(
         purpose = str(cue.get("purpose", ""))
         if (
             phrase
+            and _cue_is_admissible_phrase(phrase)
             and purpose in ARIA_PURPOSES
             and confidence >= ARIA_CUE_THRESHOLD
             and f" {phrase} " in padded
@@ -291,12 +397,11 @@ def adapt_aria_cues(
         for proposal in proposals:
             phrase = _normalize(str(proposal.get("phrase", "")))
             purpose = str(proposal.get("purpose", ""))
-            token_count = len(phrase.split())
             if (
                 phrase in core_phrases
                 or phrase in existing
                 or purpose not in ARIA_PURPOSES
-                or not 2 <= token_count <= 6
+                or not _cue_is_admissible_phrase(phrase)
                 or len(cues) >= ARIA_MAX_LEARNED_CUES
             ):
                 continue
@@ -356,8 +461,12 @@ def aria_runtime_status(
 
 __all__ = [
     "ARIA_CUE_THRESHOLD",
+    "ARIA_INDEXING_DEFERRED",
+    "ARIA_INDEXING_EAGER",
     "ARIA_MAX_LEARNED_CUES",
     "ARIA_PURPOSES",
+    "ARIA_SUBSTRATE_ANCHORS",
+    "ARIA_SUBSTRATE_DEFERRED_STATUS",
     "CORE_CUES",
     "INTERNAL_ARIA_PREFIX",
     "INTERNAL_ARIA_REGION",
@@ -368,7 +477,10 @@ __all__ = [
     "aria_routing_purposes",
     "aria_runtime_status",
     "classify_aria_task",
+    "is_aria_anchor_path",
     "is_internal_aria_path",
     "load_aria_cue_profile",
     "native_semantic_registry",
+    "should_defer_aria_indexing",
+    "substrate_work_proxy",
 ]

@@ -45,10 +45,12 @@ current task
 
 Cortex is local-first, SQLite-backed, dependency-free in its core installation, and designed to integrate with existing repositories without replacing their source, tests, governance, or authorization rules.
 
-## Cortex v3: governed continuation
+## Cortex v3.1: constitutional homeostasis
 
-Cortex v3 implements James Paul Jackson's Governed Continuation Memory Theory
-(GCMT v1.0): memory is regulated transformation with recoverable origin.
+Cortex v3.1 implements James Paul Jackson's Governed Continuation Memory Theory
+(GCMT v1.5): memory is regulated transformation with recoverable origin, and
+adaptive continuation remains legitimate only while authority, integrity,
+reversibility, and recovery stay constitutionally bounded.
 
 It adds:
 
@@ -61,9 +63,16 @@ It adds:
 - SQLite vector buckets for bounded semantic candidate selection;
 - base-versus-learned replay evaluation and regression gates;
 - a read-oriented MCP stdio server and compact operational dashboard.
+- dual-axis uncertainty/integrity classification and an observational
+  constitutional-potential surface;
+- an explicit harmonic balance between preserved context and adjacent
+  conceptualization;
+- authority-monotonic promotion, reversibility-weighted admission, local
+  authority rebinding on continuation import, and staged recovery verification.
 
 ```bash
 cortex continuation --repo MyProject --task "Continue the release investigation" --json
+cortex constitutional --repo MyProject --task "Balance anchored and adjacent context" --json
 cortex federated-query "Where is authentication owned?" --repos Web API Shared --json
 cortex lifecycle --repo MyProject --json
 cortex evaluate examples/evaluation_corpus.json --repo MyProject --json
@@ -92,11 +101,31 @@ handoff, provider-bridge, glyph, and cooperative-mesh tasks. Dormancy removes
 the region from a task's eligible evidence path; it does not unload or forget
 the language.
 
+Bootstrap is substrate-tiered: ARIA identity/anchor files index immediately,
+while bulk language files remain inventory-only (`substrate_deferred`) until an
+ARIA-active task materializes them. That keeps first assimilation proportional
+to host repository work, not language bulk.
+
 Runtime fluency is typed as `language`, `intent`, `continuity`, `consent`,
 `governance`, `coordination`, or `symbolic`. Immutable core cues provide the
 deterministic baseline. Human-reviewed cue proposals may enter a bounded
 per-repository profile only through verified outcomes; subsequent verified
 outcomes tune relevance confidence, never execution or authority.
+
+The bundled alpha.18 vocabulary adds five capability-free executable function
+glyphs:
+
+```text
+⋈  context weave             preservation balanced with adjacency
+≋  constitutional potential  observational instability
+⌁  reversibility burden      proof burden rises with irreversibility
+↧  authority descent         no internal scope expansion
+↶  verified recovery         recovery is staged before commit
+```
+
+They lower to ordinary typed ARIA calls, introduce no opcode or capability, and
+are exercised by `examples/constitutional-homeostasis.aria` inside the bundled
+language.
 
 ```bash
 cortex meta-language --repo MyProject --json

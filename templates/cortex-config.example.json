@@ -18,6 +18,7 @@
   "neural_max_nodes": 64,
   "neural_plasticity_enabled": true,
   "neural_learning_rate": 0.025,
+  "aria_substrate_indexing": "deferred",
   "bootstrap_thresholds": {
     "index_coverage": 0.98,
     "manifest_integrity": 1.0,

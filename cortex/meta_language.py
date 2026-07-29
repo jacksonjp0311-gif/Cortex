@@ -133,6 +133,8 @@ def detect_meta_language(root: Path, file_rows: list[Any]) -> dict[str, Any]:
             "intent_representation",
             "semantic_planning",
             "governance_contracts",
+            "constitutional_supervision",
+            "context_preservation_and_adjacency",
             "verified_continuation",
             "cooperative_agent_coordination",
         ],

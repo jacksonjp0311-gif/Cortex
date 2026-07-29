@@ -1,11 +1,21 @@
 {
-  "schema_version": "cortex-aria-fluency-corpus/1.0",
+  "schema_version": "cortex-aria-fluency-corpus/1.1",
   "cases": [
     {"id": "dormant-variable", "task": "Rename a Python variable", "expected_mode": "dormant"},
     {"id": "dormant-tests", "task": "Replay the failing unit test", "expected_mode": "dormant"},
     {"id": "dormant-ui", "task": "Hand off UI control to the next component", "expected_mode": "dormant"},
     {"id": "dormant-config", "task": "Update the package configuration", "expected_mode": "dormant"},
     {"id": "dormant-docs", "task": "Document the repository architecture", "expected_mode": "dormant"},
+    {"id": "dormant-semver", "task": "Bump the semantic version of the package", "expected_mode": "dormant"},
+    {"id": "dormant-intent-fn", "task": "Clarify the intent of this helper function", "expected_mode": "dormant"},
+    {"id": "dormant-bridge-modules", "task": "Bridge the frontend and backend modules", "expected_mode": "dormant"},
+    {"id": "dormant-mesh-network", "task": "Configure the mesh network routes", "expected_mode": "dormant"},
+    {"id": "dormant-consent-form", "task": "Update the consent form wording", "expected_mode": "dormant"},
+    {"id": "dormant-capability-api", "task": "List capability flags for the public API", "expected_mode": "dormant"},
+    {"id": "dormant-authority-org", "task": "Document the authority of the maintainer role", "expected_mode": "dormant"},
+    {"id": "dormant-glyph-icon", "task": "Replace the toolbar glyph icon asset", "expected_mode": "dormant"},
+    {"id": "dormant-recovery-disk", "task": "Run disk recovery after the failed backup", "expected_mode": "dormant"},
+    {"id": "dormant-governance-oss", "task": "Improve open source project governance docs", "expected_mode": "dormant"},
     {"id": "language-aria", "task": "Explain ARIA syntax", "expected_mode": "active", "expected_purposes": ["language"]},
     {"id": "language-meta", "task": "Inspect the meta language boundary", "expected_mode": "active", "expected_purposes": ["language"]},
     {"id": "intent-plan", "task": "Draft a semantic plan for the release", "expected_mode": "active", "expected_purposes": ["intent"]},
@@ -20,6 +30,7 @@
     {"id": "coordination-provider", "task": "Build a provider bridge envelope", "expected_mode": "active", "expected_purposes": ["coordination"]},
     {"id": "coordination-mesh", "task": "Coordinate a cooperative mesh", "expected_mode": "active", "expected_purposes": ["coordination"]},
     {"id": "symbolic-glyph", "task": "Render the verified glyph", "expected_mode": "active", "expected_purposes": ["symbolic"]},
+    {"id": "symbolic-glyph-card", "task": "Inspect the glyph card registry", "expected_mode": "active", "expected_purposes": ["symbolic"]},
     {"id": "combined", "task": "Use ARIA semantic replay with a cooperative mesh", "expected_mode": "active", "expected_purposes": ["language", "continuity", "coordination"]}
   ]
 }

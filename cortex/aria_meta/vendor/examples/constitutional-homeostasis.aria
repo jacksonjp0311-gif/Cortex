@@ -1,0 +1,48 @@
+aria 0.4.0
+module ConstitutionalHomeostasis version 1.0.0
+program ConstitutionalHomeostasis version 1.0.0
+entry Main
+
+function MemoryBalance(preserved: Number, adjacent: Number) -> Number {
+  if preserved + adjacent == 0 {
+    ↩ 0
+  } else {
+    ↩ (2 * preserved * adjacent) / (preserved + adjacent)
+  }
+}
+
+function ConstitutionalPotential(drift: Number, uncertainty: Number, authorityPressure: Number, illegitimacy: Number, integrityLoss: Number, evidenceLoss: Number, debt: Number, recoveryLoss: Number) -> Number {
+  ↩ (drift + uncertainty + authorityPressure + illegitimacy + integrityLoss + evidenceLoss + debt + recoveryLoss) / 8
+}
+
+function ReversibilityBurden(irreversibility: Number) -> Number {
+  ↩ 0.60 + 0.35 * irreversibility
+}
+
+function AuthorityAdmissible(currentLevel: Number, requestedLevel: Number, grantVerified: Bool) -> Bool {
+  if requestedLevel <= currentLevel {
+    ↩ true
+  } else {
+    ↩ grantVerified
+  }
+}
+
+function RecoveryAdmissible(beforeDrift: Number, afterDrift: Number, integrityHealthy: Bool, triggerResolved: Bool) -> Bool {
+  ↩ afterDrift < beforeDrift and integrityHealthy and triggerResolved
+}
+
+flow Main {
+  let balance: Number = ⋈(0.8, 0.6)
+  let potential: Number = ≋(0.1, 0.2, 0, 0.1, 0, 0.1, 0.2, 0)
+  let burden: Number = ⌁(0.8)
+  let boundedAuthority: Bool = ↧(1, 2, false)
+  let grantedAuthority: Bool = ↧(1, 2, true)
+  let recovery: Bool = ↶(0.8, 0.2, true, true)
+  emit balance
+  emit potential
+  emit burden
+  emit boundedAuthority
+  emit grantedAuthority
+  emit recovery
+  halt
+}

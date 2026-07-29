@@ -7,11 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from .config import load_repo_config
+from .constitutional import assess_context
 from .environment import environment_summary
 from .efficiency import efficiency_telemetry
-from .graph import neighborhood
+from .graph import neighborhood, resolve_graph
 from .hippocampus import active_session
-from .neuron import activate_interlink
+from .indexer import ensure_aria_substrate_materialized
+from .neuron import activate_interlink, compile_interlink
 from .retrieval import query, support_hits
 from thalamus import apply_feedback, inhibit, make_request, route
 
@@ -66,6 +68,12 @@ def build_context(
         raise ValueError(f"Unknown repository: {repo}")
     root = Path(repository["path"])
     config = load_repo_config(root)
+    # Certificate-deferred ARIA bulk materializes only when the task wakes the region.
+    aria_materialization = ensure_aria_substrate_materialized(store, repo, config, task)
+    if aria_materialization.get("materialized"):
+        resolve_graph(store, repo)
+        if config.neural_interlink_enabled:
+            compile_interlink(store, repo)
     active = active_session(home, repo)
     if config.thalamus_enabled:
         request = make_request(
@@ -202,6 +210,7 @@ def build_context(
         context_budget=effective_budget,
         neural=neural_payload,
     )
+    payload["constitutional_supervision"] = assess_context(payload)
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     payload["packet_hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     packet_path = home / "packets" / f"{repo}-context-latest.json".replace("/", "_")
@@ -250,6 +259,7 @@ def cortex_context_protocol(context: dict[str, Any]) -> dict[str, Any]:
         "repository": context["repository"],
         "task": {"text": context["task"], "packet_hash": context["packet_hash"]},
         "governance": context["governor"],
+        "constitutional_supervision": context.get("constitutional_supervision"),
         "environment": context["environment"],
         "direct_evidence": context["evidence"],
         "support_evidence": [item for item in context["evidence"] if item.get("metadata", {}).get("selection_source") != "hybrid_retrieval"],
@@ -266,7 +276,7 @@ def cortex_context_protocol(context: dict[str, Any]) -> dict[str, Any]:
             "canonical": "verified Cortex canonical memory with promotion receipts",
         },
         "continuation": {
-            "available_protocol": "cortex-continuation/1.0",
+            "available_protocol": "cortex-continuation/1.1",
             "reanchor_on": [
                 "manifest drift",
                 "low retrieval confidence",

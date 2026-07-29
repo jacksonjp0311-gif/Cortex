@@ -7,6 +7,15 @@ import time
 from pathlib import Path
 from typing import Any, Iterator
 
+from .aria_meta.substrate import (
+    ARIA_SUBSTRATE_DEFERRED_STATUS,
+    classify_aria_task,
+    is_aria_anchor_path,
+    is_internal_aria_path,
+    load_aria_cue_profile,
+    should_defer_aria_indexing,
+    substrate_work_proxy,
+)
 from .config import RUNTIME_EVIDENCE_HINTS, SPECIAL_TEXT_FILES, RepoConfig
 from .embeddings import get_embedder
 from .parsers import classify_file, language_for, parse_structure
@@ -142,7 +151,93 @@ def scan_repository(root: Path, config: RepoConfig) -> dict[str, Any]:
     }
 
 
-def index_repository(store: Any, repo_name: str, config: RepoConfig, force: bool = False) -> dict[str, Any]:
+def _index_file_body(
+    store: Any,
+    repo_name: str,
+    root: Path,
+    relative: str,
+    item: dict[str, Any],
+    *,
+    kind: str,
+    language: str,
+    content_hash: str,
+    config: RepoConfig,
+    embedder: Any,
+    indexing_tier: str,
+) -> tuple[int, int, int]:
+    """Fully index one file. Returns (chunks, symbols, edges)."""
+
+    path = root / relative
+    text = path.read_text(encoding="utf-8", errors="replace")
+    store.remove_path(repo_name, relative)
+    chunks = 0
+    for chunk_index, start_line, end_line, body in chunk_text(
+        text, config.chunk_chars, config.chunk_overlap_lines
+    ):
+        chunk_hash = sha256_bytes(body.encode("utf-8"))
+        vector = embedder.encode_one(body)
+        store.upsert_memory(
+            repo=repo_name,
+            path=relative,
+            chunk_index=chunk_index,
+            start_line=start_line,
+            end_line=end_line,
+            kind=kind,
+            text=body,
+            content_hash=chunk_hash,
+            vector=vector,
+            embedding_model=embedder.name,
+            metadata={
+                "file_hash": content_hash,
+                "language": language,
+                "authoritative": item.get("authoritative", False),
+                "indexing_tier": indexing_tier,
+                "neural_region": (
+                    "internal_aria_substrate"
+                    if is_internal_aria_path(relative)
+                    else "repository"
+                ),
+            },
+        )
+        chunks += 1
+
+    symbols, edges = parse_structure(text, relative, language)
+    for symbol in symbols:
+        store.add_symbol(repo_name, relative, symbol)
+    for edge in edges:
+        store.add_edge(repo_name, edge.to_dict())
+    store.upsert_file({
+        "repo": repo_name,
+        "path": relative,
+        "kind": kind,
+        "language": language,
+        "size_bytes": item["size_bytes"],
+        "mtime_ns": item["mtime_ns"],
+        "content_hash": content_hash,
+        "status": "indexed",
+        "authoritative": item.get("authoritative", False),
+        "metadata": {
+            "encoding": "utf-8",
+            "replacement_errors": True,
+            "indexing_tier": indexing_tier,
+            "neural_region": (
+                "internal_aria_substrate"
+                if is_internal_aria_path(relative)
+                else "repository"
+            ),
+        },
+    })
+    return chunks, len(symbols), len(edges)
+
+
+def index_repository(
+    store: Any,
+    repo_name: str,
+    config: RepoConfig,
+    force: bool = False,
+    *,
+    materialize_aria: bool = False,
+) -> dict[str, Any]:
     repository = store.repo(repo_name)
     if not repository:
         raise ValueError(f"Unknown repository: {repo_name}")
@@ -157,9 +252,14 @@ def index_repository(store: Any, repo_name: str, config: RepoConfig, force: bool
     unchanged_files = 0
     unsupported_files = 0
     failed_files = 0
+    deferred_files = 0
+    deferred_unchanged = 0
     indexed_chunks = 0
     structural_edges = 0
     symbols_found = 0
+    indexing_mode = getattr(config, "aria_substrate_indexing", "deferred")
+    if materialize_aria:
+        indexing_mode = "eager"
 
     for item in manifest["files"]:
         relative = item["path"]
@@ -187,62 +287,75 @@ def index_repository(store: Any, repo_name: str, config: RepoConfig, force: bool
             unsupported_files += 1
             continue
 
+        defer = should_defer_aria_indexing(relative, indexing_mode)
+        if defer:
+            unchanged_deferred = (
+                not force
+                and existing is not None
+                and existing["content_hash"] == content_hash
+                and existing["status"] == ARIA_SUBSTRATE_DEFERRED_STATUS
+            )
+            if unchanged_deferred:
+                deferred_unchanged += 1
+                deferred_files += 1
+                continue
+            # Inventory-only: known, hash-verified, not chunked or embedded.
+            store.remove_path(repo_name, relative)
+            store.upsert_file({
+                "repo": repo_name,
+                "path": relative,
+                "kind": kind,
+                "language": language,
+                "size_bytes": item.get("size_bytes", 0),
+                "mtime_ns": item.get("mtime_ns", 0),
+                "content_hash": content_hash,
+                "status": ARIA_SUBSTRATE_DEFERRED_STATUS,
+                "authoritative": item.get("authoritative", False),
+                "metadata": {
+                    "indexing_tier": "deferred",
+                    "neural_region": "internal_aria_substrate",
+                    "dormant_by_default": True,
+                    "materialize_on": "aria_active_task",
+                },
+            })
+            deferred_files += 1
+            continue
+
+        expected_status = "indexed"
         unchanged = (
             not force
             and existing is not None
             and existing["content_hash"] == content_hash
-            and existing["status"] == "indexed"
+            and existing["status"] == expected_status
         )
         if unchanged:
             unchanged_files += 1
             continue
 
         try:
-            text = path.read_text(encoding="utf-8", errors="replace")
-            store.remove_path(repo_name, relative)
-            for chunk_index, start_line, end_line, body in chunk_text(
-                text, config.chunk_chars, config.chunk_overlap_lines
-            ):
-                chunk_hash = sha256_bytes(body.encode("utf-8"))
-                vector = embedder.encode_one(body)
-                store.upsert_memory(
-                    repo=repo_name,
-                    path=relative,
-                    chunk_index=chunk_index,
-                    start_line=start_line,
-                    end_line=end_line,
-                    kind=kind,
-                    text=body,
-                    content_hash=chunk_hash,
-                    vector=vector,
-                    embedding_model=embedder.name,
-                    metadata={
-                        "file_hash": content_hash,
-                        "language": language,
-                        "authoritative": item.get("authoritative", False),
-                    },
-                )
-                indexed_chunks += 1
-
-            symbols, edges = parse_structure(text, relative, language)
-            for symbol in symbols:
-                store.add_symbol(repo_name, relative, symbol)
-            for edge in edges:
-                store.add_edge(repo_name, edge.to_dict())
-            symbols_found += len(symbols)
-            structural_edges += len(edges)
-            store.upsert_file({
-                "repo": repo_name,
-                "path": relative,
-                "kind": kind,
-                "language": language,
-                "size_bytes": item["size_bytes"],
-                "mtime_ns": item["mtime_ns"],
-                "content_hash": content_hash,
-                "status": "indexed",
-                "authoritative": item.get("authoritative", False),
-                "metadata": {"encoding": "utf-8", "replacement_errors": True},
-            })
+            tier = (
+                "anchor"
+                if is_aria_anchor_path(relative)
+                else "eager_substrate"
+                if is_internal_aria_path(relative)
+                else "repository"
+            )
+            chunks, sym_count, edge_count = _index_file_body(
+                store,
+                repo_name,
+                root,
+                relative,
+                item,
+                kind=kind,
+                language=language,
+                content_hash=content_hash,
+                config=config,
+                embedder=embedder,
+                indexing_tier=tier,
+            )
+            indexed_chunks += chunks
+            symbols_found += sym_count
+            structural_edges += edge_count
             indexed_files += 1
         except Exception as exc:
             store.upsert_file({
@@ -268,9 +381,35 @@ def index_repository(store: Any, repo_name: str, config: RepoConfig, force: bool
     )
     store.commit()
 
+    rows = store.files(repo_name)
     eligible = sum(item["status"] == "eligible" for item in manifest["files"])
-    indexed_total = sum(row["status"] == "indexed" for row in store.files(repo_name))
-    coverage = indexed_total / eligible if eligible else 1.0
+    indexed_total = sum(row["status"] == "indexed" for row in rows)
+    deferred_total = sum(row["status"] == ARIA_SUBSTRATE_DEFERRED_STATUS for row in rows)
+    # Coverage of the *active* indexing duty: indexed vs required-now (excludes deferred).
+    required_now = indexed_total + sum(row["status"] == "failed" for row in rows)
+    coverage = indexed_total / required_now if required_now else 1.0
+    # Recount anchors / repo from store for stable telemetry after incremental runs.
+    aria_indexed = sum(
+        1
+        for row in rows
+        if row["status"] == "indexed" and is_internal_aria_path(row["path"])
+    )
+    aria_anchor_total = sum(
+        1
+        for row in rows
+        if is_aria_anchor_path(row["path"]) and row["status"] == "indexed"
+    )
+    repo_indexed_total = sum(
+        1
+        for row in rows
+        if row["status"] == "indexed" and not is_internal_aria_path(row["path"])
+    )
+    work = substrate_work_proxy(
+        repository_indexed=repo_indexed_total,
+        aria_anchors_indexed=aria_anchor_total,
+        aria_deferred=deferred_total,
+        aria_materialized=max(0, aria_indexed - aria_anchor_total),
+    )
     return {
         "repo": repo_name,
         "root": str(root),
@@ -288,6 +427,67 @@ def index_repository(store: Any, repo_name: str, config: RepoConfig, force: bool
         "structural_edges_found": structural_edges,
         "index_coverage": round(coverage, 6),
         "excluded_rules": manifest["excluded_rules"],
+        "aria_substrate": {
+            "indexing_mode": "eager" if materialize_aria else indexing_mode,
+            "anchors_indexed": aria_anchor_total,
+            "deferred_files": deferred_total,
+            "deferred_unchanged": deferred_unchanged,
+            "substrate_indexed": aria_indexed,
+            "work_proxy": work,
+        },
+    }
+
+
+def materialize_aria_substrate(
+    store: Any, repo_name: str, config: RepoConfig, *, force: bool = False
+) -> dict[str, Any]:
+    """Fully index deferred internal ARIA files (certificate-deferred → searchable)."""
+
+    result = index_repository(
+        store, repo_name, config, force=force, materialize_aria=True
+    )
+    result["materialized"] = True
+    return result
+
+
+def ensure_aria_substrate_materialized(
+    store: Any,
+    repo_name: str,
+    config: RepoConfig,
+    task: str,
+) -> dict[str, Any]:
+    """If the task wakes ARIA and deferred files remain, materialize them once."""
+
+    profile = load_aria_cue_profile(store, repo_name)
+    classification = classify_aria_task(task, profile["cues"])
+    deferred = [
+        row
+        for row in store.files(repo_name)
+        if row["status"] == ARIA_SUBSTRATE_DEFERRED_STATUS
+    ]
+    if classification["mode"] != "active":
+        return {
+            "mode": "dormant",
+            "materialized": False,
+            "deferred_remaining": len(deferred),
+            "classification": classification,
+        }
+    if not deferred:
+        return {
+            "mode": "active",
+            "materialized": False,
+            "already_ready": True,
+            "deferred_remaining": 0,
+            "classification": classification,
+        }
+    index_result = materialize_aria_substrate(store, repo_name, config, force=False)
+    return {
+        "mode": "active",
+        "materialized": True,
+        "already_ready": False,
+        "deferred_remaining": 0,
+        "classification": classification,
+        "index": index_result,
     }
 
 

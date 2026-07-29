@@ -130,6 +130,12 @@
       "artifact": "aria.cooperative-mesh/1",
       "command": "./aria.cmd mesh create <request.json> --json",
       "boundary": "Coordinates independent participants without asserting consensus or aggregating authority."
+    },
+    {
+      "milestone": "alpha.18",
+      "artifact": "aria.constitutional-homeostasis/1",
+      "command": "./aria.cmd run examples/constitutional-homeostasis.aria",
+      "boundary": "Balances preserved and adjacent context while keeping potential observational and hard authority constraints non-compensable."
     }
   ],
   "nextAction": {

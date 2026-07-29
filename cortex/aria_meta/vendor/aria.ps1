@@ -597,6 +597,7 @@ try {
                 'Run-SessionHandoffTests.ps1'
                 'Run-ProviderBridgeTests.ps1'
                 'Run-CooperativeMeshTests.ps1'
+                'Run-ConstitutionalHomeostasisTests.ps1'
             )
             foreach($suite in $suites){
                 $suitePath=Join-Path $root ('tests/'+$suite)
@@ -616,8 +617,8 @@ try {
                 -WorkspaceRoot $workspaceRoot `
                 -Profile $closureProfile `
                 -Persist
-            $null = Send-AriaEvent -Domain verification -Phase conformance -State PASS -Energy validation -Information '500/500 gates' -Coherence 'all lattices coherent' -Source 'aria.test' -Data ([pscustomobject][ordered]@{verifiedCount=500;failedCount=0}) -Render
-            Write-AriaSummary -Title 'ALL LATTICES COHERENT' -Passed $true -Detail '500/500 gates'
+            $null = Send-AriaEvent -Domain verification -Phase conformance -State PASS -Energy validation -Information '512/512 gates' -Coherence 'all lattices coherent' -Source 'aria.test' -Data ([pscustomobject][ordered]@{verifiedCount=512;failedCount=0}) -Render
+            Write-AriaSummary -Title 'ALL LATTICES COHERENT' -Passed $true -Detail '512/512 gates'
         }
         { $_ -in @('gate','check') } {
             if (-not $Path) { throw 'gate requires a .aria source path.' }

@@ -18,6 +18,7 @@ from .context import build_context, cortex_context_protocol, nexus_packet
 from .continuation import (
     build_continuation_packet,
     promote,
+    rebind_continuation_packet,
     rollback,
     verify_continuation_packet,
 )
@@ -111,6 +112,15 @@ def build_parser() -> argparse.ArgumentParser:
     context.add_argument("--budget", type=int, default=1200)
     context.add_argument("--json", action="store_true")
 
+    constitutional = sub.add_parser(
+        "constitutional",
+        help="Observe GCMT v1.5 homeostasis, failure geometry, and memory balance.",
+    )
+    constitutional.add_argument("--repo", required=True)
+    constitutional.add_argument("--task", required=True)
+    constitutional.add_argument("--budget", type=int, default=1200)
+    constitutional.add_argument("--json", action="store_true")
+
     nexus = sub.add_parser("nexus-packet", help="Emit NexusGate Intent/Evidence/Authority/Context shape.")
     nexus.add_argument("--repo", required=True)
     nexus.add_argument("--task", required=True)
@@ -139,6 +149,15 @@ def build_parser() -> argparse.ArgumentParser:
     continuation_verify.add_argument("--packet-id", required=True)
     continuation_verify.add_argument("--json", action="store_true")
 
+    continuation_rebind = sub.add_parser(
+        "continuation-rebind",
+        help="Import verified continuity while rebinding authority to the local constitution.",
+    )
+    continuation_rebind.add_argument("--repo", required=True)
+    continuation_rebind.add_argument("--packet-id", required=True)
+    continuation_rebind.add_argument("--scope", action="append", default=[])
+    continuation_rebind.add_argument("--json", action="store_true")
+
     promote_parser = sub.add_parser(
         "promote", help="Promote a verified candidate into Cortex canonical memory."
     )
@@ -148,6 +167,14 @@ def build_parser() -> argparse.ArgumentParser:
     promote_parser.add_argument("--evidence-memory", type=int, action="append", default=[])
     promote_parser.add_argument("--verification", action="append", default=[])
     promote_parser.add_argument("--authorize", action="store_true")
+    promote_parser.add_argument("--irreversibility", type=float, default=0.0)
+    promote_parser.add_argument("--current-scope", action="append", default=[])
+    promote_parser.add_argument("--requested-scope", action="append", default=[])
+    promote_parser.add_argument(
+        "--grant-file",
+        type=Path,
+        help="Content-addressed external authority grant JSON for scope expansion.",
+    )
     promote_parser.add_argument("--json", action="store_true")
 
     rollback_parser = sub.add_parser(
@@ -372,9 +399,17 @@ def main(argv: list[str] | None = None) -> None:
                 args.json,
             )
 
-        elif command in {"context", "nexus-packet", "protocol"}:
+        elif command in {"context", "nexus-packet", "protocol", "constitutional"}:
             packet = build_context(home, store, governor, args.repo, args.task, args.budget)
-            value = nexus_packet(packet) if command == "nexus-packet" else cortex_context_protocol(packet) if command == "protocol" else packet
+            value = (
+                nexus_packet(packet)
+                if command == "nexus-packet"
+                else cortex_context_protocol(packet)
+                if command == "protocol"
+                else packet["constitutional_supervision"]
+                if command == "constitutional"
+                else packet
+            )
             emit(value, args.json)
 
         elif command == "continuation":
@@ -394,6 +429,18 @@ def main(argv: list[str] | None = None) -> None:
             if not packet:
                 raise ValueError("Continuation packet does not exist")
             emit(verify_continuation_packet(packet), args.json)
+
+        elif command == "continuation-rebind":
+            packet = store.continuation_packet(args.repo, args.packet_id)
+            if not packet:
+                raise ValueError("Continuation packet does not exist")
+            emit(
+                rebind_continuation_packet(
+                    packet,
+                    local_authority={"scope": args.scope},
+                ),
+                args.json,
+            )
 
         elif command == "promote":
             if not store.repo(args.repo):
@@ -422,6 +469,9 @@ def main(argv: list[str] | None = None) -> None:
                     if separator
                     else True
                 )
+            grant = None
+            if args.grant_file:
+                grant = json.loads(args.grant_file.read_text(encoding="utf-8"))
             emit(
                 promote(
                     store,
@@ -434,6 +484,10 @@ def main(argv: list[str] | None = None) -> None:
                         "promotion_authorized": args.authorize,
                         "human_authorized": args.authorize,
                     },
+                    irreversibility=args.irreversibility,
+                    current_scope=args.current_scope,
+                    requested_scope=args.requested_scope,
+                    authority_grant=grant,
                 ),
                 args.json,
             )

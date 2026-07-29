@@ -1,12 +1,12 @@
 # Governed Continuation Memory Theory in Cortex
 
-**Theory:** Governed Continuation Memory Theory (GCMT v1.0)
+**Theory:** Governed Continuation Memory Theory (GCMT v1.5)
 
 **Author:** James Paul Jackson
-**Implementation:** Cortex v3
+**Implementation:** Cortex v3.1
 
 GCMT treats memory as regulated transformation with recoverable origin. Cortex
-v3 implements that theory as a software architecture without claiming
+v3.1 implements that theory as a software architecture without claiming
 sentience, consciousness, biological identity, human-memory equivalence,
 clinical validity, autonomous self-improvement, or universal optimality.
 
@@ -24,6 +24,56 @@ bound
 -> receipt
 -> rollback when required
 ```
+
+## Constitutional supervision
+
+Cortex v3.1 adds a non-authoritative supervisory plane to every context and
+continuation packet:
+
+- epistemic uncertainty and state integrity are classified independently;
+- constitutional potential reports drift, uncertainty, authority pressure,
+  legitimacy, integrity, evidence fidelity, continuation debt, and recovery;
+- potential begins in `shadow` mode and cannot authorize or reject mutation;
+- severe authority, packet-transfer, irreversible-commit, and recovery
+  failures remain independent hard constraints.
+
+```bash
+cortex constitutional --repo MyProject \
+  --task "Evaluate the safest continuation boundary" --json
+```
+
+The context surface also reports memory balance as the harmonic mean of
+preserved task anchors and adjacent structural support. Preservation without
+adjacency is brittle recall; adjacency without preservation is drift.
+
+## Authority monotonicity and reversibility
+
+Canonical promotion may preserve or reduce authority without an external
+grant. Requested scope growth requires a content-addressed
+`cortex-authority-grant/1.0` record bound to repository, issuer, exact scope,
+and an external receipt. Recording the grant does not create it.
+
+Promotion requirements rise with declared irreversibility. Legitimacy,
+verification, recovery, and authority level are hard checks; they are never
+averaged into constitutional potential.
+
+## Portable continuity without portable authority
+
+`cortex-continuation/1.1` packets carry claimed scope as metadata only.
+`continuation-rebind` verifies the source packet and derives effective scope
+solely from the receiving constitution:
+
+```bash
+cortex continuation-rebind --repo MyProject \
+  --packet-id vcp_... --scope cortex.canonical.read --json
+```
+
+## Staged recovery
+
+Rollback now constructs a recovery candidate before canonical mutation. The
+candidate must reduce drift, preserve the integrity and recovery floors, and
+resolve the triggering condition. The accepted candidate is stored inside the
+hash-chained rollback receipt.
 
 ## Three state planes
 

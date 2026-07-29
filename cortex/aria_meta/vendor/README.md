@@ -6,7 +6,7 @@
 
 | Gates | Release | Conformance | Bootstrap | License |
 | :---: | :---: | :---: | :---: | :---: |
-| [![ARIA gates](https://github.com/jacksonjp0311-gif/ARIA/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jacksonjp0311-gif/ARIA/actions/workflows/ci.yml) | ![Release 0.1.0-alpha.14](https://img.shields.io/badge/0.1.0--alpha.14-ff4fc8?style=flat-square) | ![Conformance 500 of 500](https://img.shields.io/badge/500%2F500-67e8d5?style=flat-square) | ![PowerShell 5.1 and 7](https://img.shields.io/badge/PowerShell_5.1_%7C_7-8a72ff?style=flat-square) | [![Apache 2.0 license](https://img.shields.io/badge/Apache--2.0-d8d2e5?style=flat-square)](LICENSE) |
+| [![ARIA gates](https://github.com/jacksonjp0311-gif/ARIA/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jacksonjp0311-gif/ARIA/actions/workflows/ci.yml) | ![Release 0.1.0-alpha.14](https://img.shields.io/badge/0.1.0--alpha.14-ff4fc8?style=flat-square) | ![Conformance 512 of 512](https://img.shields.io/badge/512%2F512-67e8d5?style=flat-square) | ![PowerShell 5.1 and 7](https://img.shields.io/badge/PowerShell_5.1_%7C_7-8a72ff?style=flat-square) | [![Apache 2.0 license](https://img.shields.io/badge/Apache--2.0-d8d2e5?style=flat-square)](LICENSE) |
 
 <div align="center">
 
@@ -17,6 +17,10 @@
 </div>
 
 ---
+
+> Alpha.18 adds capability-free constitutional function glyphs: `⋈` context
+> weave, `≋` constitutional potential, `⌁` reversibility burden, `↧` authority
+> descent, and `↶` verified recovery.
 
 ## The idea
 
@@ -88,7 +92,7 @@ Expected closure:
 
 ```text
 ◆ SYSTEM READY            PASS  all gates online
-◆ ALL LATTICES COHERENT   PASS  500/500 gates
+◆ ALL LATTICES COHERENT   PASS  512/512 gates
 ```
 
 Run the first program:
@@ -440,7 +444,7 @@ and [Consent and Admission Receipts](docs/52-consent-admission-receipts-alpha12.
 |---|---|
 | Release | `0.1.0-alpha.14` |
 | Language specification | `0.4.0` |
-| Aggregate conformance | `500/500` deterministic gates |
+| Aggregate conformance | `512/512` deterministic gates |
 | Test lattices | 20 |
 | Runtime lanes | Windows PowerShell 5.1, PowerShell 7 Windows, PowerShell 7 Ubuntu |
 | Runtime | local PowerShell bootstrap VM |

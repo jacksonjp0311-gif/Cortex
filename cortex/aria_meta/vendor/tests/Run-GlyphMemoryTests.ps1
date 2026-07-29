@@ -78,12 +78,12 @@ try {
             'Registry rejected: ' +
             (@($validation.errors) -join ', ')
         )
-        Assert-Equal 6 $validation.cardCount 'Card count mismatch.'
+        Assert-Equal 11 $validation.cardCount 'Card count mismatch.'
     }
 
     Test-GlyphMemoryCase 'new glyph symbols are collision-free' {
         $symbols = @($registry.cards.symbol)
-        Assert-Equal 6 @($symbols | Sort-Object -Unique).Count `
+        Assert-Equal 11 @($symbols | Sort-Object -Unique).Count `
             'Card symbols are not unique.'
 
         $reserved = @($registry.reserved.symbol)

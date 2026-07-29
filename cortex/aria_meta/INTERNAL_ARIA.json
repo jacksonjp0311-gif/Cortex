@@ -6,16 +6,24 @@
   "activation_policy": "task_gated_dormant_by_default",
   "runtime_fluency": {
     "typed_purposes": 7,
-    "immutable_core_cues": 19,
+    "immutable_core_cues": 26,
     "learned_cue_limit": 32,
     "wake_threshold": 0.65,
-    "adaptation": "verified_relevance_only"
+    "adaptation": "verified_relevance_only",
+    "false_wake_guard": "multi_token_preferred_single_token_aria_only"
+  },
+  "substrate_indexing": {
+    "default_mode": "deferred",
+    "anchors_fully_indexed": true,
+    "materialize_on": "aria_active_task",
+    "work_proxy": "cortex-aria-work-proxy/1.0"
   },
   "ownership": "Cortex",
   "source_repository": "ARIA",
   "source_commit": "0b9860bd4610d24d13a483763f74a95699616193",
   "source_release": "0.1.0-alpha.14",
-  "source_language_evolution": "cooperative-agent-mesh-alpha.17",
+  "source_language_evolution": "constitutional-homeostasis-alpha.18",
+  "cortex_evolution": "gcmt-v1.5-native-glyph-integration",
   "vendoring": "git-subtree-squash",
   "external_runtime_dependency": false,
   "cortex_implementation_language": "python",

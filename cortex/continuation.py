@@ -12,6 +12,12 @@ import json
 import time
 from typing import Any
 
+from .constitutional import (
+    assess_authority_transition,
+    reversibility_requirements,
+    stage_recovery,
+)
+
 
 def _hash(value: Any) -> str:
     canonical = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
@@ -77,7 +83,7 @@ def build_continuation_packet(
 
     created_at = time.time()
     payload = {
-        "protocol": "cortex-continuation/1.0",
+        "protocol": "cortex-continuation/1.1",
         "origin": {
             "repository": repo,
             "repository_id": context["repository"].get("repository_id"),
@@ -110,9 +116,13 @@ def build_continuation_packet(
         "authority": {
             **governor.get("authority", {}),
             "governor_mode": governor.get("mode", "read_only"),
+            "claimed_scope": [],
+            "effective_scope": [],
+            "claimed_scope_metadata_only": True,
             "application_authorized": False,
             "promotion_authorized": False,
         },
+        "constitutional_state": context.get("constitutional_supervision", {}),
         "verification": {
             "bootstrap_verified": context["repository"].get("bootstrap_status") == "verified",
             "database_integrity": bool(components.get("integrity", 0.0) >= 1.0),
@@ -158,7 +168,10 @@ def verify_continuation_packet(packet: dict[str, Any], *, now: float | None = No
     }
     expected = _hash(material)
     current_time = time.time() if now is None else now
+    authority = packet.get("authority", {})
+    protocol = packet.get("protocol")
     checks = {
+        "protocol": protocol in {"cortex-continuation/1.0", "cortex-continuation/1.1"},
         "state_hash": expected == packet.get("state_hash"),
         "origin_identity": bool(packet.get("origin", {}).get("repository_id")),
         "evidence_addressable": all(
@@ -171,8 +184,64 @@ def verify_continuation_packet(packet: dict[str, Any], *, now: float | None = No
         "rollback_declared": bool(
             packet.get("receipts", {}).get("rollback_available", False)
         ),
+        "authority_boundary": (
+            True
+            if protocol == "cortex-continuation/1.0"
+            else bool(authority.get("claimed_scope_metadata_only"))
+            and not bool(authority.get("application_authorized"))
+            and not bool(authority.get("promotion_authorized"))
+        ),
     }
     return {"valid": all(checks.values()), "checks": checks, "expected_state_hash": expected}
+
+
+def rebind_continuation_packet(
+    packet: dict[str, Any],
+    *,
+    local_authority: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Import continuity while deriving effective authority only from the receiver."""
+
+    verification = verify_continuation_packet(packet)
+    if not verification["valid"]:
+        raise ValueError("Continuation packet failed verification")
+    local = local_authority or {}
+    claimed = packet.get("authority", {})
+    payload = {
+        "protocol": "cortex-continuation-import/1.0",
+        "source": {
+            "packet_id": packet.get("packet_id"),
+            "state_hash": packet.get("state_hash"),
+            "repository": packet.get("origin", {}).get("repository"),
+        },
+        "continuity": {
+            "operational_state": packet.get("operational_state", {}),
+            "evidence_state": packet.get("evidence_state", {}),
+            "canonical_state": packet.get("canonical_state", []),
+            "constitutional_state": packet.get("constitutional_state", {}),
+            "receipts": packet.get("receipts", {}),
+        },
+        "authority": {
+            "claimed_scope": claimed.get(
+                "claimed_scope", claimed.get("effective_scope", [])
+            ),
+            "claimed_scope_metadata_only": True,
+            "effective_scope": sorted(set(local.get("scope", []))),
+            "application_authorized": bool(local.get("application_authorized", False)),
+            "promotion_authorized": bool(local.get("promotion_authorized", False)),
+            "source": "local_constitution",
+        },
+        "verification": {
+            "source_packet": verification,
+            "authority_rebound": True,
+            "packet_granted_authority": False,
+        },
+    }
+    payload["state_hash"] = _hash(payload)
+    payload["import_id"] = "vci_" + _hash(
+        [payload["source"], payload["state_hash"]]
+    )[:24]
+    return payload
 
 
 def promote(
@@ -186,6 +255,10 @@ def promote(
     authority: dict[str, Any],
     quality: dict[str, float] | None = None,
     threshold: float = 0.80,
+    irreversibility: float = 0.0,
+    current_scope: list[str] | None = None,
+    requested_scope: list[str] | None = None,
+    authority_grant: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Promote a value into Cortex canonical memory after all GCMT locks pass."""
     quality = quality or {
@@ -200,12 +273,33 @@ def promote(
     score = 1.0
     for value in normalized.values():
         score *= value
+    requirements = reversibility_requirements(irreversibility)
+    verification_score = (
+        sum(bool(value) for value in verification.values()) / max(1, len(verification))
+    )
+    authority_level = int(
+        authority.get("level", 3 if authority.get("promotion_authorized") else 0)
+    )
+    authority_transition = assess_authority_transition(
+        repository=repo,
+        current_scope=current_scope or authority.get("current_scope", []),
+        requested_scope=requested_scope or authority.get("requested_scope", []),
+        grant=authority_grant or authority.get("grant"),
+    )
+    reversibility_checks = {
+        "legitimacy": normalized.get("boundary", 1.0) >= requirements["legitimacy"],
+        "verification": verification_score >= requirements["verification"],
+        "recovery": normalized.get("rollback", 1.0) >= requirements["recovery"],
+        "authority_level": authority_level >= requirements["authority_level"],
+    }
     hard_locks = {
         "source": bool(evidence) and all(item.get("content_hash") for item in evidence),
         "authority": bool(authority.get("promotion_authorized")),
         "verification": bool(verification) and all(bool(value) for value in verification.values()),
         "receipt": store.verify_continuation_receipts(repo),
         "rollback": True,
+        "authority_monotonicity": authority_transition["admissible"],
+        "reversibility": all(reversibility_checks.values()),
     }
     accepted = score >= threshold and all(hard_locks.values())
     if not accepted:
@@ -215,6 +309,13 @@ def promote(
             "quality_score": round(score, 8),
             "threshold": threshold,
             "hard_locks": hard_locks,
+            "constitutional": {
+                "authority": authority_transition,
+                "reversibility": {
+                    "requirements": requirements,
+                    "checks": reversibility_checks,
+                },
+            },
             "reason": "candidate remains operational; promotion gates did not all pass",
         }
     current = store.canonical_state(repo, state_key)
@@ -227,6 +328,13 @@ def promote(
             "hard_locks": hard_locks,
             "reason": "candidate already matches canonical state",
             "canonical_receipt_id": current["receipt_id"],
+            "constitutional": {
+                "authority": authority_transition,
+                "reversibility": {
+                    "requirements": requirements,
+                    "checks": reversibility_checks,
+                },
+            },
         }
     receipt_id = "rcp_" + _hash(
         [
@@ -234,8 +342,15 @@ def promote(
             state_key,
             candidate,
             evidence,
-            verification,
-            authority,
+        verification,
+        {
+            **authority,
+            "authority_transition": authority_transition,
+            "reversibility": {
+                "requirements": requirements,
+                "checks": reversibility_checks,
+            },
+        },
             store.continuation_receipt_tail(repo),
         ]
     )[:24]
@@ -246,18 +361,39 @@ def promote(
         candidate=candidate,
         evidence=evidence,
         verification=verification,
-        authority=authority,
+        authority={
+            **authority,
+            "authority_transition": authority_transition,
+            "reversibility": {
+                "requirements": requirements,
+                "checks": reversibility_checks,
+            },
+        },
     )
     return {
         "promoted": True,
         "quality_score": round(score, 8),
         "threshold": threshold,
         "hard_locks": hard_locks,
+        "constitutional": {
+            "authority": authority_transition,
+            "reversibility": {
+                "requirements": requirements,
+                "checks": reversibility_checks,
+            },
+        },
         **receipt,
     }
 
 
-def rollback(store: Any, repo: str, receipt_id: str, *, authorized: bool) -> dict[str, Any]:
+def rollback(
+    store: Any,
+    repo: str,
+    receipt_id: str,
+    *,
+    authorized: bool,
+    recovery_observation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if not authorized:
         return {
             "rolled_back": False,
@@ -270,8 +406,24 @@ def rollback(store: Any, repo: str, receipt_id: str, *, authorized: bool) -> dic
             "receipt_id": receipt_id,
             "reason": "continuation receipt ledger integrity failed",
         }
+    observation = recovery_observation or {
+        "before_drift": 1.0,
+        "after_drift": 0.0,
+        "integrity": 1.0,
+        "recovery_quality": 1.0,
+        "trigger_resolved": True,
+    }
+    candidate = stage_recovery(**observation)
+    if not candidate["commit_admissible"]:
+        return {
+            "rolled_back": False,
+            "receipt_id": receipt_id,
+            "recovery_candidate": candidate,
+            "reason": "staged recovery candidate failed constitutional checks",
+        }
     return store.rollback_canonical_state(
         repo,
         receipt_id,
         authority={"rollback_authorized": True, "human_authorized": True},
+        recovery_verification=candidate,
     )

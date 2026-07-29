@@ -133,6 +133,9 @@ class RepoConfig:
     neural_max_nodes: int = 64
     neural_plasticity_enabled: bool = True
     neural_learning_rate: float = 0.025
+    # deferred: inventory full ARIA substrate, fully index anchors only, materialize on wake
+    # eager: fully index the internal ARIA region during bootstrap (legacy / diagnostic)
+    aria_substrate_indexing: str = "deferred"
     bootstrap_thresholds: dict[str, float] = field(default_factory=lambda: {
         "index_coverage": 0.98,
         "manifest_integrity": 1.0,
@@ -180,6 +183,7 @@ class RepoConfig:
             "neural_max_nodes": self.neural_max_nodes,
             "neural_plasticity_enabled": self.neural_plasticity_enabled,
             "neural_learning_rate": self.neural_learning_rate,
+            "aria_substrate_indexing": self.aria_substrate_indexing,
             "bootstrap_thresholds": self.bootstrap_thresholds,
             "exclude": self.exclude,
             "include_extensions": self.include_extensions,

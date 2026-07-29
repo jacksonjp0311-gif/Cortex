@@ -1337,7 +1337,8 @@ class Store:
         }
 
     def rollback_canonical_state(
-        self, repo: str, receipt_id: str, *, authority: dict[str, Any]
+        self, repo: str, receipt_id: str, *, authority: dict[str, Any],
+        recovery_verification: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         original = self.db.execute(
             """SELECT * FROM continuation_receipts
@@ -1365,7 +1366,10 @@ class Store:
             "previous": current_value,
             "candidate": previous,
             "evidence": [],
-            "verification": {"receipt_integrity": True},
+            "verification": {
+                "receipt_integrity": True,
+                "recovery_candidate": recovery_verification or {},
+            },
             "authority": authority,
             "rollback_of": receipt_id,
             "previous_hash": previous_hash,
@@ -1383,7 +1387,13 @@ class Store:
                     rollback_id, repo, "rollback", state_key,
                     json.dumps(current_value, sort_keys=True),
                     json.dumps(previous, sort_keys=True) if previous is not None else None,
-                    json.dumps({"receipt_integrity": True}),
+                    json.dumps(
+                        {
+                            "receipt_integrity": True,
+                            "recovery_candidate": recovery_verification or {},
+                        },
+                        sort_keys=True,
+                    ),
                     json.dumps(authority, sort_keys=True), receipt_id,
                     previous_hash, receipt_hash, now,
                 ),

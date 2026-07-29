@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import time
 import unittest
@@ -12,8 +13,16 @@ from cortex.context import build_context
 from cortex.continuation import (
     build_continuation_packet,
     promote,
+    rebind_continuation_packet,
     rollback,
     verify_continuation_packet,
+)
+from cortex.constitutional import (
+    ARIA_CONSTITUTIONAL_GLYPHS,
+    build_authority_grant,
+    classify_failure,
+    memory_balance,
+    stage_recovery,
 )
 from cortex.evaluation import evaluate_corpus
 from cortex.federation import federated_query
@@ -80,7 +89,7 @@ class GovernedContinuationTests(unittest.TestCase):
             origin_version=__version__,
             ttl_seconds=60,
         )
-        self.assertEqual(packet["protocol"], "cortex-continuation/1.0")
+        self.assertEqual(packet["protocol"], "cortex-continuation/1.1")
         self.assertEqual(
             packet["operational_state"]["meta_language"][
                 "cortex_implementation_language"
@@ -90,12 +99,114 @@ class GovernedContinuationTests(unittest.TestCase):
         self.assertIn("operational_state", packet)
         self.assertIn("evidence_state", packet)
         self.assertIn("canonical_state", packet)
+        self.assertIn("constitutional_state", packet)
+        self.assertEqual(
+            "shadow",
+            packet["constitutional_state"]["constitutional_potential"]["mode"],
+        )
         self.assertTrue(verify_continuation_packet(packet)["valid"])
         self.assertFalse(
             verify_continuation_packet(
                 packet, now=packet["conditions"]["expires_at"] + 1
             )["valid"]
         )
+        rebound = rebind_continuation_packet(
+            packet,
+            local_authority={"scope": ["cortex.canonical.read"]},
+        )
+        self.assertTrue(rebound["verification"]["authority_rebound"])
+        self.assertFalse(rebound["verification"]["packet_granted_authority"])
+        self.assertEqual(
+            ["cortex.canonical.read"], rebound["authority"]["effective_scope"]
+        )
+
+    def test_constitutional_geometry_balances_anchor_and_adjacency(self) -> None:
+        supervision = self.context()["constitutional_supervision"]
+        self.assertEqual(
+            "cortex-constitutional-supervision/1.0",
+            supervision["schema_version"],
+        )
+        self.assertEqual(
+            "⋈", supervision["memory_balance"]["glyph"]["symbol"]
+        )
+        self.assertGreaterEqual(supervision["memory_balance"]["balance"], 0.0)
+        self.assertLessEqual(supervision["memory_balance"]["balance"], 1.0)
+        self.assertEqual(0.0, memory_balance(1.0, 0.0))
+        self.assertEqual(1.0, memory_balance(1.0, 1.0))
+        self.assertEqual(
+            "uncertain_compromised",
+            classify_failure(0.9, 0.2)["quadrant"],
+        )
+        self.assertEqual(
+            {"⋈", "≋", "⌁", "↧", "↶"},
+            {item["symbol"] for item in ARIA_CONSTITUTIONAL_GLYPHS.values()},
+        )
+
+    def test_authority_growth_requires_content_addressed_external_grant(self) -> None:
+        evidence_row = self.store.lexical("Alpha", "verified", 1)[0]
+        evidence = [
+            {
+                "memory_id": evidence_row["id"],
+                "path": evidence_row["path"],
+                "content_hash": evidence_row["content_hash"],
+            }
+        ]
+        without_grant = promote(
+            self.store,
+            "Alpha",
+            state_key="architecture.scope",
+            candidate={"scope": "write"},
+            evidence=evidence,
+            verification={"tests": True, "repeatable": True},
+            authority={"promotion_authorized": True, "human_authorized": True},
+            irreversibility=0.8,
+            current_scope=["cortex.canonical.read"],
+            requested_scope=["cortex.canonical.read", "cortex.canonical.write"],
+        )
+        self.assertFalse(without_grant["promoted"])
+        self.assertFalse(without_grant["hard_locks"]["authority_monotonicity"])
+
+        grant = build_authority_grant(
+            repository="Alpha",
+            issuer="human:test",
+            scope=["cortex.canonical.write"],
+            receipt_id="human-receipt-1",
+        )
+        with_grant = promote(
+            self.store,
+            "Alpha",
+            state_key="architecture.scope",
+            candidate={"scope": "write"},
+            evidence=evidence,
+            verification={"tests": True, "repeatable": True},
+            authority={"promotion_authorized": True, "human_authorized": True},
+            irreversibility=0.8,
+            current_scope=["cortex.canonical.read"],
+            requested_scope=["cortex.canonical.read", "cortex.canonical.write"],
+            authority_grant=grant,
+        )
+        self.assertTrue(with_grant["promoted"])
+        self.assertTrue(with_grant["hard_locks"]["authority_monotonicity"])
+        self.assertTrue(with_grant["hard_locks"]["reversibility"])
+
+    def test_recovery_attempt_is_staged_before_commit(self) -> None:
+        rejected = stage_recovery(
+            before_drift=0.8,
+            after_drift=0.9,
+            integrity=1.0,
+            recovery_quality=1.0,
+            trigger_resolved=True,
+        )
+        self.assertFalse(rejected["commit_admissible"])
+        accepted = stage_recovery(
+            before_drift=0.8,
+            after_drift=0.1,
+            integrity=1.0,
+            recovery_quality=1.0,
+            trigger_resolved=True,
+        )
+        self.assertTrue(accepted["commit_admissible"])
+        self.assertEqual("↶", accepted["glyph"]["symbol"])
 
     def test_promotion_requires_evidence_verification_authority_and_rolls_back(self) -> None:
         evidence_row = self.store.lexical("Alpha", "verified", 1)[0]
@@ -142,6 +253,11 @@ class GovernedContinuationTests(unittest.TestCase):
             self.store, "Alpha", accepted["receipt_id"], authorized=True
         )
         self.assertTrue(result["rolled_back"])
+        rollback_receipt = self.store.continuation_receipts("Alpha", 1)[0]
+        self.assertIn(
+            "recovery_candidate",
+            json.loads(rollback_receipt["verification_json"]),
+        )
         self.assertIsNone(self.store.canonical_state("Alpha", "architecture.greeting"))
         self.assertTrue(self.store.verify_continuation_receipts("Alpha"))
 

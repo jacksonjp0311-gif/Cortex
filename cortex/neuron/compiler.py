@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ..aria_meta.substrate import (
+    ARIA_SUBSTRATE_DEFERRED_STATUS,
     INTERNAL_ARIA_REGION,
     REPOSITORY_REGION,
     aria_purposes_for_path,
@@ -69,18 +70,28 @@ def compile_interlink(store: Any, repo: str) -> dict[str, Any]:
     structural/temporal edges become bounded synapses in the same Cortex database.
     """
 
-    file_rows = [row for row in store.files(repo) if row["status"] == "indexed"]
+    file_rows = [
+        row
+        for row in store.files(repo)
+        if row["status"] in {"indexed", ARIA_SUBSTRATE_DEFERRED_STATUS}
+    ]
     live_paths = {row["path"] for row in file_rows}
     nodes: list[NeuralNode] = []
     for row in file_rows:
         metadata = json.loads(row["metadata"] or "{}")
         internal_aria = is_internal_aria_path(row["path"])
+        deferred = row["status"] == ARIA_SUBSTRATE_DEFERRED_STATUS
         neural_region = INTERNAL_ARIA_REGION if internal_aria else REPOSITORY_REGION
+        # Deferred substrate nodes are known topology but not retrieval-seeded until
+        # materialization. Slightly higher threshold reduces accidental firing.
+        threshold = _node_threshold(row["kind"], bool(row["authoritative"]))
+        if deferred:
+            threshold = min(0.95, threshold + 0.12)
         node = NeuralNode(
             node_id=row["path"],
             path=row["path"],
             kind=row["kind"],
-            threshold=_node_threshold(row["kind"], bool(row["authoritative"])),
+            threshold=threshold,
             tags=tuple(sorted({
                 *_node_tags(
                 row["path"],
@@ -90,6 +101,7 @@ def compile_interlink(store: Any, repo: str) -> dict[str, Any]:
                 ),
                 neural_region,
                 *(("native_semantic_language",) if internal_aria else ()),
+                *(("substrate_deferred",) if deferred else ()),
             })),
             metadata={
                 "language": row["language"],
@@ -97,6 +109,10 @@ def compile_interlink(store: Any, repo: str) -> dict[str, Any]:
                 "content_hash": row["content_hash"],
                 "neural_region": neural_region,
                 "dormant_by_default": internal_aria,
+                "indexing_tier": "deferred" if deferred else metadata.get(
+                    "indexing_tier", "repository"
+                ),
+                "searchable": not deferred,
                 "aria_purposes": (
                     list(aria_purposes_for_path(row["path"]))
                     if internal_aria
@@ -192,19 +208,26 @@ def neural_graph_state(store: Any, repo: str) -> dict[str, Any]:
     }
     canonical = json.dumps(material, sort_keys=True, separators=(",", ":"))
     graph_hash = sha256(canonical.encode("utf-8")).hexdigest()
-    indexed_count = sum(row["status"] == "indexed" for row in store.files(repo))
-    coverage = len(nodes) / indexed_count if indexed_count else 1.0
+    graph_eligible = sum(
+        row["status"] in {"indexed", ARIA_SUBSTRATE_DEFERRED_STATUS}
+        for row in store.files(repo)
+    )
+    coverage = len(nodes) / graph_eligible if graph_eligible else 1.0
     regions: dict[str, int] = {}
+    deferred_nodes = 0
     for row in nodes:
         metadata = json.loads(row["metadata"] or "{}")
         region = metadata.get("neural_region", REPOSITORY_REGION)
         regions[region] = regions.get(region, 0) + 1
+        if metadata.get("indexing_tier") == "deferred" or metadata.get("searchable") is False:
+            deferred_nodes += 1
     return {
         "repo": repo,
         "nodes": len(nodes),
         "synapses": len(synapses),
         "node_coverage": round(coverage, 6),
         "regions": dict(sorted(regions.items())),
+        "deferred_substrate_nodes": deferred_nodes,
         "graph_hash": graph_hash,
         "ledger_valid": store.verify_neural_ledger(repo),
     }

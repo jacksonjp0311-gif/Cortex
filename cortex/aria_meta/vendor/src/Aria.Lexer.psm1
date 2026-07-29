@@ -1,5 +1,13 @@
 ﻿Set-StrictMode -Version 2.0
 
+$script:AriaFunctionGlyphTargets = @{
+    '⋈' = 'MemoryBalance'
+    '≋' = 'ConstitutionalPotential'
+    '⌁' = 'ReversibilityBurden'
+    '↧' = 'AuthorityAdmissible'
+    '↶' = 'RecoveryAdmissible'
+}
+
 function Remove-AriaComment {
     param([Parameter(Mandatory=$true)][AllowEmptyString()][string]$Line)
     $inString = $false
@@ -126,6 +134,19 @@ function Get-AriaExpressionTokens {
             continue
         }
 
+        $glyphText = [string]$ch
+        if ($script:AriaFunctionGlyphTargets.ContainsKey($glyphText)) {
+            $tokens.Add(
+                [pscustomobject][ordered]@{
+                    kind = 'functionGlyph'
+                    text = $glyphText
+                    value = $script:AriaFunctionGlyphTargets[$glyphText]
+                }
+            )
+            $index++
+            continue
+        }
+
         if ([char]::IsDigit($ch)) {
             $start = $index
             while ($index -lt $Text.Length -and [char]::IsDigit($Text[$index])) { $index++ }
@@ -225,6 +246,29 @@ function Parse-AriaPrimaryExpression {
             kind = 'call'
             name = $name
             arguments = $arguments.ToArray()
+        }
+    }
+
+    if ($token.kind -eq 'functionGlyph') {
+        Move-AriaExpressionToken $State
+        $null = Read-AriaExpressionToken -State $State -Kind 'lparen'
+        $arguments = New-Object System.Collections.Generic.List[object]
+        if (-not (Test-AriaExpressionToken $State 'rparen')) {
+            while ($true) {
+                $arguments.Add((Parse-AriaPipeExpression $State))
+                if (Test-AriaExpressionToken $State 'comma') {
+                    Move-AriaExpressionToken $State
+                    continue
+                }
+                break
+            }
+        }
+        $null = Read-AriaExpressionToken -State $State -Kind 'rparen'
+        return [pscustomobject][ordered]@{
+            kind = 'call'
+            name = [string]$token.value
+            arguments = $arguments.ToArray()
+            glyph = [string]$token.text
         }
     }
 

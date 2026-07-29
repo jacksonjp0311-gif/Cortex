@@ -1,5 +1,30 @@
 # Build Report
 
+## Cortex v3.1.0 addendum
+
+- Date: July 28, 2026
+- Package: `cortex-memory`
+- Python: 3.10+
+- Source distribution: `cortex_memory-3.1.0.tar.gz` (484,548 bytes)
+- Wheel: `cortex_memory-3.1.0-py3-none-any.whl` (625,334 bytes)
+- Automated tests: 47 passed
+- Ruff: passed
+- Controlled benchmark gates: passed
+- Bundled ARIA strict doctor: passed
+- Bundled ARIA conformance: 512/512
+- Bundled ARIA manifest: 301/301
+- Constitutional ARIA glyph lattice: 12/12
+- Bootstrap-tiered ARIA substrate indexing: deferred bulk + anchor full-index
+- Fluency regression corpus: ≥30 cases, zero false/missed wakes
+- Vendor bump ritual scripts: PowerShell + Bash
+
+The v3.1 package adds `cortex.constitutional`, continuation protocol 1.1,
+explicit local authority rebinding, content-addressed authority grants, staged
+recovery verification, five sealed ARIA function glyphs, certificate-deferred
+ARIA bulk indexing with wake materialization, and deliberate ARIA snapshot
+bump tooling. The glyphs lower to ordinary calls in the existing compiler and
+VM; they add no opcode, capability, or independent execution authority.
+
 ## Cortex v3.0.0 addendum
 
 - Date: July 28, 2026

@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .aria_meta.substrate import ARIA_SUBSTRATE_DEFERRED_STATUS, is_internal_aria_path
 from .config import RepoConfig
 from .indexer import current_manifest_hash
 from .integration import integration_status
@@ -19,25 +20,59 @@ HEADING_RE = re.compile(r"^#{1,3}\s+(.+)$", re.MULTILINE)
 
 def _coverage(store: Any, repo: str) -> dict[str, Any]:
     rows = store.files(repo)
-    eligible_states = {"indexed", "failed"}
-    eligible = [row for row in rows if row["status"] in eligible_states]
+    # Deferred ARIA substrate is intentionally inventory-only until wake materialization.
+    # Certificate coverage measures active indexing duty, not deferred language bulk.
+    deferred = [row for row in rows if row["status"] == ARIA_SUBSTRATE_DEFERRED_STATUS]
+    required_states = {"indexed", "failed"}
+    required = [row for row in rows if row["status"] in required_states]
     indexed = [row for row in rows if row["status"] == "indexed"]
-    authoritative = [row for row in rows if row["authoritative"]]
+    authoritative = [
+        row
+        for row in rows
+        if row["authoritative"] and row["status"] != ARIA_SUBSTRATE_DEFERRED_STATUS
+    ]
     authoritative_indexed = [row for row in authoritative if row["status"] == "indexed"]
     return {
         "inventory_count": len(rows),
-        "eligible_count": len(eligible),
+        "eligible_count": len(required) + len(deferred),
         "indexed_count": len(indexed),
         "failed_count": sum(row["status"] == "failed" for row in rows),
-        "unsupported_count": sum(row["status"] in {"unsupported", "binary", "oversized", "unreadable"} for row in rows),
-        "index_coverage": len(indexed) / len(eligible) if eligible else 1.0,
+        "deferred_substrate_count": len(deferred),
+        "unsupported_count": sum(
+            row["status"] in {"unsupported", "binary", "oversized", "unreadable"}
+            for row in rows
+        ),
+        "index_coverage": len(indexed) / len(required) if required else 1.0,
+        "substrate_registry_coverage": (
+            1.0
+            if not deferred
+            else round(
+                sum(1 for row in deferred if row["content_hash"]) / len(deferred),
+                6,
+            )
+        ),
         "authoritative_count": len(authoritative),
         "authoritative_indexed": len(authoritative_indexed),
-        "authoritative_coverage": len(authoritative_indexed) / len(authoritative) if authoritative else 1.0,
+        "authoritative_coverage": (
+            len(authoritative_indexed) / len(authoritative) if authoritative else 1.0
+        ),
         "unresolved_files": [
-            {"path": row["path"], "status": row["status"], "metadata": json.loads(row["metadata"] or "{}")}
-            for row in rows if row["status"] != "indexed"
+            {
+                "path": row["path"],
+                "status": row["status"],
+                "metadata": json.loads(row["metadata"] or "{}"),
+            }
+            for row in rows
+            if row["status"] not in {"indexed", ARIA_SUBSTRATE_DEFERRED_STATUS}
         ][:200],
+        "aria_region": {
+            "deferred": len(deferred),
+            "indexed": sum(
+                1
+                for row in indexed
+                if is_internal_aria_path(row["path"])
+            ),
+        },
     }
 
 

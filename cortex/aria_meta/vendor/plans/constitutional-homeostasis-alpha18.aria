@@ -1,0 +1,19 @@
+aria 0.4.0
+module ConstitutionalHomeostasisPlan version 1.0.0
+program ConstitutionalHomeostasisPlan version 1.0.0
+entry Main
+agent ConstitutionalVerifier {
+}
+connection HumanConstitution {
+  operator = "human"
+  agent = "ConstitutionalVerifier"
+  protocol = "intent-proposal-consent"
+}
+flow Main {
+  connect HumanConstitution
+  intent HumanConstitution <- "Balance preserved context with adjacent conceptualization while keeping integrity, authority, reversibility, and recovery independently governed."
+  propose HumanConstitution <- "Admit five capability-free function glyphs for context weave, constitutional potential, reversibility burden, authority descent, and verified recovery; keep weighted potential observational; require hard constraints before durable promotion."
+  consent HumanConstitution <- true
+  disconnect HumanConstitution
+  emit "Memory preserves an anchor and explores its verified neighborhood; neither relevance nor adjacency becomes authority."
+}

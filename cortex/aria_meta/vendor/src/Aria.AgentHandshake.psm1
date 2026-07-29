@@ -40,7 +40,7 @@ function Test-AriaAgentContract {
     $terms = @($Contract.vocabulary | ForEach-Object { [string]$_.term })
     if ($terms.Count -lt 8 -or @($terms | Sort-Object -Unique).Count -ne $terms.Count) { $errors.Add('E_AGENT_CONTRACT_VOCABULARY') }
     $milestones = @($Contract.continuity | ForEach-Object { [string]$_.milestone })
-    if (($milestones -join '|') -cne 'alpha.14|alpha.15|alpha.16|alpha.17') { $errors.Add('E_AGENT_CONTRACT_CONTINUITY') }
+    if (($milestones -join '|') -cne 'alpha.14|alpha.15|alpha.16|alpha.17|alpha.18') { $errors.Add('E_AGENT_CONTRACT_CONTINUITY') }
 
     if (
         [string]$Contract.authority.initial -ne 'none' -or

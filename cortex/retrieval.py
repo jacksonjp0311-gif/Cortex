@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 from .aria_meta.substrate import (
@@ -29,7 +30,33 @@ def reciprocal_rank_fusion(
     return dict(scores)
 
 
+def _materialize_aria_if_needed(store: Any, repo: str, text: str) -> None:
+    """On ARIA wake, materialize deferred substrate before hybrid retrieval."""
+
+    aria_profile = load_aria_cue_profile(store, repo)
+    if classify_aria_task(text, aria_profile["cues"])["mode"] != "active":
+        return
+    repository = store.repo(repo)
+    if not repository:
+        return
+    try:
+        from .config import load_repo_config
+        from .graph import resolve_graph
+        from .indexer import ensure_aria_substrate_materialized
+        from .neuron import compile_interlink
+
+        config = load_repo_config(Path(repository["path"]))
+        result = ensure_aria_substrate_materialized(store, repo, config, text)
+        if result.get("materialized"):
+            resolve_graph(store, repo)
+            if config.neural_interlink_enabled:
+                compile_interlink(store, repo)
+    except FileNotFoundError:
+        return
+
+
 def query(store: Any, repo: str, text: str, limit: int = 8, semantic_scan_limit: int = 5000) -> list[Hit]:
+    _materialize_aria_if_needed(store, repo, text)
     aria_profile = load_aria_cue_profile(store, repo)
     aria_classification = classify_aria_task(text, aria_profile["cues"])
     aria_active = aria_classification["mode"] == "active"

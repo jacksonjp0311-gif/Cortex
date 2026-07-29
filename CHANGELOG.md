@@ -1,5 +1,33 @@
 # Changelog
 
+## 3.1.0 - Constitutional Homeostasis
+
+- Bootstrap-tiered ARIA substrate indexing: inventory always, fully index
+  anchors, defer bulk language files until ARIA-active materialization, with
+  explicit work-proxy savings telemetry.
+- Hardened ARIA wake classification against false friends (multi-token core
+  cues; single-token learned cues rejected except `aria`) and expanded the
+  fluency regression corpus.
+- Added deliberate ARIA vendor bump scripts
+  (`scripts/powershell/Bump-AriaSnapshot.ps1`,
+  `scripts/bash/bump-aria-snapshot.sh`) so language snapshots are not mixed
+  ad-hoc into Cortex core edits.
+- Evolved the runtime to GCMT v1.5 with separate uncertainty/integrity failure
+  geometry and a shadow-mode constitutional potential.
+- Added a measurable harmonic balance between context preservation and adjacent
+  conceptualization.
+- Added authority-monotonic promotion with content-addressed external grant
+  verification for scope growth.
+- Added reversibility-weighted promotion requirements and staged recovery
+  verification before rollback commits.
+- Evolved continuation packets to `cortex-continuation/1.1` and added local
+  authority rebinding for imported packets.
+- Added the `cortex constitutional` and `cortex continuation-rebind` surfaces.
+- Added five verified, capability-free ARIA function glyphs: `⋈`, `≋`, `⌁`,
+  `↧`, and `↶`.
+- Kept constitutional potential observational: hard constitutional violations
+  remain non-compensable and host/human authority remains controlling.
+
 ## 3.0.0 - Governed Continuation Memory
 
 - Integrated James Paul Jackson's Governed Continuation Memory Theory (GCMT v1.0)

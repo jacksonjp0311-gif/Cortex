@@ -1,7 +1,7 @@
 {
     "schema":  "aria.runtime/1",
     "release":  "0.1.0-alpha.14",
-    "languageEvolution":  "cooperative-agent-mesh-alpha.17",
+    "languageEvolution":  "constitutional-homeostasis-alpha.18",
     "status":  "experimental",
     "repository":  {
                        "name":  "ARIA",
@@ -63,6 +63,8 @@
                          ,"sessionHandoffPlan":  "plans/portable-session-handoff-alpha15.aria"
                          ,"providerBridgePlan":  "plans/provider-bridge-membrane-alpha16.aria"
                          ,"cooperativeMeshPlan":  "plans/cooperative-agent-mesh-alpha17.aria"
+                         ,"constitutionalHomeostasisPlan":  "plans/constitutional-homeostasis-alpha18.aria"
+                         ,"constitutionalHomeostasisExample":  "examples/constitutional-homeostasis.aria"
                      },
     "continuity":  {
                        "stableTag":  "aria-alpha21-stable",

@@ -74,7 +74,7 @@ Test-HandshakeCase 'handshake binds all discovery resources' {
     Assert-Equal @('ARIA-CONNECT.json','ARIA-RUNTIME.json','AGENTS.md','MANIFEST.sha256') @($handshake.contract.path,$handshake.runtime.path,$handshake.guide.path,$handshake.manifest.path) 'Handshake resource order changed.'
     Assert-Equal @('discover','orient','verify','align','propose') @($handshake.synchronization.phases.id) 'Handshake did not carry synchronization semantics.'
     Assert-True (@($handshake.synchronization.vocabulary).Count -ge 8) 'Handshake did not carry the shared vocabulary.'
-    Assert-Equal @('alpha.14','alpha.15','alpha.16','alpha.17') @($handshake.synchronization.continuity.milestone) 'Handshake did not carry the continuity ladder.'
+    Assert-Equal @('alpha.14','alpha.15','alpha.16','alpha.17','alpha.18') @($handshake.synchronization.continuity.milestone) 'Handshake did not carry the continuity ladder.'
 }
 
 Test-HandshakeCase 'handshake rejects tampered identity' {

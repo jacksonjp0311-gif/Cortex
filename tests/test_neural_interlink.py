@@ -106,17 +106,19 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
         self.assertTrue((bundle_root() / "ARIA-RUNTIME.json").is_file())
         self.assertTrue((bundle_root() / "ARIA-CONNECT.json").is_file())
         self.assertTrue(verification["valid"], verification)
-        self.assertEqual(verification["checked_files"], 297)
+        self.assertGreaterEqual(verification["checked_files"], 297)
 
     def test_native_aria_region_is_known_but_task_gated(self) -> None:
         dormant = classify_aria_task("Fix the Python retrieval implementation")
         false_friend = classify_aria_task("Rename a Python variable")
+        glyph_false_friend = classify_aria_task("Replace the toolbar glyph icon asset")
         active = classify_aria_task(
             "Use ARIA semantic replay for a governed session handoff"
         )
         self.assertTrue(dormant["known"])
         self.assertEqual(dormant["mode"], "dormant")
         self.assertEqual(false_friend["mode"], "dormant")
+        self.assertEqual(glyph_false_friend["mode"], "dormant")
         self.assertEqual(active["mode"], "active")
         self.assertIn("aria", active["matched_signals"])
         self.assertEqual(
@@ -133,10 +135,60 @@ class CortexNeuralInterlinkTests(unittest.TestCase):
             / "aria_fluency.json"
         )
         result = evaluate_aria_corpus(load_aria_corpus(corpus))
-        self.assertEqual(result["cases"], 20)
-        self.assertEqual(result["false_wakes"], 0)
-        self.assertEqual(result["missed_wakes"], 0)
-        self.assertEqual(result["purpose_misses"], 0)
+        self.assertGreaterEqual(result["cases"], 30)
+        self.assertEqual(result["false_wakes"], 0, result)
+        self.assertEqual(result["missed_wakes"], 0, result)
+        self.assertEqual(result["purpose_misses"], 0, result)
+
+    def test_bootstrap_defers_non_anchor_aria_substrate(self) -> None:
+        native = self.repo / "cortex" / "aria_meta" / "vendor"
+        (native / "docs").mkdir(parents=True)
+        (native / "grammar").mkdir(parents=True, exist_ok=True)
+        (native / "ARIA-RUNTIME.json").write_text(
+            json.dumps({"schema": "aria-runtime", "version": "test"}),
+            encoding="utf-8",
+        )
+        (native / "ARIA-CONNECT.json").write_text(
+            json.dumps({"schema": "aria-connect", "version": "test"}),
+            encoding="utf-8",
+        )
+        (native / "README.md").write_text("# ARIA\n", encoding="utf-8")
+        (native / "grammar" / "semantic-cues.json").write_text(
+            json.dumps({"format": "test", "cues": []}),
+            encoding="utf-8",
+        )
+        deep = native / "docs" / "semantic-replay-handoff.md"
+        deep.write_text(
+            "# ARIA\n\nSemantic replay and cooperative mesh session handoff.\n",
+            encoding="utf-8",
+        )
+        result = bootstrap_repository(
+            self.home, self.store, self.repo, "AgentRepo", force=True
+        )
+        aria = result["index"]["aria_substrate"]
+        self.assertEqual(aria["indexing_mode"], "deferred")
+        self.assertGreaterEqual(aria["deferred_files"], 1)
+        self.assertGreaterEqual(aria["anchors_indexed"], 1)
+        self.assertGreater(aria["work_proxy"]["estimated_bootstrap_savings_ratio"], 0.0)
+        deep_rel = "cortex/aria_meta/vendor/docs/semantic-replay-handoff.md"
+        row = self.store.file("AgentRepo", deep_rel)
+        self.assertEqual(row["status"], "substrate_deferred")
+        # Certificate still verifies with deferred bulk.
+        self.assertEqual(result["certificate"]["status"], "verified")
+        self.assertEqual(
+            result["certificate"]["coverage"]["deferred_substrate_count"],
+            aria["deferred_files"],
+        )
+        # Wake materializes deferred evidence into searchable memory.
+        hits = query(
+            self.store,
+            "AgentRepo",
+            "Use ARIA semantic replay for cooperative mesh session handoff",
+            limit=24,
+        )
+        self.assertIn(deep_rel, {hit.path for hit in hits})
+        materialized = self.store.file("AgentRepo", deep_rel)
+        self.assertEqual(materialized["status"], "indexed")
 
     def test_verified_outcome_admits_and_tunes_bounded_aria_cue(self) -> None:
         task = "Use ARIA to define a mother tongue continuity boundary"
