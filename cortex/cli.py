@@ -660,7 +660,42 @@ def build_parser() -> argparse.ArgumentParser:
     cadence_p.add_argument("--evolve-every", type=int, default=10)
     cadence_p.add_argument("--seal-every", type=int, default=50)
     cadence_p.add_argument("--hygiene-every", type=int, default=25)
+    cadence_p.add_argument(
+        "--progress-every",
+        type=int,
+        default=25,
+        help="Write jsonl progress every N cycles (default 25).",
+    )
+    cadence_p.add_argument(
+        "--progress",
+        action="store_true",
+        help="Print cycle progress to stderr.",
+    )
     cadence_p.add_argument("--json", action="store_true")
+
+    continuum_p = sub.add_parser(
+        "continuum",
+        help="Multi-lane evolution ⟲ — packs, use→teach→measure, cadence, prune/graph, stream/glyphs, ops.",
+    )
+    continuum_p.add_argument("--repo", required=True)
+    continuum_p.add_argument(
+        "--cycles",
+        type=int,
+        default=24,
+        help="Cadence cycles inside continuum (default 24; keep small for real work).",
+    )
+    continuum_p.add_argument("--budget", type=int, default=400)
+    continuum_p.add_argument(
+        "--apply-prune",
+        action="store_true",
+        help="Opt-in: apply integrate_soft prune if would_prune>=50 (default dry-run only).",
+    )
+    continuum_p.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress stderr progress (default: progress on).",
+    )
+    continuum_p.add_argument("--json", action="store_true")
 
     stream_p = sub.add_parser(
         "stream",
@@ -1690,6 +1725,18 @@ def main(argv: list[str] | None = None) -> None:
         elif command == "cadence":
             from .cadence import run_cadence
 
+            def _cadence_progress(cycle: dict[str, Any]) -> None:
+                if not getattr(args, "progress", False):
+                    return
+                n = cycle.get("cycle")
+                obs = cycle.get("observe") or {}
+                print(
+                    f"  ⟲ c{n} family={cycle.get('family')} "
+                    f"expand={obs.get('expand')} sparse={obs.get('sparse')}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
             emit(
                 run_cadence(
                     home,
@@ -1701,6 +1748,25 @@ def main(argv: list[str] | None = None) -> None:
                     evolve_every=max(1, int(args.evolve_every or 10)),
                     seal_every=max(1, int(args.seal_every or 50)),
                     hygiene_every=max(1, int(args.hygiene_every or 25)),
+                    progress_every=max(1, int(getattr(args, "progress_every", None) or 25)),
+                    on_cycle=_cadence_progress if getattr(args, "progress", False) else None,
+                ),
+                args.json,
+            )
+
+        elif command == "continuum":
+            from .continuum import run_continuum
+
+            emit(
+                run_continuum(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    cycles=max(1, int(args.cycles or 24)),
+                    budget=max(200, int(args.budget or 400)),
+                    progress=not bool(getattr(args, "quiet", False)),
+                    apply_prune=bool(getattr(args, "apply_prune", False)),
                 ),
                 args.json,
             )

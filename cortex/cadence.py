@@ -97,8 +97,12 @@ def run_cadence(
     pack_dir: Path | None = None,
     on_cycle: Callable[[dict[str, Any]], None] | None = None,
     stop_on_block: bool = True,
+    progress_every: int = 25,
 ) -> dict[str, Any]:
-    """Run automated evolution cadence with observation-driven injections."""
+    """Run automated evolution cadence with observation-driven injections.
+
+    progress_every: write jsonl progress trail every N cycles (and final).
+    """
 
     cycles = max(1, int(cycles))
     t0 = time.time()
@@ -352,27 +356,37 @@ def run_cadence(
         # Keep only last 50 full cycle logs in memory; milestones always kept in injections
         if len(cycle_logs) > 50:
             cycle_logs = cycle_logs[-50:]
-        # Progress trail every 25 cycles (and final) so kill ≠ total loss
-        if i % 25 == 0 or i == cycles:
+        # Progress trail so kill ≠ total loss (default every 25; continuum uses smaller N)
+        pe = max(1, int(progress_every))
+        if i % pe == 0 or i == cycles:
             try:
-                progress_path.open("a", encoding="utf-8").write(
-                    json.dumps(
-                        {
-                            "cycle": i,
-                            "of": cycles,
-                            "stats": {
-                                "activates": stats["activates"],
-                                "evolves": stats["evolves"],
-                                "seals": stats["seals"],
-                                "expand_hits": stats["expand_hits"],
-                                "ranker": ranker_status(store, repo).get("train_count"),
+                with progress_path.open("a", encoding="utf-8") as prog:
+                    prog.write(
+                        json.dumps(
+                            {
+                                "cycle": i,
+                                "of": cycles,
+                                "family": fam["id"],
+                                "stats": {
+                                    "activates": stats["activates"],
+                                    "evolves": stats["evolves"],
+                                    "seals": stats["seals"],
+                                    "expand_hits": stats["expand_hits"],
+                                    "ranker": ranker_status(store, repo).get(
+                                        "train_count"
+                                    ),
+                                },
+                                "observe": {
+                                    "expand": expand,
+                                    "sparse": sparse,
+                                    "domain": top_domain,
+                                },
+                                "at": time.time(),
                             },
-                            "at": time.time(),
-                        },
-                        default=str,
+                            default=str,
+                        )
+                        + "\n"
                     )
-                    + "\n"
-                )
             except Exception:
                 pass
         if on_cycle:

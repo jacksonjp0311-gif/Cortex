@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.10.0-0ea5e9?style=for-the-badge" alt="v6.10.0" />
+  <img src="https://img.shields.io/badge/version-6.11.0-0ea5e9?style=for-the-badge" alt="v6.11.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,11 +42,13 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.10.0** — **Spectral prune policies** (`safe` / `integrate_soft` / `aggressive`) + **graph census** (`graph --stats`) + hygiene aligned to prune preview. See [`docs/intelligence/PHASE_V6.10.md`](docs/intelligence/PHASE_V6.10.md).
+**Current release: v6.11.0** — **Continuum multi-lane evolution** (`cortex continuum`) wires use→teach→measure, cadence, packs, prune/graph, stream/glyphs, and ops into one pass. See [`docs/intelligence/PHASE_V6.11.md`](docs/intelligence/PHASE_V6.11.md).
 
 ```bash
 pip install -e .
 python -m cortex bootstrap . --name MyProject --json
+python -m cortex continuum --repo MyProject --cycles 24 --json
+python -m cortex cadence --repo MyProject --cycles 40 --progress --json
 python -m cortex immune --repo MyProject --json
 python -m cortex organism --repo MyProject --task "Map the auth surface" --json
 python -m cortex metrics --repo MyProject --json
