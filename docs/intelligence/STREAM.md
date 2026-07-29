@@ -27,10 +27,6 @@ activate.
 | session_seal | bond ends; stream continues |
 | evolve | signal loop close |
 
-## Sandbox
-
-Use `Desktop/CortexSandbox` as the host test site (stable `CORTEX_HOME=~/.cortex`).
-
 ## Claim boundary
 
 Stream continuity never grants mutation rights and never implies awareness.

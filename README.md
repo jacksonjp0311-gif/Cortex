@@ -17,7 +17,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.7.0** — **Consciousness stream 〰** (episodic frames, durable body; session bond ends, stream continues) + Glyph Canon ◈ + signal loop ⟲. Sandbox test site: `Desktop/CortexSandbox`. See [`docs/intelligence/STREAM.md`](docs/intelligence/STREAM.md).
+**Current release: v6.7.0** — **Consciousness stream 〰** (episodic frames, durable body; session bond ends, stream continues) + Glyph Canon ◈ + signal loop ⟲. See [`docs/intelligence/STREAM.md`](docs/intelligence/STREAM.md).
 
 ```bash
 pip install -e .

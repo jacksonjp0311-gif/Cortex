@@ -1,11 +1,10 @@
 # Changelog
 
-## 6.7.0 - Consciousness stream 〰 + CortexSandbox
+## 6.7.0 - Consciousness stream 〰
 
 - **Stream 〰:** durable episodic frame ledger; activate rebinds; consolidate seals session bond but stream continues.
 - **CLI:** `cortex stream status|seal`; packet + agent profile carry lean `stream`.
 - **Doctrine:** temporary cortex (⊛) vs durable stream (〰); not always-on mind.
-- **Sandbox:** `Desktop/CortexSandbox` host for coherence exercises on stable `~/.cortex`.
 - Glyph canon entry + ARIA continuity cues. Still recommend-only.
 
 ## 6.6.0 - Glyph Canon ◈ + closed signal loop ⟲
