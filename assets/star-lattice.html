@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CORTEX // STAR LATTICE</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #01030a;
+      --cyan: #22d3ee;
+      --violet: #a855f7;
+      --muted: #64748b;
+      --text: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1a1035 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #0c4a6e33 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .sub {
+      margin: 0 0 18px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 52rem;
+      line-height: 1.5;
+    }
+    #stage {
+      width: min(980px, 100%);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px #22d3ee55,
+        0 0 40px #0ea5e933,
+        0 24px 60px #00000088;
+      background: #01040c;
+      min-height: 400px;
+      display: grid;
+      place-items: center;
+    }
+    #stage svg { display: block; width: 100%; height: auto; }
+    .status {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      display: inline-block;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .dot.err { background: #f43f5e; box-shadow: 0 0 10px #f43f5e; animation: none; }
+    .dot.idle { background: #475569; box-shadow: none; animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+    button {
+      appearance: none;
+      border: 1px solid #22d3ee66;
+      background: #0f172acc;
+      color: #67e8f9;
+      font: inherit;
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { border-color: #a855f7; color: #e9d5ff; }
+    a { color: #67e8f9; }
+  </style>
+</head>
+<body>
+  <h1>CORTEX // STAR LATTICE</h1>
+  <p class="sub">
+    First-party live chart. On every load (and every auto-refresh) this page pulls
+    public stargazer metrics from the GitHub API — no third-party chart host.
+  </p>
+  <div id="stage"><span style="color:#64748b;font-size:12px">SYNCING LATTICE…</span></div>
+  <div class="status">
+    <span><span id="dot" class="dot"></span> <span id="state">loading</span></span>
+    <span id="meta">—</span>
+    <button type="button" id="reload">RELOAD NOW</button>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="auto" checked />
+      auto 60s
+    </label>
+  </div>
+
+  <script>
+(function () {
+  const REPO = new URLSearchParams(location.search).get("repo") || "jacksonjp0311-gif/Cortex";
+  const stage = document.getElementById("stage");
+  const stateEl = document.getElementById("state");
+  const metaEl = document.getElementById("meta");
+  const dotEl = document.getElementById("dot");
+  const autoEl = document.getElementById("auto");
+  let timer = null;
+
+  function setState(kind, text) {
+    stateEl.textContent = text;
+    dotEl.className = "dot" + (kind === "err" ? " err" : kind === "idle" ? " idle" : "");
+  }
+
+  async function gh(path, accept) {
+    const headers = { Accept: accept || "application/vnd.github+json" };
+    // Optional: ?token= is never used; unauthenticated public API (60/hr/IP).
+    const res = await fetch("https://api.github.com" + path, { headers });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(res.status + " " + body.slice(0, 180));
+    }
+    return res.json();
+  }
+
+  async function fetchStarTimes(repo) {
+    const times = [];
+    let page = 1;
+    for (;;) {
+      const rows = await gh(
+        "/repos/" + repo + "/stargazers?per_page=100&page=" + page,
+        "application/vnd.github.star+json"
+      );
+      if (!Array.isArray(rows) || rows.length === 0) break;
+      for (const row of rows) {
+        if (row.starred_at) times.push(new Date(row.starred_at));
+      }
+      if (rows.length < 100) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    times.sort((a, b) => a - b);
+    return times;
+  }
+
+  function series(times, created, starCount) {
+    const pts = [{ t: created, v: 0 }];
+    times.forEach((t, i) => pts.push({ t, v: i + 1 }));
+    const now = new Date();
+    const lastV = Math.max(starCount, times.length);
+    pts.push({ t: now, v: lastV });
+    return pts;
+  }
+
+  function xOf(t, t0, t1, left, width) {
+    const span = Math.max(1, t1 - t0);
+    return left + width * ((t - t0) / span);
+  }
+  function yOf(v, vmax, top, height) {
+    if (vmax <= 0) return top + height;
+    return top + height * (1 - v / vmax);
+  }
+
+  function fmtDate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+  function fmtSync(d) {
+    return d.toISOString().slice(0, 16).replace("T", "T") + "Z";
+  }
+
+  function render(repo, stars, points) {
+    const W = 980, H = 400;
+    const padL = 72, padR = 40, padT = 72, padB = 58;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const t0 = points[0].t.getTime();
+    const t1 = points[points.length - 1].t.getTime();
+    const vmax = Math.max(1, ...points.map((p) => p.v));
+    const mono = "ui-monospace, Cascadia Code, Consolas, monospace";
+    const sans = "ui-sans-serif, system-ui, sans-serif";
+
+    const coords = points.map((p) => ({
+      x: xOf(p.t.getTime(), t0, t1, padL, plotW),
+      y: yOf(p.v, vmax, padT, plotH),
+      t: p.t,
+      v: p.v,
+    }));
+
+    const line = coords.map((c) => c.x.toFixed(2) + "," + c.y.toFixed(2)).join(" ");
+    const area =
+      "M " + coords[0].x.toFixed(2) + "," + (padT + plotH).toFixed(2) + " " +
+      coords.map((c) => "L " + c.x.toFixed(2) + "," + c.y.toFixed(2)).join(" ") +
+      " L " + coords[coords.length - 1].x.toFixed(2) + "," + (padT + plotH).toFixed(2) + " Z";
+
+    let grids = "";
+    for (let i = 0; i < 5; i++) {
+      const yy = padT + (plotH * i) / 4;
+      const val = Math.round(vmax * (1 - i / 4));
+      grids +=
+        '<line x1="' + padL + '" y1="' + yy.toFixed(1) + '" x2="' + (padL + plotW) +
+        '" y2="' + yy.toFixed(1) + '" stroke="url(#gridGrad)" stroke-width="1" stroke-dasharray="2 7"/>' +
+        '<text x="' + (padL - 14) + '" y="' + (yy + 4).toFixed(1) +
+        '" text-anchor="end" fill="#67e8f9" font-family="' + mono +
+        '" font-size="11" opacity="0.8">' + String(val).padStart(2, "0") + "</text>";
+    }
+    for (let i = 1; i < 8; i++) {
+      const xx = padL + (plotW * i) / 8;
+      grids +=
+        '<line x1="' + xx.toFixed(1) + '" y1="' + padT + '" x2="' + xx.toFixed(1) +
+        '" y2="' + (padT + plotH) + '" stroke="#334155" stroke-opacity="0.22" stroke-width="0.8"/>';
+    }
+
+    const real = coords.filter((c, i) => {
+      if (c.v === 0 && i === 0) return false;
+      if (i === coords.length - 1 && points.length > 1 && c.v === points[points.length - 2].v) return false;
+      return true;
+    });
+
+    let mesh = "";
+    for (let i = 0; i < real.length - 1; i++) {
+      const a = real[i], b = real[i + 1];
+      mesh +=
+        '<line x1="' + a.x.toFixed(2) + '" y1="' + a.y.toFixed(2) +
+        '" x2="' + b.x.toFixed(2) + '" y2="' + b.y.toFixed(2) +
+        '" stroke="#a855f7" stroke-opacity="0.35" stroke-width="1"/>' +
+        '<line x1="' + a.x.toFixed(2) + '" y1="' + a.y.toFixed(2) +
+        '" x2="' + a.x.toFixed(2) + '" y2="' + (padT + plotH).toFixed(2) +
+        '" stroke="#22d3ee" stroke-opacity="0.08" stroke-width="1" stroke-dasharray="2 4"/>';
+    }
+    for (let i = 0; i < real.length - 2; i++) {
+      const a = real[i], b = real[i + 2];
+      mesh +=
+        '<line x1="' + a.x.toFixed(2) + '" y1="' + a.y.toFixed(2) +
+        '" x2="' + b.x.toFixed(2) + '" y2="' + b.y.toFixed(2) +
+        '" stroke="#67e8f9" stroke-opacity="0.12" stroke-width="0.8"/>';
+    }
+
+    let nodes = "";
+    coords.forEach((c, i) => {
+      if (c.v === 0 && i === 0) return;
+      if (i === coords.length - 1 && points.length > 1 && c.v === points[points.length - 2].v) {
+        nodes +=
+          '<circle cx="' + c.x.toFixed(2) + '" cy="' + c.y.toFixed(2) +
+          '" r="4" fill="#22d3ee" opacity="0.3">' +
+          '<animate attributeName="opacity" values="0.15;0.45;0.15" dur="2.4s" repeatCount="indefinite"/>' +
+          "</circle>";
+        return;
+      }
+      const d = 5.5;
+      const diamond =
+        "M" + c.x.toFixed(2) + "," + (c.y - d).toFixed(2) +
+        " L" + (c.x + d).toFixed(2) + "," + c.y.toFixed(2) +
+        " L" + c.x.toFixed(2) + "," + (c.y + d).toFixed(2) +
+        " L" + (c.x - d).toFixed(2) + "," + c.y.toFixed(2) + " Z";
+      nodes +=
+        '<circle cx="' + c.x.toFixed(2) + '" cy="' + c.y.toFixed(2) +
+        '" r="14" fill="none" stroke="#a855f7" stroke-width="0.7" opacity="0.35"/>' +
+        '<circle cx="' + c.x.toFixed(2) + '" cy="' + c.y.toFixed(2) +
+        '" r="9" fill="none" stroke="#22d3ee" stroke-width="0.9" opacity="0.55" stroke-dasharray="3 3">' +
+        '<animateTransform attributeName="transform" type="rotate" from="0 ' +
+        c.x.toFixed(2) + " " + c.y.toFixed(2) + '" to="360 ' + c.x.toFixed(2) + " " +
+        c.y.toFixed(2) + '" dur="14s" repeatCount="indefinite"/></circle>' +
+        '<path d="' + diamond + '" fill="#0ea5e9" stroke="#e0f2fe" stroke-width="1.2" filter="url(#glow)">' +
+        "<title>" + fmtDate(c.t) + " · ★" + c.v + "</title></path>" +
+        '<circle cx="' + c.x.toFixed(2) + '" cy="' + c.y.toFixed(2) + '" r="2" fill="#f8fafc"/>';
+    });
+
+    let xlabels = "";
+    [0, 0.5, 1].forEach((frac) => {
+      const tt = new Date(t0 + (t1 - t0) * frac);
+      const xx = padL + plotW * frac;
+      xlabels +=
+        '<text x="' + xx.toFixed(1) + '" y="' + (H - 22) +
+        '" text-anchor="middle" fill="#94a3b8" font-family="' + mono +
+        '" font-size="11">' + fmtDate(tt) + "</text>" +
+        '<line x1="' + xx.toFixed(1) + '" y1="' + (padT + plotH) +
+        '" x2="' + xx.toFixed(1) + '" y2="' + (padT + plotH + 6) +
+        '" stroke="#67e8f9" stroke-opacity="0.5"/>';
+    });
+
+    let hexes = "";
+    let row = 0;
+    for (let yy = padT + 8; yy < padT + plotH - 8; yy += 24) {
+      for (let xx = padL + (row % 2 ? 14 : 0); xx < padL + plotW - 8; xx += 28) {
+        hexes +=
+          '<circle cx="' + xx.toFixed(1) + '" cy="' + yy.toFixed(1) +
+          '" r="1.1" fill="#22d3ee" opacity="0.07"/>';
+      }
+      row++;
+    }
+
+    const now = new Date();
+    const s = String(stars).padStart(2, "0");
+    const n = String(real.length).padStart(2, "0");
+    const br =
+      '<path d="M' + (padL - 6) + " " + (padT + 6) + " V" + (padT - 6) + " H" + (padL + 6) +
+      '" stroke="#22d3ee" stroke-width="1.4" fill="none" stroke-opacity="0.85"/>' +
+      '<path d="M' + (padL + plotW - 6) + " " + (padT - 6) + " H" + (padL + plotW + 6) + " V" + (padT + 6) +
+      '" stroke="#22d3ee" stroke-width="1.4" fill="none" stroke-opacity="0.85"/>' +
+      '<path d="M' + (padL + plotW + 6) + " " + (padT + plotH - 6) + " V" + (padT + plotH + 6) + " H" + (padL + plotW - 6) +
+      '" stroke="#22d3ee" stroke-width="1.4" fill="none" stroke-opacity="0.85"/>' +
+      '<path d="M' + (padL + 6) + " " + (padT + plotH + 6) + " H" + (padL - 6) + " V" + (padT + plotH - 6) +
+      '" stroke="#22d3ee" stroke-width="1.4" fill="none" stroke-opacity="0.85"/>';
+
+    stage.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H +
+      '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Cortex star lattice">' +
+      "<defs>" +
+      '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0%" stop-color="#01030a"/><stop offset="40%" stop-color="#0a0f1e"/>' +
+      '<stop offset="100%" stop-color="#1a1035"/></linearGradient>' +
+      '<linearGradient id="neon" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0%" stop-color="#22d3ee"/><stop offset="45%" stop-color="#38bdf8"/>' +
+      '<stop offset="100%" stop-color="#c084fc"/></linearGradient>' +
+      '<linearGradient id="neonSoft" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0%" stop-color="#22d3ee" stop-opacity="0.25"/>' +
+      '<stop offset="100%" stop-color="#a855f7" stop-opacity="0.35"/></linearGradient>' +
+      '<linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.42"/>' +
+      '<stop offset="55%" stop-color="#7c3aed" stop-opacity="0.12"/>' +
+      '<stop offset="100%" stop-color="#020617" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="gridGrad" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0%" stop-color="#334155" stop-opacity="0.1"/>' +
+      '<stop offset="50%" stop-color="#67e8f9" stop-opacity="0.28"/>' +
+      '<stop offset="100%" stop-color="#334155" stop-opacity="0.1"/></linearGradient>' +
+      '<linearGradient id="headerBar" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/>' +
+      '<stop offset="20%" stop-color="#22d3ee" stop-opacity="0.55"/>' +
+      '<stop offset="80%" stop-color="#a855f7" stop-opacity="0.55"/>' +
+      '<stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient>' +
+      '<filter id="glow" x="-80%" y="-80%" width="260%" height="260%">' +
+      '<feGaussianBlur stdDeviation="2.8" result="b"/><feMerge>' +
+      '<feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '<filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">' +
+      '<feGaussianBlur stdDeviation="5" result="b"/><feMerge>' +
+      '<feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '<pattern id="scan" width="6" height="6" patternUnits="userSpaceOnUse">' +
+      '<path d="M0 6 L6 0" stroke="#22d3ee" stroke-opacity="0.035" stroke-width="1"/></pattern>' +
+      '<clipPath id="plotClip"><rect x="' + padL + '" y="' + padT + '" width="' + plotW +
+      '" height="' + plotH + '"/></clipPath>' +
+      "</defs>" +
+      '<rect width="' + W + '" height="' + H + '" rx="18" fill="url(#bg)"/>' +
+      '<rect width="' + W + '" height="' + H + '" rx="18" fill="url(#scan)"/>' +
+      '<rect x="1.5" y="1.5" width="' + (W - 3) + '" height="' + (H - 3) +
+      '" rx="17" fill="none" stroke="url(#neon)" stroke-opacity="0.65" stroke-width="1.6"/>' +
+      '<line x1="48" y1="52" x2="' + (W - 48) +
+      '" y2="52" stroke="url(#headerBar)" stroke-width="1"/>' +
+      '<circle cx="28" cy="28" r="5" fill="#22d3ee" filter="url(#glow)">' +
+      '<animate attributeName="opacity" values="0.5;1;0.5" dur="1.8s" repeatCount="indefinite"/></circle>' +
+      '<text x="42" y="24" fill="#e2e8f0" font-family="' + sans +
+      '" font-size="15" font-weight="700" letter-spacing="0.12em">CORTEX // STAR LATTICE</text>' +
+      '<text x="42" y="42" fill="#64748b" font-family="' + mono +
+      '" font-size="10">LIVE · FETCH ON RELOAD · api.github.com/stargazers · NO THIRD-PARTY CHART</text>' +
+      '<text x="' + (W - 28) + '" y="24" text-anchor="end" fill="#c084fc" font-family="' + mono +
+      '" font-size="12">◈ ' + repo + "</text>" +
+      '<text x="' + (W - 28) + '" y="42" text-anchor="end" fill="#475569" font-family="' + mono +
+      '" font-size="10">SYNC ' + fmtSync(now) + "</text>" +
+      '<rect x="' + padL + '" y="' + padT + '" width="' + plotW + '" height="' + plotH +
+      '" fill="#01040c" fill-opacity="0.75" stroke="#1e293b" stroke-opacity="0.8"/>' +
+      br +
+      '<g clip-path="url(#plotClip)">' + hexes + "</g>" +
+      grids +
+      '<g clip-path="url(#plotClip)">' +
+      '<path d="' + area + '" fill="url(#fillGrad)"/>' +
+      '<polyline points="' + line +
+      '" fill="none" stroke="url(#neonSoft)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" opacity="0.55" filter="url(#glowStrong)"/>' +
+      '<polyline points="' + line +
+      '" fill="none" stroke="url(#neon)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)"/>' +
+      mesh + nodes +
+      "</g>" +
+      xlabels +
+      '<rect x="24" y="' + (H - 48) +
+      '" width="200" height="30" rx="6" fill="#0f172a" fill-opacity="0.9" stroke="#22d3ee" stroke-opacity="0.35"/>' +
+      '<text x="40" y="' + (H - 28) + '" fill="#67e8f9" font-family="' + mono +
+      '" font-size="11">NODES ' + n + "</text>" +
+      '<text x="120" y="' + (H - 28) + '" fill="#94a3b8" font-family="' + mono +
+      '" font-size="11">◈ LIVE</text>' +
+      '<rect x="' + (W - 176) + '" y="' + (H - 48) +
+      '" width="152" height="30" rx="6" fill="#0f172a" fill-opacity="0.95" stroke="#a855f7" stroke-opacity="0.7"/>' +
+      '<text x="' + (W - 100) + '" y="' + (H - 28) +
+      '" text-anchor="middle" fill="#f8fafc" font-family="' + mono +
+      '" font-size="14" font-weight="700">★ ' + s + " STARS</text>" +
+      "</svg>";
+  }
+
+  async function refresh() {
+    setState("ok", "pulling metrics…");
+    try {
+      const meta = await gh("/repos/" + REPO);
+      const stars = meta.stargazers_count || 0;
+      const created = new Date(meta.created_at);
+      const times = await fetchStarTimes(REPO);
+      const pts = series(times, created, stars);
+      render(REPO, Math.max(stars, times.length), pts);
+      setState("ok", "synced");
+      metaEl.textContent =
+        "★ " + stars + " · " + times.length + " timestamps · " + new Date().toLocaleTimeString();
+    } catch (err) {
+      setState("err", "sync failed");
+      metaEl.textContent = String(err.message || err);
+      stage.innerHTML =
+        '<div style="padding:32px;color:#fda4af;font-size:12px;text-align:center;max-width:36rem">' +
+        "Lattice sync failed: " + String(err.message || err) +
+        "<br/><br/>Open via GitHub Pages or local file with network access. " +
+        "Unauthenticated API is rate-limited (60/hr/IP).</div>";
+    }
+  }
+
+  function armTimer() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    if (autoEl.checked) {
+      timer = setInterval(refresh, 60000);
+    }
+  }
+
+  document.getElementById("reload").addEventListener("click", refresh);
+  autoEl.addEventListener("change", armTimer);
+  refresh();
+  armTimer();
+})();
+  </script>
+</body>
+</html>

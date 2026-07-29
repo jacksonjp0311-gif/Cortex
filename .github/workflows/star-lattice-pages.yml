@@ -1,0 +1,52 @@
+name: Star lattice pages
+
+# Host the live lattice HTML (fetch-on-reload) on GitHub Pages — first-party only.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/star-lattice.html"
+      - ".github/workflows/star-lattice-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-star-lattice
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage site
+        run: |
+          mkdir -p _site
+          cp assets/star-lattice.html _site/index.html
+          cp assets/star-lattice.html _site/star-lattice.html
+          # Minimal landing so / always hits live lattice
+          printf '%s\n' \
+            '<!DOCTYPE html><meta charset="utf-8">' \
+            '<meta http-equiv="refresh" content="0;url=star-lattice.html">' \
+            '<a href="star-lattice.html">CORTEX STAR LATTICE</a>' \
+            > _site/index.html
+          # Prefer the full live page as index
+          cp assets/star-lattice.html _site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

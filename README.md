@@ -853,21 +853,39 @@ See `docs/SECURITY.md` for the full threat model.
 
 ## Star Lattice
 
-First-party chart — no third-party hosts. Built from `gh` stargazer timestamps.
+First-party chart — no third-party hosts. Metrics come from the GitHub API (`stargazers` + `starred_at`) via CLI / Actions.
+
+| Surface | Behavior |
+|--------|----------|
+| **Live lattice** | On every page load (+ optional 60s auto-refresh) fetches public star metrics from `api.github.com` and redraws the HUD — see below |
+| **README SVG** | Snapshot at `assets/star-lattice.svg`, rebuilt by first-party Actions on **star events**, **hourly**, and manual dispatch |
 
 <p align="center">
-  <img
-    src="assets/star-lattice.svg"
-    alt="Cortex star lattice — cumulative stargazers"
-    width="100%"
-  />
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/">
+    <img
+      src="assets/star-lattice.svg?v=12"
+      alt="Cortex star lattice — cumulative stargazers (CI snapshot; open live lattice for fetch-on-reload)"
+      width="100%"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/"><b>◈ Open live lattice</b></a>
+  — pulls metrics on every reload · no third-party chart host
 </p>
 
 ```bash
-# regenerate (requires GitHub CLI auth)
+# regenerate README snapshot (requires GitHub CLI auth)
 python scripts/build_star_lattice.py
-# optional: --repo owner/name  --out path/to.svg
+python scripts/build_star_lattice.py --force --patch-readme
+
+# local live lattice (fetch on every reload)
+python -m http.server 8765 --directory assets
+# then open http://127.0.0.1:8765/star-lattice.html
 ```
+
+> GitHub README markdown cannot execute JavaScript, so the image above is a committed SVG kept current by `.github/workflows/star-lattice.yml`. True pull-on-reload is the live HTML (`assets/star-lattice.html`), hosted first-party on GitHub Pages after the pages workflow runs (repo **Settings → Pages → GitHub Actions**).
 
 <p align="center">
   <sub>If Cortex helps your agents remember — drop a star. It keeps the lattice bright.</sub>

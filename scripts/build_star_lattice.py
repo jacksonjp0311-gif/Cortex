@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -357,6 +358,32 @@ def render_svg(
 '''
 
 
+def _fingerprint(stars: int, times: list[datetime]) -> str:
+    """Stable id of metrics (not wall clock) for change detection."""
+    payload = {
+        "stars": stars,
+        "times": [t.isoformat() for t in times],
+    }
+    return json.dumps(payload, separators=(",", ":"), sort_keys=True)
+
+
+def _patch_readme_cache_bust(readme: Path, stars: int) -> bool:
+    """Point README img at assets/star-lattice.svg?v=<stars> so Camo re-fetches."""
+    if not readme.is_file():
+        return False
+    text = readme.read_text(encoding="utf-8")
+    new, n = re.subn(
+        r'(src="assets/star-lattice\.svg)(?:\?v=\d+)?"',
+        rf'\1?v={stars}"',
+        text,
+        count=1,
+    )
+    if n and new != text:
+        readme.write_text(new, encoding="utf-8", newline="\n")
+        return True
+    return False
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build Cortex star-lattice SVG via gh")
     ap.add_argument("--repo", default="jacksonjp0311-gif/Cortex")
@@ -366,9 +393,20 @@ def main() -> int:
         default=None,
         help="Output SVG path (default: assets/star-lattice.svg)",
     )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Rewrite SVG even if star metrics fingerprint unchanged",
+    )
+    ap.add_argument(
+        "--patch-readme",
+        action="store_true",
+        help="Update README img cache-buster ?v=<star count>",
+    )
     args = ap.parse_args()
     root = Path(__file__).resolve().parents[1]
     out = args.out or (root / "assets" / "star-lattice.svg")
+    fp_path = out.with_suffix(".fingerprint")
 
     meta = _gh_json([f"repos/{args.repo}"])
     assert isinstance(meta, dict)
@@ -377,18 +415,31 @@ def main() -> int:
         str(meta.get("created_at", "2026-07-11T00:00:00Z")).replace("Z", "+00:00")
     )
     times = fetch_star_times(args.repo)
-    if len(times) < stars:
-        # API may paginate incompletely; pad series to public count at "now"
-        pass
+    fp = _fingerprint(stars, times)
+    if not args.force and fp_path.is_file() and fp_path.read_text(encoding="utf-8") == fp:
+        if out.is_file():
+            print(f"unchanged {out} ({stars} stars, {len(times)} timestamps)")
+            if args.patch_readme:
+                _patch_readme_cache_bust(root / "README.md", stars)
+            return 0
+
     series = cumulative_series(times, created)
     # if gh returned fewer timestamps than star count, lift final value
     if series and series[-1][1] < stars:
         series[-1] = (series[-1][0], stars)
 
-    svg = render_svg(series, repo=args.repo, stars=max(stars, series[-1][1]))
+    star_n = max(stars, series[-1][1])
+    svg = render_svg(series, repo=args.repo, stars=star_n)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(svg, encoding="utf-8", newline="\n")
-    print(f"wrote {out} ({stars} stars, {len(times)} timestamps)")
+    fp_path.write_text(fp, encoding="utf-8", newline="\n")
+    patched = False
+    if args.patch_readme:
+        patched = _patch_readme_cache_bust(root / "README.md", star_n)
+    print(
+        f"wrote {out} ({stars} stars, {len(times)} timestamps)"
+        + (" · readme cache-bust" if patched else "")
+    )
     return 0
 
 
