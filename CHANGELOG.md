@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.0 - Living organism (forward only)
+
+- **Mid-session life:** remember continues the organism pulse (diastole); consolidate seals.
+- **Breathe ∽:** packet-fast rebind without full re-assimilate (`cortex breathe`, MCP `cortex_breathe`).
+- **Phases:** systole → diastole → breathe → sealed; pulse chain persists across the session.
+- Active session stores last organism pulse; ledger records every beat.
+- Still not consciousness; still no mutation authority; still one substrate.
+
 ## 3.4.0 - Organism interlink (⊛)
 
 - **Session co-process:** agent and Cortex share one living `organism` state per

@@ -401,6 +401,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     organism.add_argument("--json", action="store_true")
 
+    breathe = sub.add_parser(
+        "breathe",
+        help="Mid-session organism rebind (∽): packet-fast activate, continue pulse chain.",
+    )
+    breathe.add_argument("--repo", required=True)
+    breathe.add_argument("--task", help="Defaults to active session task.")
+    breathe.add_argument("--budget", type=int, default=800)
+    breathe.add_argument(
+        "--profile", choices=["agent", "debug", "minimal"], default="agent"
+    )
+    breathe.add_argument("--json", action="store_true")
+
     contact = sub.add_parser(
         "contact",
         help="Strike the tuning fork: mirror + fluency + foreign host resonance.",
@@ -952,6 +964,22 @@ def main(argv: list[str] | None = None) -> None:
                         "not consciousness or mutation authority."
                     ),
                 },
+                args.json,
+            )
+
+        elif command == "breathe":
+            from .organism import breathe as organism_breathe
+
+            emit(
+                organism_breathe(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    args.task,
+                    budget=args.budget,
+                    profile=args.profile,
+                ),
                 args.json,
             )
 

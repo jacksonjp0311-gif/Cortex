@@ -113,6 +113,23 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
     )
     store.end_session(resolved_session, "consolidated")
     store.commit()
+    # Seal organism pulse — cardiac cycle complete.
+    organism_seal: dict[str, Any] | None = None
+    try:
+        from . import __version__
+        from .organism import beat
+
+        organism_seal = beat(
+            home,
+            store,
+            repo,
+            kind="consolidate",
+            text=f"sealed:{card_hash[:12]}",
+            phase="sealed",
+            cortex_version=__version__,
+        )
+    except Exception:
+        organism_seal = None
     if active and active.get("session_id") == resolved_session:
         clear_active(home, repo)
     return {
@@ -124,4 +141,7 @@ def consolidate(home: Path, store: Any, repo: str, session_id: str | None = None
         "memory_path": memory_path,
         "hash": card_hash,
         "event_count": len(events),
+        "organism": organism_seal,
+        "organism_pulse": (organism_seal or {}).get("pulse"),
+        "phase": "sealed",
     }

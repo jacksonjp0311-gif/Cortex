@@ -190,6 +190,19 @@ class OrganismInterlinkTests(unittest.TestCase):
         org2 = second.get("organism") or {}
         self.assertEqual(org2.get("prior_pulse"), org1.get("pulse"))
         self.assertNotEqual(org2.get("pulse"), org1.get("pulse"))
+        # Living: remember continues pulse (diastole)
+        from cortex.hippocampus import remember
+        from cortex.organism import breathe
+
+        mem = remember(
+            home, store, "OrgHost", "discovery", "living-beat-fact"
+        )
+        self.assertIn("organism_pulse", mem)
+        self.assertTrue(mem.get("organism_pulse"))
+        breath = breathe(
+            home, store, Governor(home, store), "OrgHost", budget=400
+        )
+        self.assertEqual((breath.get("organism") or {}).get("phase"), "breathe")
         store.close()
 
 

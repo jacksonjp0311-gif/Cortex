@@ -130,6 +130,22 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_breathe",
+        "description": (
+            "Mid-session organism rebind (∽): continue pulse without full re-assimilate. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "task": {"type": "string"},
+                "budget": {"type": "integer", "default": 800},
+            },
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -262,6 +278,17 @@ class CortexMCP:
                     "Organism is session co-process state; not consciousness or authority."
                 ),
             }
+        if name == "cortex_breathe":
+            from .organism import breathe as organism_breathe
+
+            return organism_breathe(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                arguments.get("task"),
+                budget=int(arguments.get("budget", 800)),
+            )
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,

@@ -30,15 +30,31 @@ conscience (geometry + constitutional) ── pulse / pulse_chain
 **Reflexes** couple these systems (e.g. immune blocks intention under
 `read_only`; ARIA-active wakes purpose-floor memory).
 
+## Living phases (v3.5 evolution)
+
+| Phase | When | Glyph |
+|---|---|---|
+| **systole** | activate / organism | ⊛ |
+| **diastole** | each remember (pulse continues) | ⊛ |
+| **breathe** | mid-session rebind, no full re-index | ∽ |
+| **sealed** | consolidate seals the cycle | ⊛ sealed |
+
+The organism **lives for the whole session**, not only at first activate.
+
 ## Commands
 
 ```bash
 python -m cortex organism --repo MyRepo --task "..." --json
 python -m cortex activate --repo MyRepo --task "..." --profile agent --json
-# packet.organism is present on activate
+python -m cortex remember --repo MyRepo --kind discovery --text "..." --json
+# remember returns organism_pulse (diastole)
+python -m cortex breathe --repo MyRepo --json
+# mid-session rebind without full assimilate
+python -m cortex ritual --repo MyRepo --task "..." --remember-text "..." --json
+# seals cardiac cycle
 ```
 
-MCP: `cortex_organism`
+MCP: `cortex_organism`, `cortex_breathe`
 
 ## Agent stance
 

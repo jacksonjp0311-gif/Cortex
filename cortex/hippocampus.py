@@ -90,6 +90,23 @@ def remember(
         active["last_event_kind"] = kind
         active["last_event_hash"] = text_hash
         _active_path(home, repo).write_text(json.dumps(active, indent=2) + "\n", encoding="utf-8")
+    # Living organism: each memory continues the co-process pulse (diastole).
+    organism_beat: dict[str, Any] | None = None
+    try:
+        from . import __version__
+        from .organism import beat
+
+        organism_beat = beat(
+            home,
+            store,
+            repo,
+            kind=kind,
+            text=text,
+            phase="diastole",
+            cortex_version=__version__,
+        )
+    except Exception:
+        organism_beat = None
     return {
         "recorded": True,
         "duplicate": False,
@@ -98,6 +115,8 @@ def remember(
         "session_id": resolved_session,
         "kind": kind,
         "text_hash": text_hash,
+        "organism": organism_beat,
+        "organism_pulse": (organism_beat or {}).get("pulse"),
     }
 
 

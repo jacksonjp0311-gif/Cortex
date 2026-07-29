@@ -127,6 +127,7 @@ def activate_repository(
         surprise=surprise,
         prior_pulse=prior,
         cortex_version=__version__,
+        phase="systole",
     )
     context["organism"] = organism
     # Re-hash packet including organism bond.

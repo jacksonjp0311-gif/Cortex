@@ -20,12 +20,14 @@ from __future__ import annotations
 from hashlib import sha256
 import json
 import time
+from pathlib import Path
 from typing import Any
 
 from .progress_glyphs import ARIA_PROGRESS_GLYPHS
 
 ORGANISM_GLYPH = "⊛"  # co-process / shared pulse — capability free
-SCHEMA = "cortex-organism/1.0"
+BREATHE_GLYPH = "∽"  # mid-session rebind — capability free
+SCHEMA = "cortex-organism/1.1"
 
 
 def _h(material: Any) -> str:
@@ -43,6 +45,8 @@ def build_organism(
     surprise: dict[str, Any] | None = None,
     prior_pulse: str | None = None,
     cortex_version: str = "",
+    phase: str = "systole",
+    event_count: int | None = None,
 ) -> dict[str, Any]:
     """Compose one organism state from already-computed packet surfaces."""
 
@@ -69,6 +73,8 @@ def build_organism(
         "session_id": session_id,
         "cortex_version": cortex_version,
         "bond": "session_co_process",
+        "phase": phase,
+        "living": phase != "sealed",
         "claim": (
             "Agent and Cortex share this organism state for the session only; "
             "neither becomes the host authority."
@@ -117,6 +123,9 @@ def build_organism(
         "evidence_paths": [item.get("path") for item in evidence[:12]],
         "active_focus": context.get("active_focus"),
         "packet_hash": context.get("packet_hash"),
+        "session_event_count": event_count,
+        "last_event_kind": (session or {}).get("last_event_kind"),
+        "last_event_hash": (session or {}).get("last_event_hash"),
     }
 
     intention = {
@@ -184,12 +193,14 @@ def build_organism(
 
     return {
         "schema_version": SCHEMA,
-        "glyph": ORGANISM_GLYPH,
-        "spoken": "organism pulse",
+        "glyph": ORGANISM_GLYPH if phase != "breathe" else BREATHE_GLYPH,
+        "spoken": "organism pulse" if phase != "breathe" else "organism breathe",
         "co_process": True,
         "agent_is_temporary_cortex": True,
         "cortex_is_durable_body": True,
         "separable": True,
+        "phase": phase,
+        "living": phase != "sealed",
         "body": body,
         "pulse": pulse,
         "pulse_chain": chain,
@@ -200,8 +211,9 @@ def build_organism(
             "Cortex is the durable body (index, graph, ledger). You are temporary working cortex.",
             "Obey immune (governor + control_error) before intention (task work).",
             "Prefer nervous evidence paths; do not invent topology.",
-            "Close the cardiac cycle with remember → consolidate (ritual ⟳).",
-            "When the session ends, the organism dissolves; host authority remains.",
+            "Mid-session: remember() continues the pulse; breathe rebinds without full re-assimilate.",
+            "Close the cardiac cycle with remember → consolidate (ritual ⟳) to seal.",
+            "When sealed or session ends, the organism dissolves; host authority remains.",
             "This bond never grants mutation rights.",
         ],
         "refuse": [
@@ -216,6 +228,128 @@ def build_organism(
             "it is not sentience, not host ownership, and not mutation authority."
         ),
     }
+
+
+def _active_session_path(home: Path, repo: str) -> Path:
+    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in repo)
+    return Path(home) / "sessions" / f"{safe}-active.json"
+
+
+def beat(
+    home: Path,
+    store: Any,
+    repo: str,
+    *,
+    kind: str = "beat",
+    text: str = "",
+    phase: str = "diastole",
+    cortex_version: str = "",
+) -> dict[str, Any]:
+    """Continue the organism pulse mid-session without full re-activation.
+
+    Uses the latest runtime packet + active session + event counts so the
+    co-process stays alive as the agent works and remembers.
+    """
+
+    from .config import load_repo_config, runtime_directory
+    from .hippocampus import active_session
+
+    active = active_session(home, repo)
+    repository = store.repo(repo)
+    if not repository:
+        return {"error": "unknown_repo", "repo": repo}
+    root = Path(repository["path"])
+    config = load_repo_config(root)
+    runtime_path = runtime_directory(root, config) / "context_latest.json"
+    context: dict[str, Any] = {}
+    if runtime_path.is_file():
+        try:
+            context = json.loads(runtime_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            context = {}
+    session_id = (active or {}).get("session_id")
+    events = list(store.events(repo, session_id)) if session_id else []
+    prior = load_prior_pulse(store, repo)
+    task = (active or {}).get("task") or context.get("task") or "session"
+    organism = build_organism(
+        repo=repo,
+        repository_id=str(repository["repository_id"] or ""),
+        task=str(task),
+        session=active,
+        context=context
+        if context
+        else {"governor": {}, "control_error": {}, "agent_protocol": {}},
+        surprise=(context.get("efficiency") or {}).get("surprise"),
+        prior_pulse=prior,
+        cortex_version=cortex_version,
+        phase=phase,
+        event_count=len(events),
+    )
+    organism["body"]["memory"]["beat"] = {
+        "kind": kind,
+        "text_preview": (text or "")[:240],
+        "event_count": len(events),
+    }
+    organism["pulse"] = _h(organism["body"])
+    organism["pulse_chain"] = _h(
+        {"prior": prior, "pulse": organism["pulse"], "t": round(time.time(), 3)}
+    )
+    persist_organism_pulse(store, repo, organism, session_id=session_id)
+    save_prior_pulse(store, repo, organism["pulse"])
+    if active:
+        active["organism_pulse"] = organism["pulse"]
+        active["organism_phase"] = phase
+        active["updated_at"] = time.time()
+        try:
+            _active_session_path(home, repo).write_text(
+                json.dumps(active, indent=2) + "\n", encoding="utf-8"
+            )
+        except OSError:
+            pass
+    return organism
+
+
+def breathe(
+    home: Path,
+    store: Any,
+    governor: Any,
+    repo: str,
+    task: str | None = None,
+    *,
+    budget: int = 800,
+    profile: str = "agent",
+) -> dict[str, Any]:
+    """Mid-session rebind: packet-fast activate + living phase, no full assimilate."""
+
+    from . import __version__
+    from .activation import activate_repository
+    from .hippocampus import active_session
+
+    active = active_session(home, repo)
+    resolved_task = task or (active or {}).get("task") or "continue session"
+    result = activate_repository(
+        home,
+        store,
+        governor,
+        repo,
+        str(resolved_task),
+        budget=budget,
+        refresh="never",
+        profile=profile,
+    )
+    # Re-tag phase as breathe (rebind) while keeping chain from activate.
+    org = result.get("organism") or {}
+    if org:
+        org["phase"] = "breathe"
+        org["glyph"] = BREATHE_GLYPH
+        org["spoken"] = "organism breathe"
+        org["living"] = True
+        result["organism"] = org
+        if isinstance(result.get("context"), dict):
+            result["context"]["organism"] = org
+    result["evolution"] = "living_organism_breathe"
+    result["version"] = __version__
+    return result
 
 
 def persist_organism_pulse(

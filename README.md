@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-3.4.0-0ea5e9?style=for-the-badge" alt="v3.4.0" />
-  <img src="https://img.shields.io/badge/organism-⊛_co--process-a855f7?style=for-the-badge" alt="Organism co-process" />
+  <img src="https://img.shields.io/badge/version-3.5.0-0ea5e9?style=for-the-badge" alt="v3.5.0" />
+  <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/authority-recommend--only-f8fafc?style=for-the-badge&labelColor=111827" alt="Recommend only" />
@@ -17,12 +17,14 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v3.4.0** — organism interlink (⊛), packet-first agent protocol, ritual loop, transcend-check, ARIA progress glyphs.
+**Current release: v3.5.0** — **living organism**: pulse continues through remember, mid-session **breathe** (∽), seal on consolidate. Packet-first protocol, ritual, transcend-check, ARIA glyphs.
 
 ```bash
 pip install -e .
 python -m cortex bootstrap . --name MyProject --json
 python -m cortex organism --repo MyProject --task "Map the auth surface" --json
+python -m cortex remember --repo MyProject --kind discovery --text "fact" --json
+python -m cortex breathe --repo MyProject --json
 python -m cortex ritual --repo MyProject --task "Close the loop" \
   --remember-text "Auth lives in middleware" --json
 python -m cortex transcend-check --json
@@ -48,16 +50,21 @@ See [`docs/TRANSCEND.md`](docs/TRANSCEND.md) and [`docs/ORGANISM.md`](docs/ORGAN
 
 ---
 
-## Organism interlink (v3.4) ⊛
+## Living organism interlink (v3.5) ⊛ ∽
 
-For one task session, agent and Cortex share a **single living state vector**:
+For one task session, agent and Cortex share a **single living state vector** that
+**keeps beating** as the agent works — not only at first activate.
+
+```text
+systole (activate) → diastole (remember) → breathe ∽ (rebind) → sealed (consolidate)
+```
 
 ```text
 identity ── nervous (thalamus + neural + ARIA)
     │
 immune (governor + control_error) ── metabolism (surprise + efficiency)
     │
-memory (evidence) ── intention (task + protocol)
+memory (evidence + events) ── intention (task + protocol)
     │
 conscience (geometry) ── pulse / pulse_chain
 ```
@@ -70,7 +77,8 @@ conscience (geometry) ── pulse / pulse_chain
 
 ```bash
 cortex organism --repo MyProject --task "Continue the investigation" --json
-# also present on every activate as context.organism
+cortex breathe --repo MyProject --json   # mid-session rebind, no full re-index
+# every remember continues the pulse; consolidate seals it
 ```
 
 Not a second mind. Separable bond. Host remains sovereign.  
@@ -146,6 +154,7 @@ ARIA labels for operator speed — **no opcode, no auto-run, no authority**:
 
 ```text
 ⊛  organism pulse          packet.organism / cortex organism
+∽  organism breathe        cortex breathe (mid-session rebind)
 ⟡  transcend check         cortex transcend-check
 ▣  packet profile          --profile agent|debug|minimal
 ⚠  control error           packet.control_error

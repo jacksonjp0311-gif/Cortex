@@ -58,6 +58,12 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "OrganismPulse",
         "maps_to": "packet.organism / cortex organism",
     },
+    "organism_breathe": {
+        "symbol": "∽",
+        "spoken": "organism breathe",
+        "target": "OrganismBreathe",
+        "maps_to": "cortex breathe",
+    },
 }
 
 
