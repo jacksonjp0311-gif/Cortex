@@ -385,8 +385,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     teach = sub.add_parser(
         "teach",
-        help="Print packet-first operator teaching surface (TRANSCEND + glyphs).",
+        help="Print teaching surface, or --seed ARIA memory packets into Cortex body.",
     )
+    teach.add_argument(
+        "--seed",
+        action="store_true",
+        help="Distill examples/memory-packets into durable memory via ritual (this repo).",
+    )
+    teach.add_argument("--repo", help="Repository name for --seed (default: folder name).")
+    teach.add_argument(
+        "--path",
+        default=".",
+        help="Repository root for --seed (default: .).",
+    )
+    teach.add_argument("--force-bootstrap", action="store_true")
     teach.add_argument("--json", action="store_true")
 
     organism = sub.add_parser(
@@ -900,46 +912,60 @@ def main(argv: list[str] | None = None) -> None:
             )
 
         elif command == "teach":
-            root = Path(__file__).resolve().parents[1]
-            transcend_doc = root / "docs" / "TRANSCEND.md"
-            bright_doc = root / "docs" / "BRIGHT_POINT.md"
-            organism_doc = root / "docs" / "ORGANISM.md"
-            text = ""
-            if organism_doc.is_file():
-                text += organism_doc.read_text(encoding="utf-8")
-            if transcend_doc.is_file():
-                text += "\n\n---\n\n" + transcend_doc.read_text(encoding="utf-8")
-            if bright_doc.is_file():
-                text += "\n\n---\n\n" + bright_doc.read_text(encoding="utf-8")
-            payload = {
-                "schema_version": "cortex-teach/1.1",
-                "glyph": "☰",
-                "install": [
-                    "pip install -e .",
-                    "python -m cortex init --json",
-                    "python -m cortex bootstrap . --name Cortex --json",
-                    'python -m cortex organism --repo Cortex --task "<task>" --json',
-                    'python -m cortex activate --repo Cortex --task "<task>" --profile agent --json',
-                    'python -m cortex ritual --repo Cortex --task "<task>" --remember-text "<fact>" --json',
-                    "python -m cortex transcend-check --json",
-                    "python -m cortex mirror --json",
-                ],
-                "progress_glyphs": progress_glyph_registry(),
-                "markdown": text,
-                "claim_boundary": "Teaching surface only; never mutation authority.",
-            }
-            if args.json:
-                emit(payload, True)
+            if args.seed:
+                from .teach_seed import seed_into_home
+
+                emit(
+                    seed_into_home(
+                        home=home,
+                        root=Path(args.path).expanduser().resolve(),
+                        repo_name=args.repo,
+                        force_bootstrap=args.force_bootstrap,
+                    ),
+                    args.json,
+                )
             else:
-                print(text)
-                print("\n## Install\n")
-                for line in payload["install"]:
-                    print(f"- `{line}`")
-                print("\n## Progress glyphs (ARIA labels, not execution)\n")
-                for key, glyph in progress_glyph_registry()["glyphs"].items():
-                    print(
-                        f"- {glyph['symbol']}  {glyph['spoken']} → `{glyph['maps_to']}`"
-                    )
+                root = Path(__file__).resolve().parents[1]
+                transcend_doc = root / "docs" / "TRANSCEND.md"
+                bright_doc = root / "docs" / "BRIGHT_POINT.md"
+                organism_doc = root / "docs" / "ORGANISM.md"
+                interconnect_doc = root / "docs" / "intelligence" / "INTERCONNECT.md"
+                text = ""
+                for doc in (organism_doc, interconnect_doc, transcend_doc, bright_doc):
+                    if doc.is_file():
+                        text += ("\n\n---\n\n" if text else "") + doc.read_text(
+                            encoding="utf-8"
+                        )
+                payload = {
+                    "schema_version": "cortex-teach/1.2",
+                    "glyph": "☰",
+                    "install": [
+                        "pip install -e .",
+                        "python -m cortex init --json",
+                        "python -m cortex bootstrap . --name Cortex --json",
+                        "python -m cortex teach --seed --path . --repo Cortex --json",
+                        'python -m cortex organism --repo Cortex --task "interconnect" --json',
+                        'python -m cortex activate --repo Cortex --task "<task>" --profile agent --json',
+                        'python -m cortex ritual --repo Cortex --task "<task>" --remember-text "<fact>" --json',
+                        "python -m cortex transcend-check --json",
+                    ],
+                    "progress_glyphs": progress_glyph_registry(),
+                    "memory_packets": "examples/memory-packets/*.packet.json",
+                    "markdown": text,
+                    "claim_boundary": "Teaching surface only; never mutation authority.",
+                }
+                if args.json:
+                    emit(payload, True)
+                else:
+                    print(text)
+                    print("\n## Install + seed intelligence\n")
+                    for line in payload["install"]:
+                        print(f"- `{line}`")
+                    print("\n## Progress glyphs (ARIA labels, not execution)\n")
+                    for key, glyph in progress_glyph_registry()["glyphs"].items():
+                        print(
+                            f"- {glyph['symbol']}  {glyph['spoken']} → `{glyph['maps_to']}`"
+                        )
 
         elif command == "organism":
             result = activate_repository(

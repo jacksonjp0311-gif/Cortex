@@ -129,6 +129,37 @@ def query(
         quality = 1.0
         if metadata.get("authoritative"):
             quality *= 1.25
+        # Teaching mass: interconnect doctrine and memory packets rank up for
+        # organism / protocol / teach tasks without becoming authority.
+        path_norm = row["path"].replace("\\", "/")
+        if any(
+            marker in path_norm
+            for marker in (
+                "docs/intelligence/",
+                "docs/ORGANISM.md",
+                "docs/TRANSCEND.md",
+                "docs/COVENANT.md",
+                "examples/memory-packets/",
+                ".cortex/cards/",
+            )
+        ):
+            teach_terms = (
+                "organism",
+                "interconnect",
+                "protocol",
+                "ritual",
+                "teach",
+                "covenant",
+                "governor",
+                "control error",
+                "memory packet",
+                "co-process",
+                "aria",
+            )
+            if any(term in text.casefold() for term in teach_terms):
+                quality *= 1.28
+        if row["kind"] == "discovery_card":
+            quality *= 1.12
         if aria_active and is_internal_aria_path(row["path"]):
             # Prefer purpose-aligned substrate evidence once the region is awake.
             # Anchors and purpose hits must outrank ambient host noise after wake.

@@ -1,0 +1,41 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⊛",
+  "title": "Interconnect co-process law",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "one-substrate",
+      "text": "Cortex uses one SQLite substrate for inventory, graph, neural, sessions, cards, and organism pulses.",
+      "evidence": ["docs/ARCHITECTURE.md", "docs/DATA_MODEL.md"]
+    },
+    {
+      "id": "co-process",
+      "text": "During a session the agent is temporary working cortex; Cortex is durable body; host and human retain authority.",
+      "evidence": ["docs/ORGANISM.md", "docs/TRANSCEND.md"]
+    },
+    {
+      "id": "immune-first",
+      "text": "Always read control_error and governor mode before acting; read_only forbids host mutation.",
+      "evidence": ["cortex/control_error.py", "cortex/governor.py"]
+    },
+    {
+      "id": "cardiac-cycle",
+      "text": "Session life is systole activate, diastole remember, breathe rebind, sealed consolidate.",
+      "evidence": ["docs/ORGANISM.md", "cortex/session_ritual.py"]
+    },
+    {
+      "id": "aria-dormant",
+      "text": "ARIA is known and deferred; active only on typed cues; never auto-executed or mutation-granting.",
+      "evidence": ["docs/ARIA_META_LANGUAGE.md", "cortex/aria_meta/substrate.py"]
+    }
+  ],
+  "refuse": [
+    "second_memory_database",
+    "auto_execute_aria",
+    "treat_packet_as_authorization",
+    "claim_consciousness"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Memory packet is teaching mass for retrieval; never host authority."
+}

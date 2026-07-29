@@ -27,10 +27,13 @@ python -m cortex remember --repo MyProject --kind discovery --text "fact" --json
 python -m cortex breathe --repo MyProject --json
 python -m cortex ritual --repo MyProject --task "Close the loop" \
   --remember-text "Auth lives in middleware" --json
+python -m cortex teach --seed --repo Cortex --json
 python -m cortex transcend-check --json
 ```
 
-Cortex is SQLite-backed, dependency-free in core install, and **recommend-only**: it never grants mutation authority.
+**Teach the body:** ARIA memory packets under `examples/memory-packets/` distill interconnect
+intelligence into durable cards via `cortex teach --seed` — so interconnect recalls doctrine,
+not chat lore. Cortex is SQLite-backed, dependency-free in core install, and **recommend-only**.
 
 ---
 

@@ -47,6 +47,9 @@
     {"id": "progress-profile", "task": "Select a packet profile for the agent", "expected_mode": "active", "expected_purposes": ["language"]},
     {"id": "progress-control", "task": "Inspect the control error vector", "expected_mode": "active", "expected_purposes": ["governance"]},
     {"id": "dormant-error-handling", "task": "Improve error handling in the API", "expected_mode": "dormant"},
-    {"id": "dormant-profile-page", "task": "Update the user profile page styles", "expected_mode": "dormant"}
+    {"id": "dormant-profile-page", "task": "Update the user profile page styles", "expected_mode": "dormant"},
+    {"id": "teach-seed", "task": "Run teach seed for memory packets", "expected_mode": "active", "expected_purposes": ["language"]},
+    {"id": "interconnect-intel", "task": "Recall interconnect intelligence co-process", "expected_mode": "active", "expected_purposes": ["coordination", "continuity"]},
+    {"id": "memory-packet", "task": "Build an ARIA memory packet claim", "expected_mode": "active", "expected_purposes": ["continuity"]}
   ]
 }

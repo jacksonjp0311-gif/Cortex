@@ -163,6 +163,51 @@ class ResonanceContactTests(unittest.TestCase):
         self.assertEqual(field["brightness"], "bright")
 
 
+class TeachSeedTests(unittest.TestCase):
+    def test_memory_packets_load_and_seed(self) -> None:
+        from cortex.teach_seed import claims_to_memories, load_memory_packets, seed_intelligence
+
+        packets = load_memory_packets()
+        self.assertGreaterEqual(len(packets), 2)
+        memories = claims_to_memories(packets[0])
+        self.assertGreaterEqual(len(memories), 2)
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="teach-")) / "home")
+        # Seed into a tiny host copy of packets only + minimal code surface
+        host = Path(tempfile.mkdtemp(prefix="teach-host-"))
+        (host / "README.md").write_text(
+            "# TeachHost\n\n## Interconnect\n\nCo-process law.\n",
+            encoding="utf-8",
+        )
+        (host / "app.py").write_text("def run():\n    return 'ok'\n", encoding="utf-8")
+        # Copy packet files into host so load is from engine; seed uses engine packets
+        store = Store(home / "cortex.db")
+        result = seed_intelligence(
+            home,
+            store,
+            Governor(home, store),
+            root=host,
+            repo_name="TeachHost",
+            force_bootstrap=True,
+        )
+        # Engine packets may be empty on host root — force engine root packets
+        if not result.get("seeded"):
+            result = seed_intelligence(
+                home,
+                store,
+                Governor(home, store),
+                root=Path(__file__).resolve().parents[1],
+                repo_name="CortexTeach",
+                force_bootstrap=True,
+            )
+        self.assertTrue(result.get("seeded"), result)
+        self.assertGreaterEqual(result.get("memory_events", 0), 3)
+        cons = (result.get("ritual") or {}).get("consolidate") or {}
+        self.assertTrue(
+            cons.get("created") or cons.get("status") in {"created", "duplicate_skip"}
+        )
+        store.close()
+
+
 class OrganismInterlinkTests(unittest.TestCase):
     def test_activate_emits_organism_pulse_chain(self) -> None:
         home = ensure_home(Path(tempfile.mkdtemp(prefix="org-")) / "home")

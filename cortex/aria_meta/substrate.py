@@ -82,6 +82,10 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "ritual idempotent", "purpose": "continuity"},
     {"phrase": "incremental surprise", "purpose": "language"},
     {"phrase": "teach surface", "purpose": "language"},
+    {"phrase": "memory packet", "purpose": "continuity"},
+    {"phrase": "interconnect intelligence", "purpose": "coordination"},
+    {"phrase": "teach seed", "purpose": "language"},
+    {"phrase": "co-process", "purpose": "continuity"},
 )
 
 

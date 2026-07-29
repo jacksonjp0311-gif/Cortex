@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.1 - Teach the body (ARIA memory packets)
+
+- **ARIA memory packets:** `examples/memory-packets/*.packet.json` + `.aria` teaching mass.
+- **`cortex teach --seed`:** distills packet claims into durable Discovery Cards via ritual.
+- **Interconnect doctrine:** `docs/intelligence/INTERCONNECT.md` indexed teaching mass.
+- Retrieval boost for intelligence docs, memory packets, and discovery cards on teach/organism tasks.
+- Still never executes ARIA; memory-only write to Cortex body.
+
 ## 3.5.0 - Living organism (forward only)
 
 - **Mid-session life:** remember continues the organism pulse (diastole); consolidate seals.

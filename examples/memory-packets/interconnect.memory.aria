@@ -1,0 +1,24 @@
+// ARIA memory packet — teaching mass only.
+// Cortex never auto-executes this. Claims lower to remember/consolidate.
+// Glyph ⊛ organism co-process; ⟳ ritual seal.
+
+fn InterconnectMemoryPacket() {
+  // Invariant mass for durable body recall
+  claim("one-substrate", "One SQLite substrate for all memory planes");
+  claim("co-process", "Agent temporary cortex; Cortex durable body; host authority");
+  claim("immune-first", "control_error and governor before work");
+  claim("cardiac-cycle", "activate systole; remember diastole; breathe rebind; consolidate seal");
+  claim("aria-dormant", "ARIA known deferred never auto-exec never mutation");
+}
+
+fn ProtocolMemoryPacket() {
+  claim("read-order", "control_error then protocol then evidence");
+  claim("profiles", "agent default; debug telemetry; minimal hard stops");
+  claim("doors", "CLI MCP wrappers same agent_protocol");
+  claim("idempotent-ritual", "de-dupe remember; explicit consolidate status");
+}
+
+fn main() {
+  InterconnectMemoryPacket();
+  ProtocolMemoryPacket();
+}

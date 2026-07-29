@@ -1,0 +1,30 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "☰",
+  "title": "Packet-first agent protocol",
+  "kind": "lesson",
+  "claims": [
+    {
+      "id": "read-order",
+      "text": "Agent read order: control_error, instructions, agent_protocol.state, evidence path:line, organism, claim_boundary.",
+      "evidence": ["docs/TRANSCEND.md", "docs/BRIGHT_POINT.md"]
+    },
+    {
+      "id": "profiles",
+      "text": "Use profile agent by default; debug for full telemetry; minimal for evidence and hard stops only.",
+      "evidence": ["cortex/profiles.py"]
+    },
+    {
+      "id": "doors",
+      "text": "CLI activate, ritual, organism, breathe, MCP cortex_* tools, and wrappers must speak the same agent_protocol.",
+      "evidence": ["cortex/mcp.py", "cortex/cli.py", "cortex/context.py"]
+    },
+    {
+      "id": "idempotent-ritual",
+      "text": "Remember de-dupes same kind+text in a session; consolidate returns explicit status; blocked_by_governor when must_reverify.",
+      "evidence": ["cortex/hippocampus.py", "cortex/bridge.py", "cortex/session_ritual.py"]
+    }
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Protocol packet teaches doors and read order; never mutation authority."
+}
