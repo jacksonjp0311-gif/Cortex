@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - "assets/star-lattice.html"
+      - "assets/star-metrics.json"
       - ".github/workflows/star-lattice-pages.yml"
   workflow_dispatch:
 
@@ -33,6 +34,8 @@ jobs:
           mkdir -p _site
           cp assets/star-lattice.html _site/index.html
           cp assets/star-lattice.html _site/star-lattice.html
+          # Same-origin metrics for live reload (no browser api.github.com / 401)
+          cp assets/star-metrics.json _site/star-metrics.json
 
       # Creates the Pages site if missing (Settings → Pages was never set).
       - uses: actions/configure-pages@v5

@@ -367,6 +367,36 @@ def _fingerprint(stars: int, times: list[datetime]) -> str:
     return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
 
+def write_metrics_json(
+    path: Path,
+    *,
+    repo: str,
+    stars: int,
+    created: datetime,
+    times: list[datetime],
+) -> None:
+    """First-party metrics for the live lattice page (no browser GitHub API).
+
+    Browser clients cannot call stargazers with star+json (401 without a token).
+    CI/CLI pulls with `gh` and publishes this JSON next to the HTML.
+    """
+    payload = {
+        "schema": "cortex.star_metrics.v1",
+        "repo": repo,
+        "stars": stars,
+        "created_at": created.isoformat(),
+        "times": [t.isoformat() for t in times],
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "source": "gh api repos/.../stargazers Accept: application/vnd.github.star+json",
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
 def _patch_readme_cache_bust(readme: Path, stars: int) -> bool:
     """Point README img at assets/star-lattice.svg?v=<stars> so Camo re-fetches."""
     if not readme.is_file():
@@ -415,10 +445,24 @@ def main() -> int:
         str(meta.get("created_at", "2026-07-11T00:00:00Z")).replace("Z", "+00:00")
     )
     times = fetch_star_times(args.repo)
+    metrics_path = root / "assets" / "star-metrics.json"
+    star_n = max(stars, len(times))
+    # Always publish metrics JSON so the live HTML can reload without api.github.com.
+    write_metrics_json(
+        metrics_path,
+        repo=args.repo,
+        stars=star_n,
+        created=created,
+        times=times,
+    )
+
     fp = _fingerprint(stars, times)
     if not args.force and fp_path.is_file() and fp_path.read_text(encoding="utf-8") == fp:
         if out.is_file():
-            print(f"unchanged {out} ({stars} stars, {len(times)} timestamps)")
+            print(
+                f"unchanged {out} ({stars} stars, {len(times)} timestamps); "
+                f"refreshed {metrics_path.name}"
+            )
             if args.patch_readme:
                 _patch_readme_cache_bust(root / "README.md", stars)
             return 0
@@ -437,7 +481,7 @@ def main() -> int:
     if args.patch_readme:
         patched = _patch_readme_cache_bust(root / "README.md", star_n)
     print(
-        f"wrote {out} ({stars} stars, {len(times)} timestamps)"
+        f"wrote {out} + {metrics_path.name} ({stars} stars, {len(times)} timestamps)"
         + (" · readme cache-bust" if patched else "")
     )
     return 0

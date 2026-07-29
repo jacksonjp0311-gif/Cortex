@@ -50,7 +50,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/star-lattice.svg assets/star-lattice.fingerprint README.md || true
+          git add assets/star-lattice.svg assets/star-lattice.fingerprint \
+            assets/star-metrics.json README.md || true
           if git diff --staged --quiet; then
             echo "No lattice changes to commit."
             exit 0

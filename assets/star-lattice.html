@@ -99,7 +99,8 @@
   <h1>CORTEX // STAR LATTICE</h1>
   <p class="sub">
     First-party live chart. On every load (and every auto-refresh) this page pulls
-    public stargazer metrics from the GitHub API — no third-party chart host.
+    <code>star-metrics.json</code> published by Cortex CLI/Actions — no browser token,
+    no third-party chart host.
   </p>
   <div id="stage"><span style="color:#64748b;font-size:12px">SYNCING LATTICE…</span></div>
   <div class="status">
@@ -127,35 +128,38 @@
     dotEl.className = "dot" + (kind === "err" ? " err" : kind === "idle" ? " idle" : "");
   }
 
-  async function gh(path, accept) {
-    const headers = { Accept: accept || "application/vnd.github+json" };
-    // Optional: ?token= is never used; unauthenticated public API (60/hr/IP).
-    const res = await fetch("https://api.github.com" + path, { headers });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(res.status + " " + body.slice(0, 180));
-    }
-    return res.json();
+  // Browser cannot call api.github.com stargazers (star+json → 401).
+  // Metrics are pulled server-side with `gh` and served first-party as JSON.
+  function metricsUrls(repo) {
+    const bust = "t=" + Date.now();
+    return [
+      "./star-metrics.json?" + bust,
+      "star-metrics.json?" + bust,
+      "https://raw.githubusercontent.com/" + repo + "/main/assets/star-metrics.json?" + bust,
+    ];
   }
 
-  async function fetchStarTimes(repo) {
-    const times = [];
-    let page = 1;
-    for (;;) {
-      const rows = await gh(
-        "/repos/" + repo + "/stargazers?per_page=100&page=" + page,
-        "application/vnd.github.star+json"
-      );
-      if (!Array.isArray(rows) || rows.length === 0) break;
-      for (const row of rows) {
-        if (row.starred_at) times.push(new Date(row.starred_at));
+  async function loadMetrics(repo) {
+    let lastErr = null;
+    for (const url of metricsUrls(repo)) {
+      try {
+        const res = await fetch(url, { cache: "no-store", mode: "cors" });
+        if (!res.ok) {
+          lastErr = new Error(res.status + " " + url);
+          continue;
+        }
+        const data = await res.json();
+        if (!data || !Array.isArray(data.times)) {
+          lastErr = new Error("invalid metrics payload from " + url);
+          continue;
+        }
+        data._source_url = url.split("?")[0];
+        return data;
+      } catch (err) {
+        lastErr = err;
       }
-      if (rows.length < 100) break;
-      page += 1;
-      if (page > 50) break;
     }
-    times.sort((a, b) => a - b);
-    return times;
+    throw lastErr || new Error("no metrics source reachable");
   }
 
   function series(times, created, starCount) {
@@ -365,7 +369,7 @@
       '<text x="42" y="24" fill="#e2e8f0" font-family="' + sans +
       '" font-size="15" font-weight="700" letter-spacing="0.12em">CORTEX // STAR LATTICE</text>' +
       '<text x="42" y="42" fill="#64748b" font-family="' + mono +
-      '" font-size="10">LIVE · FETCH ON RELOAD · api.github.com/stargazers · NO THIRD-PARTY CHART</text>' +
+      '" font-size="10">LIVE · FETCH star-metrics.json ON RELOAD · FIRST-PARTY · NO BROWSER TOKEN</text>' +
       '<text x="' + (W - 28) + '" y="24" text-anchor="end" fill="#c084fc" font-family="' + mono +
       '" font-size="12">◈ ' + repo + "</text>" +
       '<text x="' + (W - 28) + '" y="42" text-anchor="end" fill="#475569" font-family="' + mono +
@@ -401,23 +405,27 @@
   async function refresh() {
     setState("ok", "pulling metrics…");
     try {
-      const meta = await gh("/repos/" + REPO);
-      const stars = meta.stargazers_count || 0;
-      const created = new Date(meta.created_at);
-      const times = await fetchStarTimes(REPO);
+      const data = await loadMetrics(REPO);
+      const repo = data.repo || REPO;
+      const stars = data.stars || 0;
+      const created = new Date(data.created_at || Date.now());
+      const times = data.times.map(function (t) { return new Date(t); });
       const pts = series(times, created, stars);
-      render(REPO, Math.max(stars, times.length), pts);
+      render(repo, Math.max(stars, times.length), pts);
       setState("ok", "synced");
+      const pub = data.updated_at ? new Date(data.updated_at).toLocaleString() : "—";
       metaEl.textContent =
-        "★ " + stars + " · " + times.length + " timestamps · " + new Date().toLocaleTimeString();
+        "★ " + stars + " · " + times.length + " timestamps · published " + pub +
+        " · " + (data._source_url || "metrics");
     } catch (err) {
       setState("err", "sync failed");
       metaEl.textContent = String(err.message || err);
       stage.innerHTML =
         '<div style="padding:32px;color:#fda4af;font-size:12px;text-align:center;max-width:36rem">' +
         "Lattice sync failed: " + String(err.message || err) +
-        "<br/><br/>Open via GitHub Pages or local file with network access. " +
-        "Unauthenticated API is rate-limited (60/hr/IP).</div>";
+        "<br/><br/>Expected first-party <code>star-metrics.json</code> next to this page " +
+        "(or on raw.githubusercontent.com main). Rebuild with " +
+        "<code>python scripts/build_star_lattice.py</code> and redeploy Pages.</div>";
     }
   }
 
