@@ -835,6 +835,7 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/ORGANISM.md` — session co-process bond (⊛)
 - `docs/TRANSCEND.md` — packet-first agent loop and progress glyphs
 - `docs/ARCHITECTURE_V4.md` — v4.0→v5.0 upgrade design (multi-res graph, ranker, prefetch, contracts, multi-agent, HNSW, causal ledger)
+- `docs/EVOLUTION_V6.md` — next evolution: interconnect mesh v5.1→v6.0
 - `docs/COVENANT.md` — five-axis geometry and refuse list
 - `docs/BRIGHT_POINT.md` — frozen alignment claims
 - `docs/MIRROR.md` — coherence mirror and contact

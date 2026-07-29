@@ -17,14 +17,40 @@ Host + human = authority.
 | Subsystem | Couples to | Rule |
 |---|---|---|
 | Thalamus | Retrieval | Inhibit noise; never authorize |
-| Neural interlink | Graph | Expand only existing edges |
+| Neural interlink | Graph | Expand only existing edges; multi-res rollup to file |
 | ARIA substrate | Wake cues | Dormant default; purpose floor when active |
 | control_error | Ritual | must_reverify blocks seal unless force |
 | Governor | Work | read_only = no host mutation |
 | Organism ⊛ | Session | Pulse continues on remember; seal on consolidate |
 | Breathe ∽ | Mid-session | Rebind without full re-assimilate |
 | Connect ⧉ | Metric graph | Each pass gathers + expands rollups; distills high-signal |
+| Ranker ⇅ | Retrieval | Verified-only reorder inside Thalamus inhibition |
+| HNSW ▦ | Semantic lane | Local deterministic; FTS still exact-match spine |
+| Prefetch ⇢ | Connect + causal | Propose only; precision measured; no ARIA surprise-wake |
+| Contract ▤ | Continuation / seal / promote | Constrain only; never grant |
+| Agents | Shared memory | Capability tokens; no host.mutate in vocabulary |
+| Causal ↻ | Ranker + connect | Measure improvement; recommend freeze, never auto-edit |
 | Mirror / ⟡ | Conscience | Falsify glow; no vanity metrics |
+
+## Mesh law (post-v5)
+
+v5 installed organs. **Interconnect** means they share one pulse:
+
+```text
+activate/organism/breathe
+  → Thalamus inhibit
+  → HNSW + FTS + multi-res graph
+  → Ranker reorder (if trained)
+  → Prefetch propose (budgeted)
+  → Packet + organism + immune
+  → Connect ⧉ gather/expand/distill
+  → (every N passes) Causal micro-episode
+  → Ritual seal (± contract)
+  → Outcome → ranker train ± causal verdict
+```
+
+Mesh status (planned CLI): `cortex interconnect --repo <name> --json`.  
+Plan: `docs/EVOLUTION_V6.md`.
 
 ## Connect pass (gather → graph → distill)
 
@@ -66,7 +92,7 @@ Ritual writes these into the durable body as Discovery Cards.
 
 ## Glyph keys
 
-⊛ organism · ∽ breathe · ⟳ ritual · ⚠ control_error · ⧉ connect · ⟡ transcend · ▣ profile · ⌖ retrieval · Δ surprise · ☰ teach
+⊛ organism · ∽ breathe · ⟳ ritual · ⚠ control_error · ⧉ connect · ⇅ ranker · ▦ hnsw · ⇢ predict · ▤ contract · ↻ causal · ⟡ transcend · ▣ profile · ⌖ retrieval · Δ surprise · ☰ teach
 
 ## Claim boundary
 

@@ -1,0 +1,42 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⧉",
+  "title": "Interconnect mesh law (post-v5)",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "organs-coupled",
+      "text": "v5 organs (multi-res, HNSW, ranker, prefetch, contract, agents, causal) must couple through connect pass and organism; isolated tables are not interconnect.",
+      "evidence": ["docs/EVOLUTION_V6.md", "docs/intelligence/INTERCONNECT.md", "cortex/connect_pass.py"]
+    },
+    {
+      "id": "mesh-telemetry",
+      "text": "Interconnect mesh status is operational telemetry only; it never grants host mutation rights or clears immune block.",
+      "evidence": ["docs/EVOLUTION_V6.md", "cortex/control_error.py", "docs/COVENANT.md"]
+    },
+    {
+      "id": "prefetch-causal-ranker",
+      "text": "Prefetch precision feeds causal episodes and ranker features; causal regressed recommends freeze/rollback candidates, never auto-edit.",
+      "evidence": ["docs/EVOLUTION_V6.md", "cortex/predict/prefetch.py", "cortex/causal/ledger.py", "cortex/ranker/model.py"]
+    },
+    {
+      "id": "contract-constrain",
+      "text": "Contracts constrain continuation, seal, and promote; they never expand authority or mint host.mutate.",
+      "evidence": ["cortex/contract/check.py", "docs/GCMT.md"]
+    },
+    {
+      "id": "one-body-mesh",
+      "text": "All mesh edges write the same SQLite body (ledger, settings, memories); refuse a second interconnect database.",
+      "evidence": ["docs/DATA_MODEL.md", "docs/ARCHITECTURE.md"]
+    }
+  ],
+  "refuse": [
+    "second_interconnect_database",
+    "mesh_as_authorization",
+    "auto_clear_immune_block",
+    "host_mutate_from_causal_improved",
+    "auto_execute_aria"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Mesh packet teaches coupling law; never host authority."
+}

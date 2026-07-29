@@ -39,6 +39,20 @@ python -m cortex mirror --json
 | `causal report\|evaluate` | Closed-loop memory effect ledger |
 | `compile-interlink` | Multi-res neural compile |
 
+## Next evolution (planned)
+
+Organs are present; **mesh coupling** is the next climb — see
+[`docs/EVOLUTION_V6.md`](docs/EVOLUTION_V6.md):
+
+| Release | Theme |
+|---|---|
+| **v5.1** | Interconnect spine — every connect teaches the whole body |
+| **v5.2** | Gates — contract/ranker/agent safety edges |
+| **v6.0** | Deep structure + closed causal/prefetch/ranker loop |
+
+Mesh law: high ranker score, bright prefetch, or causal “improved” still never
+equals host edit rights.
+
 ## Read order every activate
 
 1. `cortex immune` / `control_error.immune_action` (if `block: true` → stop host edits)  
