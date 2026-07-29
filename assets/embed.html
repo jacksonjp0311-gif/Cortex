@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="cortex-embed-build" content="desktop-embed-v1" />
+  <title>CORTEX // DESKTOP EMBED</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #01030a;
+      --cyan: #22d3ee;
+      --violet: #a855f7;
+      --muted: #64748b;
+      --text: #e2e8f0;
+      --panel: #0a0f1ecc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1a1035 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #0c4a6e33 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .sub {
+      margin: 0 0 18px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 40rem;
+      line-height: 1.55;
+    }
+    .sub code { color: #67e8f9; }
+    #hud {
+      width: min(720px, 100%);
+      border-radius: 18px;
+      border: 1px solid #22d3ee55;
+      box-shadow:
+        0 0 0 1px #a855f722,
+        0 0 40px #0ea5e933,
+        0 24px 60px #00000088;
+      background:
+        linear-gradient(145deg, #0a0f1ef0 0%, #01040cf5 50%, #1a1035e8 100%);
+      padding: 28px 24px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    #hud::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 6px,
+          #22d3ee06 6px,
+          #22d3ee06 7px
+        );
+      pointer-events: none;
+    }
+    .corners span {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--cyan);
+      opacity: 0.85;
+    }
+    .corners .tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+    .corners .tr { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+    .corners .bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+    .corners .br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+    .row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #67e8f9;
+      border: 1px solid #22d3ee44;
+      background: #0f172acc;
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .dot.ok { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+    .env-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 560px) {
+      .env-grid { grid-template-columns: 1fr; }
+    }
+    .cell {
+      border: 1px solid #33415588;
+      background: #020617aa;
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .cell label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .cell strong {
+      font-size: 13px;
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+    .actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    button, .btn {
+      appearance: none;
+      border: 1px solid #22d3ee66;
+      background: linear-gradient(180deg, #0f172acc, #020617cc);
+      color: #67e8f9;
+      font: inherit;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button.primary {
+      border-color: #a855f7aa;
+      color: #f5e8ff;
+      background: linear-gradient(180deg, #4c1d95aa, #0f172acc);
+      box-shadow: 0 0 20px #a855f744;
+    }
+    button:hover, .btn:hover {
+      border-color: #c084fc;
+      color: #e9d5ff;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    pre {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 14px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      background: #01040c;
+      color: #94a3b8;
+      font-size: 11px;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .steps {
+      position: relative;
+      z-index: 1;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.65;
+      margin: 0 0 8px;
+      padding-left: 1.1rem;
+    }
+    .steps li { margin-bottom: 4px; }
+    .note {
+      position: relative;
+      z-index: 1;
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 12px;
+      border-top: 1px solid #1e293b88;
+      padding-top: 12px;
+    }
+    /* Success overlay */
+    #success {
+      display: none;
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 28px 8px 12px;
+    }
+    #success.show { display: block; }
+    #main.hide { display: none; }
+    #success h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0.14em;
+      font-weight: 700;
+      background: linear-gradient(90deg, #22d3ee, #c084fc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 40px #22d3ee44;
+      animation: glowIn 1.2s ease-out;
+    }
+    #success p {
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    #success .path {
+      color: #67e8f9;
+      font-size: 11px;
+      word-break: break-all;
+    }
+    @keyframes glowIn {
+      from { opacity: 0; letter-spacing: 0.4em; filter: blur(4px); }
+      to { opacity: 1; letter-spacing: 0.14em; filter: blur(0); }
+    }
+    .ring {
+      width: 72px; height: 72px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      border: 2px solid #22d3ee66;
+      box-shadow: 0 0 24px #a855f766, inset 0 0 20px #22d3ee33;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .nav {
+      margin-top: 18px;
+      font-size: 11px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .nav a { color: #67e8f9; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: #0f172a;
+      border: 1px solid #22d3ee88;
+      color: #67e8f9;
+      font-size: 11px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: 0.25s ease;
+      z-index: 50;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <h1>CORTEX // DESKTOP EMBED</h1>
+  <p class="sub">
+    First-party embed HUD. Detects your environment, arms the correct shell script,
+    and guides a <strong>deliberate</strong> Desktop clone — browser cannot auto-run
+    PowerShell/bash; you run one command after copy or download.
+  </p>
+
+  <div id="hud">
+    <div class="corners">
+      <span class="tl"></span><span class="tr"></span>
+      <span class="bl"></span><span class="br"></span>
+    </div>
+
+    <div id="main">
+      <div class="row">
+        <span class="badge"><span class="dot" id="dot"></span> <span id="phase">SCANNING ENVIRONMENT</span></span>
+        <span class="badge" id="osBadge">—</span>
+      </div>
+
+      <div class="env-grid">
+        <div class="cell">
+          <label>DETECTED SHELL</label>
+          <strong id="shellLabel">—</strong>
+        </div>
+        <div class="cell">
+          <label>DESKTOP TARGET</label>
+          <strong id="pathLabel">—</strong>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="btnCopy">◈ COPY EMBED COMMAND</button>
+        <button type="button" id="btnDownload">↓ DOWNLOAD SCRIPT</button>
+        <button type="button" id="btnDone">✓ I RAN IT — SEAL EMBED</button>
+      </div>
+
+      <pre id="cmdView">detecting…</pre>
+
+      <ol class="steps" id="steps"></ol>
+
+      <p class="note">
+        Honest boundary: HTML can download and copy; only your shell (or a future
+        local <code>cortex://</code> helper) executes. No silent system access.
+        Repo: <a href="https://github.com/jacksonjp0311-gif/Cortex" style="color:#67e8f9">jacksonjp0311-gif/Cortex</a>
+      </p>
+    </div>
+
+    <div id="success">
+      <div class="ring">◈</div>
+      <h2>CORTEX EMBEDDED ON DESKTOP</h2>
+      <p>Local clone path (default)</p>
+      <p class="path" id="successPath">—</p>
+      <p style="margin-top:16px;color:#64748b;font-size:10px">
+        Next: <code style="color:#94a3b8">pip install -e .</code> ·
+        <code style="color:#94a3b8">python -m cortex bootstrap . --name Cortex --json</code>
+      </p>
+      <div class="actions" style="justify-content:center;margin-top:18px">
+        <button type="button" id="btnReset">↺ RE-ARM EMBED</button>
+        <a class="btn" href="./">★ STAR LATTICE</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <a href="./">Star lattice</a>
+    <a href="https://github.com/jacksonjp0311-gif/Cortex">GitHub repo</a>
+    <a href="https://github.com/jacksonjp0311-gif/Cortex#readme">README</a>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+(function () {
+  const REPO = "https://github.com/jacksonjp0311-gif/Cortex.git";
+  const RAW_BASE = "https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/assets";
+
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  const isWin = /Win/i.test(platform) || /Windows/i.test(ua);
+  const isMac = /Mac/i.test(platform) && !/like Mac/i.test(ua);
+  const isLinux = /Linux/i.test(platform) || /X11/i.test(ua);
+
+  let kind = "bash";
+  let osName = "Unix-like";
+  if (isWin) {
+    kind = "powershell";
+    osName = "Windows";
+  } else if (isMac) {
+    osName = "macOS";
+  } else if (isLinux) {
+    osName = "Linux";
+  }
+
+  const paths = {
+    powershell: "%USERPROFILE%\\Desktop\\Cortex",
+    bash: "$HOME/Desktop/Cortex",
+  };
+  const targetPath = paths[kind];
+
+  // Clean one-liners for clipboard (user pastes into their own shell).
+  const embedCmd = kind === "powershell"
+    ? "git clone " + REPO + " $env:USERPROFILE\\Desktop\\Cortex"
+    : 'git clone ' + REPO + ' "$HOME/Desktop/Cortex"';
+
+  const stepsWin = [
+    "Click <strong>COPY EMBED COMMAND</strong> (or download the <code>.ps1</code>).",
+    "Open <strong>PowerShell</strong> (Windows Terminal is fine).",
+    "Paste and press <strong>Enter</strong>. Confirm git is installed if prompted.",
+    "Return here and press <strong>I RAN IT — SEAL EMBED</strong>.",
+  ];
+  const stepsUnix = [
+    "Click <strong>COPY EMBED COMMAND</strong> (or download the <code>.sh</code>).",
+    "Open <strong>Terminal</strong>.",
+    "Paste and press <strong>Enter</strong> (or <code>bash embed-cortex.sh</code>).",
+    "Return here and press <strong>I RAN IT — SEAL EMBED</strong>.",
+  ];
+
+  document.getElementById("osBadge").textContent = "◈ " + osName.toUpperCase();
+  document.getElementById("shellLabel").textContent =
+    kind === "powershell" ? "PowerShell" : "bash / zsh";
+  document.getElementById("pathLabel").textContent = targetPath;
+  document.getElementById("cmdView").textContent = embedCmd;
+  document.getElementById("successPath").textContent = targetPath;
+  document.getElementById("phase").textContent = "ARMED · " + osName.toUpperCase();
+
+  const stepsEl = document.getElementById("steps");
+  (kind === "powershell" ? stepsWin : stepsUnix).forEach(function (html) {
+    const li = document.createElement("li");
+    li.innerHTML = html;
+    stepsEl.appendChild(li);
+  });
+
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+
+  document.getElementById("btnCopy").addEventListener("click", async function () {
+    const ok = await copyText(embedCmd);
+    document.getElementById("phase").textContent = ok ? "COMMAND COPIED · PASTE IN SHELL" : "COPY FAILED · SELECT PRE BLOCK";
+    toast(ok ? "Embed command copied to clipboard" : "Clipboard blocked — select the command and copy manually");
+  });
+
+  document.getElementById("btnDownload").addEventListener("click", function () {
+    const name = kind === "powershell" ? "embed-cortex.ps1" : "embed-cortex.sh";
+    // Prefer same-origin Pages asset; fallback raw.githubusercontent
+    const urls = ["./" + name, name, RAW_BASE + "/" + name];
+    // Try fetch then blob download so we control filename; fallback navigate
+    (async function () {
+      for (let i = 0; i < urls.length; i++) {
+        try {
+          const res = await fetch(urls[i] + "?t=" + Date.now(), { cache: "no-store" });
+          if (!res.ok) continue;
+          const blob = await res.blob();
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+          document.getElementById("phase").textContent = "SCRIPT DOWNLOADED · RUN LOCALLY";
+          toast("Downloaded " + name);
+          return;
+        } catch (err) { /* try next */ }
+      }
+      // Last resort: open raw URL
+      window.open(RAW_BASE + "/" + name, "_blank");
+      toast("Opened script URL — save and run");
+    })();
+  });
+
+  document.getElementById("btnDone").addEventListener("click", function () {
+    document.getElementById("main").classList.add("hide");
+    document.getElementById("success").classList.add("show");
+    document.getElementById("dot").classList.add("ok");
+    try {
+      localStorage.setItem("cortex_embed_sealed", new Date().toISOString());
+    } catch (e) { /* ignore */ }
+  });
+
+  document.getElementById("btnReset").addEventListener("click", function () {
+    document.getElementById("success").classList.remove("show");
+    document.getElementById("main").classList.remove("hide");
+    document.getElementById("phase").textContent = "ARMED · " + osName.toUpperCase();
+  });
+
+  // Restore seal state if they already confirmed this browser
+  try {
+    if (localStorage.getItem("cortex_embed_sealed")) {
+      document.getElementById("phase").textContent = "PRIOR SEAL IN THIS BROWSER";
+    }
+  } catch (e) { /* ignore */ }
+})();
+  </script>
+</body>
+</html>

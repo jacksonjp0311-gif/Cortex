@@ -8,6 +8,9 @@ on:
     paths:
       - "assets/star-lattice.html"
       - "assets/star-metrics.json"
+      - "assets/embed.html"
+      - "assets/embed-cortex.ps1"
+      - "assets/embed-cortex.sh"
       - ".github/workflows/star-lattice-pages.yml"
   workflow_dispatch:
 
@@ -36,6 +39,10 @@ jobs:
           cp assets/star-lattice.html _site/star-lattice.html
           # Same-origin metrics for live reload (no browser api.github.com / 401)
           cp assets/star-metrics.json _site/star-metrics.json
+          # Desktop embed HUD + first-party installer scripts
+          cp assets/embed.html _site/embed.html
+          cp assets/embed-cortex.ps1 _site/embed-cortex.ps1
+          cp assets/embed-cortex.sh _site/embed-cortex.sh
 
       # Creates the Pages site if missing (Settings → Pages was never set).
       - uses: actions/configure-pages@v5

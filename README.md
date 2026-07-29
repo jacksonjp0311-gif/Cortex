@@ -3,6 +3,16 @@
 </p>
 
 <p align="center">
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html">
+    <img src="https://img.shields.io/badge/◈_EMBED_ON_DESKTOP-live_HUD-a855f7?style=for-the-badge&labelColor=0f172a" alt="Embed Cortex on Desktop" />
+  </a>
+  &nbsp;
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/">
+    <img src="https://img.shields.io/badge/★_STAR_LATTICE-live-0ea5e9?style=for-the-badge&labelColor=0f172a" alt="Star lattice" />
+  </a>
+</p>
+
+<p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
   <img src="https://img.shields.io/badge/version-6.10.0-0ea5e9?style=for-the-badge" alt="v6.10.0" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
