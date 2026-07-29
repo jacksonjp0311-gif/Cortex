@@ -327,6 +327,11 @@ def build_parser() -> argparse.ArgumentParser:
     graph.add_argument("--repo", required=True)
     graph.add_argument("--path")
     graph.add_argument("--rebuild", action="store_true")
+    graph.add_argument(
+        "--stats",
+        action="store_true",
+        help="Neural graph census (kernel classes, weight percentiles, prune preview).",
+    )
     graph.add_argument("--json", action="store_true")
 
     telemetry = sub.add_parser("telemetry", help="Refresh Git temporal and co-change memory.")
@@ -733,8 +738,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     prune_p.add_argument("--repo", required=True)
     prune_p.add_argument("--dry-run", action="store_true")
-    prune_p.add_argument("--min-weight", type=float, default=0.08)
+    prune_p.add_argument(
+        "--policy",
+        choices=["safe", "integrate_soft", "aggressive"],
+        default="safe",
+        help="Prune policy (v6.10). Default safe; post-cadence use integrate_soft.",
+    )
+    prune_p.add_argument(
+        "--min-weight",
+        type=float,
+        default=None,
+        help="Override policy min_weight (optional).",
+    )
+    prune_p.add_argument(
+        "--authorize-aggressive",
+        action="store_true",
+        help="Required to apply aggressive policy (not dry-run).",
+    )
     prune_p.add_argument("--decay", action="store_true", help="Also decay unused weights.")
+    prune_p.add_argument("--preview", action="store_true", help="Preview all policies.")
     prune_p.add_argument("--json", action="store_true")
 
     contact = sub.add_parser(
@@ -1111,7 +1133,11 @@ def main(argv: list[str] | None = None) -> None:
             emit(verify_repository(home, store, args.repo, config, write_certificate=True), args.json)
 
         elif command == "graph":
-            if args.rebuild:
+            if args.stats:
+                from .prune import graph_census
+
+                result = graph_census(store, args.repo)
+            elif args.rebuild:
                 result: Any = resolve_graph(store, args.repo)
             elif args.path:
                 result = neighborhood(store, args.repo, [args.path], limit=100)
@@ -1762,17 +1788,22 @@ def main(argv: list[str] | None = None) -> None:
             emit(mesh_status(store, args.repo, governor=governor, home=home), args.json)
 
         elif command == "prune":
-            from .prune import decay_unused_weights, prune_graph
+            from .prune import decay_unused_weights, policy_preview, prune_graph
 
-            result = prune_graph(
-                store,
-                args.repo,
-                min_weight=args.min_weight,
-                dry_run=args.dry_run,
-            )
-            if args.decay and not args.dry_run:
-                result["decay"] = decay_unused_weights(store, args.repo)
-            emit(result, args.json)
+            if args.preview:
+                emit(policy_preview(store, args.repo), args.json)
+            else:
+                result = prune_graph(
+                    store,
+                    args.repo,
+                    policy=args.policy,
+                    min_weight=args.min_weight,
+                    dry_run=args.dry_run,
+                    authorize_aggressive=bool(args.authorize_aggressive),
+                )
+                if args.decay and not args.dry_run:
+                    result["decay"] = decay_unused_weights(store, args.repo)
+                emit(result, args.json)
 
         elif command == "dashboard":
             if getattr(args, "mesh", False):

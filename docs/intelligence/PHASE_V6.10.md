@@ -165,12 +165,12 @@ Do **not** jump to 0.20 on first pass.
 
 ## 7. Exit criteria (v6.10.0)
 
-- [ ] Hygiene advice and prune dry-run agree under named policies  
-- [ ] Graph census CLI/JSON available  
-- [ ] One integrate_soft prune applied on a durable repo with before/after note  
-- [ ] HIGH pack enter still expands correctly after prune  
-- [ ] Cadence writes progress every ≤25 cycles  
-- [ ] Tests green; claim boundary unchanged  
+- [x] Hygiene advice and prune dry-run agree under named policies  
+- [x] Graph census CLI/JSON available (`graph --stats`)  
+- [x] One integrate_soft prune applied on durable CortexTeach  
+- [x] HIGH pack enter still expands correctly after prune  
+- [x] Cadence writes progress every ≤25 cycles  
+- [x] Tests green; claim boundary unchanged  
 
 ---
 

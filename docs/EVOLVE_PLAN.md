@@ -27,7 +27,7 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v6.1.0** (lattice fol
 | 20 | v6.8 signal validation + surface parity | **done** | phrasebook, harness, hygiene, activate envelope |
 | 21 | v6.9 binary-intel packs | **done** | portable domain packs, zero-in/expand memory branch |
 | 22 | v6.9.x teach/cadence | **done** | pack teach, grow_seal, cadence automation |
-| 23 | v6.10 spectral prune & graph | **planned** | see `docs/intelligence/PHASE_V6.10.md` |
+| 23 | v6.10 spectral prune & graph | **done** | policies, census, integrate_soft apply, cadence progress |
 
 ## Forward path
 
@@ -41,7 +41,7 @@ Next execution plan: **`docs/intelligence/PHASE_V6.8.md`**
 | **v6.5–6.7** | Identity, proof, glyphs, evolve, stream | **done** |
 | **v6.8** | Prove loop + activate envelope parity + hygiene | **done** |
 | **v6.9** | Binary-intel packs + teach + cadence | **done** |
-| **v6.10** | Spectral prune policy + graph census | **planned** |
+| **v6.10** | Spectral prune policy + graph census | **done** |
 | **v7.0** | AST/CFG when ID stability proven | deferred until graph hygiene exits |
 
 **Principle:** memory is a **spectrum of retention kernels**, not one ρ.

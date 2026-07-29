@@ -145,6 +145,12 @@ def run_cadence(
                 }
             )
 
+    progress_path = Path(home) / "logs" / f"cadence-progress-{repo}.jsonl"
+    try:
+        progress_path.parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        progress_path = Path(home) / f"cadence-progress-{repo}.jsonl"
+
     for i in range(1, cycles + 1):
         fam = TASK_FAMILIES[(i - 1) % len(TASK_FAMILIES)]
         task = fam["task"]
@@ -346,6 +352,29 @@ def run_cadence(
         # Keep only last 50 full cycle logs in memory; milestones always kept in injections
         if len(cycle_logs) > 50:
             cycle_logs = cycle_logs[-50:]
+        # Progress trail every 25 cycles (and final) so kill ≠ total loss
+        if i % 25 == 0 or i == cycles:
+            try:
+                progress_path.open("a", encoding="utf-8").write(
+                    json.dumps(
+                        {
+                            "cycle": i,
+                            "of": cycles,
+                            "stats": {
+                                "activates": stats["activates"],
+                                "evolves": stats["evolves"],
+                                "seals": stats["seals"],
+                                "expand_hits": stats["expand_hits"],
+                                "ranker": ranker_status(store, repo).get("train_count"),
+                            },
+                            "at": time.time(),
+                        },
+                        default=str,
+                    )
+                    + "\n"
+                )
+            except Exception:
+                pass
         if on_cycle:
             on_cycle(cycle)
 
@@ -419,14 +448,18 @@ def _hygiene_tick(
     stats: dict[str, Any],
 ) -> None:
     try:
-        dry = prune_graph(store, repo, min_weight=0.08, dry_run=True)
+        # Align with v6.10: dry-run integrate_soft; apply only if meaningful tail
+        dry = prune_graph(store, repo, policy="integrate_soft", dry_run=True)
         would = int(dry.get("would_prune") or 0)
-        if would > 0:
-            real = prune_graph(store, repo, min_weight=0.08, dry_run=False)
+        if would >= 50:
+            real = prune_graph(store, repo, policy="integrate_soft", dry_run=False)
             stats["prunes"] += 1
-            inject("prune", f"removed={real.get('pruned')} would={would}")
+            inject(
+                "prune_integrate_soft",
+                f"removed={real.get('pruned')} would={would}",
+            )
         else:
-            inject("prune_dry_clean", "0 candidates")
+            inject("prune_dry_clean", f"integrate_soft would={would}")
         # Mild spectral decay occasionally
         if cycle % 50 == 0:
             dec = decay_unused_weights(store, repo, factor=0.98)

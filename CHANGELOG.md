@@ -1,3 +1,12 @@
+## 6.10.0 - Spectral prune policies + graph census
+
+- **Policies:** `safe` | `integrate_soft` | `aggressive` (authorize required to apply aggressive).
+- **CLI:** `prune --policy …`, `prune --preview`, `graph --stats` (kernel classes, weight percentiles, weak-by-class, orphans).
+- **Hygiene 1.1:** `prune_preview` + advice only when a policy would actually prune.
+- **Cadence:** progress JSONL every 25 cycles; hygiene uses integrate_soft when would≥50.
+- Measured apply on durable body: integrate_soft cut soft integrate tail; HIGH packs still expand.
+- Still recommend-only; never deletes evidence memories.
+
 ## 6.9.3 - Automated evolution cadence
 
 - **`cortex cadence --repo R --cycles N`:** automated enter → observe → surgical inject → periodic evolve/seal/hygiene.

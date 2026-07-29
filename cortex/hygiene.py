@@ -7,6 +7,7 @@ from typing import Any
 
 from .glyphs.canon import compact_line, phrase
 from .identity import home_looks_temporary
+from .prune import policy_preview
 from .ranker.model import ranker_status
 
 
@@ -47,16 +48,28 @@ def body_hygiene(
     temporary = home_looks_temporary(home) or home_looks_temporary(config_home)
     ranker = ranker_status(store, repo)
 
+    preview = policy_preview(store, repo)
+    soft_would = int(
+        ((preview.get("policies") or {}).get("integrate_soft") or {}).get("would_prune")
+        or 0
+    )
+    safe_would = int(
+        ((preview.get("policies") or {}).get("safe") or {}).get("would_prune") or 0
+    )
+    recommended = preview.get("recommended") or "safe"
+
     advice: list[str] = []
     if temporary:
         advice.append("bind_stable_CORTEX_HOME")
-    # Large graphs need prune *attention* only if weak dead weight exists.
-    if weak >= 50:
-        advice.append("prune_weak_unused_synapses")
-    elif nodes >= 800 and weak == 0:
+    # Align advice with prune policy preview (v6.10)
+    if soft_would >= 50:
+        advice.append(f"prune_policy_integrate_soft_would_{soft_would}")
+    elif safe_would > 0:
+        advice.append(f"prune_policy_safe_would_{safe_would}")
+    elif nodes >= 800 and weak == 0 and soft_would == 0:
         advice.append("graph_large_but_healthy_weights")
-    elif nodes >= 800:
-        advice.append("consider_prune_dry_run")
+    elif nodes >= 800 and soft_would == 0:
+        advice.append("graph_large_prune_not_indicated")
     if int(ranker.get("train_count") or 0) == 0:
         advice.append("run_signal_harness_or_evolve")
     if not advice:
@@ -69,7 +82,7 @@ def body_hygiene(
         glyph_line = compact_line(["graph_prune", "spectral_kernels", "identity"])
 
     return {
-        "schema_version": "cortex-body-hygiene/1.0",
+        "schema_version": "cortex-body-hygiene/1.1",
         "glyph": "✂",
         "glyph_line": glyph_line,
         "repo": repo,
@@ -84,13 +97,19 @@ def body_hygiene(
             "weak_unused": int(weak),
             "aria_path_nodes": int(aria_nodes),
         },
+        "prune_preview": preview,
+        "recommended_prune_policy": recommended,
         "ranker": {
             "train_count": ranker.get("train_count"),
             "frozen": ranker.get("frozen"),
         },
         "advice": advice,
         "commands": {
-            "prune_dry_run": f"cortex prune --repo {repo} --dry-run --json",
+            "prune_dry_safe": f"cortex prune --repo {repo} --policy safe --dry-run --json",
+            "prune_dry_integrate_soft": (
+                f"cortex prune --repo {repo} --policy integrate_soft --dry-run --json"
+            ),
+            "graph_stats": f"cortex graph --repo {repo} --stats --json",
             "kernels": f"cortex kernels --repo {repo} --json",
             "identity": f"cortex identity --repo {repo} --json",
             "harness": f"cortex harness --repo {repo} --json",
