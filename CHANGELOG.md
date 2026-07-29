@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.2.2 - Bright Point
+
+- **Freeze:** `docs/BRIGHT_POINT.md` names the aligned release; self-host only contact.
+- **Deepen packet:** `instructions` + machine-readable `agent_protocol` (steps, state, refuse).
+- **Session ritual:** `cortex ritual` closes activate → remember → consolidate on one substrate.
+- **Refuse:** no new regions, second DBs, auto-ARIA, glow-chasing, unsolicited host scans.
+- Tag: `v3.2.2`.
+
 ## 3.2.1 - Contact Resonance
 
 - **Tuning fork:** `cortex contact` runs mirror + fluency + foreign hosts and

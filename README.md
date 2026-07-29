@@ -45,22 +45,22 @@ current task
 
 Cortex is local-first, SQLite-backed, dependency-free in its core installation, and designed to integrate with existing repositories without replacing their source, tests, governance, or authorization rules.
 
-## Cortex v3.2: aligned geometry
+## Cortex v3.2: aligned geometry / bright point
 
 Cortex v3.2 latches the covenant interlocks into a single geometry: authority,
-evidence, activation, language, and economics must co-agree under mirror stress
-and on foreign hosts. See [`docs/COVENANT.md`](docs/COVENANT.md) and
-[`docs/STEADY_STATE.md`](docs/STEADY_STATE.md).
+evidence, activation, language, and economics must co-agree under mirror stress.
+See [`docs/COVENANT.md`](docs/COVENANT.md), [`docs/BRIGHT_POINT.md`](docs/BRIGHT_POINT.md),
+and [`docs/STEADY_STATE.md`](docs/STEADY_STATE.md).
 
 ```bash
 cortex mirror --json
 cortex contact --json
-python benchmarks/foreign_host_matrix.py
-python benchmarks/deferred_vs_eager_benchmark.py
+cortex ritual --repo MyProject --task "Close the loop" --remember-text "fact" --json
 ```
 
-`cortex contact` strikes the full tuning fork (self-mirror + fluency + five
-foreign host surfaces) and reports multi-string resonance brightness.
+Packets carry `agent_protocol` so agents can follow activate → remember →
+consolidate without lore. `cortex contact` is synthetic self/fork stress only
+unless you name another path.
 
 ## Cortex v3.1: constitutional homeostasis
 

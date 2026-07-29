@@ -161,3 +161,47 @@ class ResonanceContactTests(unittest.TestCase):
         self.assertTrue(field["glow"])
         self.assertGreaterEqual(field["glow_intensity"], 0.90)
         self.assertEqual(field["brightness"], "bright")
+
+
+class SessionRitualTests(unittest.TestCase):
+    def test_ritual_activate_remember_consolidate(self) -> None:
+        from cortex.session_ritual import run_session_ritual
+
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="ritual-")) / "home")
+        repo = Path(tempfile.mkdtemp(prefix="ritual-repo-"))
+        (repo / "README.md").write_text("# Ritual\n\n## API\n\nRun helpers.\n", encoding="utf-8")
+        (repo / "app.py").write_text("def run() -> str:\n    return 'ok'\n", encoding="utf-8")
+        store = Store(home / "cortex.db")
+        bootstrap_repository(home, store, repo, "RitualHost")
+        result = run_session_ritual(
+            home,
+            store,
+            Governor(home, store),
+            "RitualHost",
+            "Document the session ritual loop",
+            memories=[
+                {
+                    "kind": "discovery",
+                    "text": "Ritual closes activate-remember-consolidate on one substrate",
+                }
+            ],
+            consolidate_session=True,
+        )
+        self.assertEqual(result["activation"], "ready")
+        self.assertTrue(result["remembered"])
+        self.assertTrue(result["consolidate"].get("created"))
+        self.assertEqual(result["ritual"], ["activate", "remember", "consolidate"])
+        self.assertFalse(result["authority"]["cortex_may_mutate"])
+        packet = activate_repository(
+            home,
+            store,
+            Governor(home, store),
+            "RitualHost",
+            "Inspect agent protocol",
+            budget=400,
+        )
+        protocol = packet["context"].get("agent_protocol")
+        self.assertIsNotNone(protocol)
+        self.assertIn("steps", protocol)
+        self.assertIn("new_memory_database", protocol["refuse"])
+        store.close()

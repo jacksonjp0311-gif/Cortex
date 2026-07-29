@@ -32,6 +32,23 @@ they may not walk around it.
 - Automatic ARIA plan execution
 - Learned or fluent authority
 - New “organs” that do not reduce tension on an existing axis
+- New neural regions without a covenant-axis justification
+- Glow-chasing (intensity cosmetics without quality gates)
+- Scanning repositories outside an operator-named path
+
+## Session ritual (closed loop)
+
+```text
+activate → work under host/human authority → remember → consolidate
+```
+
+Single command:
+
+```bash
+cortex ritual --repo <name> --task "<task>" --remember-text "<fact>" --json
+```
+
+One substrate. One Governor. No second ledger.
 
 ## Sacred practice (not idol)
 

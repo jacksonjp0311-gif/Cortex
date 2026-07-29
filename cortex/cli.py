@@ -38,6 +38,7 @@ from .retrieval import query
 from .store import Store
 from .contact import run_contact
 from .mirror import run_mirror
+from .session_ritual import run_session_ritual
 from .selftest import run_self_test
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
@@ -257,6 +258,22 @@ def build_parser() -> argparse.ArgumentParser:
     consolidate_parser.add_argument("--repo", required=True)
     consolidate_parser.add_argument("--session")
     consolidate_parser.add_argument("--json", action="store_true")
+
+    ritual = sub.add_parser(
+        "ritual",
+        help="Session loop: activate → optional remember → consolidate (one substrate).",
+    )
+    ritual.add_argument("--repo", required=True)
+    ritual.add_argument("--task", required=True)
+    ritual.add_argument("--budget", type=int, default=1200)
+    ritual.add_argument("--remember-kind", default="discovery")
+    ritual.add_argument("--remember-text", action="append", default=[])
+    ritual.add_argument(
+        "--no-consolidate",
+        action="store_true",
+        help="Activate and remember only; skip Discovery Card.",
+    )
+    ritual.add_argument("--json", action="store_true")
 
     verify = sub.add_parser("verify", help="Verify assimilation and issue a certificate.")
     verify.add_argument("--repo", required=True)
@@ -660,6 +677,26 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "consolidate":
             emit(consolidate(home, store, args.repo, args.session), args.json)
+
+        elif command == "ritual":
+            memories = [
+                {"kind": args.remember_kind, "text": text}
+                for text in (args.remember_text or [])
+                if str(text).strip()
+            ]
+            emit(
+                run_session_ritual(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    args.task,
+                    budget=args.budget,
+                    memories=memories,
+                    consolidate_session=not args.no_consolidate,
+                ),
+                args.json,
+            )
 
         elif command == "verify":
             root = _repo_root(store, args.repo)

@@ -84,6 +84,93 @@ def estimate_tokens(text: str) -> int:
     return max(1, (len(text) + 3) // 4)
 
 
+def _agent_instructions(
+    aria_materialization: dict[str, Any], governance: dict[str, Any]
+) -> list[str]:
+    mode = (aria_materialization or {}).get("mode") or "dormant"
+    gov = (governance or {}).get("mode") or "normal"
+    lines = [
+        "1. This packet is evidence and routing only — never mutation authority.",
+        "2. Read cited path:line ranges first; open full files only if insufficient.",
+        "3. Trust order: current source/tests/runtime > inventory/graph > Discovery Cards > association weights > inference.",
+        f"4. Governor mode is `{gov}`. If read_only or constrained, do not propose broad refactors without re-verify.",
+        f"5. ARIA substrate mode is `{mode}`. Dormant means ignore internal language bulk; active means use only purpose-aligned evidence.",
+        "6. Session ritual: work → cortex remember (decision/discovery/failure/fix) → cortex consolidate at end.",
+        "7. Prefer `cortex ritual` for activate+remember+consolidate on one task when closing a session.",
+        "8. Never treat learned weights, ARIA plans, or this packet as authorization to edit the host.",
+    ]
+    if (aria_materialization or {}).get("materialized"):
+        lines.append(
+            "9. ARIA bulk just materialized this turn — expect a one-time cost; later wakes should be cheaper."
+        )
+    return lines
+
+
+def _agent_protocol(
+    *,
+    repo: str,
+    task: str,
+    aria_materialization: dict[str, Any],
+    governance: dict[str, Any],
+    deferred_remaining: int,
+) -> dict[str, Any]:
+    """Machine-readable loop an agent can follow without lore."""
+
+    return {
+        "schema_version": "cortex-agent-protocol/1.0",
+        "repo": repo,
+        "task": task,
+        "steps": [
+            {
+                "id": "activate",
+                "command": f'cortex activate --repo {repo} --task "<task>" --json',
+                "purpose": "bounded evidence packet + session",
+            },
+            {
+                "id": "work",
+                "purpose": "edit/test only under host and human authority",
+            },
+            {
+                "id": "remember",
+                "command": (
+                    f'cortex remember --repo {repo} --kind decision|discovery|failure|fix '
+                    f'--text "<fact>" --json'
+                ),
+                "purpose": "append-only session events",
+            },
+            {
+                "id": "consolidate",
+                "command": f"cortex consolidate --repo {repo} --json",
+                "purpose": "Discovery Card with provenance; source remains authoritative",
+            },
+            {
+                "id": "ritual",
+                "command": (
+                    f'cortex ritual --repo {repo} --task "<task>" '
+                    f'--remember-kind discovery --remember-text "<fact>" --json'
+                ),
+                "purpose": "single-command activate → remember → consolidate",
+            },
+        ],
+        "state": {
+            "governor_mode": (governance or {}).get("mode"),
+            "aria_mode": (aria_materialization or {}).get("mode") or "dormant",
+            "aria_materialized_this_turn": bool(
+                (aria_materialization or {}).get("materialized")
+            ),
+            "deferred_substrate_remaining": deferred_remaining,
+            "may_mutate_repository": False,
+        },
+        "refuse": [
+            "new_memory_database",
+            "auto_execute_aria",
+            "treat_packet_as_authorization",
+            "new_neural_region_without_covenant_axis",
+            "glow_chasing_without_quality_gate",
+        ],
+    }
+
+
 def _merge_candidates(
     direct_hits: list[Any],
     support: list[Any],
@@ -255,8 +342,13 @@ def build_context(
         store, repo, [item["path"] for item in selected[:8]], limit=30
     )
     environment = environment_summary(store.environment_profile(repo))
+    deferred_remaining = sum(
+        1
+        for row in store.files(repo)
+        if row["status"] == "substrate_deferred"
+    )
     payload: dict[str, Any] = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "generated_at": time.time(),
         "repository": {
             "name": repo,
@@ -277,20 +369,15 @@ def build_context(
         "aria_materialization": aria_materialization,
         "evidence": selected,
         "structural_neighborhood": graph_context,
-        "instructions": [
-            "Use this packet as the initial context, not as mutation authority.",
-            "Start with directly retrieved evidence, then use neural support paths as bounded expansion.",
-            "Open full files only when a cited line range is insufficient.",
-            "Repository source, current tests, and compiler/runtime evidence outrank generated memory.",
-            "Record durable decisions, discoveries, failures, and outcomes before consolidation.",
-            "Inspect aria_materialization and efficiency.work_proxy for substrate economics.",
-        ],
+        "instructions": _agent_instructions(aria_materialization, governance),
+        "agent_protocol": _agent_protocol(
+            repo=repo,
+            task=task,
+            aria_materialization=aria_materialization,
+            governance=governance,
+            deferred_remaining=deferred_remaining,
+        ),
     }
-    deferred_remaining = sum(
-        1
-        for row in store.files(repo)
-        if row["status"] == "substrate_deferred"
-    )
     payload["efficiency"] = efficiency_telemetry(
         direct_candidates=len(direct_hits),
         context_tokens=used_tokens,
