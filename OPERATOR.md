@@ -58,6 +58,18 @@ python -m cortex ritual --repo Cortex --task "seal" --contract default --json
 Mesh law: high ranker score, bright prefetch, or causal “improved” still never
 equals host edit rights. Glyphs are our medium — labels, never opcodes.
 
+## Next plan (spectral)
+
+See [`docs/EVOLUTION_SPECTRAL.md`](docs/EVOLUTION_SPECTRAL.md):
+
+| Release | Theme |
+|---|---|
+| **v6.1** | Kernel spectrum + closed loops + mesh dashboard |
+| **v6.2** | Multi-agent under tokens |
+| **v7.0** | AST/CFG when IDs stable |
+
+Principle: **distributed retention kernels**, not one memory scalar.
+
 ## Read order every activate
 
 1. `cortex immune` / `control_error.immune_action` (if `block: true` → stop host edits)  

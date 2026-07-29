@@ -18,13 +18,18 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v5.0.0**.
 | 11 | Interconnect mesh plan | designed | `docs/EVOLUTION_V6.md` |
 | 12 | v6.0 mesh + sealed gates | **done** | interconnect, prune, ritual gates, glyphic ARIA, transcend 3.0 |
 
-## Forward path (optional depth after v6.0)
+## Forward path (spectral memory mesh — plan)
 
-| Release | Theme | Notes |
+Canonical plan: **`docs/EVOLUTION_SPECTRAL.md`**
+
+| Release | Theme | Priority content |
 |---|---|---|
-| **v6.1+** | Full AST CFG / dataflow SSA | ID stability first |
-| **v6.1+** | Ranker GCMT promote CLI polish | snapshot path exists |
-| **v6.1+** | Multi-agent MCP token mode default opt-in | still no host.mutate |
+| **v6.1** | Deeper structure + closed loops + mesh dashboard | **Spectral kernels** (reset/integrate/retain), class-aware prune, call-graph, prefetch→ranker→causal, ranker promote CLI, mesh dashboard |
+| **v6.2** | Real multi-agent under tokens | multi_agent mode, conflict receipts, per-agent kernel telemetry; no host.mutate |
+| **v7.0** | AST/CFG when ID stability proven | AST/CFG/dataflow, multi-mode kernels, coverage, transcend 4.0 |
+
+**High-priority principle:** memory is a **spectrum of retention kernels**, not one ρ.
+Clock ≠ memory ≠ decision. Common connect pulse → distributed filters → gated commit.
 
 ## Verbs used as design motions
 

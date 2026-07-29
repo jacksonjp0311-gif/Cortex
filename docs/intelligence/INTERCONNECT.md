@@ -54,6 +54,19 @@ Prune dead weight: `cortex prune --repo <name> --json` (evidence never deleted).
 Glyphic medium: progress glyphs are how we speak — labels, never execution.  
 Plan/status: `docs/EVOLUTION_V6.md` (v6.0 delivered).
 
+## Spectral retention (next evolution — high priority)
+
+Memory is **not** one universal ρ. A common pulse (connect / task / Thalamus)
+is projected through a **spectrum of kernels** — reset · integrate · retain:
+
+```text
+u(t) → {K_g} → {Λ_g} → {Ξ_g} → commit under Governor/immune only
+clock ≠ memory ≠ decision
+```
+
+Full plan: [`docs/EVOLUTION_SPECTRAL.md`](../EVOLUTION_SPECTRAL.md).  
+Teaching packet: `examples/memory-packets/spectral-memory.packet.json`.
+
 ## Connect pass (gather → graph → distill)
 
 Every full connect (activate / organism / breathe / ritual) does three things on

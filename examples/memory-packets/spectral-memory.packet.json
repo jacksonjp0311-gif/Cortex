@@ -1,0 +1,42 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⧉",
+  "title": "Spectral memory kernels (distributed retention)",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "not-one-rho",
+      "text": "Memory is not one universal retention scalar; it is a spectrum of kernels across decoders (classes, lanes, resolutions).",
+      "evidence": ["docs/EVOLUTION_SPECTRAL.md", "docs/intelligence/INTERCONNECT.md"]
+    },
+    {
+      "id": "clock-memory-decision",
+      "text": "Clock (connect/Thalamus pulse) is not memory (filters/graph/cards) is not decision (Governor/immune/host).",
+      "evidence": ["docs/EVOLUTION_SPECTRAL.md", "cortex/governor.py", "cortex/control_error.py"]
+    },
+    {
+      "id": "three-regimes",
+      "text": "Temporal decoding regimes map to Cortex as reset (ephemeral), integrate (connect/ranker/prefetch), retain (cards/canonical/hierarchy).",
+      "evidence": ["docs/EVOLUTION_SPECTRAL.md", "cortex/connect_pass.py", "cortex/prune.py"]
+    },
+    {
+      "id": "common-signal-many-filters",
+      "text": "One task/connect broadcast is projected through many kernels; meaning is interaction of pulse geometry and decoder retention — never mutation rights.",
+      "evidence": ["docs/EVOLUTION_SPECTRAL.md", "docs/COVENANT.md"]
+    },
+    {
+      "id": "prune-respects-retain",
+      "text": "Organism-like prune raises effective decay on reset weight; hierarchical retain and evidence rows are protected.",
+      "evidence": ["cortex/prune.py", "docs/EVOLUTION_SPECTRAL.md"]
+    }
+  ],
+  "refuse": [
+    "one_scalar_memory_as_authority",
+    "biology_as_consciousness_claim",
+    "kernel_commit_as_host_mutation",
+    "second_spectral_database",
+    "auto_execute_aria"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Spectral packet teaches distributed retention architecture; not biology identity or host rights."
+}
