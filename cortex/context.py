@@ -14,6 +14,7 @@ from .efficiency import efficiency_telemetry
 from .graph import neighborhood
 from .hippocampus import active_session
 from .neuron import activate_interlink
+from .glyphs.canon import encode_state, glyph_canon_registry, meta_instructions
 from .progress_glyphs import progress_glyph_registry
 from .resonance import clamp
 from .retrieval import materialize_aria_for_task, query, support_hits
@@ -582,6 +583,47 @@ def build_context(
         deferred_remaining=deferred_remaining,
     )
     payload["constitutional_supervision"] = assess_context(payload)
+    # Glyph Canon meta-medium: compress routing into ◈ line (ARIA-addressable).
+    try:
+        xi = ((payload.get("connect_pass") or {}).get("xi_spectrum") or {})
+        dominant = None
+        if isinstance(xi, dict) and xi:
+            dominant = max(
+                ((k, (v or {}).get("share") or 0) for k, v in xi.items() if isinstance(v, dict)),
+                key=lambda item: item[1],
+                default=(None, 0),
+            )[0]
+        resonance = (
+            ((payload.get("connect_pass") or {}).get("intel_pulse") or {}).get("resonance")
+            or {}
+        )
+        glyph_state = encode_state(
+            control=control_error,
+            governor=governance,
+            aria=aria_materialization,
+            resonance=resonance if isinstance(resonance, dict) else {},
+            kernels={"dominant": dominant} if dominant else {},
+        )
+        payload["glyph_state"] = glyph_state
+        payload["glyph_canon"] = {
+            "schema_version": glyph_canon_registry()["schema_version"],
+            "glyph": "◈",
+            "count": glyph_canon_registry()["count"],
+            "aria_role": "meta_medium",
+        }
+        # Prefer glyph meta-instructions when not emergency blocked (token thrift).
+        if not control_error.get("block"):
+            payload["instructions"] = meta_instructions(
+                glyph_state,
+                governor_mode=str((governance or {}).get("mode") or "normal"),
+            )
+            if control_error.get("errors"):
+                payload["instructions"] = [
+                    f"⚠ {control_error.get('severity')}: {control_error.get('summary')}",
+                    *payload["instructions"],
+                ]
+    except Exception:
+        payload["glyph_state"] = {"line": "◈", "error": "encode_failed"}
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     payload["packet_hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     packet_path = home / "packets" / f"{repo}-context-latest.json".replace("/", "_")

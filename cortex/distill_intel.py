@@ -121,6 +121,20 @@ DOCTRINE_CLAIMS: list[dict[str, str]] = [
             "vendor anchors), not only rank Discovery Cards."
         ),
     },
+    {
+        "kind": "invariant",
+        "text": (
+            "[intel] Glyph Canon is the meta medium: ARIA speaks glyphs; Cortex lowers "
+            "them. Compact lines beat prose. Close the loop with matched probes."
+        ),
+    },
+    {
+        "kind": "invariant",
+        "text": (
+            "[intel] Signal intelligence closes as: probe -> outcome -> ranker features "
+            "from fired paths + plasticity -> probe -> causal. Resonance is not proof."
+        ),
+    },
 ]
 
 

@@ -62,7 +62,7 @@ POWERSHELL_WRAPPER = r'''param(
         "verify", "status", "graph", "telemetry", "environment", "meta-language",
         "thalamus", "interlink", "neural-replay", "doctor",
         "identity", "distill", "kernels", "interconnect", "immune", "metrics",
-        "prune", "organism", "breathe", "causal"
+        "prune", "organism", "breathe", "causal", "glyphs", "evolve"
     )]
     [string]$Command = "activate",
     [string]$Task = "",
@@ -210,6 +210,20 @@ if ($Command -eq "causal") {
         $ProbeText = if (-not [string]::IsNullOrWhiteSpace($Task)) { $Task } else { $Query }
         $ArgsList += @("--task", $ProbeText, "--slot", $Slot, "--k", "$K")
     }
+}
+if ($Command -eq "glyphs") {
+    $ArgsList += @("glyphs", "--json")
+}
+if ($Command -eq "evolve") {
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        throw "-Text must carry activation-id for evolve (use -Text <activation_id>)."
+    }
+    if ([string]::IsNullOrWhiteSpace($Kind)) {
+        throw "-Kind is used as verification type for evolve."
+    }
+    $Status = if (-not [string]::IsNullOrWhiteSpace($Query)) { $Query } else { "verified" }
+    $ArgsList += @("evolve", "--repo", $RepoName, "--activation-id", $Text, "--status", $Status, "--verification", $Kind, "--json")
+    if (-not [string]::IsNullOrWhiteSpace($Task)) { $ArgsList += @("--task", $Task) }
 }
 
 & $ResolvedPython @ArgsList
@@ -441,6 +455,30 @@ case "$COMMAND" in
         ;;
       *) echo "Unknown causal action: $ACTION (status|report|evaluate|probe)" >&2; exit 2 ;;
     esac
+    ;;
+  glyphs)
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" glyphs --json
+    ;;
+  evolve)
+    ACT=""
+    STATUS="verified"
+    VERIFICATION="test"
+    TASK=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --activation-id) ACT="${2:-}"; shift 2 ;;
+        --status) STATUS="${2:-verified}"; shift 2 ;;
+        --verification) VERIFICATION="${2:-test}"; shift 2 ;;
+        --task) TASK="${2:-}"; shift 2 ;;
+        *) echo "Unknown evolve argument: $1" >&2; exit 2 ;;
+      esac
+    done
+    [[ -n "$ACT" ]] || { echo "--activation-id is required" >&2; exit 2; }
+    if [[ -n "$TASK" ]]; then
+      exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" evolve --repo "$REPO_NAME" --activation-id "$ACT" --status "$STATUS" --verification "$VERIFICATION" --task "$TASK" --json
+    else
+      exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" evolve --repo "$REPO_NAME" --activation-id "$ACT" --status "$STATUS" --verification "$VERIFICATION" --json
+    fi
     ;;
   consolidate|verify|status|graph|telemetry|environment|meta-language|neural-replay|doctor|interconnect|immune|metrics)
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" "$COMMAND" --repo "$REPO_NAME" --json

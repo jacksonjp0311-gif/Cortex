@@ -1,8 +1,9 @@
 # Distilled intelligence — what the lattice is teaching
 
-**Version lens:** Cortex **v6.2 → v6.3**  
+**Version lens:** Cortex **v6.2 → v6.6**  
 **Source:** Building and operating this body (not external lab runs)  
-**Seal into body:** `cortex distill --repo <name> --json`
+**Seal into body:** `cortex distill --repo <name> --json`  
+**Meta medium:** Glyph Canon ◈ — `cortex glyphs --json`
 
 ## Seeing
 
@@ -59,6 +60,13 @@ only surface Discovery Cards have not *proven* substrate implementation.
   namespaces — use `cortex identity` before merging teaching mass.
 - **Proof:** ARIA-active activation re-materializes when ARIA paths sparse, and
   ranks substrate + `cortex/*.py` above card monopoly.
+
+## Glyph Canon + closed loop (v6.6)
+
+- **◈ Canon:** one ARIA-addressable registry; agent packets carry compact lines.
+- **⟲ Evolve:** `probe → outcome → ranker/plasticity (path features) → probe → causal`.
+- Token thrift: meta_instructions from glyph_state replace long prose when not blocked.
+- Still recommend-only; glyphs never execute.
 
 ## Refuse
 

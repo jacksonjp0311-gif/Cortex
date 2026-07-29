@@ -239,6 +239,50 @@ def rerank_hits(
     return [h for _, h in scored]
 
 
+def feature_vectors_from_activation(activation: dict[str, Any]) -> list[list[float]]:
+    """Build ranker training vectors from fired activation paths (signal loop)."""
+
+    vectors: list[list[float]] = []
+    records = activation.get("records") or []
+    paths: list[str] = []
+    for rec in records:
+        if not isinstance(rec, dict) or not rec.get("fired"):
+            continue
+        path = rec.get("path") or (rec.get("payload") or {}).get("path")
+        if path:
+            paths.append(str(path))
+    for path in list(activation.get("support_paths") or []) + list(
+        activation.get("fired_paths") or []
+    ):
+        if path and str(path) not in paths:
+            paths.append(str(path))
+    for i, path in enumerate(paths[:16]):
+        p = path.replace("\\", "/")
+        kind = "test" if ("test" in p.lower() or "/tests/" in p) else "source"
+        if p.endswith(".md"):
+            kind = "documentation"
+        meta: dict[str, Any] = {}
+        if p.startswith("cortex/") and p.endswith(".py"):
+            meta["selection_source"] = "implementation_proof"
+            meta["prove_implementation"] = True
+        vectors.append(
+            features_from_hit(
+                {
+                    "path": p,
+                    "kind": kind,
+                    "score": max(0.1, 1.0 - i * 0.05),
+                    "metadata": meta,
+                },
+                rank=i,
+            )
+        )
+    if not vectors:
+        vectors.append(
+            features_from_hit({"path": "outcome", "score": 0.5, "kind": "source"})
+        )
+    return vectors
+
+
 def train_from_outcome(
     store: Any,
     repo: str,

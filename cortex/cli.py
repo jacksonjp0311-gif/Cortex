@@ -39,6 +39,8 @@ from .store import Store
 from .contact import run_contact
 from .evaluation import evaluate_retrieval_corpus
 from .mirror import run_mirror
+from .evolve_loop import close_signal_loop
+from .glyphs.canon import glyph_canon_registry
 from .progress_glyphs import progress_glyph_registry
 from .session_ritual import run_session_ritual
 from .selftest import run_self_test
@@ -565,6 +567,34 @@ def build_parser() -> argparse.ArgumentParser:
     token_p.add_argument("--scope", action="append", default=[])
     token_p.add_argument("--ttl", type=int, default=28800)
     token_p.add_argument("--json", action="store_true")
+
+    evolve_p = sub.add_parser(
+        "evolve",
+        help="Close signal loop ⟲: probe→outcome→ranker/plasticity→probe→causal.",
+    )
+    evolve_p.add_argument("--repo", required=True)
+    evolve_p.add_argument("--activation-id", required=True)
+    evolve_p.add_argument(
+        "--status",
+        choices=["verified", "diagnosed", "helpful", "unknown", "irrelevant", "failed", "unsafe"],
+        required=True,
+    )
+    evolve_p.add_argument("--verification", required=True)
+    evolve_p.add_argument("--task", help="Probe task for matched recall pair.")
+    evolve_p.add_argument("--reward", type=float)
+    evolve_p.add_argument("--k", type=int, default=8)
+    evolve_p.add_argument("--json", action="store_true")
+
+    glyphs_p = sub.add_parser(
+        "glyphs",
+        help="Glyph Canon ◈ — ARIA meta medium (capability-free).",
+    )
+    glyphs_p.add_argument(
+        "--full",
+        action="store_true",
+        help="Include secondary aliases (default: optimized set).",
+    )
+    glyphs_p.add_argument("--json", action="store_true")
 
     causal_p = sub.add_parser(
         "causal",
@@ -1476,6 +1506,26 @@ def main(argv: list[str] | None = None) -> None:
                 if not args.token_id:
                     raise ValueError("--token-id required")
                 emit(validate_token(store, args.repo, args.token_id), args.json)
+
+        elif command == "glyphs":
+            emit(glyph_canon_registry(optimized=not args.full), args.json)
+
+        elif command == "evolve":
+            governance = governor.evaluate(args.repo)
+            emit(
+                close_signal_loop(
+                    store,
+                    args.repo,
+                    activation_id=args.activation_id,
+                    status=args.status,
+                    verification_type=args.verification,
+                    task=args.task,
+                    reward=args.reward,
+                    governance_mode=governance.get("mode") or "read_only",
+                    probe_k=max(1, int(args.k or 8)),
+                ),
+                args.json,
+            )
 
         elif command == "causal":
             from .causal import (

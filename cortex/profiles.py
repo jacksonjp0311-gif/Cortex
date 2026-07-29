@@ -106,6 +106,15 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         k: (v.get("symbol") if isinstance(v, dict) else v)
         for k, v in (glyphs.get("glyphs") or glyphs or {}).items()
     }
+    glyph_state = full.get("glyph_state") or {}
+    # Agent thrift: keep only compact glyph line + sparse expands (not full registry)
+    glyph_lean = {
+        "line": glyph_state.get("line"),
+        "expand": glyph_state.get("expand") or [],
+        "estimated_tokens": glyph_state.get("estimated_tokens"),
+        "doctrine": glyph_state.get("doctrine")
+        or "Read ◈ line first; expand only listed symbols.",
+    }
     # Constitutional: keep key present (organ gates) but strip heavy trees
     const = full.get("constitutional_supervision") or {}
     const_lean = {
@@ -156,11 +165,20 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
             "support_paths": (neural.get("support_paths") or [])[:8],
         },
         "efficiency": full.get("efficiency"),
-        "progress_glyphs": {"symbols": glyph_symbols, "automatic_execution": False},
+        "glyph_state": glyph_lean,
+        "glyph_canon": full.get("glyph_canon")
+        or {"glyph": "◈", "aria_role": "meta_medium"},
+        "progress_glyphs": {
+            "symbols": {
+                k: v
+                for k, v in list(glyph_symbols.items())[:12]
+            },
+            "automatic_execution": False,
+        },
         "organism": full.get("organism"),
         "connect_pass": full.get("connect_pass"),
         "packet_hash": full.get("packet_hash"),
         "claim_boundary": (
-            "Agent profile is lean operational routing; never mutation authority."
+            "Agent profile is lean glyph-routed operational packet; never mutation authority."
         ),
     }

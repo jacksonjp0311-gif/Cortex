@@ -20,6 +20,8 @@ from .store import Store
 PACKET_GLOB = "examples/memory-packets/*.packet.json"
 INTELLIGENCE_DOCS = (
     "docs/intelligence/INTERCONNECT.md",
+    "docs/intelligence/GLYPH_CANON.md",
+    "docs/intelligence/DISTILLED.md",
     "docs/ORGANISM.md",
     "docs/TRANSCEND.md",
     "docs/COVENANT.md",

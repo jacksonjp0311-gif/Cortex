@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.6.0 - Glyph Canon ◈ + closed signal loop ⟲
+
+- **Glyph Canon:** unified ARIA-addressable registry (`cortex glyphs`); optimized set; compact lines for agent packets.
+- **Meta role:** `glyph_state` + `meta_instructions` replace long prose when not blocked (token thrift).
+- **Signal loop:** `cortex evolve` runs probe→outcome→ranker path-features + plasticity→probe→causal with matched pair.
+- **Ranker:** trains on fired activation path features, not dummy vectors.
+- **ARIA cues:** glyph canon / signal loop / meta medium wake phrases.
+- Doctrine + `docs/intelligence/GLYPH_CANON.md`. Still recommend-only; glyphs never execute.
+
 ## 6.5.2 - Ops durability (stable home + honest mirror)
 
 - **Mirror host binding:** snapshot/restore `.cortex/config.json`; external bootstrap so stress does not leave production pointed at `%TEMP%`.

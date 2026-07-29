@@ -29,14 +29,25 @@ def _bounded(value: float, low: float, high: float) -> float:
 
 
 def record_outcome(
-    store: Any, repo: str, activation_id: str, *, status: str, verification_type: str,
-    reward: float | None = None, verification_payload: dict[str, Any] | None = None,
+    store: Any,
+    repo: str,
+    activation_id: str,
+    *,
+    status: str,
+    verification_type: str,
+    reward: float | None = None,
+    verification_payload: dict[str, Any] | None = None,
     governance_mode: str = "read_only",
+    feature_vectors: list[list[float]] | None = None,
+    skip_auto_causal: bool = False,
 ) -> dict[str, Any]:
     """Record an outcome and optionally promote bounded, shadow-validated updates.
 
     The replay gate is intentionally conservative: no update can escape synapse bounds,
     integrity must hold, and read-only governance can record but never adapt.
+
+    feature_vectors: optional ranker training vectors from fired paths (signal loop).
+    skip_auto_causal: when True, caller (close_signal_loop) owns causal probe/evaluate.
     """
     if status not in REWARDS:
         raise ValueError(f"Unknown outcome status: {status}")
@@ -92,7 +103,28 @@ def record_outcome(
         governance_mode=governance_mode,
     )
     graph_after = store.neural_graph_hash(repo)
-    # Ranker online update (v5) — verified outcomes only; cannot clear immune.
+    # Resolve training features: explicit → pending setting → path-derived
+    vectors = feature_vectors
+    if vectors is None:
+        pending = store.get_setting(
+            f"ranker_pending_features:{repo}:{activation_id}", None
+        )
+        if isinstance(pending, dict) and pending.get("vectors"):
+            vectors = pending["vectors"]
+            try:
+                store.set_setting(
+                    f"ranker_pending_features:{repo}:{activation_id}", {"consumed": True}
+                )
+            except Exception:
+                pass
+    if vectors is None:
+        try:
+            from ..ranker.model import feature_vectors_from_activation
+
+            vectors = feature_vectors_from_activation(activation)
+        except Exception:
+            vectors = None
+    # Ranker online update (v5) — path features when available.
     ranker_result: dict[str, Any]
     try:
         from ..ranker.model import train_from_outcome
@@ -106,12 +138,18 @@ def record_outcome(
             reward=final_reward,
             verification_type=verification_type,
             governance_mode=governance_mode,
+            feature_vectors=vectors,
         )
     except Exception as exc:
         ranker_result = {"trained": False, "error": f"{type(exc).__name__}: {exc}"}
-    # Causal episode bookkeeping (optional auto-close on verified)
+    # Causal auto-close only when caller is not running the full signal loop.
+    # Full loop uses matched probes; bare evaluate without pair is always inconclusive noise.
     causal_result: dict[str, Any] | None = None
-    if status in {"verified", "failed"} and governance_mode != "read_only":
+    if (
+        not skip_auto_causal
+        and status in {"verified", "failed"}
+        and governance_mode != "read_only"
+    ):
         try:
             from ..causal.ledger import evaluate_causal_episode, open_episode
 
@@ -124,6 +162,7 @@ def record_outcome(
                     "outcome_id": outcome_id,
                     "ranker": ranker_result.get("trained"),
                     "plasticity": apply_updates,
+                    "hint": "use cortex evolve for matched recall pair",
                 },
             )
             causal_result = evaluate_causal_episode(store, repo)
@@ -138,4 +177,6 @@ def record_outcome(
             "governance_mode": governance_mode,
             "aria_cue_learning": aria_cue_learning,
             "ranker": ranker_result,
-            "causal": causal_result}
+            "ranker_feature_vectors": len(vectors or []),
+            "causal": causal_result,
+            "signal_loop_hint": "cortex evolve --repo REPO --activation-id ID --status verified --verification test"}
