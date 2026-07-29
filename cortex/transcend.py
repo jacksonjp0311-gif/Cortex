@@ -10,6 +10,7 @@ from .aria_meta.evaluation import evaluate_aria_corpus, load_aria_corpus
 from .bootstrap import bootstrap_repository
 from .config import ensure_home
 from .context import _agent_instructions, _agent_protocol
+from .control_error import build_control_error
 from .governor import Governor
 from .mirror import run_mirror
 from .progress_glyphs import progress_glyph_registry
@@ -52,6 +53,47 @@ def run_transcend_check(
     if "repository_mutation" not in (proto_ro.get("hard_stops") or []):
         breaks.append({"id": "read_only_hard_stops"})
     notes.append({"red_mode": "ok" if not breaks else "failed"})
+
+    # Immune action codes agents cannot miss (control_error 1.1)
+    stop = build_control_error(
+        certificate={"status": "verified"},
+        governance={"mode": "read_only"},
+        manifest_current=True,
+        retrieval_confidence=0.9,
+        aria_materialization={"mode": "dormant"},
+    )
+    if not stop.get("block") or stop.get("immune_action", {}).get("code") != "STOP_NO_HOST_MUTATION":
+        breaks.append({"id": "immune_stop_read_only", "value": stop.get("immune_action")})
+    reverify = build_control_error(
+        certificate={"status": "failed"},
+        governance={"mode": "normal"},
+        manifest_current=False,
+        retrieval_confidence=0.5,
+        aria_materialization={"mode": "dormant"},
+    )
+    if not reverify.get("block") or reverify.get("immune_action", {}).get("code") not in {
+        "STOP_REVERIFY_REQUIRED",
+        "STOP_NO_HOST_MUTATION",
+    }:
+        breaks.append({"id": "immune_stop_reverify", "value": reverify.get("immune_action")})
+    proceed = build_control_error(
+        certificate={"status": "verified"},
+        governance={"mode": "normal"},
+        manifest_current=True,
+        retrieval_confidence=0.9,
+        aria_materialization={"mode": "dormant"},
+    )
+    if proceed.get("block") or proceed.get("immune_action", {}).get("code") != "PROCEED_UNDER_HOST_AUTHORITY":
+        breaks.append({"id": "immune_proceed_open", "value": proceed.get("immune_action")})
+    notes.append(
+        {
+            "immune": {
+                "stop": stop.get("immune_action", {}).get("code"),
+                "reverify": reverify.get("immune_action", {}).get("code"),
+                "proceed": proceed.get("immune_action", {}).get("code"),
+            }
+        }
+    )
 
     # Ritual on a tiny synthetic host inside the check (not Desktop scan)
     tiny = Path(tempfile.mkdtemp(prefix="transcend-host-"))
@@ -156,7 +198,7 @@ def run_transcend_check(
 
     passed = len(breaks) == 0
     return {
-        "schema_version": "cortex-transcend-check/1.0",
+        "schema_version": "cortex-transcend-check/1.1",
         "glyph": "⟡",
         "passed": passed,
         "break_count": len(breaks),
@@ -172,8 +214,8 @@ def run_transcend_check(
             else None
         ),
         "definition": (
-            "Agent can run from packet alone, close with ritual, mirror stays bright; "
-            "no new organs; no unsolicited foreign hosts."
+            "Agent can run from packet alone, obey immune_action, close with ritual, "
+            "mirror stays bright; no new organs; no unsolicited foreign hosts."
         ),
         "claim_boundary": (
             "Transcend-check is local operational falsification; not consciousness "

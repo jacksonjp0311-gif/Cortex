@@ -28,6 +28,12 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "ControlError",
         "maps_to": "packet.control_error",
     },
+    "immune_gate": {
+        "symbol": "⚠",
+        "spoken": "immune gate",
+        "target": "ImmuneGate",
+        "maps_to": "cortex immune / packet.control_error.immune_action",
+    },
     "retrieval_gate": {
         "symbol": "⌖",
         "spoken": "retrieval gate",

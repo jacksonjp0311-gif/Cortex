@@ -7,8 +7,10 @@ pip install -e .
 python -m cortex init --json
 python -m cortex bootstrap . --name Cortex --json
 python -m cortex teach --seed --path . --repo Cortex --json
+python -m cortex immune --repo Cortex --json
+# if block: true → diagnose only; no host edits
 python -m cortex organism --repo Cortex --task "interconnect immune first" --json
-# work under host/human authority; read control_error.immune_action first
+# work under host/human authority only when immune_action allows
 python -m cortex remember --repo Cortex --kind discovery --text "durable fact" --json
 python -m cortex breathe --repo Cortex --json
 python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --json
@@ -18,7 +20,7 @@ python -m cortex mirror --json
 
 ## Read order every activate
 
-1. `control_error` / `immune_action` (if `block: true` → stop host edits)  
+1. `cortex immune` / `control_error.immune_action` (if `block: true` → stop host edits)  
 2. `instructions`  
 3. `agent_protocol.state`  
 4. `organism` pulse  

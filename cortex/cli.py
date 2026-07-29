@@ -43,6 +43,7 @@ from .progress_glyphs import progress_glyph_registry
 from .session_ritual import run_session_ritual
 from .selftest import run_self_test
 from .transcend import run_transcend_check
+from .immune import inspect_immune
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
 from .verify import verify_repository
@@ -424,6 +425,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--profile", choices=["agent", "debug", "minimal"], default="agent"
     )
     breathe.add_argument("--json", action="store_true")
+
+    immune = sub.add_parser(
+        "immune",
+        help="Read immune gate first (⚠): block + immune_action for one repository.",
+    )
+    immune.add_argument("--repo", required=True)
+    immune.add_argument("--json", action="store_true")
 
     contact = sub.add_parser(
         "contact",
@@ -1008,6 +1016,9 @@ def main(argv: list[str] | None = None) -> None:
                 ),
                 args.json,
             )
+
+        elif command == "immune":
+            emit(inspect_immune(home, store, governor, args.repo), args.json)
 
         elif command == "dashboard":
             repository = store.repo(args.repo)

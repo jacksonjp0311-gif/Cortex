@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-3.5.2-0ea5e9?style=for-the-badge" alt="v3.5.2" />
+  <img src="https://img.shields.io/badge/version-3.5.3-0ea5e9?style=for-the-badge" alt="v3.5.3" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -17,11 +17,12 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v3.5.2** — living organism + **taught body** + **immune_action** blocks + CI teach/retrieval gates. See [`OPERATOR.md`](OPERATOR.md).
+**Current release: v3.5.3** — living organism + taught body + **`cortex immune`** gate + CI teach/retrieval/immune gates. See [`OPERATOR.md`](OPERATOR.md).
 
 ```bash
 pip install -e .
 python -m cortex bootstrap . --name MyProject --json
+python -m cortex immune --repo MyProject --json
 python -m cortex organism --repo MyProject --task "Map the auth surface" --json
 python -m cortex remember --repo MyProject --kind discovery --text "fact" --json
 python -m cortex breathe --repo MyProject --json
@@ -41,6 +42,7 @@ not chat lore. Cortex is SQLite-backed, dependency-free in core install, and **r
 
 | Surface | Purpose |
 |---|---|
+| **Immune ⚠** | `cortex immune` — read `block` + `immune_action` before host work |
 | **Packet** | Evidence + `instructions` + `agent_protocol` + `control_error` |
 | **Organism ⊛** | Session co-process: shared living state (not consciousness) |
 | **Ritual ⟳** | `activate → remember → consolidate` on one substrate |

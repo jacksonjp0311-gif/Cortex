@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.5.3 - Immune gate surface
+
+- **`cortex immune` / MCP `cortex_immune`:** read-first block + immune_action for one repo.
+- **Transcend-check 1.1:** falsifies STOP / reverify / proceed immune codes.
+- **CI (this repo only):** `scripts/ci/smoke_immune_gate.py`.
+- Progress glyph `immune_gate` (⚠ label only). Still recommend-only; still no outside repos.
+
 ## 3.5.2 - Adherence + CI intelligence gates
 
 - **Immune action:** `control_error.block` + `immune_action` (STOP codes agents cannot miss).

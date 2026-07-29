@@ -41,6 +41,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/smoke_retrieval_gate.py
+      - name: Immune gate smoke (this repo only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/smoke_immune_gate.py
       - name: Bash syntax
         if: runner.os != 'Windows'
         run: bash -n cortex.sh cortex-all-one.sh scripts/bash/*.sh

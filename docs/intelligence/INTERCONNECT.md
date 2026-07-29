@@ -39,13 +39,14 @@ Ritual writes these into the durable body as Discovery Cards.
 
 ## Agent interconnect stance
 
-1. Read `control_error` and `organism.immune` first.  
-2. Follow `agent_protocol.allowed_actions`.  
-3. Prefer cited evidence over inference.  
-4. Remember durable facts (diastole).  
-5. Breathe when context drifts mid-session.  
-6. Ritual to seal.  
-7. Never claim consciousness or host rights.
+1. Read `cortex immune` / `control_error.immune_action` and `organism.immune` first.  
+2. If `block: true`, stop host edits — diagnose only.  
+3. Follow `agent_protocol.allowed_actions`.  
+4. Prefer cited evidence over inference.  
+5. Remember durable facts (diastole).  
+6. Breathe when context drifts mid-session.  
+7. Ritual to seal.  
+8. Never claim consciousness or host rights.
 
 ## Glyph keys
 

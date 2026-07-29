@@ -146,6 +146,20 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_immune",
+        "description": (
+            "Immune gate (⚠): read block + immune_action before any host work. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+            },
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -288,6 +302,15 @@ class CortexMCP:
                 str(arguments["repo"]),
                 arguments.get("task"),
                 budget=int(arguments.get("budget", 800)),
+            )
+        if name == "cortex_immune":
+            from .immune import inspect_immune
+
+            return inspect_immune(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
             )
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(

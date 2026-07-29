@@ -268,6 +268,17 @@ class ProgressStackTests(unittest.TestCase):
         self.assertTrue(err["block"])
         self.assertEqual(err["immune_action"]["code"], "STOP_NO_HOST_MUTATION")
         self.assertIn("edit_host", err["immune_action"]["forbidden"])
+        proceed = build_control_error(
+            certificate={"status": "verified"},
+            governance={"mode": "normal"},
+            manifest_current=True,
+            retrieval_confidence=0.9,
+            aria_materialization={"mode": "dormant"},
+        )
+        self.assertFalse(proceed["block"])
+        self.assertEqual(
+            proceed["immune_action"]["code"], "PROCEED_UNDER_HOST_AUTHORITY"
+        )
         full = {
             "schema_version": "1.3",
             "task": "t",
@@ -373,6 +384,25 @@ class TranscendProtocolTests(unittest.TestCase):
         self.assertIn("repository_mutation", protocol["hard_stops"])
         constrained = _agent_instructions({}, {"mode": "constrained"})
         self.assertTrue(any("CONSTRAINED" in line for line in constrained))
+
+    def test_immune_inspect_and_mcp(self) -> None:
+        from cortex.immune import inspect_immune
+        from cortex.mcp import TOOLS
+
+        home = ensure_home(Path(tempfile.mkdtemp(prefix="imm-")) / "home")
+        repo = Path(tempfile.mkdtemp(prefix="imm-repo-"))
+        (repo / "README.md").write_text("# I\n\n## API\n\nX\n", encoding="utf-8")
+        (repo / "app.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+        store = Store(home / "cortex.db")
+        bootstrap_repository(home, store, repo, "ImmHost")
+        gate = inspect_immune(home, store, Governor(home, store), "ImmHost")
+        self.assertTrue(gate["read_first"])
+        self.assertIn("block", gate)
+        self.assertIn("immune_action", gate)
+        self.assertIn("code", gate["immune_action"])
+        names = {t["name"] for t in TOOLS}
+        self.assertIn("cortex_immune", names)
+        store.close()
 
     def test_mcp_exposes_ritual_and_activate_tools(self) -> None:
         from cortex.mcp import TOOLS
