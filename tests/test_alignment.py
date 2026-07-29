@@ -265,6 +265,9 @@ class ProgressStackTests(unittest.TestCase):
         )
         self.assertFalse(err["work_allowed"])
         self.assertTrue(err["must_reverify"])
+        self.assertTrue(err["block"])
+        self.assertEqual(err["immune_action"]["code"], "STOP_NO_HOST_MUTATION")
+        self.assertIn("edit_host", err["immune_action"]["forbidden"])
         full = {
             "schema_version": "1.3",
             "task": "t",

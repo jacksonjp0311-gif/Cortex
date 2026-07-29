@@ -86,6 +86,7 @@ def build_control_error(
         e["code"] in {"manifest_drift", "certificate_failed", "governor_read_only"}
         for e in errors
     )
+    work_allowed = gov_mode != "read_only" and cert_status != "failed"
     severity = (
         "high"
         if hard
@@ -95,13 +96,48 @@ def build_control_error(
         if errors
         else "none"
     )
+    # Single field agents cannot miss — immune action for the co-process.
+    if not work_allowed or gov_mode == "read_only":
+        immune_action = {
+            "block": True,
+            "code": "STOP_NO_HOST_MUTATION",
+            "allowed": ["read_evidence", "diagnose", "remember", "verify", "report"],
+            "forbidden": ["edit_host", "broad_refactor", "deploy", "delete"],
+            "message": "Immune gate closed: diagnose only until trust is restored.",
+        }
+    elif must_reverify:
+        immune_action = {
+            "block": True,
+            "code": "STOP_REVERIFY_REQUIRED",
+            "allowed": ["read_evidence", "verify", "bootstrap", "remember", "diagnose"],
+            "forbidden": ["edit_host_until_reverified", "ignore_control_error"],
+            "message": "Immune gate: re-verify or bootstrap before treating memory as trustworthy.",
+        }
+    elif gov_mode == "constrained":
+        immune_action = {
+            "block": False,
+            "code": "CONSTRAIN_BLAST_RADIUS",
+            "allowed": ["read_evidence", "minimal_edit", "test", "remember", "consolidate"],
+            "forbidden": ["broad_refactor", "mass_rename", "ignore_low_confidence"],
+            "message": "Immune gate open with limits: minimal reversible edits only.",
+        }
+    else:
+        immune_action = {
+            "block": False,
+            "code": "PROCEED_UNDER_HOST_AUTHORITY",
+            "allowed": ["read_evidence", "edit_with_host_authority", "test", "remember", "consolidate"],
+            "forbidden": ["treat_packet_as_authorization"],
+            "message": "Immune gate open: work only under host and human authority.",
+        }
     return {
-        "schema_version": "cortex-control-error/1.0",
+        "schema_version": "cortex-control-error/1.1",
         "glyph": "⚠",
         "ok": not hard and severity in {"none", "low"},
         "severity": severity,
         "must_reverify": must_reverify,
-        "work_allowed": gov_mode != "read_only" and cert_status != "failed",
+        "work_allowed": work_allowed,
+        "block": bool(immune_action["block"]),
+        "immune_action": immune_action,
         "errors": errors,
         "summary": (
             "ok"

@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.2 - Adherence + CI intelligence gates
+
+- **Immune action:** `control_error.block` + `immune_action` (STOP codes agents cannot miss).
+- **Organism/protocol:** carry immune_action into living state and agent_protocol.state.
+- **CI (this repo only):** teach-seed smoke + retrieval path-recall gate.
+- **OPERATOR.md:** single forward path for self-host use.
+- Still no outside-repo scanning; still recommend-only.
+
 ## 3.5.1 - Teach the body (ARIA memory packets)
 
 - **ARIA memory packets:** `examples/memory-packets/*.packet.json` + `.aria` teaching mass.

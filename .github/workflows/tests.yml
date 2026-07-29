@@ -33,6 +33,14 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python benchmarks/foreign_host_matrix.py
+      - name: Teach-seed smoke (this repo only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/smoke_teach_seed.py
+      - name: Retrieval path-recall gate (this repo only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/smoke_retrieval_gate.py
       - name: Bash syntax
         if: runner.os != 'Windows'
         run: bash -n cortex.sh cortex-all-one.sh scripts/bash/*.sh

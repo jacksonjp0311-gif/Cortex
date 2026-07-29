@@ -100,6 +100,8 @@ def build_organism(
         "control_severity": control.get("severity"),
         "control_ok": control.get("ok"),
         "must_reverify": control.get("must_reverify"),
+        "block": control.get("block"),
+        "immune_action": control.get("immune_action"),
         "work_allowed": control.get("work_allowed")
         if control
         else protocol.get("state", {}).get("work_allowed"),

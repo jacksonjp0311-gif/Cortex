@@ -470,10 +470,24 @@ def build_context(
     )
     protocol["state"]["must_reverify"] = bool(control_error.get("must_reverify"))
     protocol["state"]["control_severity"] = control_error.get("severity")
-    if control_error.get("must_reverify"):
+    protocol["state"]["block"] = bool(control_error.get("block"))
+    protocol["state"]["immune_action"] = control_error.get("immune_action")
+    if control_error.get("block") or control_error.get("must_reverify"):
         protocol["hard_stops"] = list(
-            dict.fromkeys([*(protocol.get("hard_stops") or []), "ignore_control_error"])
+            dict.fromkeys(
+                [
+                    *(protocol.get("hard_stops") or []),
+                    "ignore_control_error",
+                    "ignore_immune_block",
+                ]
+            )
         )
+    if control_error.get("errors"):
+        instructions = [
+            f"IMMUNE_ACTION: {control_error.get('immune_action', {}).get('code')} — "
+            f"{control_error.get('immune_action', {}).get('message')}",
+            *instructions,
+        ]
     payload: dict[str, Any] = {
         "schema_version": "1.3",
         "generated_at": time.time(),
