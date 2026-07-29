@@ -149,6 +149,7 @@ def activate_repository(
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(full_context, indent=2) + "\n", encoding="utf-8")
 
+    control = full_context.get("control_error") or {}
     return {
         "activation": "ready" if certificate["status"] == "verified" else "read_only",
         "repo": repo,
@@ -158,7 +159,10 @@ def activate_repository(
         "manifest_current": manifest_current,
         "refresh": refresh_result,
         "surprise": surprise,
-        "control_error": full_context.get("control_error"),
+        "read_first": True,
+        "block": bool(control.get("block")),
+        "immune_action": control.get("immune_action"),
+        "control_error": control,
         "organism": organism,
         "environment": environment,
         "neural_interlink": neural,

@@ -14,10 +14,16 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
     if name not in PROFILES:
         name = "agent"
     full = context
+    control = full.get("control_error") or {}
+    block = bool(control.get("block"))
+    immune_action = control.get("immune_action")
     if name == "debug":
         return {
             "profile": "debug",
             "schema_version": full.get("schema_version"),
+            "read_first": True,
+            "block": block,
+            "immune_action": immune_action,
             "repository": full.get("repository"),
             "task": full.get("task"),
             "governor": full.get("governor"),
@@ -42,6 +48,9 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         protocol = full.get("agent_protocol") or {}
         return {
             "profile": "minimal",
+            "read_first": True,
+            "block": block,
+            "immune_action": immune_action,
             "task": full.get("task"),
             "control_error": full.get("control_error"),
             "governor_mode": (full.get("governor") or {}).get("mode"),
@@ -66,6 +75,9 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
     return {
         "profile": "agent",
         "schema_version": full.get("schema_version"),
+        "read_first": True,
+        "block": block,
+        "immune_action": immune_action,
         "repository": full.get("repository"),
         "task": full.get("task"),
         "governor": full.get("governor"),

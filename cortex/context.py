@@ -489,8 +489,11 @@ def build_context(
             *instructions,
         ]
     payload: dict[str, Any] = {
-        "schema_version": "1.3",
+        "schema_version": "1.4",
         "generated_at": time.time(),
+        "read_first": True,
+        "block": bool(control_error.get("block")),
+        "immune_action": control_error.get("immune_action"),
         "control_error": control_error,
         "repository": {
             "name": repo,

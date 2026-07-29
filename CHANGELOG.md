@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.5.4 - Unmissable packet block
+
+- **Profiles:** every agent/debug/minimal packet carries top-level `block` + `immune_action` + `read_first`.
+- **Activate:** same top-level immune fields on the activation envelope.
+- **Doctor --repo:** surfaces immune inspect when a repository is named.
+- Still recommend-only; still self-host only.
+
 ## 3.5.3 - Immune gate surface
 
 - **`cortex immune` / MCP `cortex_immune`:** read-first block + immune_action for one repo.

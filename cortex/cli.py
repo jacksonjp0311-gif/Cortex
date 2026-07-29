@@ -864,6 +864,13 @@ def main(argv: list[str] | None = None) -> None:
                 result["vector_format"] = store.vector_format_status(args.repo) if repository else None
                 if result["vector_format"] and result["vector_format"]["legacy_or_invalid"]:
                     result["vector_migration_recommendation"] = f"cortex migrate-vectors --repo {args.repo} --json"
+                if repository:
+                    gate = inspect_immune(home, store, governor, args.repo)
+                    result["read_first"] = True
+                    result["block"] = gate.get("block")
+                    result["immune_action"] = gate.get("immune_action")
+                    result["control_error"] = gate.get("control_error")
+                    result["immune"] = f"cortex immune --repo {args.repo} --json"
             emit(result, args.json)
 
         elif command == "health":
