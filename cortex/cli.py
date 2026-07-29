@@ -640,6 +640,23 @@ def build_parser() -> argparse.ArgumentParser:
     hygiene_p.add_argument("--repo", required=True)
     hygiene_p.add_argument("--json", action="store_true")
 
+    cadence_p = sub.add_parser(
+        "cadence",
+        help="Automated evolution cadence ⟲ (observe + surgical inject, N cycles).",
+    )
+    cadence_p.add_argument("--repo", required=True)
+    cadence_p.add_argument(
+        "--cycles",
+        type=int,
+        default=100,
+        help="Number of enter/observe/inject cycles (default 100; use 1000 for deep run).",
+    )
+    cadence_p.add_argument("--budget", type=int, default=400)
+    cadence_p.add_argument("--evolve-every", type=int, default=10)
+    cadence_p.add_argument("--seal-every", type=int, default=50)
+    cadence_p.add_argument("--hygiene-every", type=int, default=25)
+    cadence_p.add_argument("--json", action="store_true")
+
     stream_p = sub.add_parser(
         "stream",
         help="Consciousness stream 〰 (episodic frames on durable body).",
@@ -1643,6 +1660,24 @@ def main(argv: list[str] | None = None) -> None:
             except Exception:
                 config = None
             emit(body_hygiene(home, store, args.repo, config=config), args.json)
+
+        elif command == "cadence":
+            from .cadence import run_cadence
+
+            emit(
+                run_cadence(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    cycles=max(1, int(args.cycles or 100)),
+                    budget=max(200, int(args.budget or 400)),
+                    evolve_every=max(1, int(args.evolve_every or 10)),
+                    seal_every=max(1, int(args.seal_every or 50)),
+                    hygiene_every=max(1, int(args.hygiene_every or 25)),
+                ),
+                args.json,
+            )
 
         elif command == "stream":
             from .stream import seal_session_bond, stream_status

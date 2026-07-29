@@ -1,3 +1,9 @@
+## 6.9.3 - Automated evolution cadence
+
+- **`cortex cadence --repo R --cycles N`:** automated enter → observe → surgical inject → periodic evolve/seal/hygiene.
+- Rotates HIGH-card task families; reindexes packs on expand miss; evolve every N; seal milestones; decay/prune when indicated.
+- Writes report under `$CORTEX_HOME/logs/cadence-*.json`. Still recommend-only; no host.mutate.
+
 ## 6.9.2 - Grow cards · enter · distill · seal
 
 - Core pack **v1.2**: +6 taught cards (evidence, falsification, sparse doctrine, abstain, enter-exit-seal, priority map); domain `evidence`.
