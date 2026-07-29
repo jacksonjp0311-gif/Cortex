@@ -246,6 +246,20 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_distill",
+        "description": (
+            "Distill mesh observation + doctrine into durable memory (☰). " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "seal": {"type": "boolean", "default": True},
+            },
+        },
+    },
+    {
         "name": "cortex_continuation",
         "description": f"Build a verified cortex-continuation packet. {_REFUSE}",
         "inputSchema": {
@@ -473,6 +487,17 @@ class CortexMCP:
             from .kernels import kernels_status
 
             return kernels_status(self.store, str(arguments["repo"]))
+        if name == "cortex_distill":
+            from .distill_intel import distill_intelligence
+
+            return distill_intelligence(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                seal=bool(arguments.get("seal", True)),
+                force=True,
+            )
         if name in {"cortex_context", "cortex_continuation"}:
             packet = build_context(
                 self.home,

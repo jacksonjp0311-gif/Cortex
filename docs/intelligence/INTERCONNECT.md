@@ -67,6 +67,17 @@ clock ≠ memory ≠ decision
 Full plan: [`docs/EVOLUTION_SPECTRAL.md`](../EVOLUTION_SPECTRAL.md).  
 Teaching packet: `examples/memory-packets/spectral-memory.packet.json`.
 
+## Distill intelligence (v6.3)
+
+Periodic self-observation of the lattice → durable claims:
+
+```bash
+python -m cortex distill --repo <name> --json
+```
+
+Doctrine + live mesh/kernel snapshot seal via ritual. See
+[`DISTILLED.md`](DISTILLED.md).
+
 ## Connect pass (gather → graph → distill)
 
 Every full connect (activate / organism / breathe / ritual) does three things on

@@ -19,6 +19,7 @@ Phases executed end-to-end for Cortex **v3.2.0** through **v6.1.0** (lattice fol
 | 12 | v6.0 mesh + sealed gates | **done** | interconnect, prune, ritual gates, glyphic ARIA, transcend 3.0 |
 | 13 | v6.1 spectral kernels | **done** | kernels, class prune, call-graph lite, mesh dashboard, ranker promote |
 | 14 | v6.2 fold + lean + multi-agent | **done** | docs lattice, lean agent profile, multi_agent mode |
+| 15 | v6.3 distill intelligence | **done** | cortex distill, DISTILLED.md, doctrine→body |
 
 ## Forward path
 

@@ -1,0 +1,41 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "☰",
+  "title": "Distilled lattice intelligence",
+  "kind": "lesson",
+  "claims": [
+    {
+      "id": "center-held",
+      "text": "One body, one Governor, recommend-only held through v5–v6 organ growth; couple new surfaces to connect pulse or do not add them.",
+      "evidence": ["docs/intelligence/DISTILLED.md", "docs/COVENANT.md"]
+    },
+    {
+      "id": "clock-memory-decision",
+      "text": "Clock (connect/Thalamus) is not memory (kernels/graph/cards) is not decision (Governor/immune/host).",
+      "evidence": ["docs/EVOLUTION_SPECTRAL.md", "docs/intelligence/DISTILLED.md"]
+    },
+    {
+      "id": "lean-is-hygiene",
+      "text": "Lean agent packets and budget 800 are organism hygiene equal to prune — fat context is a bottleneck not a feature.",
+      "evidence": ["cortex/profiles.py", "OPERATOR.md"]
+    },
+    {
+      "id": "steady-state-over-sprawl",
+      "text": "After lattice formation prefer measure-mesh, prune, distill, seal over inventing organs that do not reduce a bottleneck.",
+      "evidence": ["docs/intelligence/DISTILLED.md", "docs/STEADY_STATE.md"]
+    },
+    {
+      "id": "distill-command",
+      "text": "Use cortex distill to seal live mesh observation plus doctrine into durable Discovery Cards on the same substrate.",
+      "evidence": ["cortex/distill_intel.py"]
+    }
+  ],
+  "refuse": [
+    "second_database",
+    "auto_execute_aria",
+    "relevance_as_mutation",
+    "feature_sprawl_without_pulse"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Distilled intel packet teaches operational wisdom; never host rights."
+}

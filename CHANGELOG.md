@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.3.0 - Distill intelligence into the body
+
+- **`cortex distill` / MCP `cortex_distill`:** observe mesh + kernels, fold doctrine claims, ritual-seal into durable cards.
+- **Doctrine:** one-body law, clock≠memory≠decision, lean hygiene, steady-state over sprawl (see `docs/intelligence/DISTILLED.md`).
+- **Packet:** `distilled-intel.packet.json` for teach-seed.
+- Glyph distill ☰. Still recommend-only; observation is not authorization.
+
 ## 6.2.0 - Lattice fold · lean packets · multi-agent tokens
 
 - **Fold:** `DATA_MODEL.md` + `ARCHITECTURE.md` lattice synced to v6.1 reality.

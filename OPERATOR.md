@@ -14,6 +14,7 @@ python -m cortex kernels --repo Cortex --json
 python -m cortex activate --repo Cortex --task "heal lattice" --budget 800 --profile agent --json
 python -m cortex remember --repo Cortex --kind discovery --text "fact" --json
 python -m cortex ritual --repo Cortex --task "seal" --remember-text "lesson" --contract default --json
+python -m cortex distill --repo Cortex --json
 python -m cortex dashboard --repo Cortex --mesh --json
 ```
 

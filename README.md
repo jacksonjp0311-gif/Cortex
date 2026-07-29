@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.2.0-0ea5e9?style=for-the-badge" alt="v6.2.0" />
+  <img src="https://img.shields.io/badge/version-6.3.0-0ea5e9?style=for-the-badge" alt="v6.3.0" />
   <img src="https://img.shields.io/badge/organism-⊛_living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -17,7 +17,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.2.0** — lattice **fold** (docs match code), **lean agent packets** (lower tokens), **multi-agent under tokens** (opt-in). Spectral kernels + sealed mesh remain. See [`OPERATOR.md`](OPERATOR.md).
+**Current release: v6.3.0** — **`cortex distill`** seals live mesh observation + doctrine into the body. Lattice folded, lean packets, spectral kernels, multi-agent opt-in. See [`OPERATOR.md`](OPERATOR.md) and [`docs/intelligence/DISTILLED.md`](docs/intelligence/DISTILLED.md).
 
 ```bash
 pip install -e .

@@ -335,6 +335,25 @@ class V5SubstrateTests(unittest.TestCase):
         self.assertTrue(ok.get("recorded") or ok.get("duplicate"))
         set_multi_agent_mode(self.store, "V5Host", False)
 
+    def test_distill_intelligence(self) -> None:
+        from cortex.distill_intel import distill_intelligence, observe_lattice
+
+        obs = observe_lattice(
+            self.store, "V5Host", governor=self.gov, home=self.home
+        )
+        self.assertIn("mesh_green", obs)
+        result = distill_intelligence(
+            self.home,
+            self.store,
+            self.gov,
+            "V5Host",
+            seal=True,
+            force=True,
+        )
+        self.assertGreaterEqual(result.get("claims_count", 0), 5)
+        self.assertIn("ritual", result)
+        self.assertIn("observation", result)
+
 
 if __name__ == "__main__":
     unittest.main()

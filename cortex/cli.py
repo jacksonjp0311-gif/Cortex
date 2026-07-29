@@ -46,6 +46,7 @@ from .transcend import run_transcend_check
 from .immune import inspect_immune
 from .connect_pass import metric_graph_report
 from .interconnect import mesh_status
+from .distill_intel import distill_intelligence
 from .telemetry import ingest_git
 from thalamus import apply_feedback, inhibit, make_request, record_feedback, route
 from .verify import verify_repository
@@ -383,6 +384,23 @@ def build_parser() -> argparse.ArgumentParser:
     kernels_p.add_argument("--repo", required=True)
     kernels_p.add_argument("--annotate", action="store_true")
     kernels_p.add_argument("--json", action="store_true")
+
+    distill_p = sub.add_parser(
+        "distill",
+        help="Distill mesh observation + doctrine into durable body (☰).",
+    )
+    distill_p.add_argument("--repo", required=True)
+    distill_p.add_argument(
+        "--no-seal",
+        action="store_true",
+        help="Observe and remember only; skip consolidate.",
+    )
+    distill_p.add_argument(
+        "--doctrine-only",
+        action="store_true",
+        help="Skip live mesh observation claims.",
+    )
+    distill_p.add_argument("--json", action="store_true")
 
     benchmark = sub.add_parser("benchmark", help="Verify committed controlled-workload benchmark thresholds.")
     benchmark.add_argument("--verify", action="store_true")
@@ -1230,6 +1248,49 @@ def main(argv: list[str] | None = None) -> None:
             if args.annotate:
                 annotate_synapses(store, args.repo)
             emit(kernels_status(store, args.repo), args.json)
+
+        elif command == "distill":
+            if args.doctrine_only:
+                from .distill_intel import DOCTRINE_CLAIMS, observe_lattice
+
+                obs = observe_lattice(store, args.repo, governor=governor, home=home)
+                memories = [
+                    {"kind": "focus", "text": "☰ Distill doctrine-only"},
+                    *DOCTRINE_CLAIMS,
+                ]
+                ritual = run_session_ritual(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    "Distill doctrine only",
+                    memories=memories,
+                    consolidate_session=not args.no_seal,
+                    force=True,
+                )
+                emit(
+                    {
+                        "schema_version": "cortex-distill-intel/1.0",
+                        "mode": "doctrine_only",
+                        "observation": obs,
+                        "ritual": ritual.get("consolidate"),
+                        "gates_sealed": ritual.get("gates_sealed"),
+                    },
+                    args.json,
+                )
+            else:
+                emit(
+                    distill_intelligence(
+                        home,
+                        store,
+                        governor,
+                        args.repo,
+                        seal=not args.no_seal,
+                        include_doctrine=True,
+                        force=True,
+                    ),
+                    args.json,
+                )
 
         elif command == "predict":
             from .predict import predict_context

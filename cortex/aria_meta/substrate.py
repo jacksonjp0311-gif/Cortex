@@ -116,6 +116,8 @@ CORE_CUES: tuple[dict[str, str], ...] = (
     {"phrase": "lean packet", "purpose": "language"},
     {"phrase": "multi agent mode", "purpose": "coordination"},
     {"phrase": "capability token", "purpose": "governance"},
+    {"phrase": "distill intelligence", "purpose": "continuity"},
+    {"phrase": "steady state cadence", "purpose": "coordination"},
 )
 
 

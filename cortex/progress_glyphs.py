@@ -124,6 +124,12 @@ ARIA_PROGRESS_GLYPHS: dict[str, dict[str, str]] = {
         "target": "SpectralKernels",
         "maps_to": "cortex kernels",
     },
+    "distill_intel": {
+        "symbol": "☰",
+        "spoken": "distill intelligence",
+        "target": "DistillIntel",
+        "maps_to": "cortex distill",
+    },
 }
 
 
