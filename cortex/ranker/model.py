@@ -353,9 +353,13 @@ def feature_vectors_from_activation(activation: dict[str, Any]) -> list[list[flo
             )
         )
     if not vectors:
-        vectors.append(
-            features_from_hit({"path": "outcome", "score": 0.5, "kind": "source"})
-        )
+        try:
+            vectors.append(
+                features_from_hit({"path": "outcome", "score": 0.5, "kind": "source"})
+            )
+        except Exception:
+            # Schema-safe zero vector if feature extraction fails
+            vectors.append([0.0] * len(FEATURE_NAMES))
     return vectors
 
 

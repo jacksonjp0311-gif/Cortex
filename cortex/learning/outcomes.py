@@ -84,7 +84,7 @@ def record_outcome(
     )
     replay = {"deterministic": True, "ledger_integrity": integrity, "bounded_weights": bounded,
               "authoritative_recall_regression": False, "accepted": integrity and bounded}
-    # M8 plasticity RCT: off arm records but does not apply Hebbian updates
+    # M8 plasticity RCT is opt-in (default arm=on so Hebbian still applies).
     rct_arm = "on"
     try:
         from ..math_net.plasticity_rct import assign_arm
@@ -147,7 +147,14 @@ def record_outcome(
 
             vectors = feature_vectors_from_activation(activation)
         except Exception:
-            vectors = None
+            try:
+                from ..ranker.model import FEATURE_NAMES, features_from_hit
+
+                vectors = [features_from_hit({"path": "outcome", "score": 0.5, "kind": "source"})]
+            except Exception:
+                from ..ranker.model import FEATURE_NAMES
+
+                vectors = [[0.0] * len(FEATURE_NAMES)]
     # Ranker online update (v5) — path features when available.
     ranker_result: dict[str, Any]
     try:

@@ -14,7 +14,9 @@ def rct_status(store: Any, repo: str) -> dict[str, Any]:
         return raw
     return {
         "schema_version": SCHEMA,
-        "enabled_arm": "on",  # default production arm
+        # RCT is opt-in. Default production always applies plasticity (arm=on).
+        "enabled": False,
+        "enabled_arm": "on",
         "arms": {
             "on": {"n": 0, "reward_sum": 0.0, "recall_sum": 0.0},
             "off": {"n": 0, "reward_sum": 0.0, "recall_sum": 0.0},
@@ -23,11 +25,26 @@ def rct_status(store: Any, repo: str) -> dict[str, Any]:
     }
 
 
+def enable_rct(store: Any, repo: str, *, enabled: bool = True) -> dict[str, Any]:
+    """Opt-in Hebbian on/off RCT (disabled by default so live plasticity stays on)."""
+    st = rct_status(store, repo)
+    st["enabled"] = bool(enabled)
+    st["updated_at"] = time.time()
+    try:
+        store.set_setting(f"plasticity_rct:{repo}", st)
+    except Exception:
+        pass
+    return st
+
+
 def assign_arm(store: Any, repo: str, *, force: str | None = None) -> str:
-    """Alternate arms by pulse count for a crude RCT (not crypto RNG)."""
+    """Return plasticity arm. Production default: always 'on' unless RCT enabled."""
     st = rct_status(store, repo)
     if force in {"on", "off"}:
         arm = force
+    elif not st.get("enabled"):
+        # Critical: do not alternate when RCT is off — CI and live learning need Hebbian.
+        arm = "on"
     else:
         total = int(st["arms"]["on"]["n"]) + int(st["arms"]["off"]["n"])
         arm = "off" if total % 2 == 0 else "on"
