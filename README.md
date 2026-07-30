@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.14.0-0ea5e9?style=for-the-badge" alt="v6.14.0" />
+  <img src="https://img.shields.io/badge/version-6.15.0-0ea5e9?style=for-the-badge" alt="v6.15.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.14.0** — **Fusion co-process** (`cortex fuse` + **`fuse-proxy`**): regenerate memory geometry on every model token via OpenAI-compatible proxy; spectral e2e + continuum. See [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
+**Current release: v6.15.0** — **Measure gate** (`eval-coupling`): fixed corpus + ablations prove whether spectral/ranker lift recall. Plus fusion co-process, coherence couples, emergence log. See [`docs/intelligence/PHASE_V6.15_MEASURE_GATE.md`](docs/intelligence/PHASE_V6.15_MEASURE_GATE.md).
 
 ```bash
 pip install -e .
@@ -151,6 +151,16 @@ python -m cortex emergence-log --repo MyProject --note "Shipped fuse-proxy wirin
 | `agent_note` | Human/agent milestone |
 
 Use directives in the log to **enhance progress** (spectral-primary, fuse, evolve) — never as host authority or consciousness.
+
+### Measure gate (eval-coupling)
+
+Frozen path-substring corpus under three ablations: **baseline** (spectral enrich + ranker primary), **no_spectral**, **no_ranker**. Winner and gate flags direct evolution — not universal answer quality.
+
+```bash
+python -m cortex eval-coupling --repo CortexTeach --json
+# gate.spectral_helps / gate.ranker_helps / winner
+# logs under CORTEX_HOME/logs/eval-coupling-*.json + emergence measure_gate
+```
 
 **Teach the body:** ARIA memory packets under `examples/memory-packets/` distill interconnect
 intelligence into durable cards via `cortex teach --seed` — so interconnect recalls doctrine,

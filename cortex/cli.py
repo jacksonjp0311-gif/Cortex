@@ -568,6 +568,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     emergence_p.add_argument("--limit", type=int, default=16)
     emergence_p.add_argument("--json", action="store_true")
+
+    eval_c = sub.add_parser(
+        "eval-coupling",
+        help="Measure gate ⌖⧉ — fixed corpus + ablations (spectral/ranker); directs evolution.",
+    )
+    eval_c.add_argument("--repo", required=True)
+    eval_c.add_argument("--limit", type=int, default=12)
+    eval_c.add_argument("--top-k", type=int, default=5)
+    eval_c.add_argument("--json", action="store_true")
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1536,6 +1545,25 @@ def main(argv: list[str] | None = None) -> None:
             emit(
                 read_emergence_log(
                     home, store, args.repo, limit=max(1, int(args.limit or 16))
+                ),
+                args.json,
+            )
+
+        elif command == "eval-coupling":
+            from .eval_coupling import run_eval_coupling
+
+            def _prog(msg: str) -> None:
+                print(f"  ⌖ {msg}", file=sys.stderr, flush=True)
+
+            emit(
+                run_eval_coupling(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    limit=max(4, int(args.limit or 12)),
+                    top_k=max(1, int(getattr(args, "top_k", None) or 5)),
+                    on_progress=_prog,
                 ),
                 args.json,
             )

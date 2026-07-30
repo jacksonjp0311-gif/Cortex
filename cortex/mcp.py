@@ -330,6 +330,23 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_eval_coupling",
+        "description": (
+            "Measure gate ⌖⧉: fixed corpus + ablations (baseline / no_spectral / "
+            "no_ranker). Proves whether spectral+ranker lifts recall. Directs evolution. "
+            "Not consciousness. " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "limit": {"type": "integer", "default": 12},
+                "top_k": {"type": "integer", "default": 5},
+            },
+        },
+    },
+    {
         "name": "cortex_distill",
         "description": (
             "Distill mesh observation + doctrine into durable memory (☰). " + _REFUSE
@@ -559,6 +576,17 @@ class CortexMCP:
                 self.store,
                 repo,
                 limit=int(arguments.get("limit") or 16),
+            )
+        if name == "cortex_eval_coupling":
+            from .eval_coupling import run_eval_coupling
+
+            return run_eval_coupling(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                limit=max(4, int(arguments.get("limit") or 12)),
+                top_k=max(1, int(arguments.get("top_k") or 5)),
             )
         if name == "cortex_breathe":
             from .organism import breathe as organism_breathe
