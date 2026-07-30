@@ -252,7 +252,7 @@ def _directives_from_mesh(hosts: list[dict[str, Any]]) -> list[str]:
         )
     if non_emergent_foreign:
         dirs.append(
-            "Foreign hosts not emergent yet — more activate/remember/seal loops: "
+            "Foreign hosts not emergent yet — run foreign-emerge / host-mesh --thicken: "
             + ", ".join(non_emergent_foreign[:6])
         )
     if missing_path:
@@ -353,6 +353,16 @@ def run_host_mesh(
     ]
     if cold:
         next_moves.append("real_task_loops_on=" + ",".join(cold[:4]))
+    non_em_foreign = [
+        h["name"]
+        for h in hosts
+        if h.get("role") == "foreign_host"
+        and not (h.get("coherence") or {}).get("emergent_coupling")
+    ]
+    if non_em_foreign:
+        next_moves.append(
+            "foreign_emerge_or_host_mesh_thicken=" + ",".join(non_em_foreign[:4])
+        )
     if emergent_n == 0 and hosts:
         next_moves.append("raise_body_coupling_via_fuse_and_measure")
     elif foreign_n and emergent_n < len(hosts):

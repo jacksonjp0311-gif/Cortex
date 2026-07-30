@@ -1,3 +1,10 @@
+## 6.23.0 - Foreign Emergence
+
+- **`foreign_emerge`:** fuse open + ticks + ranker path-token warm toward host emergent phase.
+- **CLI:** `foreign-emerge`, `host-mesh --thicken` / `--thicken-foreign-only`.
+- **self-org:** auto-thicken foreign host when suite measured but not emergent.
+- Docs: `PHASE_V6.23_FOREIGN_EMERGENCE.md`.
+
 ## 6.22.0 - Foreign Geometry
 
 - **Foreign IR:** concept routes for policy/storage/server/main/tests + damp cards vs `src/*.rs`.

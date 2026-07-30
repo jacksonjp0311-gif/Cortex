@@ -639,7 +639,29 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip per-host coherence measure (inventory only).",
     )
+    mesh_p.add_argument(
+        "--thicken",
+        action="store_true",
+        help="v6.23: thicken non-emergent foreign/cold hosts (fuse+ranker; no identity merge).",
+    )
+    mesh_p.add_argument(
+        "--thicken-foreign-only",
+        action="store_true",
+        help="With --thicken, only foreign_host roles.",
+    )
     mesh_p.add_argument("--json", action="store_true")
+
+    fe_p = sub.add_parser(
+        "foreign-emerge",
+        help="Foreign/cold host phase thicken ⧉◐ — fuse open+ticks + ranker warm toward emergent.",
+    )
+    fe_p.add_argument("--repo", required=True, help="Target host (e.g. PulseFlow), not primary body.")
+    fe_p.add_argument("--fuse-ticks", type=int, default=4)
+    fe_p.add_argument("--target-trains", type=int, default=8)
+    fe_p.add_argument("--no-activate", action="store_true")
+    fe_p.add_argument("--no-fuse-open", action="store_true")
+    fe_p.add_argument("--budget", type=int, default=600)
+    fe_p.add_argument("--json", action="store_true")
 
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
@@ -1676,15 +1698,60 @@ def main(argv: list[str] | None = None) -> None:
             def _mprog(msg: str) -> None:
                 print(f"  ⧉⬡ {msg}", file=sys.stderr, flush=True)
 
-            emit(
-                run_host_mesh(
+            mesh_report = run_host_mesh(
+                home,
+                store,
+                governor,
+                primary_repo=str(getattr(args, "primary", None) or "CortexTeach"),
+                query=getattr(args, "query", None),
+                measure_coherence_field=not bool(getattr(args, "fast", False)),
+                on_progress=_mprog,
+            )
+            if getattr(args, "thicken", False) or getattr(
+                args, "thicken_foreign_only", False
+            ):
+                from .foreign_emerge import thicken_mesh_cold_hosts
+
+                def _tprog(msg: str) -> None:
+                    print(f"  ⧉◐ {msg}", file=sys.stderr, flush=True)
+
+                mesh_report["thicken"] = thicken_mesh_cold_hosts(
+                    home,
+                    store,
+                    governor,
+                    foreign_only=bool(getattr(args, "thicken_foreign_only", False))
+                    or bool(getattr(args, "thicken", False)),
+                    on_progress=_tprog,
+                )
+                # Re-measure mesh after thicken
+                mesh_report["mesh_after"] = run_host_mesh(
                     home,
                     store,
                     governor,
                     primary_repo=str(getattr(args, "primary", None) or "CortexTeach"),
-                    query=getattr(args, "query", None),
-                    measure_coherence_field=not bool(getattr(args, "fast", False)),
+                    measure_coherence_field=True,
                     on_progress=_mprog,
+                )
+            emit(mesh_report, args.json)
+
+        elif command == "foreign-emerge":
+            from .foreign_emerge import thicken_host_phase
+
+            def _fprog(msg: str) -> None:
+                print(f"  ⧉◐ {msg}", file=sys.stderr, flush=True)
+
+            emit(
+                thicken_host_phase(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    fuse_ticks=int(getattr(args, "fuse_ticks", 4) or 4),
+                    open_fuse=not bool(getattr(args, "no_fuse_open", False)),
+                    activate=not bool(getattr(args, "no_activate", False)),
+                    target_trains=int(getattr(args, "target_trains", 8) or 8),
+                    budget=int(getattr(args, "budget", 600) or 600),
+                    on_progress=_fprog,
                 ),
                 args.json,
             )

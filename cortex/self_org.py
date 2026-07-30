@@ -351,6 +351,44 @@ def run_self_org(
         except Exception as exc:
             fuse = {"ticked": False, "error": f"{type(exc).__name__}: {exc}"}
 
+    # ── Foreign host phase thicken (v6.23) — if foreign measured non-emergent ─
+    foreign_emerge: dict[str, Any] = {"skipped": True}
+    if (
+        f_repo
+        and foreign_report
+        and not foreign_report.get("error")
+        and mode != "read_only"
+    ):
+        try:
+            f_coh = measure_coherence(
+                store, f_repo, governor=governor, home=home, retrieval_confidence=0.6
+            )
+            if not f_coh.get("emergent_coupling"):
+                prog(f"foreign_emerge:{f_repo}")
+                from .foreign_emerge import thicken_host_phase
+
+                foreign_emerge = thicken_host_phase(
+                    home,
+                    store,
+                    governor,
+                    f_repo,
+                    fuse_ticks=3,
+                    target_trains=8,
+                    activate=True,
+                    on_progress=lambda m: prog(f"fe:{m}"),
+                )
+            else:
+                foreign_emerge = {
+                    "skipped": True,
+                    "reason": "foreign_already_emergent",
+                    "score": f_coh.get("score"),
+                }
+        except Exception as exc:
+            foreign_emerge = {
+                "skipped": True,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
     # ── Coherence after ────────────────────────────────────────────────
     prog("coherence_after")
     coh_after = measure_coherence(
@@ -535,6 +573,21 @@ def run_self_org(
                 "reason": fuse.get("reason"),
                 "error": fuse.get("error"),
             },
+            "foreign_emerge": {
+                k: foreign_emerge.get(k)
+                for k in (
+                    "skipped",
+                    "reason",
+                    "error",
+                    "repo",
+                    "emergent_flipped_on",
+                    "phase_before",
+                    "phase_after",
+                )
+                if k in foreign_emerge or foreign_emerge.get(k) is not None
+            }
+            if isinstance(foreign_emerge, dict)
+            else foreign_emerge,
             "seal": seal_note,
         },
         "held_course": {
