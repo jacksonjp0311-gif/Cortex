@@ -116,3 +116,112 @@ def enter_phase(store: Any, repo: str, phase: str, *, reason: str = "") -> dict[
     """Legal phase entry under current epoch."""
     ensure_current_epoch(store, repo, reason=f"enter_phase:{phase}")
     return transition_phase(store, repo, phase, reason=reason)
+
+
+def epoch_compatible_influence(
+    left_repo: str,
+    right_repo: str,
+    store: Any,
+) -> dict[str, Any]:
+    """Whether federated/influence exchange may compose across two hosts.
+
+    Distinct body_epoch_ids are required (identity isolation). Compatible when
+    cortex_version and constitutional_config_hash match and both epochs verify.
+    Adaptive roots may differ — influence still blocked if constitution/version skew.
+    """
+    from .epoch import compare_epochs, ensure_current_epoch, verify_body_epoch
+
+    left = ensure_current_epoch(store, left_repo, reason="influence_check")
+    right = ensure_current_epoch(store, right_repo, reason="influence_check")
+    lv = verify_body_epoch(store, left_repo, left)
+    rv = verify_body_epoch(store, right_repo, right)
+    version_ok = left.cortex_version == right.cortex_version
+    constitution_ok = left.constitutional_config_hash == right.constitutional_config_hash
+    reasons: list[str] = []
+    if not lv.get("ok"):
+        reasons.append("left_epoch_stale")
+    if not rv.get("ok"):
+        reasons.append("right_epoch_stale")
+    if left.repo != right.repo and left.epoch_id == right.epoch_id:
+        reasons.append("cross_repo_epoch_id_collision")
+    if not version_ok:
+        reasons.append("cortex_version_mismatch")
+    if not constitution_ok:
+        reasons.append("constitutional_config_mismatch")
+    if left.repo == right.repo:
+        allowed = bool(lv.get("ok")) and bool(rv.get("ok"))
+    else:
+        allowed = (
+            bool(lv.get("ok"))
+            and bool(rv.get("ok"))
+            and version_ok
+            and constitution_ok
+            and left.epoch_id != right.epoch_id
+        )
+    return {
+        "schema_version": "cortex-epoch-compatible-influence/1.0",
+        "allowed": allowed,
+        "left": {
+            "repo": left.repo,
+            "epoch_id": left.epoch_id,
+            "version": left.cortex_version,
+            "verified": lv.get("ok"),
+        },
+        "right": {
+            "repo": right.repo,
+            "epoch_id": right.epoch_id,
+            "version": right.cortex_version,
+            "verified": rv.get("ok"),
+        },
+        "compare": compare_epochs(left, right).to_dict(),
+        "reasons_if_denied": [] if allowed else reasons,
+        "claim_boundary": CLAIM,
+    }
+
+
+def mesh_continuity_report(store: Any, repos: list[str] | None = None) -> dict[str, Any]:
+    """Multi-host continuity rollup for interconnect expansion."""
+    if repos is None:
+        try:
+            repos = [
+                str(r["name"])
+                for r in store.db.execute(
+                    "SELECT name FROM repositories ORDER BY name"
+                ).fetchall()
+            ]
+        except Exception:
+            repos = []
+    hosts: list[dict[str, Any]] = []
+    for repo in repos:
+        try:
+            st = snapshot_continuity(store, repo)
+            hosts.append(
+                {
+                    "repo": repo,
+                    "body_epoch_id": (st.body_epoch or {}).get("epoch_id"),
+                    "runtime_phase": (st.runtime_phase or {}).get("phase"),
+                    "cortex_version": (st.body_epoch or {}).get("cortex_version"),
+                    "constitutional_config_hash": (st.constitutional_plane or {}).get(
+                        "constitutional_config_hash"
+                    ),
+                    "evidence_root_hash": (st.evidence_plane or {}).get("evidence_root_hash"),
+                }
+            )
+        except Exception as exc:
+            hosts.append({"repo": repo, "error": f"{type(exc).__name__}: {exc}"})
+    versions = {h.get("cortex_version") for h in hosts if h.get("cortex_version")}
+    constitutions = {
+        h.get("constitutional_config_hash")
+        for h in hosts
+        if h.get("constitutional_config_hash")
+    }
+    return {
+        "schema_version": "cortex-mesh-continuity/1.0",
+        "glyph": GLYPH,
+        "host_count": len(hosts),
+        "hosts": hosts,
+        "version_aligned": len(versions) <= 1,
+        "constitution_aligned": len(constitutions) <= 1,
+        "claim_boundary": CLAIM,
+        "at": time.time(),
+    }

@@ -718,6 +718,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--phase",
         help="Optional legal phase transition (e.g. OBSERVE, ADAPT, WITNESS).",
     )
+    cont_p.add_argument(
+        "--mesh",
+        action="store_true",
+        help="Multi-host mesh continuity rollup (version/constitution alignment).",
+    )
+    cont_p.add_argument(
+        "--with-repo",
+        help="Check epoch-compatible influence between --repo and this host.",
+    )
     cont_p.add_argument("--json", action="store_true")
 
     epoch_p = sub.add_parser(
@@ -1859,11 +1868,25 @@ def main(argv: list[str] | None = None) -> None:
             )
 
         elif command == "continuity":
-            from .continuity import continuity_report, enter_phase
+            from .continuity import (
+                continuity_report,
+                enter_phase,
+                epoch_compatible_influence,
+                mesh_continuity_report,
+            )
 
             if getattr(args, "phase", None):
                 emit(
                     enter_phase(store, args.repo, str(args.phase), reason="cli"),
+                    args.json,
+                )
+            elif getattr(args, "mesh", False):
+                emit(mesh_continuity_report(store), args.json)
+            elif getattr(args, "with_repo", None):
+                emit(
+                    epoch_compatible_influence(
+                        args.repo, str(args.with_repo), store
+                    ),
                     args.json,
                 )
             else:

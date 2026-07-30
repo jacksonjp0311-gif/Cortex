@@ -17,8 +17,36 @@ from .progress_glyphs import progress_glyph_registry
 from .ranker.model import ranker_status
 from .vectors.index import hnsw_status
 
-SCHEMA = "cortex-interconnect/1.0"
+SCHEMA = "cortex-interconnect/1.1"
 GLYPH = "⧉"
+
+
+def _continuity_slice(store: Any, repo: str) -> dict[str, Any]:
+    """v7.0: body epoch + phase + plane roots for mesh (read/seal, no host mutation)."""
+    try:
+        from .epoch import ensure_current_epoch, verify_body_epoch
+        from .phases import current_phase
+
+        ep = ensure_current_epoch(store, repo, reason="interconnect_mesh")
+        ph = current_phase(store, repo)
+        ver = verify_body_epoch(store, repo, ep)
+        return {
+            "plane": "continuity",
+            "body_epoch_id": ep.epoch_id,
+            "epoch_verified": bool(ver.get("ok")),
+            "epoch_mismatches": list(ver.get("mismatches") or []),
+            "runtime_phase": ph.phase,
+            "phase_epoch_id": ph.epoch_id,
+            "phase_bound": ph.epoch_id == ep.epoch_id,
+            "evidence_root_hash": ep.evidence_root_hash[:16],
+            "adaptive_root_hash": ep.adaptive_root_hash[:16],
+            "constitutional_config_hash": ep.constitutional_config_hash[:16],
+            "cortex_version": ep.cortex_version,
+            "repository_id": ep.repository_id,
+            "receipt_hash": ep.receipt_hash[:16],
+        }
+    except Exception as exc:
+        return {"plane": "continuity", "error": f"{type(exc).__name__}: {exc}"}
 
 
 def mesh_status(
@@ -48,6 +76,7 @@ def mesh_status(
     except Exception as exc:
         kernels = {"error": f"{type(exc).__name__}: {exc}"}
     intel_pulse = store.get_setting(f"intel_pulse:{repo}", {}) or {}
+    continuity = _continuity_slice(store, repo)
 
     control: dict[str, Any] = {}
     if governor is not None and home is not None:
@@ -94,6 +123,16 @@ def mesh_status(
         bottlenecks.append("hnsw_absent")
     if int(graph.get("pass_count") or 0) == 0:
         bottlenecks.append("no_connect_passes_yet")
+    # v7.0 continuity bottlenecks (executable stale-state signals)
+    if continuity.get("error"):
+        bottlenecks.append("continuity_unavailable")
+    else:
+        if continuity.get("epoch_verified") is False:
+            bottlenecks.append("epoch_stale_or_mismatched")
+        if continuity.get("phase_bound") is False:
+            bottlenecks.append("phase_epoch_unbound")
+        if not continuity.get("body_epoch_id"):
+            bottlenecks.append("body_epoch_missing")
 
     nodes = store.db.execute(
         "SELECT COUNT(*) AS c FROM neural_nodes WHERE repo=?", (repo,)
@@ -114,6 +153,9 @@ def mesh_status(
         and "host.mutate" not in ALLOWED_SCOPES
         and "host.mutate" in FORBIDDEN_SCOPES
         and not frozen
+        and continuity.get("epoch_verified") is not False
+        and continuity.get("phase_bound") is not False
+        and not continuity.get("error")
     )
 
     return {
@@ -124,6 +166,14 @@ def mesh_status(
         "ts": round(time.time(), 3),
         "mesh_green": mesh_green,
         "bottlenecks": bottlenecks,
+        "continuity": continuity,
+        "planes": {
+            "E": "evidence",
+            "A": "adaptation",
+            "I": "immunity",
+            "C": "constitutional",
+            "W": "witness",
+        },
         "immune": {
             "block": block,
             "code": (control.get("immune_action") or {}).get("code"),
@@ -214,12 +264,13 @@ def mesh_status(
 
 
 def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: Any | None = None) -> dict[str, Any]:
-    """One-screen mesh + spectral Ξ field for operators."""
+    """One-screen mesh + spectral field + continuity for operators."""
 
     mesh = mesh_status(store, repo, governor=governor, home=home)
     spectrum = (mesh.get("spectral") or {}).get("retention") or {}
+    cont = mesh.get("continuity") or {}
     return {
-        "schema_version": "cortex-mesh-dashboard/1.0",
+        "schema_version": "cortex-mesh-dashboard/1.1",
         "glyph": "⧉",
         "repo": repo,
         "mesh_green": mesh.get("mesh_green"),
@@ -234,7 +285,10 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "gates": mesh.get("gates"),
         "immune": mesh.get("immune"),
         "intelligence": mesh.get("intelligence"),
+        "continuity": cont,
+        "body_epoch_id": cont.get("body_epoch_id"),
+        "runtime_phase": cont.get("runtime_phase"),
         "resonance": (mesh.get("intelligence") or {}).get("resonance"),
-        "law": "common_pulse_through_kernel_spectrum",
+        "law": "common_pulse_through_kernel_spectrum_and_body_epoch",
         "claim_boundary": mesh.get("claim_boundary"),
     }

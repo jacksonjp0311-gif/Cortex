@@ -237,7 +237,7 @@ def run_self_org(
         )
         ranker_train["eval_split"] = "train"
 
-    # ── Promotion gate (holdout + foreign) ─────────────────────────────
+    # ── Promotion gate (holdout + foreign + body epoch) ────────────────
     from .promote_gate import evaluate_promotion
 
     holdout_recall = float(
@@ -246,6 +246,18 @@ def run_self_org(
         )
         or 0.0
     )
+    epoch_for_promote: dict[str, Any] = {}
+    try:
+        from .epoch import ensure_current_epoch, verify_body_epoch
+
+        _ep = ensure_current_epoch(store, repo, reason="self_org_promote")
+        _ver = verify_body_epoch(store, repo, _ep)
+        epoch_for_promote = {
+            "body_epoch_id": _ep.epoch_id,
+            "epoch_verified": bool(_ver.get("ok")),
+        }
+    except Exception as exc:
+        epoch_for_promote = {"epoch_verified": False, "error": f"{type(exc).__name__}:{exc}"}
     promotion = evaluate_promotion(
         holdout_report=holdout_report,
         foreign_report=foreign_report,
@@ -253,6 +265,8 @@ def run_self_org(
         emergent_coupling=bool(coh_before.get("emergent_coupling")),
         governance_mode=mode,
         require_foreign=bool(f_repo),
+        body_epoch_id=epoch_for_promote.get("body_epoch_id"),
+        epoch_verified=epoch_for_promote.get("epoch_verified"),
     )
     may_promote = bool(promotion.get("allow_shadow_calibration"))
 
@@ -463,6 +477,47 @@ def run_self_org(
                 "error": f"{type(exc).__name__}: {exc}",
             }
 
+    # v7.0: seal body epoch after self-org adaptive work (roots may have drifted)
+    body_epoch_seal: dict[str, Any] = {}
+    try:
+        from .epoch import ensure_current_epoch, seal_epoch_transition
+        from .phases import transition_phase
+
+        parent = ensure_current_epoch(store, repo, reason="self_org_pre_seal")
+        sealed_ep = seal_epoch_transition(
+            store, repo, reason="post_self_org", parent=parent
+        )
+        body_epoch_seal = {
+            "epoch_id": sealed_ep.epoch_id,
+            "changed": sealed_ep.epoch_id != parent.epoch_id,
+            "transition_reason": sealed_ep.transition_reason,
+        }
+        if sealed_ep.epoch_id != parent.epoch_id:
+            try:
+                from .capabilities import revoke_epoch_capabilities
+
+                revoke_epoch_capabilities(store, repo, parent.epoch_id)
+            except Exception:
+                pass
+        # Legal phase settle: try WITNESS then QUIESCENT when graph allows
+        try:
+            from .phases import current_phase as _cur_ph
+
+            cur_ph = _cur_ph(store, repo).phase
+            if cur_ph in {"ADAPT", "CONSOLIDATE", "OBSERVE", "EVIDENCE_FREEZE", "PROMOTE", "WITNESS"}:
+                if cur_ph == "ADAPT":
+                    transition_phase(store, repo, "CONSOLIDATE", reason="self_org")
+                    transition_phase(store, repo, "WITNESS", reason="self_org")
+                elif cur_ph == "CONSOLIDATE":
+                    transition_phase(store, repo, "WITNESS", reason="self_org")
+                transition_phase(store, repo, "QUIESCENT", reason="self_org_done")
+            elif cur_ph != "QUIESCENT":
+                transition_phase(store, repo, "QUIESCENT", reason="self_org_done")
+        except Exception:
+            pass
+    except Exception as exc:
+        body_epoch_seal = {"error": f"{type(exc).__name__}: {exc}"}
+
     log_milestone(
         home,
         store,
@@ -589,7 +644,10 @@ def run_self_org(
             if isinstance(foreign_emerge, dict)
             else foreign_emerge,
             "seal": seal_note,
+            "body_epoch": body_epoch_seal,
         },
+        "body_epoch": body_epoch_seal,
+        "promotion_epoch": epoch_for_promote,
         "held_course": {
             "spectral_kept": bool(
                 active_gate.get("keep_spectral_features")

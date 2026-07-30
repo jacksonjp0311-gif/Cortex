@@ -47,10 +47,12 @@ class HostMeshTests(unittest.TestCase):
             measure_coherence_field=False,
             persist=True,
         )
-        self.assertEqual(report["schema_version"], "cortex-host-mesh/1.0")
+        self.assertEqual(report["schema_version"], "cortex-host-mesh/1.1")
         self.assertGreaterEqual(report["host_count"], 1)
         self.assertTrue(report["directives"])
         self.assertIn("next", report)
+        self.assertIn("epoch_alignment", report)
+        self.assertTrue(one.get("body_epoch_id") or (one.get("continuity") or {}).get("body_epoch_id"))
 
     def test_explicit_mesh_role_and_topology_law(self) -> None:
         meta = set_mesh_role(self.store, "MeshHost", "foreign_host")

@@ -36,11 +36,16 @@ def evaluate_promotion(
     min_witness_recall: float = 0.5,
     lineage_ok: bool = True,
     has_critical_wound: bool = False,
+    body_epoch_id: str | None = None,
+    epoch_verified: bool | None = None,
 ) -> dict[str, Any]:
     """Decide whether promotion / shadow-calibrate / big KEEP claims may fire."""
 
     if governance_mode == "read_only":
         return _deny("governor_read_only")
+    # v7.0: promotion must not certify a different/stale epoch when bound
+    if epoch_verified is False:
+        return _deny("body_epoch_not_verified")
 
     ho = holdout_report or {}
     ho_gate = ho.get("gate") or {}
@@ -137,11 +142,14 @@ def evaluate_promotion(
         "emergent_coupling": emergent_coupling,
         "coupling_role": "safety_prerequisite_only",
         "holdout_freeze_id": HOLDOUT_FREEZE_ID,
+        "body_epoch_id": body_epoch_id,
+        "epoch_verified": epoch_verified,
         "reasons_if_denied": [] if allow else list(dict.fromkeys(reasons)),
         "law": (
             "Promote when sealed holdout utility holds AND development-transfer utility "
             "holds AND coupling health is on (safety) AND lineage/wounds clean AND "
-            "governance allows. Coupling does not certify utility. "
+            "governance allows AND body epoch is verified when bound. "
+            "Coupling does not certify utility. "
             "Optional sealed witness when require_witness=True."
         ),
         "claim_boundary": CLAIM,

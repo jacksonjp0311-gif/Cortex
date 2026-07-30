@@ -59,6 +59,15 @@ class ContinuityTests(unittest.TestCase):
         self.assertFalse(bad.allowed)
         self.assertEqual(bad.reason, "capability_epoch_mismatch")
 
+    def test_same_repo_influence_and_mesh_report(self) -> None:
+        from cortex.continuity import epoch_compatible_influence, mesh_continuity_report
+
+        inf = epoch_compatible_influence("CHost", "CHost", self.store)
+        self.assertTrue(inf["allowed"], inf)
+        mesh = mesh_continuity_report(self.store, repos=["CHost"])
+        self.assertEqual(mesh["host_count"], 1)
+        self.assertTrue(mesh.get("version_aligned"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,7 @@
 - **Runtime phases:** legal phase machine bound to epoch; operation allowlists per phase.
 - **Epoch-bound capabilities:** mismatch denies adaptive ops; epoch transition revokes adaptive caps.
 - **Continuity snapshot:** five-plane report (`E/A/I/C/W`) + CLI `continuity` / `epoch`.
+- **Interconnect expansion:** mesh_status + host-mesh carry epoch/phase; epoch_alignment (version/constitution, never merge repo epochs); `continuity --mesh` / `--with-repo` influence gate; self-org seals epoch post-pulse; promote_gate binds verified epoch.
 - Preserves all v6.25.1 constitutional seals. Docs: `PHASE_V7.0_RESONANT_CONTINUITY.md`.
 
 ## 6.25.1 - Constitutional Seal

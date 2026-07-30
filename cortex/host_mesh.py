@@ -22,7 +22,7 @@ from .emergence_log import log_milestone, read_emergence_log
 from .federation import federated_query
 from .ranker.model import ranker_status
 
-SCHEMA = "cortex-host-mesh/1.0"
+SCHEMA = "cortex-host-mesh/1.1"
 GLYPH = "⧉⬡"
 
 
@@ -181,6 +181,29 @@ def observe_host(
     except Exception:
         latest = None
 
+    # v7.0: per-host body epoch + runtime phase (distributed alignment inputs)
+    continuity: dict[str, Any] = {}
+    try:
+        from .epoch import ensure_current_epoch, verify_body_epoch
+        from .phases import current_phase
+
+        ep = ensure_current_epoch(store, repo, reason="host_mesh_observe")
+        ph = current_phase(store, repo)
+        ver = verify_body_epoch(store, repo, ep)
+        continuity = {
+            "body_epoch_id": ep.epoch_id,
+            "epoch_verified": bool(ver.get("ok")),
+            "runtime_phase": ph.phase,
+            "phase_bound": ph.epoch_id == ep.epoch_id,
+            "cortex_version": ep.cortex_version,
+            "repository_id": ep.repository_id,
+            "evidence_root_prefix": (ep.evidence_root_hash or "")[:12],
+            "adaptive_root_prefix": (ep.adaptive_root_hash or "")[:12],
+            "constitutional_prefix": (ep.constitutional_config_hash or "")[:12],
+        }
+    except Exception as exc:
+        continuity = {"error": f"{type(exc).__name__}: {exc}"}
+
     return {
         "name": repo,
         "attached": True,
@@ -207,7 +230,59 @@ def observe_host(
             "train_count": ranker.get("train_count"),
             "frozen": ranker.get("frozen"),
         },
+        "continuity": continuity,
+        "body_epoch_id": continuity.get("body_epoch_id"),
+        "runtime_phase": continuity.get("runtime_phase"),
         "emergence_latest": latest if isinstance(latest, dict) else None,
+    }
+
+
+def _epoch_alignment(hosts: list[dict[str, Any]]) -> dict[str, Any]:
+    """Distributed host alignment: versions, constitution prefixes, phase diversity.
+
+    Hosts keep distinct body_epoch_ids (repo identity). Alignment is about
+    cortex_version + constitutional prefix compatibility — not merging epochs.
+    """
+    versions: dict[str, list[str]] = {}
+    constitutions: dict[str, list[str]] = {}
+    phases: dict[str, list[str]] = {}
+    stale: list[str] = []
+    unbound: list[str] = []
+    for h in hosts:
+        if not h.get("path_exists"):
+            continue
+        name = str(h.get("name") or "")
+        c = h.get("continuity") or {}
+        if c.get("error"):
+            stale.append(name)
+            continue
+        if c.get("epoch_verified") is False:
+            stale.append(name)
+        if c.get("phase_bound") is False:
+            unbound.append(name)
+        ver = str(c.get("cortex_version") or "unknown")
+        versions.setdefault(ver, []).append(name)
+        cp = str(c.get("constitutional_prefix") or "unknown")
+        constitutions.setdefault(cp, []).append(name)
+        ph = str(c.get("runtime_phase") or "unknown")
+        phases.setdefault(ph, []).append(name)
+    version_aligned = len(versions) <= 1
+    constitution_aligned = len(constitutions) <= 1
+    return {
+        "schema_version": "cortex-epoch-alignment/1.0",
+        "version_aligned": version_aligned,
+        "constitution_aligned": constitution_aligned,
+        "cortex_versions": {k: sorted(v) for k, v in versions.items()},
+        "constitutional_prefixes": {k: sorted(v) for k, v in constitutions.items()},
+        "runtime_phases": {k: sorted(v) for k, v in phases.items()},
+        "stale_epoch_hosts": stale,
+        "phase_unbound_hosts": unbound,
+        "aligned": version_aligned and constitution_aligned and not stale and not unbound,
+        "law": (
+            "Hosts share one body SQLite but never merge repository epochs. "
+            "Alignment requires same cortex_version and constitutional prefix; "
+            "distinct body_epoch_id per repo is required and expected."
+        ),
     }
 
 
@@ -243,7 +318,9 @@ def _directives_from_mesh(hosts: list[dict[str, Any]]) -> list[str]:
         dirs.append(
             f"Durable/engine body focus: {top['name']} "
             f"(coh={(top.get('coherence') or {}).get('score')}, "
-            f"emergent={(top.get('coherence') or {}).get('emergent_coupling')})."
+            f"emergent={(top.get('coherence') or {}).get('emergent_coupling')}, "
+            f"epoch={((top.get('continuity') or {}).get('body_epoch_id') or '')[:12]}, "
+            f"phase={(top.get('continuity') or {}).get('runtime_phase')})."
         )
     if cold_ranker:
         dirs.append(
@@ -257,12 +334,35 @@ def _directives_from_mesh(hosts: list[dict[str, Any]]) -> list[str]:
         )
     if missing_path:
         dirs.append("Re-attach or prune missing paths: " + ", ".join(missing_path[:4]))
+    align = _epoch_alignment(hosts)
+    if not align.get("version_aligned"):
+        dirs.append(
+            "Cortex version skew across hosts — upgrade lagging attachments: "
+            + str(align.get("cortex_versions"))
+        )
+    if not align.get("constitution_aligned"):
+        dirs.append(
+            "Constitutional prefix skew — re-seal epochs after policy/version align."
+        )
+    if align.get("stale_epoch_hosts"):
+        dirs.append(
+            "Stale body epochs (roots drifted): "
+            + ", ".join(align["stale_epoch_hosts"][:6])
+            + " — run: cortex epoch --repo <name> seal"
+        )
+    if align.get("phase_unbound_hosts"):
+        dirs.append(
+            "Phase unbound from epoch: "
+            + ", ".join(align["phase_unbound_hosts"][:6])
+            + " — re-enter legal phase under current epoch"
+        )
     dirs.append(
         "Prefer host-mesh + fuse ticks over live continuum on large graphs; "
         "no prune thrash; recommend-only."
     )
     dirs.append(
-        "Cross-repo search: cortex federate / host-mesh --query — boundaries preserved."
+        "Cross-repo search: cortex federate / host-mesh --query — boundaries preserved. "
+        "Federate only when host epochs share constitutional prefix (epoch-compatible influence)."
     )
     return dirs
 
@@ -343,6 +443,7 @@ def run_host_mesh(
     foreign_n = sum(1 for h in hosts if h.get("role") == "foreign_host")
     mesh_score = round(sum(scores) / len(scores), 4) if scores else 0.0
 
+    alignment = _epoch_alignment(hosts)
     directives = _directives_from_mesh(hosts)
     next_moves: list[str] = []
     cold = [
@@ -367,6 +468,8 @@ def run_host_mesh(
         next_moves.append("raise_body_coupling_via_fuse_and_measure")
     elif foreign_n and emergent_n < len(hosts):
         next_moves.append("deepen_foreign_hosts_without_merging_identity")
+    if not alignment.get("aligned"):
+        next_moves.append("seal_or_align_body_epochs_before_federated_promote")
     next_moves.append("keep_spectral_ranker_on_primary_body")
     next_moves.append("host_mesh_is_observe_not_authority")
 
@@ -380,13 +483,15 @@ def run_host_mesh(
         "foreign_count": foreign_n,
         "emergent_host_count": emergent_n,
         "mesh_mean_coherence": mesh_score,
+        "epoch_alignment": alignment,
         "hosts": hosts,
         "federated_query": federated,
         "directives": directives,
         "next": next_moves,
         "claim_boundary": (
             "Host mesh observes attached repositories in one SQLite body. "
-            "Does not merge repo identity, grant host mutation, or claim consciousness."
+            "Does not merge repo identity or body epochs, grant host mutation, "
+            "or claim consciousness. v7 alignment is version/constitution compatibility only."
         ),
     }
 
