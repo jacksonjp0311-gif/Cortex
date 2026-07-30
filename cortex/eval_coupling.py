@@ -150,6 +150,83 @@ HARD_CORPUS: list[dict[str, Any]] = [
     },
 ]
 
+# Stress suite: distractors + multi-concept / wrong-neighbor traps (v6.16).
+# Leaves the perfect full-suite ceiling so self-org has a gradient again.
+STRESS_CORPUS: list[dict[str, Any]] = [
+    {
+        "id": "not_plasticity_but_rct",
+        "query": (
+            "do not open neuron plasticity alone; need the RCT experiment arms "
+            "comparing hebbian on versus off with opt-in only"
+        ),
+        "expected_substrings": ["plasticity_rct"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_immune_but_u",
+        "query": (
+            "ignore immune codes; want the unified U scalar confidence inverse "
+            "that governor consumes everywhere"
+        ),
+        "expected_substrings": ["math_net/uncertainty", "uncertainty.py"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_prefetch_but_calibration",
+        "query": (
+            "not prefetch; shadow profile that maps scores to hit rates and "
+            "clamps constitutional drift weights"
+        ),
+        "expected_substrings": ["math_net/calibration", "calibration.py"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_eval_but_info_bits",
+        "query": (
+            "not evaluation corpus; information budget accounting delta-U per "
+            "token promotion_score gate"
+        ),
+        "expected_substrings": ["info_account"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_spectral_mem_but_operator",
+        "query": (
+            "not spectral_memory pulse; the adjacency matrix builder A_ij from "
+            "synapse weights and dual reverse edges"
+        ),
+        "expected_substrings": ["math_net/operator", "operator.py"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_coprocess_but_invent",
+        "query": (
+            "not fuse tick itself; invent new integrate synapses when two nodes "
+            "co-fire and no edge exists yet under gates"
+        ),
+        "expected_substrings": ["structure_invent"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_cli_but_emergence",
+        "query": (
+            "not the argparse surface; the durable MUST-READ progress journal "
+            "with couple activations and measure_gate events"
+        ),
+        "expected_substrings": ["emergence_log"],
+        "suite": "stress",
+    },
+    {
+        "id": "not_packet_but_fuse_proxy",
+        "query": (
+            "not a memory packet json; the HTTP OpenAI-compatible proxy that "
+            "forwards chat completions and auto fuse_ticks on SSE deltas"
+        ),
+        "expected_substrings": ["fuse_proxy"],
+        "suite": "stress",
+    },
+]
+
 # Back-compat alias
 DEFAULT_CORPUS = EASY_CORPUS
 
@@ -157,6 +234,8 @@ SUITES: dict[str, list[dict[str, Any]]] = {
     "easy": EASY_CORPUS,
     "hard": HARD_CORPUS,
     "full": EASY_CORPUS + HARD_CORPUS,
+    "stress": STRESS_CORPUS,
+    "all": EASY_CORPUS + HARD_CORPUS + STRESS_CORPUS,
 }
 
 ABLATIONS: tuple[str, ...] = (
@@ -169,7 +248,9 @@ ABLATIONS: tuple[str, ...] = (
 def resolve_corpus(suite: str | None = None) -> list[dict[str, Any]]:
     key = (suite or "full").strip().lower()
     if key not in SUITES:
-        raise ValueError(f"Unknown suite {suite!r}; choose easy|hard|full")
+        raise ValueError(
+            f"Unknown suite {suite!r}; choose easy|hard|full|stress|all"
+        )
     return list(SUITES[key])
 
 

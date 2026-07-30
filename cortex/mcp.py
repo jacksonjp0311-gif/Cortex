@@ -333,8 +333,8 @@ TOOLS = [
         "name": "cortex_eval_coupling",
         "description": (
             "Measure gate ⌖⧉: fixed corpus + ablations (baseline / no_spectral / "
-            "no_ranker). Suites: easy|hard|full. Proves spectral+ranker lift via "
-            "recall@k + MRR. Directs evolution. Not consciousness. " + _REFUSE
+            "no_ranker). Suites: easy|hard|full|stress|all. Proves spectral+ranker "
+            "lift via recall@k + MRR. Directs evolution. Not consciousness. " + _REFUSE
         ),
         "inputSchema": {
             "type": "object",
@@ -343,11 +343,29 @@ TOOLS = [
                 "repo": {"type": "string"},
                 "suite": {
                     "type": "string",
-                    "enum": ["easy", "hard", "full"],
+                    "enum": ["easy", "hard", "full", "stress", "all"],
                     "default": "full",
                 },
                 "limit": {"type": "integer", "default": 16},
                 "top_k": {"type": "integer", "default": 5},
+            },
+        },
+    },
+    {
+        "name": "cortex_self_org",
+        "description": (
+            "Self-org / alignment pulse ⧉⟳: listen to emergence + measure gate, "
+            "warm ranker, invent coactivation edges, fuse tick if open, seal. "
+            "Not consciousness. Not host mutation. " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "invent": {"type": "boolean", "default": True},
+                "fuse_tick": {"type": "boolean", "default": True},
+                "warm_ranker": {"type": "boolean", "default": True},
             },
         },
     },
@@ -593,6 +611,18 @@ class CortexMCP:
                 suite=str(arguments.get("suite") or "full"),
                 limit=max(4, int(arguments.get("limit") or 16)),
                 top_k=max(1, int(arguments.get("top_k") or 5)),
+            )
+        if name == "cortex_self_org":
+            from .self_org import run_self_org
+
+            return run_self_org(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                invent=bool(arguments.get("invent", True)),
+                fuse_tick=bool(arguments.get("fuse_tick", True)),
+                warm_ranker=bool(arguments.get("warm_ranker", True)),
             )
         if name == "cortex_breathe":
             from .organism import breathe as organism_breathe

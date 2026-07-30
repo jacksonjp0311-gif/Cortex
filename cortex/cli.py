@@ -576,13 +576,36 @@ def build_parser() -> argparse.ArgumentParser:
     eval_c.add_argument("--repo", required=True)
     eval_c.add_argument(
         "--suite",
-        choices=["easy", "hard", "full"],
+        choices=["easy", "hard", "full", "stress", "all"],
         default="full",
-        help="easy=keyword corpus; hard=paraphrases; full=both (default).",
+        help="easy|hard|full|stress|all measure corpora.",
     )
     eval_c.add_argument("--limit", type=int, default=16)
     eval_c.add_argument("--top-k", type=int, default=5)
     eval_c.add_argument("--json", action="store_true")
+
+    self_org_p = sub.add_parser(
+        "self-org",
+        help="Self-org / alignment pulse ⧉⟳ — listen to emergence + measure gate; warm ranker; invent edges.",
+    )
+    self_org_p.add_argument("--repo", required=True)
+    self_org_p.add_argument(
+        "--no-invent",
+        action="store_true",
+        help="Skip structure invent coactivation edges.",
+    )
+    self_org_p.add_argument(
+        "--no-fuse-tick",
+        action="store_true",
+        help="Skip fuse tick even if session open.",
+    )
+    self_org_p.add_argument(
+        "--no-ranker-warm",
+        action="store_true",
+        help="Skip ranker training from measure hits.",
+    )
+    self_org_p.add_argument("--json", action="store_true")
+
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1576,6 +1599,26 @@ def main(argv: list[str] | None = None) -> None:
                     limit=max(4, int(args.limit or 16)),
                     top_k=max(1, int(getattr(args, "top_k", None) or 5)),
                     on_progress=_prog,
+                ),
+                args.json,
+            )
+
+        elif command == "self-org":
+            from .self_org import run_self_org
+
+            def _sprog(msg: str) -> None:
+                print(f"  ⧉⟳ {msg}", file=sys.stderr, flush=True)
+
+            emit(
+                run_self_org(
+                    home,
+                    store,
+                    governor,
+                    args.repo,
+                    invent=not bool(getattr(args, "no_invent", False)),
+                    fuse_tick=not bool(getattr(args, "no_fuse_tick", False)),
+                    warm_ranker=not bool(getattr(args, "no_ranker_warm", False)),
+                    on_progress=_sprog,
                 ),
                 args.json,
             )

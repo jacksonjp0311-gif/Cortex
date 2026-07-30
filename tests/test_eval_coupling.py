@@ -12,6 +12,7 @@ from cortex.eval_coupling import (
     DEFAULT_CORPUS,
     EASY_CORPUS,
     HARD_CORPUS,
+    STRESS_CORPUS,
     resolve_corpus,
     run_eval_coupling,
 )
@@ -112,6 +113,7 @@ class EvalCouplingTests(unittest.TestCase):
         self.assertEqual(
             len(resolve_corpus("full")), len(EASY_CORPUS) + len(HARD_CORPUS)
         )
+        self.assertEqual(len(resolve_corpus("stress")), len(STRESS_CORPUS))
         self.assertIs(DEFAULT_CORPUS, EASY_CORPUS)
 
     def test_eval_coupling_runs(self) -> None:
