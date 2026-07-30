@@ -59,6 +59,104 @@ def _component_panel(components: dict[str, float]) -> dict[str, str]:
     return panel
 
 
+def _couple_percolation(
+    components: dict[str, float],
+    coupling: dict[str, bool],
+    indicators: list[dict[str, Any]],
+    above_threshold: bool,
+    *,
+    score: float = 0.0,
+) -> dict[str, Any]:
+    """Bond percolation on the couple dual graph (v6.19).
+
+    Components = seam nodes; each couple is a bond between two components.
+    Occupied bond when both endpoints are active. Emergent ≈ giant bond count
+    ≥ MIN_COUPLES_FOR_EMERGENT and S above threshold.
+    """
+    # Build adjacency among component nodes via active couples
+    active_bonds = [i for i in indicators if i.get("active")]
+    adj: dict[str, set[str]] = {}
+    bond_ids = []
+    for i in active_bonds:
+        left, right = str(i["left"]), str(i["right"])
+        bond_ids.append(str(i["id"]))
+        adj.setdefault(left, set()).add(right)
+        adj.setdefault(right, set()).add(left)
+
+    def _components_of(graph: dict[str, set[str]]) -> list[set[str]]:
+        seen: set[str] = set()
+        comps: list[set[str]] = []
+        for node in graph:
+            if node in seen:
+                continue
+            stack = [node]
+            comp: set[str] = set()
+            while stack:
+                u = stack.pop()
+                if u in seen:
+                    continue
+                seen.add(u)
+                comp.add(u)
+                stack.extend(graph.get(u, ()))
+            if comp:
+                comps.append(comp)
+        return comps
+
+    comps = _components_of(adj)
+    giant = max((len(c) for c in comps), default=0)
+    occupied = len(active_bonds)
+
+    # Cut bonds: removing this bond drops occupied count below threshold
+    cut_bonds: list[str] = []
+    for i in indicators:
+        if not i.get("active"):
+            continue
+        cid = str(i["id"])
+        # If this is one of few bonds, it is critical
+        if occupied <= MIN_COUPLES_FOR_EMERGENT:
+            cut_bonds.append(cid)
+            continue
+        # Rebuild without this bond
+        left, right = str(i["left"]), str(i["right"])
+        trial_adj: dict[str, set[str]] = {
+            k: set(v) for k, v in adj.items()
+        }
+        if left in trial_adj:
+            trial_adj[left].discard(right)
+        if right in trial_adj:
+            trial_adj[right].discard(left)
+        # Also count remaining active bonds
+        remain = occupied - 1
+        if remain < MIN_COUPLES_FOR_EMERGENT:
+            cut_bonds.append(cid)
+
+    margin_on = float(score) - COHERENCE_THRESHOLD
+    # Symmetric-ish off threshold: emergent drops if S falls below threshold or bonds < 3
+    hysteresis = {
+        "score_margin_above_threshold": round(margin_on, 4),
+        "score_drop_to_lose_threshold": round(max(0.0, margin_on), 4),
+        "bonds_drop_to_lose_phase": max(0, occupied - MIN_COUPLES_FOR_EMERGENT + 1)
+        if occupied >= MIN_COUPLES_FOR_EMERGENT
+        else 0,
+    }
+    return {
+        "occupied_bonds": occupied,
+        "min_bonds_for_emergent": MIN_COUPLES_FOR_EMERGENT,
+        "giant_component_nodes": giant,
+        "active_bond_ids": bond_ids,
+        "cut_bonds": cut_bonds,
+        "phase_emergent": bool(
+            above_threshold and occupied >= MIN_COUPLES_FOR_EMERGENT
+        ),
+        "bottleneck_couples": cut_bonds[:4],
+        "hysteresis": hysteresis,
+        "claim_boundary": (
+            "Couple percolation is discrete phase telemetry on a fixed 6-bond dual "
+            "graph — not thermodynamic criticality or consciousness."
+        ),
+    }
+
+
 def measure_coherence(
     store: Any,
     repo: str,
@@ -268,6 +366,13 @@ def measure_coherence(
     active_ids = [i["id"] for i in indicators if i["active"]]
     emergent_coupling = above and coupled_count >= MIN_COUPLES_FOR_EMERGENT
 
+    # --- Couple-graph percolation (v6.19) ---
+    # Components = seam nodes; couples = bonds. Occupied bond when both ends active.
+    # Emergent = S above threshold AND occupied bonds >= 3 (discrete phase).
+    percolation = _couple_percolation(
+        components, coupling, indicators, above, score=score
+    )
+
     # Trend from history
     history = _load_history(store, repo)
     prev_score = history[-1]["score"] if history else None
@@ -279,7 +384,36 @@ def measure_coherence(
         and above
     )
 
+    # Lyapunov-style health certificate (recommend-only stability telemetry)
+    u_proxy = 1.0 - float(components.get("certainty", 0.5))
+    couple_frac = coupled_count / max(1, len(COUPLE_DEFS))
+    v_lyap = (1.0 - score) + 0.35 * (1.0 - couple_frac) + 0.25 * u_proxy
+    prev_v = None
+    if history:
+        prev_v = history[-1].get("lyapunov_v")
+        if prev_v is None:
+            # reconstruct from prior score if present
+            ps = float(history[-1].get("score") or score)
+            prev_v = (1.0 - ps) + 0.35 * 0.5 + 0.25 * 0.2
+    v_delta = None if prev_v is None else round(v_lyap - float(prev_v), 4)
+    lyapunov = {
+        "V": round(v_lyap, 6),
+        "delta_V": v_delta,
+        "stable": v_delta is None or v_delta <= 0.05,
+        "formula": "V=(1-S)+0.35*(1-couple_frac)+0.25*U_proxy",
+        "claim_boundary": (
+            "Discrete Lyapunov-style health on coherence history — stability "
+            "telemetry for Governor, not a thermodynamic proof of equilibrium."
+        ),
+    }
+    if not lyapunov["stable"]:
+        advice_pre = "lyapunov_V_rising_check_drift"
+    else:
+        advice_pre = None
+
     advice: list[str] = []
+    if advice_pre:
+        advice.append(advice_pre)
     if not above:
         if components.get("geometry_mass", 0) < 0.4:
             advice.append("compile_interlink_or_bootstrap")
@@ -321,11 +455,15 @@ def measure_coherence(
         "active_indicator_ids": active_ids,
         "coupled_seams": coupled_count,
         "emergent_coupling": emergent_coupling,
+        "couple_percolation": percolation,
+        "lyapunov": lyapunov,
         "trend": {
             "delta_score": delta,
             "rising": rising,
             "sustained_above_threshold": sustained,
             "history_len": len(history),
+            "lyapunov_V": lyapunov["V"],
+            "lyapunov_stable": lyapunov["stable"],
         },
         "seams": seams,
         "notes": notes,
@@ -333,7 +471,8 @@ def measure_coherence(
         "auto_fuse_env": os.environ.get("CORTEX_FUSE_AUTO", ""),
         "claim_boundary": (
             "operational_coupling_index (score) = multi-seam co-activation of independent "
-            "telemetry channels. Not validated utility, not consciousness, not host authority. "
+            "telemetry channels. Couple percolation and Lyapunov V are phase/stability "
+            "telemetry — not thermodynamic criticality, not consciousness, not host authority. "
             "Use holdout/foreign eval for utility claims."
         ),
         "at": time.time(),
@@ -369,6 +508,7 @@ def _persist(store: Any, repo: str, report: dict[str, Any]) -> None:
             "emergent_coupling": report.get("emergent_coupling"),
             "coupled_seams": report.get("coupled_seams"),
             "active_indicator_ids": report.get("active_indicator_ids"),
+            "lyapunov_v": (report.get("lyapunov") or {}).get("V"),
         }
         hist = _load_history(store, repo)
         hist.append(point)

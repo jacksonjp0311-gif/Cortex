@@ -1,3 +1,12 @@
+## 6.19.0 - Emergent math made explicit
+
+- **Spectral:** Cheeger/Fiedler cut bottleneck, cut-crossing underuse priority, heat wavelet tops.
+- **Coherence:** couple-graph percolation (cut bonds, hysteresis) + discrete Lyapunov V.
+- **Multiscale:** mass conservation distortion δ.
+- **Ranker:** diagonal Fisher proxy from logged examples.
+- **Info account:** free-energy *proxy* as internal accounting (not FEP ideology).
+- Docs: `PHASE_V6.19_EMERGENT_MATH.md`. Claim boundaries absolute; holdout for utility.
+
 ## 6.18.1 - Holdout IR tune + PulseFlow warm + README agent surface
 
 - Concept routes + neighbor damp for `operator.py` vs spectral; `host_mesh` holdout phrases.

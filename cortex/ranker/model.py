@@ -550,9 +550,70 @@ def train_from_outcome(
     }
 
 
+def ranker_fisher_diag(store: Any, repo: str, *, limit: int = 64) -> dict[str, Any]:
+    """Diagonal Fisher proxy from logged ranker examples (v6.19).
+
+    I_ii ≈ mean[ p(1-p) x_i^2 ] with p = current model score on example features.
+    Used to scale learning confidence / shadow promotion — not host authority.
+    """
+    model = ensure_ranker(store, repo)
+    names = list(model.get("feature_names") or FEATURE_NAMES)
+    acc = [0.0] * len(names)
+    n = 0
+    try:
+        rows = store.db.execute(
+            """
+            SELECT feature_vector_json FROM ranker_examples
+            WHERE repo=? ORDER BY rowid DESC LIMIT ?
+            """,
+            (repo, max(1, int(limit))),
+        ).fetchall()
+    except Exception:
+        rows = []
+    for row in rows or []:
+        try:
+            feats = json.loads(row["feature_vector_json"] or "[]")
+        except Exception:
+            continue
+        if not feats:
+            continue
+        p = score_features(model, feats)
+        p = max(1e-6, min(1.0 - 1e-6, float(p)))
+        w = p * (1.0 - p)
+        for i in range(min(len(names), len(feats))):
+            x = float(feats[i])
+            acc[i] += w * x * x
+        n += 1
+    if n <= 0:
+        return {
+            "ok": False,
+            "n_examples": 0,
+            "claim_boundary": "No ranker_examples yet; Fisher undefined.",
+        }
+    diag = [round(a / n, 8) for a in acc]
+    top = sorted(
+        [{"feature": names[i], "I_ii": diag[i]} for i in range(len(names))],
+        key=lambda r: r["I_ii"],
+        reverse=True,
+    )[:8]
+    identified = sum(1 for d in diag if d >= 0.02)
+    return {
+        "ok": True,
+        "n_examples": n,
+        "fisher_diag_top": top,
+        "identified_features": identified,
+        "feature_count": len(names),
+        "claim_boundary": (
+            "Diagonal Fisher proxy on logged outcomes — information geometry light. "
+            "Telemetry for calibration confidence, not consciousness or host rights."
+        ),
+    }
+
+
 def ranker_status(store: Any, repo: str) -> dict[str, Any]:
     model = ensure_ranker(store, repo)
     frozen = store.get_setting(f"ranker_frozen:{repo}", {}) or {}
+    fisher = ranker_fisher_diag(store, repo)
     return {
         "schema_version": SCHEMA,
         "repo": repo,
@@ -562,6 +623,7 @@ def ranker_status(store: Any, repo: str) -> dict[str, Any]:
         "bias": model["bias"],
         "frozen": bool(frozen.get("frozen")),
         "freeze_reason": frozen.get("reason"),
+        "fisher": fisher,
         "claim_boundary": "Ranker status is operational telemetry; not host rights.",
     }
 

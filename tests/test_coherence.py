@@ -50,6 +50,11 @@ class CoherenceTests(unittest.TestCase):
         self.assertIn("component_panel", c)
         self.assertIn("emergent_coupling", c)
         self.assertIn("trend", c)
+        self.assertIn("operational_coupling_index", c)
+        self.assertIn("couple_percolation", c)
+        self.assertIn("occupied_bonds", c["couple_percolation"])
+        self.assertIn("lyapunov", c)
+        self.assertIn("V", c["lyapunov"])
         self.assertIsInstance(c["above_threshold"], bool)
         # Persisted latest
         latest = self.store.get_setting("coherence_latest:CohHost", None)

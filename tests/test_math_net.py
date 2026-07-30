@@ -66,6 +66,21 @@ class MathNetTests(unittest.TestCase):
         acc = info_account(u_before=0.6, u_after=0.3, budget_tokens=400, evidence_fidelity=0.8)
         self.assertAlmostEqual(acc["delta_u"], 0.3, places=5)
         self.assertIn("promotion_gate_open", acc)
+        self.assertIn("free_energy_proxy", acc)
+        self.assertIn("F", acc["free_energy_proxy"])
+
+    def test_m4_cheeger_and_m9_delta(self) -> None:
+        from cortex.math_net.multiscale import multiscale_conservation
+        from cortex.math_net.spectral import spectral_slice
+
+        spec = spectral_slice(self.store, "MathHost", max_nodes=80)
+        if spec.get("ok"):
+            self.assertIn("cheeger", spec)
+            self.assertIn("h_approx", spec["cheeger"])
+            self.assertIn("fiedler_cut_underuse_top", spec)
+        ms = multiscale_conservation(self.store, "MathHost", fired_node_ids=[], budget=50)
+        self.assertIn("mass_conservation", ms)
+        self.assertIn("distortion_delta", ms["mass_conservation"])
 
     def test_full_pass_m0_m10(self) -> None:
         report = run_math_network_pass(

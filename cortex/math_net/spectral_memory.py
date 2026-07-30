@@ -293,6 +293,9 @@ def spectral_memory_pulse(
             "ok": spec.get("ok"),
             "lambda2": spec.get("lambda2"),
             "n": spec.get("n"),
+            "cheeger": spec.get("cheeger"),
+            "fiedler_cut_underuse_top": (spec.get("fiedler_cut_underuse_top") or [])[:5],
+            "heat_wavelet_top": (spec.get("heat_wavelet_top") or [])[:5],
             "edge_underuse_top": (spec.get("edge_underuse_top") or [])[:5],
         },
         "dual_graph": {

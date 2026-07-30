@@ -54,11 +54,31 @@ def multiscale_conservation(
     # Budget distortion proxy
     total_fired = len(fired)
     truncated = max(0, total_fired - int(budget)) if budget > 0 else 0
-    ok = len(orphans) <= max(1, int(0.25 * max(1, len(covered_files))))
+    covered_n = max(1, len(covered_files))
+    orphan_ratio = len(orphans) / covered_n
+    ok = len(orphans) <= max(1, int(0.25 * covered_n))
+
+    # Explicit multi-scale mass inequality (v6.19):
+    # sum_files m(f) >= gamma * sum_symbols m(s)  (unit mass per fired node)
+    # distortion δ = 1 - LHS / (gamma * RHS) when truncated / orphaned.
+    gamma = 1.0
+    lhs = float(file_mass)  # coarse mass present
+    rhs = float(symbol_mass)  # fine mass
+    # Effective coarse coverage: files that actually cover symbol fire
+    lhs_effective = float(len(covered_files) - len(orphans))
+    denom = gamma * max(1.0, rhs)
+    # When symbols fire, parent files should carry mass
+    if rhs <= 0:
+        delta_mass = 0.0
+        inequality_holds = True
+    else:
+        ratio = lhs_effective / denom
+        delta_mass = max(0.0, 1.0 - ratio)
+        inequality_holds = ratio >= 1.0 - 1e-9 or orphan_ratio <= 0.25
 
     return {
         "schema_version": SCHEMA,
-        "ok": ok,
+        "ok": ok and inequality_holds,
         "counts": {
             "fired_total": total_fired,
             "fired_symbols": symbol_mass,
@@ -73,8 +93,22 @@ def multiscale_conservation(
             "holds": ok,
             "detail": "orphan_symbol_parents / covered_files <= 0.25",
         },
+        "mass_conservation": {
+            "gamma": gamma,
+            "lhs_file_mass_effective": lhs_effective,
+            "rhs_symbol_mass": rhs,
+            "distortion_delta": round(delta_mass, 6),
+            "orphan_ratio": round(orphan_ratio, 6),
+            "holds": inequality_holds,
+            "law": "sum m(file) >= gamma * sum m(symbol) under budget; delta=1-LHS/(gamma*RHS)",
+            "claim_boundary": (
+                "Multi-scale mass distortion is hierarchical coverage telemetry under "
+                "activation budget — not thermodynamic free energy or consciousness."
+            ),
+        },
         "orphan_sample": list(orphans)[:12],
         "claim_boundary": (
-            "Soft multi-scale check; not a proof of hierarchical exactness under all budgets."
+            "Soft multi-scale conservation; distortion delta spikes when budget lies "
+            "about hierarchical coverage. Not host authority."
         ),
     }

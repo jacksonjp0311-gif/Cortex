@@ -37,6 +37,12 @@ def info_account(
     gate_open = (delta_u > 0.02 and evidence_fidelity >= 0.5) or (
         ua < 0.25 and evidence_fidelity >= 0.75 and reversibility >= 0.8
     )
+    # Free-energy style internal accounting (v6.19) — NOT FEP ideology:
+    # F ≈ U + complexity; complexity from inverse fidelity/reversibility load.
+    complexity = (1.0 - max(0.0, min(1.0, evidence_fidelity))) + 0.5 * (
+        1.0 - max(0.0, min(1.0, reversibility))
+    )
+    free_energy = ua + 0.35 * complexity
     return {
         "schema_version": SCHEMA,
         "u_before": round(float(u_before), 6),
@@ -44,10 +50,21 @@ def info_account(
         "delta_u": round(delta_u, 6),
         "budget_tokens": tokens,
         "efficiency_delta_u_per_log_token": round(efficiency, 8),
+        "eta_roi": round(efficiency, 8),
         "evidence_fidelity": round(float(evidence_fidelity), 6),
         "reversibility": round(float(reversibility), 6),
         "promotion_score": round(promotion, 6),
         "promotion_gate_open": bool(gate_open),
+        "free_energy_proxy": {
+            "F": round(free_energy, 6),
+            "U": round(ua, 6),
+            "complexity": round(complexity, 6),
+            "formula": "F ≈ U + 0.35*((1-F)+0.5*(1-R))",
+            "claim_boundary": (
+                "Internal accounting identity only — not free-energy principle, "
+                "not Markov blankets, not agent-as-minimizer."
+            ),
+        },
         "claim_boundary": (
             "ΔU is a proxy, not Shannon bits from the environment; gate is recommend-only."
         ),
