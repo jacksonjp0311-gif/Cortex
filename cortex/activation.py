@@ -1,3 +1,5 @@
+"""Repository activation — v6.25.1 controller-first, sterile baseline path."""
+
 from __future__ import annotations
 
 import hashlib
@@ -14,6 +16,522 @@ from .indexer import current_manifest_hash, index_repository
 from .neuron import compile_interlink, neural_graph_state
 from .telemetry import ingest_git
 from .verify import verify_repository
+
+
+def resolve_activation_controller(
+    governor: Any,
+    repo: str,
+    *,
+    memory_controller: str | None = None,
+    force_evidence_baseline: bool = False,
+    manifest_current: bool | None = None,
+) -> dict[str, Any]:
+    """Resolve controller before any side effect. Fail closed to evidence_baseline."""
+    from .capabilities import CapabilityIssuer
+    from .controller_scope import normalize_controller
+
+    fail_closed = False
+    reason = "advanced_allowed"
+    gov_pre: dict[str, Any] = {}
+    try:
+        gov_pre = governor.evaluate(
+            repo, retrieval_confidence=0.5, manifest_current=manifest_current
+        )
+    except Exception as exc:
+        fail_closed = True
+        reason = f"internal_control_failure:governor:{type(exc).__name__}"
+        gov_pre = {
+            "mode": "read_only",
+            "reason": reason,
+            "stability": 0.0,
+        }
+
+    try:
+        from .memory_simplex import resolve_controller
+
+        sx = resolve_controller(
+            requested=memory_controller,
+            governance_mode=str(gov_pre.get("mode") or "read_only"),
+            force_baseline=bool(force_evidence_baseline) or fail_closed,
+        )
+        controller = normalize_controller(str(sx.get("controller") or "evidence_baseline"))
+        if fail_closed:
+            controller = "evidence_baseline"
+            reason = reason if reason.startswith("internal") else str(sx.get("reason") or reason)
+        else:
+            reason = str(sx.get("reason") or reason)
+            if force_evidence_baseline:
+                controller = "evidence_baseline"
+                reason = "force_baseline"
+    except Exception as exc:
+        fail_closed = True
+        controller = "evidence_baseline"
+        reason = f"internal_control_failure:simplex:{type(exc).__name__}"
+        sx = {"error": f"{type(exc).__name__}: {exc}"}
+
+    cap = CapabilityIssuer("activation").issue(
+        repo=repo,
+        controller=controller,
+        reason=reason,
+        ttl_s=7200.0,
+    )
+    return {
+        "controller": controller,
+        "fail_closed": fail_closed,
+        "reason": reason,
+        "governor": gov_pre,
+        "simplex": sx if isinstance(sx, dict) else {},
+        "capability": cap,
+        "transfer_to_baseline": controller == "evidence_baseline",
+    }
+
+
+def activate_evidence_baseline(
+    home: Path,
+    store: Any,
+    repo: str,
+    task: str,
+    *,
+    budget: int = 1200,
+    profile: str = "agent",
+    resolution: dict[str, Any],
+    repository: Any,
+    root: Path,
+    config: Any,
+    manifest_current: bool,
+    certificate: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Sterile baseline: resolve already done → Evidence Kernel → audit → return.
+
+    Does NOT index, invent, fuse, train, organism-persist adaptive, connect_pass, etc.
+    """
+    from . import __version__
+    from .capabilities import ExecutionCapability
+    from .evidence_kernel import evidence_kernel_context
+    from .profiles import project_packet
+    from .state_transition import append_controller_audit
+
+    controller = "evidence_baseline"
+    cap: ExecutionCapability = resolution["capability"]
+    gov_pre = resolution.get("governor") or {}
+
+    append_controller_audit(
+        store,
+        repo,
+        "controller_resolved",
+        controller=controller,
+        payload={"reason": resolution.get("reason"), "capability_id": cap.capability_id},
+    )
+    append_controller_audit(
+        store,
+        repo,
+        "manifest_observed",
+        controller=controller,
+        payload={"manifest_current": manifest_current},
+    )
+    cert_status = (certificate or {}).get("status") if certificate else "unknown"
+    append_controller_audit(
+        store,
+        repo,
+        "certificate_observed",
+        controller=controller,
+        payload={"status": cert_status},
+    )
+
+    ek_ctx = evidence_kernel_context(
+        store, repo, task, budget=budget, certificate=certificate if isinstance(certificate, dict) else None
+    )
+    append_controller_audit(
+        store,
+        repo,
+        "evidence_kernel_queried",
+        controller=controller,
+        payload={
+            "n_hits": len(ek_ctx.get("evidence") or []),
+            "receipt": (ek_ctx.get("receipt") or {}).get("receipt_hash"),
+        },
+    )
+
+    blocked = [
+        "index_repository",
+        "learn_environment",
+        "ingest_git",
+        "compile_interlink",
+        "begin_session",
+        "build_organism",
+        "persist_organism_pulse",
+        "append_stream_frame",
+        "record_connect_pass",
+        "spectral_memory_pulse",
+        "soft_bind_fusion",
+        "predict_context",
+        "train_from_outcome",
+        "invent_from_coactivation",
+        "foreign_emerge",
+        "decay_unused_weights",
+    ]
+    exec_receipt = {
+        "requested": resolution.get("simplex", {}).get("requested") or "advanced",
+        "resolved": controller,
+        "fail_closed": bool(resolution.get("fail_closed")),
+        "reason": resolution.get("reason"),
+        "allowed_write_classes": list(cap.allowed_write_classes),
+        "blocked_operations": blocked,
+        "capability_id": cap.capability_id,
+        "sterile_baseline": True,
+    }
+    exec_receipt["receipt_hash"] = hashlib.sha256(
+        json.dumps(exec_receipt, sort_keys=True, default=str).encode()
+    ).hexdigest()
+
+    full_context: dict[str, Any] = {
+        "schema_version": "1.5",
+        "task": task,
+        "repository": {
+            "name": repo,
+            "path": str(root),
+            "manifest_current": manifest_current,
+            "repository_id": str(repository["repository_id"] or ""),
+        },
+        "governor": gov_pre,
+        "governance": gov_pre,
+        "context_budget": budget,
+        "estimated_tokens": ek_ctx.get("estimated_tokens"),
+        "budget_partition": ek_ctx.get("budget_partition"),
+        "evidence": ek_ctx.get("evidence") or [],
+        "structural_neighborhood": ek_ctx.get("structural_neighborhood") or [],
+        "evidence_kernel": ek_ctx,
+        "memory_simplex": {
+            "controller": controller,
+            "budget_scheme": "flat",
+            "transfer_to_baseline": True,
+            "reason": resolution.get("reason"),
+        },
+        "controller_execution": exec_receipt,
+        "capability": cap.to_dict(),
+        "control_error": {"block": False, "immune_action": None, "errors": []},
+        "claim_boundary": (
+            "EVIDENCE_BASELINE sterile activation — Evidence Kernel + audit only."
+        ),
+        "version": __version__,
+    }
+    append_controller_audit(
+        store,
+        repo,
+        "activation_completed",
+        controller=controller,
+        payload={"receipt_hash": exec_receipt["receipt_hash"]},
+    )
+
+    projected = project_packet(full_context, profile)
+    runtime_path = runtime_directory(root, config) / "context_latest.json"
+    runtime_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_path.write_text(json.dumps(full_context, indent=2, default=str) + "\n", encoding="utf-8")
+
+    return {
+        "profile": profile,
+        "context": projected,
+        "controller_execution": exec_receipt,
+        "memory_simplex": full_context["memory_simplex"],
+        "evidence_kernel": ek_ctx,
+        "certificate": certificate,
+        "manifest_current": manifest_current,
+        "sterile_baseline": True,
+        "packet_path": str(runtime_path),
+        "claim_boundary": full_context["claim_boundary"],
+    }
+
+
+def activate_advanced(
+    home: Path,
+    store: Any,
+    governor: Any,
+    repo: str,
+    task: str,
+    *,
+    budget: int,
+    refresh: str,
+    profile: str,
+    prefetch: str,
+    budget_scheme: str,
+    resolution: dict[str, Any],
+    repository: Any,
+    root: Path,
+    config: Any,
+    manifest_current: bool,
+    certificate: dict[str, Any] | None,
+    surprise: dict[str, Any],
+    refresh_result: dict[str, Any] | None,
+    environment: Any,
+    neural: Any,
+) -> dict[str, Any]:
+    """Full adaptive activation under advanced capability."""
+    from . import __version__
+    from .capabilities import ExecutionCapability
+    from .organism import (
+        build_organism,
+        load_prior_pulse,
+        persist_organism_pulse,
+        save_prior_pulse,
+    )
+    from .profiles import project_packet
+    from .state_transition import append_controller_audit
+
+    cap: ExecutionCapability = resolution["capability"]
+    controller = "advanced"
+    scheme = budget_scheme or "fib"
+    try:
+        from .memory_simplex import budget_scheme_for_controller
+
+        scheme = budget_scheme_for_controller(controller, default=scheme)
+    except Exception:
+        pass
+
+    append_controller_audit(
+        store,
+        repo,
+        "controller_resolved",
+        controller=controller,
+        payload={"capability_id": cap.capability_id, "reason": resolution.get("reason")},
+    )
+
+    context = build_context(
+        home,
+        store,
+        governor,
+        repo,
+        task,
+        budget,
+        manifest_current=manifest_current,
+        certificate=certificate,
+        budget_scheme=scheme,
+        memory_controller=controller,
+    )
+    context["memory_simplex"] = {
+        **(resolution.get("simplex") or {}),
+        "controller": controller,
+        "budget_scheme": scheme,
+    }
+    context["capability"] = cap.to_dict()
+    if isinstance(context.get("efficiency"), dict):
+        context["efficiency"]["surprise"] = surprise
+
+    conf = float(
+        ((context.get("governance") or {}).get("components") or {}).get(
+            "retrieval_confidence"
+        )
+        or 0.5
+    )
+    try:
+        from .math_net.spectral_memory import spectral_memory_pulse
+
+        spectral_memory = spectral_memory_pulse(
+            store,
+            repo,
+            retrieval_confidence=conf,
+            certificate_status=str((certificate or {}).get("status") or "unknown"),
+            manifest_current=manifest_current,
+            budget_tokens=budget,
+            auto_promote=True,
+            capability=cap,
+        )
+        context["spectral_memory"] = spectral_memory
+        context["u"] = (spectral_memory.get("u") or {}).get("u")
+    except TypeError:
+        # older signature without capability
+        try:
+            from .math_net.spectral_memory import spectral_memory_pulse
+
+            spectral_memory = spectral_memory_pulse(
+                store,
+                repo,
+                retrieval_confidence=conf,
+                certificate_status=str((certificate or {}).get("status") or "unknown"),
+                manifest_current=manifest_current,
+                budget_tokens=budget,
+                auto_promote=True,
+            )
+            context["spectral_memory"] = spectral_memory
+        except Exception as exc:
+            context["spectral_memory"] = {"error": f"{type(exc).__name__}: {exc}"}
+    except Exception as exc:
+        context["spectral_memory"] = {"error": f"{type(exc).__name__}: {exc}"}
+
+    try:
+        from .coherence import measure_coherence, soft_bind_fusion
+
+        context["fusion_bind"] = soft_bind_fusion(
+            home, store, governor, repo, task=task, capability=cap
+        )
+    except TypeError:
+        try:
+            from .coherence import measure_coherence, soft_bind_fusion
+
+            context["fusion_bind"] = soft_bind_fusion(home, store, governor, repo, task=task)
+            conf_for_c = conf
+            if context.get("u") is not None:
+                conf_for_c = max(0.0, min(1.0, 1.0 - float(context.get("u") or 0.5)))
+            context["coherence"] = measure_coherence(
+                store, repo, governor=governor, home=home, retrieval_confidence=conf_for_c
+            )
+        except Exception as exc:
+            context["coherence"] = {"error": f"{type(exc).__name__}: {exc}"}
+    except Exception as exc:
+        context["fusion_bind"] = {"error": f"{type(exc).__name__}: {exc}"}
+    try:
+        from .coherence import measure_coherence
+
+        conf_for_c = conf
+        if context.get("u") is not None:
+            conf_for_c = max(0.0, min(1.0, 1.0 - float(context.get("u") or 0.5)))
+        if "coherence" not in context:
+            context["coherence"] = measure_coherence(
+                store, repo, governor=governor, home=home, retrieval_confidence=conf_for_c
+            )
+    except Exception as exc:
+        context.setdefault("coherence", {"error": f"{type(exc).__name__}: {exc}"})
+
+    session = begin_session(home, store, repo, task)
+    prior = load_prior_pulse(store, repo)
+    organism = build_organism(
+        repo=repo,
+        repository_id=str(repository["repository_id"] or ""),
+        task=task,
+        session=session,
+        context=context,
+        surprise=surprise,
+        prior_pulse=prior,
+        cortex_version=__version__,
+        phase="systole",
+    )
+    context["organism"] = organism
+    to_hash = {k: v for k, v in context.items() if k not in {"packet_path", "packet_hash"}}
+    context["packet_hash"] = hashlib.sha256(
+        json.dumps(to_hash, sort_keys=True, separators=(",", ":"), default=str).encode()
+    ).hexdigest()
+    persist_organism_pulse(store, repo, organism, session_id=session.get("session_id"))
+    save_prior_pulse(store, repo, organism["pulse"])
+
+    try:
+        from .stream import append_stream_frame, stream_context_for_packet, stream_status
+
+        stream_surface = stream_context_for_packet(
+            store,
+            repo,
+            task=task,
+            session_id=session.get("session_id"),
+            control=context.get("control_error") or {},
+            governor=context.get("governor") or {},
+            aria=context.get("aria_materialization") or {},
+        )
+        append_stream_frame(
+            store,
+            repo,
+            kind="activate" if refresh != "never" else "breathe",
+            task=task,
+            session_id=session.get("session_id"),
+            surface="activate" if refresh != "never" else "breathe",
+            payload={
+                "activation": (
+                    "ready" if (certificate or {}).get("status") == "verified" else "degraded"
+                ),
+                "budget": budget,
+                "profile": profile,
+            },
+            glyph_line=stream_surface.get("glyph_line"),
+        )
+        status = stream_status(store, repo)
+        context["stream"] = {
+            **stream_surface,
+            "frame_count": status.get("frame_count"),
+            "chain_tip": status.get("chain_tip"),
+            "recent_frames": status.get("recent_frames"),
+        }
+    except Exception as exc:
+        context["stream"] = {"glyph": "〰", "alive": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    prediction = None
+    gov_mode = str((context.get("governor") or {}).get("mode") or "normal")
+    do_prefetch = prefetch == "aggressive" or (
+        prefetch == "auto" and gov_mode != "read_only"
+    )
+    if do_prefetch:
+        try:
+            from .predict import predict_context
+
+            prediction = predict_context(
+                store,
+                repo,
+                task,
+                budget=min(200, max(80, budget // 6)),
+                session_id=session.get("session_id"),
+                governor_mode=gov_mode,
+            )
+            context["prediction"] = {
+                "trace_id": prediction.get("trace_id"),
+                "predicted_paths": prediction.get("predicted_paths"),
+            }
+        except Exception:
+            prediction = None
+
+    from .connect_pass import record_connect_pass
+
+    connect = record_connect_pass(
+        store,
+        home,
+        repo=repo,
+        task=task,
+        session_id=session.get("session_id"),
+        surface="breathe" if refresh == "never" else "activate",
+        context=context,
+        surprise=surprise,
+        organism=organism,
+        activation="ready" if (certificate or {}).get("status") == "verified" else "read_only",
+        block=bool((context.get("control_error") or {}).get("block")),
+        auto_distill=True,
+    )
+    context["connect_pass"] = {
+        "pass_id": connect.get("pass_id"),
+        "pass_count": connect.get("pass_count"),
+    }
+
+    exec_receipt = {
+        "requested": "advanced",
+        "resolved": controller,
+        "fail_closed": False,
+        "reason": resolution.get("reason"),
+        "allowed_write_classes": list(cap.allowed_write_classes),
+        "blocked_operations": [],
+        "capability_id": cap.capability_id,
+        "sterile_baseline": False,
+    }
+    exec_receipt["receipt_hash"] = hashlib.sha256(
+        json.dumps(exec_receipt, sort_keys=True, default=str).encode()
+    ).hexdigest()
+    context["controller_execution"] = exec_receipt
+
+    full_context = context
+    projected = project_packet(full_context, profile)
+    runtime_path = runtime_directory(root, config) / "context_latest.json"
+    runtime_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_path.write_text(json.dumps(full_context, indent=2, default=str) + "\n", encoding="utf-8")
+
+    return {
+        "profile": profile,
+        "context": projected,
+        "controller_execution": exec_receipt,
+        "memory_simplex": full_context.get("memory_simplex"),
+        "certificate": certificate,
+        "manifest_current": manifest_current,
+        "sterile_baseline": False,
+        "session": session,
+        "organism": organism,
+        "packet_path": str(runtime_path),
+        "neural": neural,
+        "environment": environment,
+        "refresh": refresh_result,
+        "claim_boundary": "Advanced activation under capability-scoped adaptive writes.",
+    }
 
 
 def activate_repository(
@@ -37,8 +555,38 @@ def activate_repository(
     config = load_repo_config(root)
     observed_manifest = current_manifest_hash(root, config)
     manifest_current = observed_manifest == (repository["manifest_hash"] or "")
-    refresh_result: dict[str, Any] | None = None
 
+    # Phase 1: resolve controller BEFORE any adaptive side effect
+    resolution = resolve_activation_controller(
+        governor,
+        repo,
+        memory_controller=memory_controller,
+        force_evidence_baseline=force_evidence_baseline,
+        manifest_current=manifest_current,
+    )
+    controller = resolution["controller"]
+
+    # Phase 2a: sterile baseline — early return (no index/organism/connect)
+    if controller == "evidence_baseline":
+        certificate = verify_repository(
+            home, store, repo, config, write_certificate=False
+        )
+        return activate_evidence_baseline(
+            home,
+            store,
+            repo,
+            task,
+            budget=budget,
+            profile=profile,
+            resolution=resolution,
+            repository=repository,
+            root=root,
+            config=config,
+            manifest_current=manifest_current,
+            certificate=certificate,
+        )
+
+    # Phase 2b: advanced — refresh/index allowed under capability
     surprise: dict[str, Any] = {
         "schema_version": "cortex-surprise/1.0",
         "glyph": "Δ",
@@ -49,6 +597,7 @@ def activate_repository(
         "surprise_ratio": 0.0,
         "claim_boundary": "Surprise is an incremental work proxy, not biological prediction error.",
     }
+    refresh_result: dict[str, Any] | None = None
     if refresh == "always" or (refresh == "auto" and not manifest_current):
         refresh_result = index_repository(store, repo, config, force=False)
         reindexed = int(refresh_result.get("indexed_files_this_run") or 0)
@@ -99,543 +648,25 @@ def activate_repository(
             neural = {"available": False, "disabled": True}
         certificate = verify_repository(home, store, repo, config, write_certificate=False)
 
-    # v6.25 fail-closed controller resolution → EVIDENCE_BASELINE on any control fault
-    from .controller_scope import (
-        ADAPTIVE_WRITE,
-        allowed_write_classes,
-        check_adaptive_op,
-        normalize_controller,
-        scope_receipt,
-    )
-
-    blocked_ops: list[str] = []
-    fail_closed = False
-    resolve_reason = "advanced_allowed"
-    gov_pre: dict[str, Any] = {}
-    try:
-        gov_pre = governor.evaluate(
-            repo, retrieval_confidence=0.5, manifest_current=manifest_current
-        )
-    except Exception as exc:
-        gov_pre = {
-            "mode": "read_only",
-            "reason": f"governor_eval_failed:{type(exc).__name__}",
-            "stability": 0.0,
-        }
-        fail_closed = True
-        resolve_reason = "internal_control_failure:governor"
-
-    sx: dict[str, Any] = {}
-    try:
-        from .memory_simplex import (
-            budget_scheme_for_controller,
-            is_evidence_baseline,
-            resolve_controller,
-        )
-
-        sx = resolve_controller(
-            requested=memory_controller,
-            governance_mode=str(gov_pre.get("mode") or "read_only"),
-            force_baseline=bool(force_evidence_baseline) or fail_closed,
-        )
-        active_controller = str(sx.get("controller") or "evidence_baseline")
-        if fail_closed:
-            active_controller = "evidence_baseline"
-            sx = {
-                **sx,
-                "controller": "evidence_baseline",
-                "transfer_to_baseline": True,
-                "reason": resolve_reason,
-            }
-        scheme = budget_scheme_for_controller(
-            active_controller, default=budget_scheme or "fib"
-        )
-        if not fail_closed:
-            resolve_reason = str(sx.get("reason") or resolve_reason)
-    except Exception as exc:
-        fail_closed = True
-        resolve_reason = f"internal_control_failure:simplex:{type(exc).__name__}"
-        active_controller = "evidence_baseline"
-        scheme = "flat"
-        sx = {
-            "controller": "evidence_baseline",
-            "transfer_to_baseline": True,
-            "reason": resolve_reason,
-            "error": f"{type(exc).__name__}: {exc}",
-        }
-
-    active_controller = normalize_controller(active_controller)
-    baseline_mode = active_controller == "evidence_baseline"
-
-    # Context: Evidence Kernel path when baseline; else advanced build_context
-    if baseline_mode:
-        from .evidence_kernel import evidence_kernel_context
-
-        ek_ctx = evidence_kernel_context(
-            store,
-            repo,
-            task,
-            budget=budget,
-            certificate=certificate if isinstance(certificate, dict) else None,
-        )
-        context = {
-            "schema_version": "1.5",
-            "task": task,
-            "repository": {
-                "name": repo,
-                "path": str(root),
-                "manifest_current": manifest_current,
-            },
-            "governor": gov_pre,
-            "governance": gov_pre,
-            "context_budget": budget,
-            "estimated_tokens": ek_ctx.get("estimated_tokens"),
-            "budget_partition": ek_ctx.get("budget_partition"),
-            "evidence": ek_ctx.get("evidence") or [],
-            "structural_neighborhood": ek_ctx.get("structural_neighborhood") or [],
-            "evidence_kernel": ek_ctx,
-            "memory_simplex": {
-                **sx,
-                "controller": "evidence_baseline",
-                "budget_scheme": "flat",
-            },
-            "control_error": {
-                "block": False,
-                "immune_action": None,
-                "errors": [],
-            },
-            "claim_boundary": (
-                "EVIDENCE_BASELINE packet via Evidence Kernel — no adaptive machinery."
-            ),
-        }
-        scheme = "flat"
-    else:
-        context = build_context(
-            home,
-            store,
-            governor,
-            repo,
-            task,
-            budget,
-            manifest_current=manifest_current,
-            certificate=certificate,
-            budget_scheme=scheme,
-            memory_controller=active_controller,
-        )
-        if isinstance(context, dict):
-            context["memory_simplex"] = {
-                **(sx if isinstance(sx, dict) else {}),
-                "controller": active_controller,
-                "budget_scheme": scheme,
-            }
-    # Attach surprise to efficiency for agent-visible economics.
-    if isinstance(context.get("efficiency"), dict):
-        context["efficiency"]["surprise"] = surprise
-    elif baseline_mode:
-        context["efficiency"] = {"surprise": surprise}
-
-    conf = float(
-        ((context.get("governance") or {}).get("components") or {}).get(
-            "retrieval_confidence"
-        )
-        or ((context.get("governor") or {}).get("components") or {}).get(
-            "retrieval_confidence"
-        )
-        or 0.5
-    )
-
-    # Adaptive ops — skip under baseline with explicit receipts (never silent)
-    spectral_memory: dict[str, Any] | None = None
-    fusion_bind: dict[str, Any] | None = None
-    if baseline_mode:
-        for op in (
-            "spectral_promote",
-            "fusion_open",
-            "prefetch_write",
-            "auto_distill",
-            "structure_invent",
-            "foreign_emerge",
-            "ranker_train",
-        ):
-            d = check_adaptive_op(active_controller, op)
-            if not d.allowed:
-                blocked_ops.append(op)
-        spectral_memory = {
-            "skipped": True,
-            "reason": "evidence_baseline_forbids_adaptive",
-            "operation": "spectral_memory_pulse",
-        }
-        context["spectral_memory"] = spectral_memory
-        fusion_bind = {
-            "skipped": True,
-            "reason": "evidence_baseline_forbids_adaptive",
-            "operation": "soft_bind_fusion",
-        }
-        context["fusion_bind"] = fusion_bind
-        # Coherence measure is audit telemetry — allowed
-        try:
-            from .coherence import measure_coherence
-
-            context["coherence"] = measure_coherence(
-                store,
-                repo,
-                governor=governor,
-                home=home,
-                retrieval_confidence=conf,
-                persist=False,
-            )
-        except Exception as exc:
-            context["coherence"] = {
-                "error": f"{type(exc).__name__}: {exc}",
-                "skipped_persist": True,
-            }
-    else:
-        try:
-            from .math_net.spectral_memory import spectral_memory_pulse
-
-            cert_st = str((certificate or {}).get("status") or "unknown")
-            spectral_memory = spectral_memory_pulse(
-                store,
-                repo,
-                retrieval_confidence=conf,
-                certificate_status=cert_st,
-                manifest_current=manifest_current,
-                budget_tokens=budget,
-                auto_promote=True,
-            )
-            context["spectral_memory"] = spectral_memory
-            context["u"] = (spectral_memory.get("u") or {}).get("u")
-            if isinstance(context.get("governance"), dict) and spectral_memory.get("u"):
-                context["governance"] = {
-                    **context["governance"],
-                    "uncertainty": spectral_memory["u"],
-                }
-            elif isinstance(context.get("governor"), dict) and spectral_memory.get("u"):
-                context["governor"] = {
-                    **context["governor"],
-                    "uncertainty": spectral_memory["u"],
-                }
-        except Exception as exc:
-            spectral_memory = {
-                "error": f"{type(exc).__name__}: {exc}",
-                "end_to_end": False,
-            }
-            context["spectral_memory"] = spectral_memory
-        try:
-            from .coherence import measure_coherence, soft_bind_fusion
-
-            fusion_bind = soft_bind_fusion(home, store, governor, repo, task=task)
-            context["fusion_bind"] = fusion_bind
-            conf_for_c = conf
-            if context.get("u") is not None:
-                conf_for_c = max(0.0, min(1.0, 1.0 - float(context.get("u") or 0.5)))
-            context["coherence"] = measure_coherence(
-                store,
-                repo,
-                governor=governor,
-                home=home,
-                retrieval_confidence=conf_for_c,
-            )
-        except Exception as exc:
-            context["coherence"] = {"error": f"{type(exc).__name__}: {exc}"}
-            fusion_bind = None
-
-    # Controller execution receipt (v6.25)
-    _exec = {
-        "requested": memory_controller or "advanced",
-        "resolved": active_controller,
-        "fail_closed": bool(
-            fail_closed
-            or (
-                baseline_mode
-                and str(resolve_reason).startswith("internal_control_failure")
-            )
-        ),
-        "reason": resolve_reason,
-        "allowed_write_classes": allowed_write_classes(active_controller),
-        "blocked_operations": blocked_ops,
-        "claim_boundary": (
-            "Controller execution receipt — fail-closed to EVIDENCE_BASELINE on control faults."
-        ),
-    }
-    _exec["receipt_hash"] = hashlib.sha256(
-        json.dumps(_exec, sort_keys=True, default=str).encode()
-    ).hexdigest()
-    context["controller_execution"] = _exec
-    context["controller_scope"] = scope_receipt(active_controller, blocked_ops)
-    session = begin_session(home, store, repo, task)
-    from . import __version__
-    from .organism import (
-        build_organism,
-        load_prior_pulse,
-        persist_organism_pulse,
-        save_prior_pulse,
-    )
-    from .profiles import project_packet
-
-    prior = load_prior_pulse(store, repo)
-    organism = build_organism(
-        repo=repo,
-        repository_id=str(repository["repository_id"] or ""),
-        task=task,
-        session=session,
-        context=context,
-        surprise=surprise,
-        prior_pulse=prior,
-        cortex_version=__version__,
-        phase="systole",
-    )
-    context["organism"] = organism
-    # Re-hash packet including organism bond.
-    to_hash = {k: v for k, v in context.items() if k not in {"packet_path", "packet_hash"}}
-    context["packet_hash"] = hashlib.sha256(
-        json.dumps(to_hash, sort_keys=True, separators=(",", ":"), default=str).encode(
-            "utf-8"
-        )
-    ).hexdigest()
-    persist_organism_pulse(store, repo, organism, session_id=session.get("session_id"))
-    save_prior_pulse(store, repo, organism["pulse"])
-
-    # Consciousness stream 〰: rebind durable episodic thread; session bond is temporary.
-    try:
-        from .stream import append_stream_frame, stream_context_for_packet, stream_status
-
-        stream_surface = stream_context_for_packet(
-            store,
-            repo,
-            task=task,
-            session_id=session.get("session_id"),
-            control=context.get("control_error") or {},
-            governor=context.get("governor") or {},
-            aria=context.get("aria_materialization") or {},
-        )
-        append_stream_frame(
-            store,
-            repo,
-            kind="activate" if refresh != "never" else "breathe",
-            task=task,
-            session_id=session.get("session_id"),
-            surface="activate" if refresh != "never" else "breathe",
-            payload={
-                "activation": (
-                    "ready" if certificate["status"] == "verified" else "degraded"
-                ),
-                "budget": budget,
-                "profile": profile,
-            },
-            glyph_line=stream_surface.get("glyph_line"),
-        )
-        status = stream_status(store, repo)
-        context["stream"] = {
-            **stream_surface,
-            "frame_count": status.get("frame_count"),
-            "chain_tip": status.get("chain_tip"),
-            "recent_frames": status.get("recent_frames"),
-        }
-        organism["stream"] = {
-            "glyph": "〰",
-            "stream_id": status.get("stream_id"),
-            "frame_count": status.get("frame_count"),
-            "alive": status.get("alive"),
-            "continuity": stream_surface.get("continuity"),
-        }
-    except Exception as exc:
-        context["stream"] = {
-            "glyph": "〰",
-            "alive": False,
-            "error": f"{type(exc).__name__}: {exc}",
-            "claim_boundary": "Stream optional; activation still valid without it.",
-        }
-
-    # Prefetch (v5): proactive evidence proposal — never ARIA surprise-wake.
-    prediction: dict[str, Any] | None = None
-    gov_mode = str((context.get("governor") or {}).get("mode") or "normal")
-    do_prefetch = (
-        not baseline_mode
-        and (
-            prefetch == "aggressive"
-            or (prefetch == "auto" and gov_mode != "read_only")
-        )
-    )
-    if baseline_mode:
-        context["prediction"] = {
-            "skipped": True,
-            "reason": "evidence_baseline_forbids_prefetch_write",
-        }
-    if do_prefetch:
-        try:
-            from .predict import predict_context
-
-            pref_budget = min(200, max(80, budget // 6))
-            if prefetch == "aggressive":
-                pref_budget = min(400, budget // 3)
-            prediction = predict_context(
-                store,
-                repo,
-                task,
-                budget=pref_budget,
-                session_id=session.get("session_id"),
-                governor_mode=gov_mode,
-            )
-            context["prediction"] = {
-                "trace_id": prediction.get("trace_id"),
-                "predicted_paths": prediction.get("predicted_paths"),
-                "scores": prediction.get("scores"),
-            }
-        except Exception:
-            prediction = None
-
-    # Connect pass: gather multi-surface metrics, expand metric graph, distill.
-    from .connect_pass import record_connect_pass
-
-    # Close prefetch→precision loop when prediction exists
-    if prediction and prediction.get("trace_id"):
-        try:
-            from .predict import record_prediction_outcome
-
-            used = [
-                str(e.get("path") or "")
-                for e in (context.get("evidence") or [])
-                if e.get("path")
-            ]
-            pred_set = set(prediction.get("predicted_paths") or [])
-            # Mark prefetch hits on evidence metadata for ranker features
-            for item in context.get("evidence") or []:
-                if isinstance(item, dict) and item.get("path") in pred_set:
-                    meta = item.get("metadata") or {}
-                    meta = {**meta, "prefetch_hit": True}
-                    item["metadata"] = meta
-            record_prediction_outcome(
-                store, str(prediction["trace_id"]), used
-            )
-        except Exception:
-            pass
-
-    connect = record_connect_pass(
-        store,
+    return activate_advanced(
         home,
-        repo=repo,
-        task=task,
-        session_id=session.get("session_id"),
-        surface="breathe" if refresh == "never" else "activate",
-        context=context,
+        store,
+        governor,
+        repo,
+        task,
+        budget=budget,
+        refresh=refresh,
+        profile=profile,
+        prefetch=prefetch,
+        budget_scheme=budget_scheme,
+        resolution=resolution,
+        repository=repository,
+        root=root,
+        config=config,
+        manifest_current=manifest_current,
+        certificate=certificate,
         surprise=surprise,
-        organism=organism,
-        activation="ready" if certificate["status"] == "verified" else "read_only",
-        block=bool((context.get("control_error") or {}).get("block")),
-        auto_distill=True,
+        refresh_result=refresh_result,
+        environment=environment,
+        neural=neural,
     )
-    metrics_in = connect.get("metrics") or {}
-    context["connect_pass"] = {
-        "pass_id": connect.get("pass_id"),
-        "pass_count": connect.get("pass_count"),
-        "metric_graph": connect.get("metric_graph"),
-        "distilled_count": len(connect.get("distilled") or []),
-        "causal": connect.get("causal"),
-        "decay": connect.get("decay"),
-        "intel_pulse": connect.get("intel_pulse"),
-        "spectral": connect.get("spectral"),
-        # Pack interconnection on the connect pulse (enter→connect)
-        "pack_top_domain": metrics_in.get("pack_top_domain")
-        or (context.get("packs") or {}).get("top_domain"),
-        "pack_expand": metrics_in.get("pack_expand")
-        if "pack_expand" in metrics_in
-        else (context.get("packs") or {}).get("expand"),
-        "pack_evidence_paths": metrics_in.get("pack_evidence_paths"),
-    }
-    # Re-resonate organism nervous mesh with intel pulse (same frequency)
-    if isinstance(organism.get("body"), dict):
-        nervous = organism["body"].setdefault("nervous", {})
-        mesh = nervous.setdefault("mesh", {})
-        ip = connect.get("intel_pulse") or {}
-        mesh["connect_pass_count"] = connect.get("pass_count")
-        mesh["intel_beat"] = ip.get("beat")
-        mesh["intel_intensity"] = (ip.get("resonance") or {}).get("intensity")
-        mesh["intel_brightness"] = (ip.get("resonance") or {}).get("brightness")
-        context["organism"] = organism
-
-    full_context = context
-    context = project_packet(full_context, profile)
-    runtime_path = runtime_directory(root, config) / "context_latest.json"
-    runtime_path.parent.mkdir(parents=True, exist_ok=True)
-    runtime_path.write_text(json.dumps(full_context, indent=2) + "\n", encoding="utf-8")
-
-    control = full_context.get("control_error") or {}
-    identity_report: dict[str, Any] | None = None
-    try:
-        from .identity import continuity_check
-
-        identity_report = continuity_check(store, repo=repo)
-    except Exception:
-        identity_report = None
-    # Envelope parity (v6.8): glyph_state + stream always on activate JSON root.
-    glyph_state = full_context.get("glyph_state") or context.get("glyph_state")
-    stream_env = full_context.get("stream") or context.get("stream")
-    if isinstance(stream_env, dict):
-        stream_env = {
-            "glyph": stream_env.get("glyph") or "〰",
-            "stream_id": stream_env.get("stream_id"),
-            "alive": stream_env.get("alive"),
-            "frame_count": stream_env.get("frame_count"),
-            "last_task": stream_env.get("last_task"),
-            "glyph_line": stream_env.get("glyph_line"),
-            "continuity": stream_env.get("continuity"),
-            "recent_frames": (stream_env.get("recent_frames") or [])[-4:],
-        }
-    aria_language: dict[str, Any] | None = None
-    try:
-        from .glyphs.canon import phrasebook, speak_line
-
-        g_line = (
-            (glyph_state or {}).get("line") if isinstance(glyph_state, dict) else None
-        )
-        aria_language = {
-            "medium": "glyph_canon",
-            "glyph": "◈",
-            "line": g_line,
-            "spoken": speak_line(g_line or "") if g_line else [],
-            "phrasebook": phrasebook(),
-            "automatic_execution": False,
-            "claim_boundary": (
-                "ARIA language here is reusable glyph phrases only; never opcodes "
-                "or host mutation authority."
-            ),
-        }
-    except Exception:
-        aria_language = None
-    return {
-        "activation": "ready" if certificate["status"] == "verified" else "read_only",
-        "repo": repo,
-        "task": task,
-        "profile": profile,
-        "bootstrap_status": certificate["status"],
-        "manifest_current": manifest_current,
-        "refresh": refresh_result,
-        "surprise": surprise,
-        "read_first": True,
-        "block": bool(control.get("block")),
-        "immune_action": control.get("immune_action"),
-        "control_error": control,
-        "identity": identity_report,
-        "glyph_state": glyph_state,
-        "glyph_line": (
-            (glyph_state or {}).get("line") if isinstance(glyph_state, dict) else None
-        ),
-        "stream": stream_env,
-        "spectral_memory": full_context.get("spectral_memory") or spectral_memory,
-        "u": full_context.get("u"),
-        "coherence": full_context.get("coherence"),
-        "emergence_log": full_context.get("emergence_log"),
-        "fusion_bind": full_context.get("fusion_bind") or fusion_bind,
-        "aria_language": aria_language,
-        "packs": full_context.get("packs") or context.get("packs"),
-        "connect_pass": connect,
-        "prediction": prediction,
-        "organism": organism,
-        "environment": environment,
-        "neural_interlink": neural,
-        "session": session,
-        "context": context,
-        "context_full": full_context if profile != "debug" else None,
-        "runtime_packet": str(runtime_path),
-    }

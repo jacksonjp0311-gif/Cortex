@@ -543,19 +543,24 @@ class Store:
             self.db.commit()
 
     def _ensure_v625_tables(self) -> None:
-        """Constitutional Immunity tables (lineage, quarantine, wounds, repairs)."""
+        """Constitutional Immunity + Seal tables."""
         try:
             from .lineage import ensure_lineage_tables
             from .quarantine import ensure_quarantine_tables
             from .unlearning import ensure_unlearning_tables
             from .immunity import ensure_immunity_tables
+            from .state_transition import ensure_transition_tables
+            from .ranker.model import ensure_training_events
+            from .witness import ensure_witness_tables
 
             ensure_lineage_tables(self)
             ensure_quarantine_tables(self)
             ensure_unlearning_tables(self)
             ensure_immunity_tables(self)
+            ensure_transition_tables(self)
+            ensure_training_events(self)
+            ensure_witness_tables(self)
         except Exception:
-            # Fail open on migration import only — tables created on first use
             pass
 
     def close(self) -> None:

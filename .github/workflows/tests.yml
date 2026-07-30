@@ -21,6 +21,35 @@ jobs:
         run: python -m compileall -q cortex thalamus tests
       - name: Test
         run: python -m unittest discover -s tests -v
+      - name: Pytest constitutional seal gates
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: >
+          python -m pytest
+          tests/test_evidence_kernel.py
+          tests/test_controller_firewall.py
+          tests/test_activation_fail_closed.py
+          tests/test_lineage_graph.py
+          tests/test_immunity_scan.py
+          tests/test_quarantine.py
+          tests/test_causal_unlearning.py
+          tests/test_ranker_rebuild.py
+          tests/test_independent_witness.py
+          tests/test_repair_readmission.py
+          tests/test_promotion_independence.py
+          tests/test_memory_simplex.py
+          -q --tb=line
+      - name: Constitutional seal release receipt
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v6251.py
+      - name: Upload release receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: constitutional-seal-receipt-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: work/release_receipt_v6251.json
+          if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
       # Benchmark scripts may be invoked as files (sys.path[0]=benchmarks/).

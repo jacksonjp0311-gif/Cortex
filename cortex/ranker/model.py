@@ -455,6 +455,62 @@ def feature_vectors_from_activation(activation: dict[str, Any]) -> list[list[flo
     return vectors
 
 
+TRAINING_EVENTS_DDL = """
+CREATE TABLE IF NOT EXISTS ranker_training_events(
+    event_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    outcome_id TEXT NOT NULL,
+    activation_id TEXT NOT NULL,
+    feature_vector_json TEXT NOT NULL,
+    label REAL NOT NULL,
+    reward REAL NOT NULL,
+    verification_type TEXT NOT NULL,
+    controller TEXT,
+    governance_mode TEXT,
+    origin_artifact_ids_json TEXT NOT NULL DEFAULT '[]',
+    created_at REAL NOT NULL,
+    excluded INTEGER NOT NULL DEFAULT 0,
+    exclusion_reason TEXT,
+    receipt_hash TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rte_repo ON ranker_training_events(repo, created_at);
+"""
+
+
+def ensure_training_events(store: Any) -> None:
+    store.db.executescript(TRAINING_EVENTS_DDL)
+    store.db.commit()
+
+
+def _apply_sgd_step(
+    weights: list[float],
+    bias: float,
+    feats: list[float],
+    label: float,
+    *,
+    base_lr: float,
+    fisher_map: dict[str, float],
+    names: list[str],
+) -> tuple[list[float], float]:
+    pred = score_features({"weights": weights, "bias": bias}, feats)
+    y = 1.0 if label > 0 else 0.0
+    err = pred - y
+    for i in range(min(len(weights), len(feats))):
+        fname = names[i] if i < len(names) else str(i)
+        i_ii = float(fisher_map.get(fname, 0.0))
+        lr_i = base_lr / (1.0 + i_ii)
+        weights[i] = _clip(weights[i] - lr_i * err * feats[i], -3.0, 3.0)
+    bias = _clip(bias - base_lr * err, -2.0, 2.0)
+    for i in range(len(weights)):
+        weights[i] *= 0.999
+    return weights, bias
+
+
+def model_hash(weights: list[float], bias: float) -> str:
+    material = json.dumps({"w": [round(x, 8) for x in weights], "b": round(bias, 8)}, sort_keys=True)
+    return sha256(material.encode()).hexdigest()
+
+
 def train_from_outcome(
     store: Any,
     repo: str,
@@ -467,24 +523,41 @@ def train_from_outcome(
     governance_mode: str = "read_only",
     feature_vectors: list[list[float]] | None = None,
     memory_controller: str = "advanced",
+    capability: Any = None,
+    origin_artifact_ids: list[str] | None = None,
+    conn: Any = None,
+    commit: bool = True,
 ) -> dict[str, Any]:
-    """Online SGD update. Only verified/helpful with non-read_only may train."""
+    """Online SGD update. Requires ExecutionCapability for ranker_train (v6.25.1)."""
 
     if governance_mode == "read_only":
         return {"trained": False, "reason": "governor_read_only"}
-    # v6.25 controller firewall
+    # Capability required — strings alone do not authorize
     try:
-        from ..controller_scope import check_adaptive_op
+        from ..capabilities import issue_for_controller, validate_capability
 
-        d = check_adaptive_op(memory_controller, "ranker_train")
+        cap = capability
+        if cap is None:
+            # development compat: issue ephemeral advanced only if controller advanced
+            if memory_controller == "evidence_baseline":
+                return {
+                    "trained": False,
+                    "reason": "missing_capability_or_baseline",
+                    "controller": "evidence_baseline",
+                }
+            cap = issue_for_controller(repo, "advanced", reason="train_from_outcome_compat")
+        d = validate_capability(cap, repo=repo, operation="ranker_train")
         if not d.allowed:
             return {
                 "trained": False,
                 "reason": d.reason,
                 "controller": d.controller,
             }
-    except Exception:
-        pass
+    except PermissionError as exc:
+        return {"trained": False, "reason": str(exc)}
+    except Exception as exc:
+        return {"trained": False, "reason": f"capability_error:{type(exc).__name__}:{exc}"}
+
     if status not in {"verified", "helpful", "failed", "unsafe", "irrelevant"}:
         return {"trained": False, "reason": "status_not_trainable"}
     if status == "unsafe":
@@ -497,12 +570,12 @@ def train_from_outcome(
     if frozen.get("frozen"):
         return {"trained": False, "reason": "ranker_frozen", "frozen": True}
 
+    ensure_training_events(store)
     model = ensure_ranker(store, repo)
     label = 1.0 if status in {"verified", "helpful"} else -1.0
     if status == "irrelevant":
         label = -0.5
     base_lr = 0.05 if governance_mode == "normal" else 0.02
-    # Fisher-scaled LR (v6.20): step ∝ 1/(1+I_ii) when examples exist.
     fisher = ranker_fisher_diag(store, repo)
     fisher_map = {
         str(r["feature"]): float(r["I_ii"])
@@ -514,24 +587,19 @@ def train_from_outcome(
     weights = list(model["weights"])
     bias = float(model["bias"])
     for feats in vectors:
-        pred = score_features({"weights": weights, "bias": bias}, feats)
-        # logistic loss gradient toward label mapped 0/1
-        y = 1.0 if label > 0 else 0.0
-        err = pred - y
-        for i in range(min(len(weights), len(feats))):
-            fname = names[i] if i < len(names) else str(i)
-            i_ii = float(fisher_map.get(fname, 0.0))
-            lr_i = base_lr / (1.0 + i_ii)
-            weights[i] = _clip(weights[i] - lr_i * err * feats[i], -3.0, 3.0)
-        bias = _clip(bias - base_lr * err, -2.0, 2.0)
-
-    # L2 light decay
-    for i in range(len(weights)):
-        weights[i] *= 0.999
+        weights, bias = _apply_sgd_step(
+            weights, bias, list(feats), label, base_lr=base_lr, fisher_map=fisher_map, names=names
+        )
 
     now = time.time()
     example_id = "rex_" + sha256(f"{outcome_id}|{activation_id}".encode()).hexdigest()[:20]
-    store.db.execute(
+    event_id = "rte_" + sha256(f"{repo}|{outcome_id}|{activation_id}|{now}".encode()).hexdigest()[:20]
+    feat0 = vectors[0] if vectors else []
+    receipt = sha256(
+        json.dumps({"event_id": event_id, "label": label, "feats": feat0}, sort_keys=True).encode()
+    ).hexdigest()
+    db = conn or store.db
+    db.execute(
         """
         INSERT OR REPLACE INTO ranker_examples(
           example_id, repo, outcome_id, activation_id, feature_vector_json,
@@ -543,13 +611,37 @@ def train_from_outcome(
             repo,
             outcome_id,
             activation_id,
-            json.dumps(vectors[0] if vectors else []),
+            json.dumps(feat0),
             label,
             verification_type,
             now,
         ),
     )
-    store.db.execute(
+    db.execute(
+        """
+        INSERT INTO ranker_training_events(
+          event_id, repo, outcome_id, activation_id, feature_vector_json,
+          label, reward, verification_type, controller, governance_mode,
+          origin_artifact_ids_json, created_at, excluded, receipt_hash
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0,?)
+        """,
+        (
+            event_id,
+            repo,
+            outcome_id,
+            activation_id,
+            json.dumps(feat0),
+            label,
+            float(reward),
+            verification_type,
+            getattr(capability, "controller", None) or memory_controller,
+            governance_mode,
+            json.dumps(list(origin_artifact_ids or [])),
+            now,
+            receipt,
+        ),
+    )
+    db.execute(
         """
         UPDATE ranker_models SET weights_json=?, bias=?, train_count=train_count+1,
           last_outcome_id=?, updated_at=?
@@ -557,27 +649,96 @@ def train_from_outcome(
         """,
         (json.dumps(weights), bias, outcome_id, now, repo, MODEL_ID),
     )
-    store.db.commit()
-    try:
-        store.append_neural_event(
-            repo,
-            event_type="ranker_trained",
-            entity_id=MODEL_ID,
-            payload={
-                "outcome_id": outcome_id,
-                "status": status,
-                "label": label,
-                "train_count": int(model["train_count"]) + 1,
-            },
-        )
-    except Exception:
-        pass
+    if commit and conn is None:
+        store.db.commit()
     return {
         "trained": True,
         "model_id": MODEL_ID,
         "label": label,
         "train_count": int(model["train_count"]) + 1,
+        "event_id": event_id,
+        "model_hash": model_hash(weights, bias),
         "claim_boundary": "Ranker learns ranking only; never mutation authority.",
+    }
+
+
+def rebuild_ranker_from_events(
+    store: Any,
+    repo: str,
+    excluded_event_ids: list[str] | None = None,
+    *,
+    capability: Any = None,
+    conn: Any = None,
+    commit: bool = True,
+) -> dict[str, Any]:
+    """Deterministic clean rebuild from non-excluded training events."""
+    ensure_training_events(store)
+    try:
+        from ..capabilities import issue_for_controller, validate_capability
+
+        cap = capability or issue_for_controller(repo, "repair", reason="ranker_rebuild")
+        d = validate_capability(cap, repo=repo, operation="repair_ranker_rebuild")
+        if not d.allowed:
+            # allow advanced capability with ranker_rebuild alias
+            d2 = validate_capability(cap, repo=repo, operation="ranker_rebuild")
+            if not d2.allowed and cap.controller != "advanced":
+                return {"ok": False, "reason": d.reason}
+    except Exception as exc:
+        return {"ok": False, "reason": f"capability:{type(exc).__name__}:{exc}"}
+
+    excl = set(str(x) for x in (excluded_event_ids or []))
+    # mark excluded
+    db = conn or store.db
+    for eid in excl:
+        db.execute(
+            "UPDATE ranker_training_events SET excluded=1, exclusion_reason=? WHERE repo=? AND event_id=?",
+            ("rebuild_exclude", repo, eid),
+        )
+    rows = db.execute(
+        """
+        SELECT * FROM ranker_training_events
+        WHERE repo=? AND excluded=0
+        ORDER BY created_at ASC, event_id ASC
+        """,
+        (repo,),
+    ).fetchall()
+    weights = default_weights()
+    bias = 0.0
+    names = list(FEATURE_NAMES)
+    fisher_map: dict[str, float] = {}
+    for row in rows:
+        try:
+            feats = json.loads(row["feature_vector_json"] or "[]")
+        except Exception:
+            continue
+        label = float(row["label"] or 0)
+        gm = str(row["governance_mode"] or "normal")
+        base_lr = 0.05 if gm == "normal" else 0.02
+        weights, bias = _apply_sgd_step(
+            list(weights), bias, list(feats), label, base_lr=base_lr, fisher_map=fisher_map, names=names
+        )
+    h = model_hash(weights, bias)
+    old = ensure_ranker(store, repo)
+    old_h = model_hash(list(old["weights"]), float(old["bias"]))
+    now = time.time()
+    db.execute(
+        """
+        UPDATE ranker_models SET weights_json=?, bias=?, train_count=?, updated_at=?
+        WHERE repo=? AND model_id=?
+        """,
+        (json.dumps(weights), bias, len(rows), now, repo, MODEL_ID),
+    )
+    if commit and conn is None:
+        store.db.commit()
+    return {
+        "ok": True,
+        "repo": repo,
+        "events_replayed": len(rows),
+        "excluded": list(excl),
+        "old_model_hash": old_h,
+        "new_model_hash": h,
+        "train_count": len(rows),
+        "claim_boundary": "Deterministic ranker rebuild from clean event ledger.",
     }
 
 

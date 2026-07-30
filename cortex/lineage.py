@@ -78,6 +78,8 @@ def record_artifact(
     governance_mode: str = "normal",
     controller: str = "advanced",
     metadata: dict[str, Any] | None = None,
+    conn: Any = None,
+    commit: bool = True,
 ) -> dict[str, Any]:
     ensure_lineage_tables(store)
     now = time.time()
@@ -87,7 +89,8 @@ def record_artifact(
     meta = metadata or {}
     material = f"{repo}|{artifact_id}|{artifact_type}|{parents}|{origins}|{now}"
     receipt = hashlib.sha256(material.encode()).hexdigest()
-    store.db.execute(
+    db = conn or store.db
+    db.execute(
         """
         INSERT INTO lineage_artifacts(
           artifact_id, repo, artifact_type, lineage_plane,
@@ -121,7 +124,7 @@ def record_artifact(
         ),
     )
     for p in parents:
-        store.db.execute(
+        db.execute(
             """
             INSERT OR IGNORE INTO lineage_edges(repo, parent_id, child_id, relation, created_at)
             VALUES(?,?,?,?,?)
@@ -129,15 +132,16 @@ def record_artifact(
             (repo, p, artifact_id, "derived_from", now),
         )
     for o in origins:
-        oid = f"mem:{o}"
-        store.db.execute(
+        oid = f"mem:{o}" if not str(o).startswith("mem:") else str(o)
+        db.execute(
             """
             INSERT OR IGNORE INTO lineage_edges(repo, parent_id, child_id, relation, created_at)
             VALUES(?,?,?,?,?)
             """,
             (repo, oid, artifact_id, "origin_memory", now),
         )
-    store.db.commit()
+    if commit and conn is None:
+        store.db.commit()
     return {
         "artifact_id": artifact_id,
         "repo": repo,

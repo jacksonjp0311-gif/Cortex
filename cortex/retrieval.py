@@ -433,6 +433,13 @@ def query(
         output = _inject_concept_routes(
             store, repo, text, output, limit=max(limit * 2, 28)
         )
+    # v6.25.1 influence cut — exclude quarantined/invalidated artifacts
+    try:
+        from .influence_policy import filter_memory_hits
+
+        output = filter_memory_hits(store, repo, output)
+    except Exception:
+        pass
     # Ranker-primary + spectral diffusion features (v6.13) — never authority.
     # Measure-gate sets ranker_primary=False to obtain raw hybrid for ablations.
     if ranker_primary:

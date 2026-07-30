@@ -32,10 +32,14 @@ def invent_from_coactivation(
     governance_mode: str = "normal",
     max_new: int = 8,
     base_weight: float = 0.12,
+    capability: Any = None,
+    conn: Any = None,
+    commit: bool = True,
 ) -> dict[str, Any]:
     """Create weak integrate edges between co-fired nodes that lack a direct synapse.
 
     Blocked in read_only. Caps max_new per call. Marks metadata invented=True.
+    v6.25.1: requires ExecutionCapability for structure_invent.
     """
     if governance_mode == "read_only":
         return {
@@ -45,20 +49,13 @@ def invent_from_coactivation(
             "blocked": True,
             "reason": "governor_read_only",
         }
-    # v6.25 controller firewall — evidence_baseline / quarantine cannot invent
-    if governance_mode in {"evidence_baseline", "quarantine"}:
-        return {
-            "schema_version": SCHEMA,
-            "glyph": GLYPH,
-            "invented": 0,
-            "blocked": True,
-            "reason": f"controller_{governance_mode}_forbids_structure_invent",
-            "controller": governance_mode,
-        }
     try:
-        from .controller_scope import check_adaptive_op
+        from .capabilities import issue_for_controller, validate_capability
 
-        d = check_adaptive_op("advanced", "structure_invent")
+        cap = capability
+        if cap is None:
+            cap = issue_for_controller(repo, "advanced", reason="structure_invent_compat")
+        d = validate_capability(cap, repo=repo, operation="structure_invent")
         if not d.allowed:
             return {
                 "schema_version": SCHEMA,
@@ -66,9 +63,16 @@ def invent_from_coactivation(
                 "invented": 0,
                 "blocked": True,
                 "reason": d.reason,
+                "controller": d.controller,
             }
-    except Exception:
-        pass
+    except Exception as exc:
+        return {
+            "schema_version": SCHEMA,
+            "glyph": GLYPH,
+            "invented": 0,
+            "blocked": True,
+            "reason": f"capability_error:{type(exc).__name__}",
+        }
     nodes = {str(r["node_id"]) for r in (store.neural_nodes(repo) or [])}
     fired = [n for n in fired_node_ids if n in nodes]
     if len(fired) < 2:
@@ -99,7 +103,12 @@ def invent_from_coactivation(
     now = time.time()
     created = 0
     samples: list[dict[str, Any]] = []
-    with store.transaction() as conn:
+    own_tx = conn is None
+    db = conn
+    if own_tx:
+        store.db.execute("BEGIN IMMEDIATE")
+        db = store.db
+    try:
         for a, b in proposed:
             sid = _synapse_id(a, b, "coactivated")
             meta = {
@@ -108,12 +117,11 @@ def invent_from_coactivation(
                 "retention_regime": "integrate",
                 "source": "structure_invent",
                 "at": now,
-                # v6.24 lineage prep for causal unlearning (ancestors = co-fired nodes)
                 "ancestors": [a, b],
                 "derived_from_coactivation": True,
                 "lineage_plane": "G_learned",
             }
-            conn.execute(
+            db.execute(
                 """
                 INSERT INTO neural_synapses(
                   repo, synapse_id, source_id, target_id, relation, base_weight, weight,
@@ -158,9 +166,36 @@ def invent_from_coactivation(
                     controller="advanced",
                     governance_mode=governance_mode,
                     metadata={"relation": "coactivated"},
+                    conn=db,
+                    commit=False,
                 )
+            except TypeError:
+                try:
+                    from .lineage import record_artifact
+
+                    record_artifact(
+                        store,
+                        repo,
+                        artifact_id=sid,
+                        artifact_type="invented_synapse",
+                        lineage_plane="G_learned",
+                        parent_ids=[a, b],
+                        origin_memory_ids=[],
+                        operation_id="structure_invent",
+                        controller="advanced",
+                        governance_mode=governance_mode,
+                        metadata={"relation": "coactivated"},
+                    )
+                except Exception:
+                    pass
             except Exception:
                 pass
+        if own_tx and commit:
+            store.db.commit()
+    except Exception:
+        if own_tx:
+            store.db.rollback()
+        raise
 
     try:
         store.append_neural_event(

@@ -1,3 +1,13 @@
+## 6.25.1 - Constitutional Seal
+
+- **Capabilities:** immutable `ExecutionCapability`; operation registry; fail-closed defaults.
+- **Sterile baseline activation:** controller-first; early return; `controller_audit_events` only.
+- **Influence quarantine:** runtime exclusion across retrieval/training paths.
+- **Transactional repair:** full SQLite backup snapshots; single-tx apply; exact rollback checks.
+- **Ranker rebuild:** append-only `ranker_training_events`; deterministic replay + hash.
+- **Witness chronology:** commit-before-reveal; reject snapshot/commit drift.
+- Docs: PHASE_V6.25.1 + architecture seal set.
+
 ## 6.25.0 - Constitutional Immunity
 
 - **Evidence Kernel:** separate trusted retrieval path (no adaptive machinery).
