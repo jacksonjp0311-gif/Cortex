@@ -46,7 +46,8 @@ class ContinuumTests(unittest.TestCase):
             progress=False,
             pack_dir=ENGINE / "packs" / "cortex-core-intel-v1",
         )
-        self.assertEqual(report["schema_version"], "cortex-continuum/1.0")
+        self.assertEqual(report["schema_version"], "cortex-continuum/1.3")
+        self.assertIn("large_graph", report)
         lanes = report["lanes"]
         for name in (
             "packs",
