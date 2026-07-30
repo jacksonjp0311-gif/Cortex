@@ -13,6 +13,7 @@ def build_control_error(
     retrieval_confidence: float,
     aria_materialization: dict[str, Any] | None,
     task: str = "",
+    uncertainty: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     certificate = certificate or {}
     governance = governance or {}
@@ -20,6 +21,29 @@ def build_control_error(
     cert_status = str(certificate.get("status") or "unknown")
     gov_mode = str(governance.get("mode") or "unknown")
     conf = float(retrieval_confidence or 0.0)
+    # M1: prefer unified U from governance or explicit packet
+    u_packet = uncertainty if isinstance(uncertainty, dict) else None
+    if u_packet is None and isinstance(governance, dict):
+        maybe = governance.get("uncertainty")
+        if isinstance(maybe, dict):
+            u_packet = maybe
+    if not isinstance(u_packet, dict):
+        try:
+            from .math_net.uncertainty import compute_uncertainty
+
+            stab = (governance or {}).get("stability")
+            u_packet = compute_uncertainty(
+                retrieval_confidence=conf,
+                certificate_status=cert_status,
+                manifest_current=manifest_current,
+                governor_stability=float(stab) if stab is not None else None,
+            )
+        except Exception:
+            u_packet = {"u": round(1.0 - conf, 6), "confidence": conf}
+    conf = float(
+        u_packet["confidence"] if u_packet.get("confidence") is not None else conf
+    )
+    u_val = float(u_packet["u"] if u_packet.get("u") is not None else (1.0 - conf))
 
     errors: list[dict[str, Any]] = []
     if manifest_current is False:
@@ -62,12 +86,13 @@ def build_control_error(
                 "action": "minimal_reversible_edits_only",
             }
         )
-    if conf < 0.15 and cert_status == "verified" and gov_mode == "normal":
+    if (conf < 0.15 or u_val > 0.85) and cert_status == "verified" and gov_mode == "normal":
         errors.append(
             {
                 "code": "low_retrieval_confidence",
                 "severity": "low",
                 "action": "narrow_task_or_expand_evidence",
+                "u": u_val,
             }
         )
     # Unexpected: ARIA active on tasks that look purely implementation (soft)
@@ -130,7 +155,7 @@ def build_control_error(
             "message": "Immune gate open: work only under host and human authority.",
         }
     return {
-        "schema_version": "cortex-control-error/1.1",
+        "schema_version": "cortex-control-error/1.2",
         "glyph": "⚠",
         "ok": not hard and severity in {"none", "low"},
         "severity": severity,
@@ -139,6 +164,9 @@ def build_control_error(
         "block": bool(immune_action["block"]),
         "immune_action": immune_action,
         "errors": errors,
+        "u": u_val,
+        "uncertainty": u_packet,
+        "unified_confidence": conf,
         "summary": (
             "ok"
             if not errors
@@ -147,6 +175,7 @@ def build_control_error(
         "read_first": True,
         "claim_boundary": (
             "Control error is a routing signal for agents; it does not grant or "
-            "deny host authority by itself — host/human rules remain controlling."
+            "deny host authority by itself — host/human rules remain controlling. "
+            "U is the unified uncertainty (M1)."
         ),
     }

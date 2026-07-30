@@ -402,15 +402,18 @@ def persist_connect_pass(
     """Write ledger event, expand metric graph, distill, causal cadence, light decay."""
 
     graph = expand_metric_graph(load_metric_graph(store, repo), metrics)
-    # Spectral kernels: annotate + retention spectrum on each connect
+    # Retention regimes (M0) + Λ_g state pulse (not Laplacian-spectral)
     spectral: dict[str, Any] | None = None
     try:
         from .kernels import annotate_synapses, retention_by_class
+        from .math_net.kernel_state import update_lambda_on_pulse
 
         annotate_synapses(store, repo)
         spectral = retention_by_class(store, repo, metrics=metrics)
         graph["retention_by_class"] = spectral.get("spectrum")
         graph["dominant_kernel"] = spectral.get("dominant")
+        graph["regime_priors"] = True
+        graph["Lambda"] = update_lambda_on_pulse(store, repo).get("Lambda")
     except Exception as exc:
         spectral = {"error": f"{type(exc).__name__}: {exc}"}
 

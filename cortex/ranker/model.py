@@ -34,6 +34,13 @@ FEATURE_NAMES: tuple[str, ...] = (
     "coact_strength",
     "kernel_retain",
     "kernel_integrate",
+    # M3/M4 graph features
+    "ppr",
+    "heat",
+    "degree_centrality",
+    "lambda2_gap",
+    # M1 uncertainty
+    "unified_confidence",
 )
 
 
@@ -61,6 +68,11 @@ def default_weights() -> list[float]:
         "coact_strength": 0.18,
         "kernel_retain": 0.12,
         "kernel_integrate": 0.08,
+        "ppr": 0.22,
+        "heat": 0.18,
+        "degree_centrality": 0.10,
+        "lambda2_gap": 0.05,
+        "unified_confidence": 0.12,
     }
     for i, name in enumerate(FEATURE_NAMES):
         w[i] = mapping.get(name, 0.0)

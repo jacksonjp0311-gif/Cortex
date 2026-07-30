@@ -1,8 +1,11 @@
-"""Spectral memory kernels — distributed retention, not one scalar ρ.
+"""Retention regimes (legacy name: spectral kernels) — multi-rate priors.
+
+M0 claim hygiene: these are *not* Laplacian-spectral. Fixed ρ = e^{-δT}
+are hand-set priors. True spectral objects: cortex.math_net.spectral.
+Filter state Λ_g: cortex.math_net.kernel_state.
 
 Classes: reset (fast decay) · integrate (medium) · retain (slow).
-Common connect pulse is projected through this spectrum. Telemetry only;
-never mutation authority. Biology motivates structure, not identity.
+Telemetry only; never mutation authority.
 """
 
 from __future__ import annotations
@@ -12,17 +15,15 @@ import math
 import time
 from typing import Any
 
-SCHEMA = "cortex-kernels/1.0"
+from .math_net.regimes import PRIOR_DELTAS, CLAIM as REGIME_CLAIM, prior_regime_profile
+
+SCHEMA = "cortex-kernels/1.1"
 GLYPH = "≋"
 CLASSES = ("reset", "integrate", "retain")
 
-# Default degradation rates (per connect interval T=1): δ_reset >> δ_integrate >> δ_retain
-# ρ = e^{-δ T}
-DEFAULT_DELTAS: dict[str, float] = {
-    "reset": 2.3,  # ρ ≈ 0.10
-    "integrate": 0.35,  # ρ ≈ 0.70
-    "retain": 0.023,  # ρ ≈ 0.977
-}
+# Prior degradation rates (per connect interval T=1): δ_reset >> δ_integrate >> δ_retain
+# ρ = e^{-δ T} — PRIORS, not fitted (see math_net.calibration)
+DEFAULT_DELTAS: dict[str, float] = dict(PRIOR_DELTAS)
 
 
 def rho_from_delta(delta: float, interval: float = 1.0) -> float:
@@ -30,25 +31,17 @@ def rho_from_delta(delta: float, interval: float = 1.0) -> float:
 
 
 def default_kernel_profile() -> dict[str, Any]:
-    classes = {}
-    for name, delta in DEFAULT_DELTAS.items():
-        classes[name] = {
-            "delta": delta,
-            "rho": round(rho_from_delta(delta), 6),
-            "role": {
-                "reset": "ephemeral_hits_and_prune_candidates",
-                "integrate": "connect_ranker_prefetch",
-                "retain": "cards_canonical_hierarchy",
-            }[name],
-        }
+    base = prior_regime_profile()
+    # Keep legacy "classes" key for callers
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
-        "classes": classes,
+        "classes": base.get("regimes"),
+        "regimes": base.get("regimes"),
+        "terminology": base.get("terminology"),
+        "priors": True,
         "law": "clock_neq_memory_neq_decision",
-        "claim_boundary": (
-            "Kernel profile is routing telemetry; not consciousness or host rights."
-        ),
+        "claim_boundary": REGIME_CLAIM,
     }
 
 
@@ -187,13 +180,25 @@ def retention_by_class(
 def kernels_status(store: Any, repo: str) -> dict[str, Any]:
     profile = load_kernel_profile(store, repo)
     retention = retention_by_class(store, repo)
+    lambda_state = None
+    try:
+        from .math_net.kernel_state import _load_state
+
+        lambda_state = _load_state(store, repo)
+    except Exception:
+        lambda_state = None
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "repo": repo,
         "profile": profile.get("classes"),
+        "regimes": profile.get("regimes") or profile.get("classes"),
+        "priors": True,
+        "not_spectral": True,
+        "true_spectral_module": "cortex.math_net.spectral",
         "retention": retention.get("spectrum"),
         "dominant": retention.get("dominant"),
+        "Lambda": (lambda_state or {}).get("Lambda"),
         "clock_neq_memory_neq_decision": True,
-        "claim_boundary": profile.get("claim_boundary"),
+        "claim_boundary": profile.get("claim_boundary") or REGIME_CLAIM,
     }

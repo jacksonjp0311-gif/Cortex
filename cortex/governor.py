@@ -65,12 +65,47 @@ class Governor:
             continuity = 1.0
 
         confidence = max(0.0, min(1.0, retrieval_confidence))
+        # M1: unified uncertainty U (single number); confidence = 1 - U
+        u_packet: dict[str, Any] = {}
+        try:
+            from .math_net.uncertainty import compute_uncertainty
+
+            u_packet = compute_uncertainty(
+                retrieval_confidence=confidence,
+                certificate_status=str(certificate_status or "unknown"),
+                manifest_current=manifest_current,
+                governor_stability=None,  # avoid circular use of S
+            )
+            unified_conf = float(u_packet.get("confidence") or confidence)
+        except Exception:
+            unified_conf = confidence
+            u_packet = {"u": round(1.0 - confidence, 6), "confidence": confidence}
+
+        # M5: shadow governor weights if present; else prior linear form (documented priors)
+        w_i, w_f, w_r, w_c, w_k = 0.30, 0.25, 0.20, 0.15, 0.10
+        try:
+            from .math_net.calibration import load_shadow_calibration
+
+            shadow = load_shadow_calibration(self.store, repo)
+            gw = shadow.get("governor_weights") or {}
+            if shadow.get("n_outcomes", 0) >= 5 and gw:
+                # blend shadow with prior (never fully replace without promote)
+                w_i = 0.7 * w_i + 0.3 * float(gw.get("integrity", w_i))
+                w_f = 0.7 * w_f + 0.3 * float(gw.get("focus", w_f))
+                w_r = 0.7 * w_r + 0.3 * float(gw.get("freshness", w_r))
+                w_c = 0.7 * w_c + 0.3 * float(gw.get("confidence", w_c))
+                w_k = 0.7 * w_k + 0.3 * float(gw.get("continuity", w_k))
+                s = w_i + w_f + w_r + w_c + w_k
+                w_i, w_f, w_r, w_c, w_k = w_i / s, w_f / s, w_r / s, w_c / s, w_k / s
+        except Exception:
+            pass
+
         stability = (
-            0.30 * integrity
-            + 0.25 * focus
-            + 0.20 * freshness
-            + 0.15 * confidence
-            + 0.10 * continuity
+            w_i * integrity
+            + w_f * focus
+            + w_r * freshness
+            + w_c * unified_conf
+            + w_k * continuity
         )
         stability = round(stability, 6)
 
@@ -91,11 +126,29 @@ class Governor:
             "stability": stability,
             "mode": mode,
             "reason": reason,
+            "uncertainty": u_packet,
+            "u": u_packet.get("u"),
+            "coeffs_prior": {
+                "integrity": 0.30,
+                "focus": 0.25,
+                "freshness": 0.20,
+                "confidence": 0.15,
+                "continuity": 0.10,
+                "note": "priors; shadow blend after n_outcomes>=5",
+            },
+            "coeffs_used": {
+                "integrity": round(w_i, 4),
+                "focus": round(w_f, 4),
+                "freshness": round(w_r, 4),
+                "confidence": round(w_c, 4),
+                "continuity": round(w_k, 4),
+            },
             "components": {
                 "integrity": round(integrity, 6),
                 "focus": round(focus, 6),
                 "freshness": round(freshness, 6),
                 "retrieval_confidence": round(confidence, 6),
+                "unified_confidence": round(unified_conf, 6),
                 "continuity": round(continuity, 6),
             },
             "authority": {

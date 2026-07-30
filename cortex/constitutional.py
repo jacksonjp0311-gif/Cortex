@@ -42,6 +42,7 @@ ARIA_CONSTITUTIONAL_GLYPHS = {
     },
 }
 
+# Uniform priors — not fitted (M5 shadow calibration may blend later).
 DEFAULT_POTENTIAL_WEIGHTS = {
     "drift": 0.125,
     "uncertainty": 0.125,
@@ -52,6 +53,7 @@ DEFAULT_POTENTIAL_WEIGHTS = {
     "continuation_debt": 0.125,
     "recovery_loss": 0.125,
 }
+POTENTIAL_WEIGHTS_ARE_PRIORS = True
 
 
 def _clamp(value: float) -> float:
@@ -107,9 +109,11 @@ def constitutional_potential(
     *,
     weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
+    # M1: prefer unified U when provided as observation["u"]
+    u_obs = observation.get("u", observation.get("uncertainty", 0.0))
     components = {
         "drift": _clamp(observation.get("drift", 0.0)),
-        "uncertainty": _clamp(observation.get("uncertainty", 0.0)),
+        "uncertainty": _clamp(float(u_obs)),
         "authority_pressure": _clamp(observation.get("authority_pressure", 0.0)),
         "illegitimacy": 1.0 - _clamp(observation.get("legitimacy", 1.0)),
         "integrity_loss": 1.0 - _clamp(observation.get("integrity", 1.0)),
@@ -119,18 +123,27 @@ def constitutional_potential(
     }
     selected = dict(DEFAULT_POTENTIAL_WEIGHTS)
     if weights:
-        selected.update({key: max(0.0, float(value)) for key, value in weights.items()})
+        selected.update(
+            {
+                key: max(0.0, float(value))
+                for key, value in weights.items()
+                if key in DEFAULT_POTENTIAL_WEIGHTS
+            }
+        )
     score = sum(selected[key] * value for key, value in components.items())
     return {
         "score": round(score, 8),
         "components": {key: round(value, 8) for key, value in components.items()},
         "weights": selected,
+        "weights_are_priors": POTENTIAL_WEIGHTS_ARE_PRIORS,
         "safe_threshold": SAFE_THRESHOLD,
         "inside_safe_set": score <= SAFE_THRESHOLD,
         "mode": "shadow",
+        "u": components["uncertainty"],
         "claim_boundary": (
-            "Constitutional potential is an uncalibrated supervisory diagnostic; "
-            "it is not truth, permission, or mutation authority."
+            "Constitutional potential uses prior weights (M0/M5); shadow calibration "
+            "does not auto-promote. Not truth, permission, or mutation authority. "
+            "Uncertainty component prefers unified U when observation provides u."
         ),
     }
 

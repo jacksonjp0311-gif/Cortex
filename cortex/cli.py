@@ -386,11 +386,27 @@ def build_parser() -> argparse.ArgumentParser:
 
     kernels_p = sub.add_parser(
         "kernels",
-        help="Spectral memory kernel spectrum (reset|integrate|retain).",
+        help="Retention regimes (reset|integrate|retain) — priors, not Laplacian-spectral.",
     )
     kernels_p.add_argument("--repo", required=True)
     kernels_p.add_argument("--annotate", action="store_true")
     kernels_p.add_argument("--json", action="store_true")
+
+    math_net_p = sub.add_parser(
+        "math-net",
+        help="Math/network spine M0–M10 (uncertainty, operator A, spectral, calibration…).",
+    )
+    math_net_p.add_argument("--repo", required=True)
+    math_net_p.add_argument(
+        "action",
+        choices=["pass", "phases", "spectral", "diffusion", "uncertainty", "dual"],
+        nargs="?",
+        default="pass",
+        help="pass (default)=run all phases; or a single probe",
+    )
+    math_net_p.add_argument("--confidence", type=float, default=0.5)
+    math_net_p.add_argument("--budget", type=int, default=400)
+    math_net_p.add_argument("--json", action="store_true")
 
     identity_p = sub.add_parser(
         "identity",
@@ -1457,6 +1473,41 @@ def main(argv: list[str] | None = None) -> None:
             if args.annotate:
                 annotate_synapses(store, args.repo)
             emit(kernels_status(store, args.repo), args.json)
+
+        elif command == "math-net":
+            from .math_net import phase_status, run_math_network_pass
+            from .math_net.diffusion import diffusion_features
+            from .math_net.operator import dual_graph_report
+            from .math_net.spectral import spectral_slice
+            from .math_net.uncertainty import compute_uncertainty
+
+            action = getattr(args, "action", None) or "pass"
+            if action == "phases":
+                emit(phase_status(), args.json)
+            elif action == "uncertainty":
+                emit(
+                    compute_uncertainty(
+                        retrieval_confidence=float(args.confidence or 0.5),
+                        budget_tokens=int(args.budget or 400),
+                    ),
+                    args.json,
+                )
+            elif action == "spectral":
+                emit(spectral_slice(store, args.repo), args.json)
+            elif action == "diffusion":
+                emit(diffusion_features(store, args.repo), args.json)
+            elif action == "dual":
+                emit(dual_graph_report(store, args.repo), args.json)
+            else:
+                emit(
+                    run_math_network_pass(
+                        store,
+                        args.repo,
+                        retrieval_confidence=float(args.confidence or 0.5),
+                        budget=int(args.budget or 400),
+                    ),
+                    args.json,
+                )
 
         elif command == "identity":
             from .identity import continuity_check

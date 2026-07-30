@@ -84,7 +84,21 @@ def record_outcome(
     )
     replay = {"deterministic": True, "ledger_integrity": integrity, "bounded_weights": bounded,
               "authoritative_recall_regression": False, "accepted": integrity and bounded}
-    apply_updates = bool(updates and final_reward != 0 and governance_mode in {"normal", "constrained"} and replay["accepted"])
+    # M8 plasticity RCT: off arm records but does not apply Hebbian updates
+    rct_arm = "on"
+    try:
+        from ..math_net.plasticity_rct import assign_arm
+
+        rct_arm = assign_arm(store, repo)
+    except Exception:
+        rct_arm = "on"
+    apply_updates = bool(
+        updates
+        and final_reward != 0
+        and governance_mode in {"normal", "constrained"}
+        and replay["accepted"]
+        and rct_arm == "on"
+    )
     outcome_id = _outcome_id(repo, activation_id, status, verification_type)
     verified_payload = verification_payload or {}
     store.record_outcome(
@@ -92,6 +106,16 @@ def record_outcome(
         verification_type=verification_type, verification_payload=verified_payload,
         credits=credits, updates=updates, apply_updates=apply_updates,
     )
+    try:
+        from ..math_net.calibration import observe_outcome_for_calibration
+        from ..math_net.plasticity_rct import record_rct_outcome
+
+        observe_outcome_for_calibration(
+            store, repo, reward=final_reward, features={"uncertainty": 0.5}
+        )
+        record_rct_outcome(store, repo, arm=rct_arm, reward=final_reward)
+    except Exception:
+        pass
     aria_cue_learning = adapt_aria_cues(
         store,
         repo,
