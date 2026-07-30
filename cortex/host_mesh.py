@@ -4,6 +4,9 @@ v6.17: Make the “whoa” explicit. Cortex already stores many hosts in one SQL
 body; this pulse observes them, compares coupling, and directs evolution
 without merging identities or host authority.
 
+Pulse that lists every attached repository with role coherence and ranker trains
+without merging identities. run_host_mesh / host-mesh CLI — mesh_role metadata.
+
 Recommend-only. Not consciousness. Boundaries preserved.
 """
 

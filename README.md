@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.18.0-0ea5e9?style=for-the-badge" alt="v6.18.0" />
+  <img src="https://img.shields.io/badge/version-6.18.1-0ea5e9?style=for-the-badge" alt="v6.18.1" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,24 +42,39 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.18.0** — **Boundary Consolidation**: topology law, train/holdout eval, Governor fail-closed, mesh_role metadata, operational_coupling_index. See [`docs/intelligence/PHASE_V6.18_BOUNDARY.md`](docs/intelligence/PHASE_V6.18_BOUNDARY.md).
+**Current release: v6.18.1** — **Boundary Consolidation + holdout IR tune**: topology law, train/holdout eval, host-mesh, self-org, foreign hosts. OCI is vitals — **holdout** is the utility exam. See [`docs/intelligence/PHASE_V6.18_BOUNDARY.md`](docs/intelligence/PHASE_V6.18_BOUNDARY.md).
 
 ```bash
 pip install -e .
+# Attach a host (one SQLite body can hold many)
 python -m cortex bootstrap . --name MyProject --json
-python -m cortex continuum --repo MyProject --cycles 24 --json
-python -m cortex cadence --repo MyProject --cycles 40 --progress --json
-python -m cortex immune --repo MyProject --json
-python -m cortex organism --repo MyProject --task "Map the auth surface" --json
-python -m cortex metrics --repo MyProject --json
+python -m cortex bootstrap /path/to/other --name OtherApp --json
+
+# Daily agent loop (durable body example: CortexTeach)
+python -m cortex activate --repo MyProject --task "Map auth" --json
 python -m cortex remember --repo MyProject --kind discovery --text "fact" --json
-python -m cortex breathe --repo MyProject --json
 python -m cortex ritual --repo MyProject --task "Close the loop" \
   --remember-text "Auth lives in middleware" --json
-python -m cortex teach --seed --repo Cortex --json
-python -m cortex metrics --repo Cortex --json
+
+# Honest utility + multi-host + self-org
+python -m cortex eval-coupling --repo CortexTeach --suite holdout --json
+python -m cortex eval-coupling --repo CortexTeach --suite train --json
+python -m cortex host-mesh --primary CortexTeach --query "governor policy" --json
+python -m cortex self-org --repo CortexTeach --json
+python -m cortex distill --repo CortexTeach --json
+python -m cortex emergence-log --repo CortexTeach --json
+python -m cortex coherence --repo CortexTeach --json
+
+# Optional / heavy (large graphs: continuum auto-throttles)
+python -m cortex continuum --repo MyProject --cycles 24 --json
+python -m cortex cadence --repo MyProject --cycles 40 --progress --json
+python -m cortex teach --seed --repo CortexTeach --json
 python -m cortex transcend-check --json
 ```
+
+**Trust order (unchanged):** host source & tests > runtime evidence > verified model > consolidated memory > learned associations > inference. Learned relevance never becomes host authority.
+
+**Topology law:** `G_host` immutable · `G_evidence` via re-index · `G_learned` under Governor · `G_federated` query-only — see [`docs/intelligence/TOPOLOGY_LAW.md`](docs/intelligence/TOPOLOGY_LAW.md).
 
 ---
 

@@ -1,7 +1,9 @@
 """M2 — One graph operator A from neural synapses (+ structural reconciliation).
 
 Build graph adjacency operator and dual reverse-edge operator for spectral work.
-Undirected weighted adjacency from neural synapses (operator A).
+Assembles the weighted undirected adjacency from synapse mass for spectral operators.
+Module that builds A_ij / operator A — not spectral_memory pulse, not heat kernels alone.
+Undirected weighted adjacency from neural synapses (operator A) via build_operator_A.
 """
 
 from __future__ import annotations

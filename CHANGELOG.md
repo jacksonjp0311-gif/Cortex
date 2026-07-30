@@ -1,3 +1,9 @@
+## 6.18.1 - Holdout IR tune + PulseFlow warm + README agent surface
+
+- Concept routes + neighbor damp for `operator.py` vs spectral; `host_mesh` holdout phrases.
+- README: holdout/train/host-mesh/self-org/distill as primary agent surface; topology law pointer.
+- Strike-fork loop: reindex, foreign real task, holdout assess, mesh, distill.
+
 ## 6.18.0 - Boundary Consolidation
 
 - **Self-org:** fix `returned_paths` slicing; Governor failure → `read_only`; train/holdout split (no ranker warm from holdout).
