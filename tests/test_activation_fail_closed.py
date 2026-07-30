@@ -88,7 +88,25 @@ class ActivationFailClosedTests(unittest.TestCase):
         )
         # unknown maps through simplex to advanced or baseline — issuer normalizes
         self.assertIn(res["controller"], {"advanced", "evidence_baseline"})
-        self.assertIn("capability", res)
+        # v7.0: capability is issued after epoch bind in activate_repository, not resolve
+        self.assertNotIn("capability", res)
+
+    def test_activate_issues_epoch_capability(self) -> None:
+        r = activate_repository(
+            self.home,
+            self.store,
+            self.gov,
+            "AFCHost",
+            "readme",
+            budget=300,
+            refresh="never",
+            force_evidence_baseline=True,
+        )
+        self.assertIn("capability", r)
+        cap = r["capability"]
+        self.assertTrue(cap.get("capability_id") or cap.get("body_epoch_id"))
+        self.assertIn("body_epoch", r)
+        self.assertTrue((r.get("body_epoch") or {}).get("epoch_id"))
 
 
 if __name__ == "__main__":

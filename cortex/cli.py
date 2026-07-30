@@ -709,6 +709,31 @@ def build_parser() -> argparse.ArgumentParser:
     imm_p.add_argument("--authorize", action="store_true")
     imm_p.add_argument("--json", action="store_true")
 
+    cont_p = sub.add_parser(
+        "continuity",
+        help="v7.0 Resonant Continuity ∿ — body epoch + runtime phase + five-plane snapshot.",
+    )
+    cont_p.add_argument("--repo", required=True)
+    cont_p.add_argument(
+        "--phase",
+        help="Optional legal phase transition (e.g. OBSERVE, ADAPT, WITNESS).",
+    )
+    cont_p.add_argument("--json", action="store_true")
+
+    epoch_p = sub.add_parser(
+        "epoch",
+        help="v7.0 Body Epoch ⏱ — compute/verify/seal deterministic continuity identity.",
+    )
+    epoch_p.add_argument("--repo", required=True)
+    epoch_p.add_argument(
+        "action",
+        choices=["current", "compute", "verify", "seal"],
+        nargs="?",
+        default="current",
+    )
+    epoch_p.add_argument("--reason", default="operator")
+    epoch_p.add_argument("--json", action="store_true")
+
     wit_p = sub.add_parser(
         "witness",
         help="Independent Witness ⚖ — sealed evaluation outside adaptive geometry.",
@@ -1832,6 +1857,47 @@ def main(argv: list[str] | None = None) -> None:
                 ),
                 args.json,
             )
+
+        elif command == "continuity":
+            from .continuity import continuity_report, enter_phase
+
+            if getattr(args, "phase", None):
+                emit(
+                    enter_phase(store, args.repo, str(args.phase), reason="cli"),
+                    args.json,
+                )
+            else:
+                emit(continuity_report(store, args.repo), args.json)
+
+        elif command == "epoch":
+            from .epoch import (
+                compute_body_epoch,
+                current_body_epoch,
+                ensure_current_epoch,
+                seal_epoch_transition,
+                verify_body_epoch,
+            )
+
+            act = str(getattr(args, "action", "current") or "current")
+            if act == "compute":
+                emit(compute_body_epoch(store, args.repo).to_dict(), args.json)
+            elif act == "seal":
+                emit(
+                    seal_epoch_transition(
+                        store, args.repo, reason=str(args.reason or "cli")
+                    ).to_dict(),
+                    args.json,
+                )
+            elif act == "verify":
+                ep = current_body_epoch(store, args.repo) or ensure_current_epoch(
+                    store, args.repo
+                )
+                emit(verify_body_epoch(store, args.repo, ep), args.json)
+            else:
+                emit(
+                    ensure_current_epoch(store, args.repo, reason="cli").to_dict(),
+                    args.json,
+                )
 
         elif command == "immunity":
             from .immunity import (

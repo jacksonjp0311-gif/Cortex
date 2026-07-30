@@ -27,7 +27,6 @@ def resolve_activation_controller(
     manifest_current: bool | None = None,
 ) -> dict[str, Any]:
     """Resolve controller before any side effect. Fail closed to evidence_baseline."""
-    from .capabilities import CapabilityIssuer
     from .controller_scope import normalize_controller
 
     fail_closed = False
@@ -69,19 +68,13 @@ def resolve_activation_controller(
         reason = f"internal_control_failure:simplex:{type(exc).__name__}"
         sx = {"error": f"{type(exc).__name__}: {exc}"}
 
-    cap = CapabilityIssuer("activation").issue(
-        repo=repo,
-        controller=controller,
-        reason=reason,
-        ttl_s=7200.0,
-    )
+    # capability issued after caller binds epoch (see activate_repository)
     return {
         "controller": controller,
         "fail_closed": fail_closed,
         "reason": reason,
         "governor": gov_pre,
         "simplex": sx if isinstance(sx, dict) else {},
-        "capability": cap,
         "transfer_to_baseline": controller == "evidence_baseline",
     }
 
@@ -237,6 +230,7 @@ def activate_evidence_baseline(
         "certificate": certificate,
         "manifest_current": manifest_current,
         "sterile_baseline": True,
+        "capability": cap.to_dict(),
         "packet_path": str(runtime_path),
         "claim_boundary": full_context["claim_boundary"],
     }
@@ -524,6 +518,7 @@ def activate_advanced(
         "certificate": certificate,
         "manifest_current": manifest_current,
         "sterile_baseline": False,
+        "capability": cap.to_dict(),
         "session": session,
         "organism": organism,
         "packet_path": str(runtime_path),
@@ -566,12 +561,40 @@ def activate_repository(
     )
     controller = resolution["controller"]
 
+    # v7.0: bind body epoch + issue epoch-scoped capability
+    from .capabilities import CapabilityIssuer
+    from .epoch import ensure_current_epoch
+    from .phases import transition_phase
+
+    epoch = ensure_current_epoch(store, repo, reason="activation")
+    cap = CapabilityIssuer("activation").issue(
+        repo=repo,
+        controller=controller,
+        reason=resolution.get("reason") or "activation",
+        ttl_s=7200.0,
+        body_epoch_id=epoch.epoch_id,
+        evidence_root_hash=epoch.evidence_root_hash,
+        constitutional_config_hash=epoch.constitutional_config_hash,
+    )
+    resolution["capability"] = cap
+    resolution["body_epoch"] = epoch.to_dict()
+    # phase: baseline → OBSERVE/EVIDENCE_FREEZE; advanced → OBSERVE then ADAPT
+    try:
+        if controller == "evidence_baseline":
+            transition_phase(store, repo, "OBSERVE", reason="baseline_activation")
+            transition_phase(store, repo, "EVIDENCE_FREEZE", reason="baseline_activation")
+        else:
+            transition_phase(store, repo, "OBSERVE", reason="advanced_activation")
+            transition_phase(store, repo, "ADAPT", reason="advanced_activation")
+    except Exception:
+        pass
+
     # Phase 2a: sterile baseline — early return (no index/organism/connect)
     if controller == "evidence_baseline":
         certificate = verify_repository(
             home, store, repo, config, write_certificate=False
         )
-        return activate_evidence_baseline(
+        out = activate_evidence_baseline(
             home,
             store,
             repo,
@@ -585,6 +608,8 @@ def activate_repository(
             manifest_current=manifest_current,
             certificate=certificate,
         )
+        out["body_epoch"] = epoch.to_dict()
+        return out
 
     # Phase 2b: advanced — refresh/index allowed under capability
     surprise: dict[str, Any] = {
@@ -648,7 +673,7 @@ def activate_repository(
             neural = {"available": False, "disabled": True}
         certificate = verify_repository(home, store, repo, config, write_certificate=False)
 
-    return activate_advanced(
+    out = activate_advanced(
         home,
         store,
         governor,
@@ -670,3 +695,19 @@ def activate_repository(
         environment=environment,
         neural=neural,
     )
+    out["body_epoch"] = epoch.to_dict()
+    # seal epoch if adaptive roots changed during advanced activation
+    try:
+        from .epoch import seal_epoch_transition
+
+        sealed = seal_epoch_transition(
+            store, repo, reason="post_advanced_activation", parent=epoch
+        )
+        out["body_epoch"] = sealed.to_dict()
+        if sealed.epoch_id != epoch.epoch_id:
+            from .capabilities import revoke_epoch_capabilities
+
+            revoke_epoch_capabilities(store, repo, epoch.epoch_id)
+    except Exception:
+        pass
+    return out

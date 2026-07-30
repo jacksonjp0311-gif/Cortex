@@ -11,7 +11,7 @@ import json
 import secrets
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, FrozenSet
+from typing import Any, FrozenSet  # Any used by issue_for_controller(store=)
 
 from .controller_scope import (
     ADAPTIVE_WRITE,
@@ -22,7 +22,7 @@ from .controller_scope import (
     WRITE_CLASSES,
 )
 
-SCHEMA = "cortex-capabilities/1.1"
+SCHEMA = "cortex-capabilities/1.2"
 GLYPH = "⌘"
 
 CLAIM = (
@@ -145,6 +145,11 @@ class ExecutionCapability:
     nonce: str
     configuration_hash: str
     receipt_hash: str
+    # v7.0 epoch binding
+    body_epoch_id: str = ""
+    evidence_root_hash: str = ""
+    constitutional_config_hash: str = ""
+    issued_epoch_sequence: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -164,6 +169,10 @@ class ExecutionCapability:
             nonce=str(d.get("nonce") or ""),
             configuration_hash=str(d.get("configuration_hash") or ""),
             receipt_hash=str(d.get("receipt_hash") or ""),
+            body_epoch_id=str(d.get("body_epoch_id") or ""),
+            evidence_root_hash=str(d.get("evidence_root_hash") or ""),
+            constitutional_config_hash=str(d.get("constitutional_config_hash") or ""),
+            issued_epoch_sequence=int(d.get("issued_epoch_sequence") or 0),
         )
 
 
@@ -231,6 +240,10 @@ class CapabilityIssuer:
         ttl_s: float = 3600.0,
         operations: list[str] | None = None,
         write_classes: list[str] | None = None,
+        body_epoch_id: str = "",
+        evidence_root_hash: str = "",
+        constitutional_config_hash: str = "",
+        issued_epoch_sequence: int = 0,
     ) -> ExecutionCapability:
         c = (controller or "evidence_baseline").casefold().strip()
         if c in {"unknown", ""}:
@@ -253,6 +266,10 @@ class CapabilityIssuer:
             "expires_at": now + ttl_s,
             "reason": reason,
             "nonce": nonce,
+            "body_epoch_id": body_epoch_id,
+            "evidence_root_hash": evidence_root_hash,
+            "constitutional_config_hash": constitutional_config_hash,
+            "issued_epoch_sequence": issued_epoch_sequence,
         }
         cfg = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
         cid = "cap_" + cfg[:20]
@@ -270,6 +287,10 @@ class CapabilityIssuer:
             nonce=nonce,
             configuration_hash=cfg,
             receipt_hash=receipt,
+            body_epoch_id=body_epoch_id,
+            evidence_root_hash=evidence_root_hash,
+            constitutional_config_hash=constitutional_config_hash,
+            issued_epoch_sequence=issued_epoch_sequence,
         )
 
 
@@ -371,13 +392,80 @@ def validate_capability(
     )
 
 
+def validate_epoch_capability(
+    capability: ExecutionCapability | None,
+    *,
+    repo: str,
+    operation: str,
+    body_epoch_id: str,
+    evidence_root_hash: str = "",
+    constitutional_config_hash: str = "",
+) -> CapabilityDecision:
+    """v7.0: capability must match body epoch / evidence / constitution roots."""
+    d = validate_capability(capability, repo=repo, operation=operation)
+    if not d.allowed:
+        return d
+    assert capability is not None
+    from .epoch import EPOCH_STABLE_OPS
+
+    if capability.body_epoch_id and body_epoch_id and capability.body_epoch_id != body_epoch_id:
+        if operation not in EPOCH_STABLE_OPS:
+            return CapabilityDecision(
+                False,
+                "capability_epoch_mismatch",
+                capability_id=capability.capability_id,
+                operation=operation,
+                controller=capability.controller,
+            )
+    if (
+        capability.evidence_root_hash
+        and evidence_root_hash
+        and capability.evidence_root_hash != evidence_root_hash
+        and operation not in EPOCH_STABLE_OPS
+    ):
+        return CapabilityDecision(
+            False,
+            "capability_evidence_root_mismatch",
+            capability_id=capability.capability_id,
+            operation=operation,
+            controller=capability.controller,
+        )
+    if (
+        capability.constitutional_config_hash
+        and constitutional_config_hash
+        and capability.constitutional_config_hash != constitutional_config_hash
+        and operation not in EPOCH_STABLE_OPS
+    ):
+        return CapabilityDecision(
+            False,
+            "capability_constitutional_mismatch",
+            capability_id=capability.capability_id,
+            operation=operation,
+            controller=capability.controller,
+        )
+    return d
+
+
 def require_capability(
     capability: ExecutionCapability | None,
     *,
     repo: str,
     operation: str,
+    body_epoch_id: str = "",
+    evidence_root_hash: str = "",
+    constitutional_config_hash: str = "",
 ) -> CapabilityDecision:
-    d = validate_capability(capability, repo=repo, operation=operation)
+    if body_epoch_id:
+        d = validate_epoch_capability(
+            capability,
+            repo=repo,
+            operation=operation,
+            body_epoch_id=body_epoch_id,
+            evidence_root_hash=evidence_root_hash,
+            constitutional_config_hash=constitutional_config_hash,
+        )
+    else:
+        d = validate_capability(capability, repo=repo, operation=operation)
     if not d.allowed:
         raise PermissionError(
             f"capability denied op={operation} reason={d.reason} "
@@ -393,7 +481,61 @@ def issue_for_controller(
     reason: str = "runtime",
     issuer: str = "governor",
     ttl_s: float = 3600.0,
+    store: Any = None,
 ) -> ExecutionCapability:
+    body_epoch_id = ""
+    evidence_root_hash = ""
+    constitutional_config_hash = ""
+    seq = 0
+    if store is not None:
+        try:
+            from .epoch import ensure_current_epoch
+
+            ep = ensure_current_epoch(store, repo, reason="capability_issue")
+            body_epoch_id = ep.epoch_id
+            evidence_root_hash = ep.evidence_root_hash
+            constitutional_config_hash = ep.constitutional_config_hash
+            # sequence = count of epochs
+            try:
+                row = store.db.execute(
+                    "SELECT COUNT(1) AS c FROM body_epochs WHERE repo=?", (repo,)
+                ).fetchone()
+                seq = int(row["c"] if row else 0)
+            except Exception:
+                seq = 0
+        except Exception:
+            pass
     return CapabilityIssuer(issuer).issue(
-        repo=repo, controller=controller, reason=reason, ttl_s=ttl_s
+        repo=repo,
+        controller=controller,
+        reason=reason,
+        ttl_s=ttl_s,
+        body_epoch_id=body_epoch_id,
+        evidence_root_hash=evidence_root_hash,
+        constitutional_config_hash=constitutional_config_hash,
+        issued_epoch_sequence=seq,
     )
+
+
+def revoke_epoch_capabilities(store: Any, repo: str, epoch_id: str) -> dict[str, Any]:
+    """Record epoch transition revocation (capabilities are immutable; track revoked epoch)."""
+    key = f"revoked_epoch_capabilities:{repo}"
+    prev = store.get_setting(key, {}) or {}
+    revoked = list(prev.get("epoch_ids") or [])
+    if epoch_id not in revoked:
+        revoked.append(epoch_id)
+    store.set_setting(
+        key,
+        {"epoch_ids": revoked[-32:], "updated_at": time.time(), "latest": epoch_id},
+    )
+    return {"revoked_epoch_id": epoch_id, "n": len(revoked), "claim_boundary": CLAIM}
+
+
+def capability_epoch_report(capability: ExecutionCapability, body_epoch_id: str) -> dict[str, Any]:
+    return {
+        "capability_id": capability.capability_id,
+        "capability_epoch": capability.body_epoch_id,
+        "body_epoch_id": body_epoch_id,
+        "match": (not capability.body_epoch_id) or capability.body_epoch_id == body_epoch_id,
+        "claim_boundary": CLAIM,
+    }

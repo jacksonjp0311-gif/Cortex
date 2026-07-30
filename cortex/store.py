@@ -560,6 +560,11 @@ class Store:
             ensure_transition_tables(self)
             ensure_training_events(self)
             ensure_witness_tables(self)
+            from .epoch import ensure_epoch_tables
+            from .phases import ensure_phase_tables
+
+            ensure_epoch_tables(self)
+            ensure_phase_tables(self)
         except Exception:
             pass
 
