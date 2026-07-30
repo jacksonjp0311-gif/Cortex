@@ -331,14 +331,14 @@ def measure_coherence(
     }
 
     if persist:
-        _persist(store, repo, report)
-        # Feed emergence log (threshold / couple / emergent transitions)
+        # Log transitions against prior snapshot BEFORE overwriting coherence_latest
         try:
             from .emergence_log import log_from_coherence
 
             log_from_coherence(home, store, repo, report, source="coherence")
         except Exception:
             pass
+        _persist(store, repo, report)
     return report
 
 
