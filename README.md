@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.16.1-0ea5e9?style=for-the-badge" alt="v6.16.1" />
+  <img src="https://img.shields.io/badge/version-6.17.0-0ea5e9?style=for-the-badge" alt="v6.17.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.16.1** — **Foreign host + distill**: PulseFlow real-task loop, self-org, dual distill; fuse_tick fix in self-org. See [`docs/intelligence/DISTILLED_FOREIGN_LOOP.md`](docs/intelligence/DISTILLED_FOREIGN_LOOP.md).
+**Current release: v6.17.0** — **Host mesh** (`host-mesh`): one body, many hosts — observe coupling, federated query, direct which foreign ranker to warm. See [`docs/intelligence/PHASE_V6.17_HOST_MESH.md`](docs/intelligence/PHASE_V6.17_HOST_MESH.md).
 
 ```bash
 pip install -e .

@@ -606,6 +606,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     self_org_p.add_argument("--json", action="store_true")
 
+    mesh_p = sub.add_parser(
+        "host-mesh",
+        help="Multi-host mesh ⧉⬡ — one body, many hosts; observe coupling + optional federated query.",
+    )
+    mesh_p.add_argument(
+        "--primary",
+        default="CortexTeach",
+        help="Repo that receives emergence log milestone (default CortexTeach).",
+    )
+    mesh_p.add_argument(
+        "--query",
+        help="Optional cross-repo federated query (boundaries preserved).",
+    )
+    mesh_p.add_argument(
+        "--fast",
+        action="store_true",
+        help="Skip per-host coherence measure (inventory only).",
+    )
+    mesh_p.add_argument("--json", action="store_true")
+
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1619,6 +1639,25 @@ def main(argv: list[str] | None = None) -> None:
                     fuse_tick=not bool(getattr(args, "no_fuse_tick", False)),
                     warm_ranker=not bool(getattr(args, "no_ranker_warm", False)),
                     on_progress=_sprog,
+                ),
+                args.json,
+            )
+
+        elif command == "host-mesh":
+            from .host_mesh import run_host_mesh
+
+            def _mprog(msg: str) -> None:
+                print(f"  ⧉⬡ {msg}", file=sys.stderr, flush=True)
+
+            emit(
+                run_host_mesh(
+                    home,
+                    store,
+                    governor,
+                    primary_repo=str(getattr(args, "primary", None) or "CortexTeach"),
+                    query=getattr(args, "query", None),
+                    measure_coherence_field=not bool(getattr(args, "fast", False)),
+                    on_progress=_mprog,
                 ),
                 args.json,
             )

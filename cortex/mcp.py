@@ -370,6 +370,22 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_host_mesh",
+        "description": (
+            "Multi-host mesh ⧉⬡: one SQLite body, many attached hosts. Observe "
+            "coherence/ranker per host; optional federated query. Boundaries "
+            "preserved. Not consciousness. " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "primary": {"type": "string", "default": "CortexTeach"},
+                "query": {"type": "string"},
+                "fast": {"type": "boolean", "default": False},
+            },
+        },
+    },
+    {
         "name": "cortex_distill",
         "description": (
             "Distill mesh observation + doctrine into durable memory (☰). " + _REFUSE
@@ -623,6 +639,17 @@ class CortexMCP:
                 invent=bool(arguments.get("invent", True)),
                 fuse_tick=bool(arguments.get("fuse_tick", True)),
                 warm_ranker=bool(arguments.get("warm_ranker", True)),
+            )
+        if name == "cortex_host_mesh":
+            from .host_mesh import run_host_mesh
+
+            return run_host_mesh(
+                self.home,
+                self.store,
+                self.governor,
+                primary_repo=str(arguments.get("primary") or "CortexTeach"),
+                query=arguments.get("query"),
+                measure_coherence_field=not bool(arguments.get("fast")),
             )
         if name == "cortex_breathe":
             from .organism import breathe as organism_breathe
