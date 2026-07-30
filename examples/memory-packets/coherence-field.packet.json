@@ -1,0 +1,38 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⧉≈",
+  "title": "System coherence field (multi-seam couples)",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "coherence-score",
+      "text": "System coherence is a multi-seam coactivation score over blood, geometry, spectral, ranker, fusion, and hygiene — threshold 0.62; not consciousness.",
+      "evidence": [
+        "cortex/coherence.py",
+        "docs/intelligence/PHASE_V6.15_MEASURE_GATE.md"
+      ]
+    },
+    {
+      "id": "emergent-coupling",
+      "text": "Emergent coupling lights when enough couple indicators are active and score is above threshold; agents read emergence log first each turn.",
+      "evidence": [
+        "cortex/coherence.py",
+        "cortex/emergence_log.py"
+      ]
+    },
+    {
+      "id": "couple-ids",
+      "text": "Active couples include blood_geometry, geometry_learning, ops_geometry, gates_aligned, blood_learning, spectral_ops when co-moving telemetry allows.",
+      "evidence": [
+        "cortex/coherence.py"
+      ]
+    }
+  ],
+  "refuse": [
+    "claim_consciousness",
+    "coherence_as_host_authority",
+    "auto_execute_aria"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Coherence packet teaches multi-seam telemetry coupling; never sentience or mutation rights."
+}

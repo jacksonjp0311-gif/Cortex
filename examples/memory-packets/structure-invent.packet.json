@@ -1,0 +1,39 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⧉+",
+  "title": "Structure invent (gated coactivation topology)",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "invent-coactivation",
+      "text": "Structure invent proposes new coactivation topology edges from simultaneous path fire under Governor gates; never invents host source files.",
+      "evidence": [
+        "cortex/structure_invent.py",
+        "cortex/coprocess.py"
+      ]
+    },
+    {
+      "id": "invent-blocked-readonly",
+      "text": "Topology invention is blocked in read_only mode and capped per call; invented synapses are internal body edges only.",
+      "evidence": [
+        "cortex/structure_invent.py",
+        "cortex/governor.py"
+      ]
+    },
+    {
+      "id": "invent-on-fuse",
+      "text": "Fusion ticks may call structure invent after co-fired paths; spectral-primary ranking still prefer existing evidence over invented edges as authority.",
+      "evidence": [
+        "cortex/coprocess.py",
+        "cortex/structure_invent.py"
+      ]
+    }
+  ],
+  "refuse": [
+    "invent_host_source_files",
+    "treat_invented_edges_as_authorization",
+    "claim_consciousness"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Structure invent packet teaches gated memory-graph plasticity; never host mutation rights."
+}

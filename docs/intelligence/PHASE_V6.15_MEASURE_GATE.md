@@ -51,3 +51,24 @@ Honest findings (CortexTeach body):
 - **Ranker helps** on hard paraphrases (recall@5 and/or MRR).
 - **Spectral features often do not reorder** yet: ranker sigmoid scores saturate (~0.98), so PPR/heat deltas are tiny — `spectral_helps` stays false until ranking is de-saturated or re-trained on verified outcomes.
 - Hard misses under baseline → teach/index targets: `structure_invent`, `plasticity_rct`, `operator`, `uncertainty`, `calibration`, `info_account`, paraphrase paths.
+
+## v6.15.2 notes
+
+**Both** next moves:
+1. **Teach packets** for hard-miss modules: `math-net-hard`, `structure-invent`, `coherence-field` (+ seed via `cortex teach --seed`).
+2. **De-saturated ranker**: temperature sigmoid + **batch-relative** logit scores in `rerank_hits`; floor spectral weights (`ppr`/`heat`) so enrich can reorder vs `no_spectral`.
+3. **Honest ablations**: measure gate uses `query(..., ranker_primary=False)` then applies ablations itself.
+4. **Evidence expansion**: top hits that cite `cortex/...py` inject those modules into the candidate list.
+
+### CortexTeach full-suite result (post v6.15.2)
+
+| Mode | Recall@5 | MRR |
+|------|----------|-----|
+| baseline | **0.60** | 0.38 |
+| no_spectral | 0.53 | 0.39 |
+| no_ranker | 0.40 | 0.37 |
+
+- `spectral_helps=true`, `ranker_helps=true`, `winner=baseline`
+- Still hard misses: structure_invent, plasticity_rct, operator, uncertainty, calibration, info_account (paraphrase IR ceiling)
+
+Re-run: `python -m cortex eval-coupling --repo CortexTeach --suite full --json`

@@ -199,7 +199,8 @@ def _run_case(
 ) -> dict[str, Any]:
     q = str(case["query"])
     expected = [str(x) for x in case.get("expected_substrings") or []]
-    hits = query(store, repo, q, limit=limit)
+    # Raw hybrid only — query() ranker path is off so ablations are honest.
+    hits = query(store, repo, q, limit=limit, ranker_primary=False)
     if mode == "baseline":
         hits = rerank_hits(
             store,

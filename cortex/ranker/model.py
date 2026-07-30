@@ -48,17 +48,22 @@ def _clip(v: float, lo: float = -2.0, hi: float = 2.0) -> float:
     return max(lo, min(hi, float(v)))
 
 
+# Softmax / sigmoid temperature: >1 de-saturates so small feature deltas reorder.
+SCORE_TEMPERATURE = 2.5
+
+
 def default_weights() -> list[float]:
     # Hand-tuned seed approximating v3 fusion priorities.
+    # v6.15.1: stronger spectral mass, slightly softer fts_rank so PPR/heat can move order.
     w = [0.0] * len(FEATURE_NAMES)
     mapping = {
         "thalamus_lane": 0.35,
-        "fts_rank": 0.40,
-        "vector_sim": 0.45,
-        "neural_support": 0.30,
+        "fts_rank": 0.28,
+        "vector_sim": 0.40,
+        "neural_support": 0.28,
         "is_source": 0.15,
         "is_test": 0.12,
-        "prior_score": 0.50,
+        "prior_score": 0.45,
         "retrieval_confidence": 0.10,
         "path_depth": -0.05,
         "immune_block": -0.20,
@@ -68,10 +73,10 @@ def default_weights() -> list[float]:
         "coact_strength": 0.18,
         "kernel_retain": 0.12,
         "kernel_integrate": 0.08,
-        "ppr": 0.22,
-        "heat": 0.18,
-        "degree_centrality": 0.10,
-        "lambda2_gap": 0.05,
+        "ppr": 0.38,
+        "heat": 0.32,
+        "degree_centrality": 0.12,
+        "lambda2_gap": 0.08,
         "unified_confidence": 0.12,
     }
     for i, name in enumerate(FEATURE_NAMES):
@@ -88,10 +93,24 @@ def ensure_ranker(store: Any, repo: str) -> dict[str, Any]:
     if row:
         names = json.loads(row["feature_names_json"])
         weights = json.loads(row["weights_json"])
+        defaults = default_weights()
+        dirty = False
         # Pad/truncate if feature schema evolved (v6.1)
         if len(weights) < len(FEATURE_NAMES):
-            defaults = default_weights()
             weights = list(weights) + defaults[len(weights) :]
+            names = list(FEATURE_NAMES)
+            dirty = True
+        # Floor spectral weights so de-saturated scoring can reorder (v6.15.1).
+        # Never shrink trained weights; only lift undersized ppr/heat toward defaults.
+        for feat in ("ppr", "heat", "degree_centrality", "lambda2_gap"):
+            try:
+                idx = FEATURE_NAMES.index(feat)
+            except ValueError:
+                continue
+            if idx < len(weights) and float(weights[idx]) < float(defaults[idx]):
+                weights[idx] = float(defaults[idx])
+                dirty = True
+        if dirty:
             names = list(FEATURE_NAMES)
             store.db.execute(
                 """
@@ -222,13 +241,42 @@ def features_from_hit(
     return [_clip(feats[name], -1.0, 1.0) for name in FEATURE_NAMES]
 
 
-def score_features(model: dict[str, Any], features: list[float]) -> float:
+def logit_score(model: dict[str, Any], features: list[float]) -> float:
+    """Linear score z (pre-sigmoid) for de-saturated ranking."""
     weights = model.get("weights") or default_weights()
     bias = float(model.get("bias") or 0.0)
     n = min(len(weights), len(features))
-    z = bias + sum(float(weights[i]) * float(features[i]) for i in range(n))
-    # Squash to 0..1
-    return 1.0 / (1.0 + math.exp(-_clip(z, -8.0, 8.0)))
+    return bias + sum(float(weights[i]) * float(features[i]) for i in range(n))
+
+
+def score_features(model: dict[str, Any], features: list[float]) -> float:
+    """Absolute 0..1 score with temperature (de-saturated vs unit sigmoid)."""
+    z = logit_score(model, features)
+    t = max(0.5, float(SCORE_TEMPERATURE))
+    return 1.0 / (1.0 + math.exp(-_clip(z / t, -8.0, 8.0)))
+
+
+def _batch_relative_scores(logits: list[float]) -> list[float]:
+    """Map logits to 0..1 within the candidate batch (z-score + soft sigmoid).
+
+    Absolute sigmoid saturates near 1.0 for all hits; relative scores let
+    small spectral feature deltas reorder candidates honestly.
+    """
+    if not logits:
+        return []
+    if len(logits) == 1:
+        return [0.5]
+    mean = sum(logits) / len(logits)
+    var = sum((z - mean) ** 2 for z in logits) / len(logits)
+    std = math.sqrt(var) if var > 1e-12 else 1.0
+    # Floor std so tiny noise does not explode; still preserves order.
+    std = max(std, 0.35)
+    t = max(0.5, float(SCORE_TEMPERATURE))
+    out: list[float] = []
+    for z in logits:
+        rel = (z - mean) / std
+        out.append(1.0 / (1.0 + math.exp(-_clip(rel / t, -8.0, 8.0))))
+    return out
 
 
 def rerank_hits(
@@ -246,6 +294,7 @@ def rerank_hits(
 
     primary=True → final = 0.82 * P(model) + 0.18 * prior (was 0.55/0.45).
     enrich_spectral=True → attach PPR/heat into metadata before features.
+    v6.15.1: batch-relative de-saturated model scores so spectral features can reorder.
     """
     if not hits:
         return hits
@@ -267,7 +316,7 @@ def rerank_hits(
         u_conf = retrieval_confidence
 
     model = ensure_ranker(store, repo)
-    scored: list[tuple[float, Any]] = []
+    prepared: list[tuple[float, float, Any]] = []
     for i, hit in enumerate(hits):
         if isinstance(hit, dict):
             meta = dict(hit.get("metadata") or {})
@@ -287,35 +336,68 @@ def rerank_hits(
             surprise_ratio=surprise_ratio,
             immune_block=immune_block,
         )
-        s = score_features(model, feats)
+        z = logit_score(model, feats)
         prior = 0.0
         if isinstance(hit, dict):
             prior = float(hit.get("score") or 0.0)
-            hit = {
-                **hit,
-                "ranker_score": round(s, 6),
-                "ranker_primary": bool(primary),
-            }
         else:
             prior = float(getattr(hit, "score", 0.0) or 0.0)
+        prepared.append((z, prior, hit))
+
+    rel_scores = _batch_relative_scores([z for z, _, _ in prepared])
+    scored: list[tuple[float, Any]] = []
+    for (z, prior, hit), s_rel in zip(prepared, rel_scores):
+        s_abs = 1.0 / (
+            1.0
+            + math.exp(
+                -_clip(z / max(0.5, float(SCORE_TEMPERATURE)), -8.0, 8.0)
+            )
+        )
+        if isinstance(hit, dict):
+            hit = {
+                **hit,
+                "ranker_score": round(s_rel, 6),
+                "ranker_logit": round(z, 6),
+                "ranker_score_abs": round(s_abs, 6),
+                "ranker_primary": bool(primary),
+                "ranker_desaturated": True,
+            }
+        else:
             try:
                 hit.metadata = {
                     **(hit.metadata or {}),
-                    "ranker_score": round(s, 6),
+                    "ranker_score": round(s_rel, 6),
+                    "ranker_logit": round(z, 6),
+                    "ranker_score_abs": round(s_abs, 6),
                     "ranker_primary": bool(primary),
+                    "ranker_desaturated": True,
                 }
             except Exception:
                 pass
-        # Note: sigmoid model scores often saturate (~0.98), so ppr/heat features
-        # alone rarely reorder. Measure-gate hard suite + MRR detect this honestly
-        # (spectral_helps stays false until ranking is de-saturated / re-trained).
         prior_c = min(1.0, max(0.0, prior))
+        # De-saturated model scores need enough prior mass so exact hybrid matches
+        # (authoritative headings, path boosts) survive reordering.
         if primary:
-            final = 0.82 * s + 0.18 * prior_c
+            final = 0.68 * s_rel + 0.32 * prior_c
         else:
-            final = 0.55 * s + 0.45 * prior_c
+            final = 0.50 * s_rel + 0.50 * prior_c
         scored.append((final, hit))
     scored.sort(key=lambda x: x[0], reverse=True)
+
+    def _prior_of(hit: Any) -> float:
+        if isinstance(hit, dict):
+            return float(hit.get("score") or 0.0)
+        return float(getattr(hit, "score", 0.0) or 0.0)
+
+    # Soft pin: if hybrid clearly prefers one hit (exact phrase / authoritative),
+    # do not let de-saturated model scores bury it below #1.
+    if len(scored) > 1:
+        best_prior_idx = max(range(len(scored)), key=lambda i: _prior_of(scored[i][1]))
+        p_best = _prior_of(scored[best_prior_idx][1])
+        p_top = _prior_of(scored[0][1])
+        if best_prior_idx > 0 and p_best >= p_top * 1.05 and p_best > 0.0:
+            item = scored.pop(best_prior_idx)
+            scored.insert(0, item)
     return [h for _, h in scored]
 
 

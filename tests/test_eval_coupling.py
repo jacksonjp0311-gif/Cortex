@@ -24,6 +24,18 @@ from cortex.retrieval import (
 from cortex.store import Store
 
 
+class RankerDesaturateTests(unittest.TestCase):
+    def test_batch_relative_scores_spread(self) -> None:
+        from cortex.ranker.model import _batch_relative_scores
+
+        # Saturated absolute logits still must produce ordered relative scores.
+        rel = _batch_relative_scores([4.0, 4.05, 4.2, 3.5])
+        self.assertEqual(len(rel), 4)
+        self.assertGreater(rel[2], rel[0])  # 4.2 > 4.0
+        self.assertGreater(rel[0], rel[3])  # 4.0 > 3.5
+        self.assertTrue(all(0.0 < x < 1.0 for x in rel))
+
+
 class PathTokenBoostTests(unittest.TestCase):
     def test_fusion_paths_align_with_impl_query(self) -> None:
         q = "fusion co-process fuse tick regenerate geometry mind_hash"

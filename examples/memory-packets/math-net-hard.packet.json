@@ -1,0 +1,64 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⌖Σ",
+  "title": "Math-net hard modules (measure-gate misses)",
+  "kind": "discovery",
+  "claims": [
+    {
+      "id": "uncertainty-u",
+      "text": "Unified uncertainty U is a single scalar in [0,1]; confidence C=1-U may only lower under immune stress — never inflate certainty for the Governor.",
+      "evidence": [
+        "cortex/math_net/uncertainty.py",
+        "docs/intelligence/PHASE_V6.12_MATH_NETWORK.md"
+      ]
+    },
+    {
+      "id": "calibration-shadow",
+      "text": "Calibration maps predicted confidence to observed hit rates and clamps drift floor; shadow profiles fit from verified outcomes without host mutation.",
+      "evidence": [
+        "cortex/math_net/calibration.py",
+        "cortex/learning/outcomes.py"
+      ]
+    },
+    {
+      "id": "info-account",
+      "text": "Information accounting budgets tokens against delta-U; promotion gates open when uncertainty falls with fidelity and reversibility.",
+      "evidence": [
+        "cortex/math_net/info_account.py",
+        "cortex/math_net/uncertainty.py"
+      ]
+    },
+    {
+      "id": "operator-A",
+      "text": "Graph adjacency operator A is built from neural synapses; dual reverse-edge operator supports spectral work and alignment checks.",
+      "evidence": [
+        "cortex/math_net/operator.py",
+        "cortex/math_net/spectral.py"
+      ]
+    },
+    {
+      "id": "plasticity-rct",
+      "text": "Plasticity RCT is an opt-in randomized controlled trial arm comparing Hebbian on vs off; default production leaves plasticity on without thrashing arms.",
+      "evidence": [
+        "cortex/math_net/plasticity_rct.py",
+        "cortex/neuron/plasticity.py"
+      ]
+    },
+    {
+      "id": "diffusion-ppr-heat",
+      "text": "Diffusion spreads activation mass along edges with heat kernel and personalized PageRank for ranking features on the synapse graph.",
+      "evidence": [
+        "cortex/math_net/diffusion.py",
+        "cortex/math_net/spectral_memory.py"
+      ]
+    }
+  ],
+  "refuse": [
+    "inflate_certainty_against_governor",
+    "auto_enable_rct_without_opt_in",
+    "claim_consciousness",
+    "second_math_database"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Math-net hard packet teaches module locations for retrieval; never host authority."
+}

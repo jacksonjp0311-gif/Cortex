@@ -180,6 +180,8 @@ def query(
     *,
     materialize_substrate: bool = False,
     prove_implementation: bool = False,
+    ranker_primary: bool = True,
+    enrich_spectral: bool = True,
 ) -> list[Hit]:
     """Hybrid retrieval. Substrate materialization is opt-in (activation/CLI).
 
@@ -187,6 +189,8 @@ def query(
     monopoly and vendor-guide domination (evidence selection, not authority).
     Activation enables this when ARIA is awake; bare verify probes do not, so
     host heading evidence (e.g. README) is not reordered away by prove mode.
+
+    ranker_primary=False returns hybrid order only (measure-gate ablations).
     """
 
     if materialize_substrate:
@@ -402,30 +406,29 @@ def query(
             metadata=metadata,
         ))
     output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
+    # Promote implementation paths cited as evidence in top teach/doctrine hits.
+    output = _expand_evidence_paths(store, repo, output, limit=max(limit * 2, 24))
     # Ranker-primary + spectral diffusion features (v6.13) — never authority.
-    try:
-        from .ranker.model import rerank_hits
+    # Measure-gate sets ranker_primary=False to obtain raw hybrid for ablations.
+    if ranker_primary:
+        try:
+            from .ranker.model import rerank_hits
 
-        # Confidence proxy from top fused score mass
-        top_scores = [float(h.score) for h in output[:8]] or [0.0]
-        conf_proxy = max(0.0, min(1.0, sum(top_scores) / max(1, len(top_scores))))
-        output = rerank_hits(
-            store,
-            repo,
-            output,
-            retrieval_confidence=conf_proxy,
-            primary=True,
-            enrich_spectral=True,
-        )
-        output.sort(
-            key=lambda hit: (
-                -float((hit.metadata or {}).get("ranker_score") or hit.score),
-                hit.path,
-                hit.start_line,
+            # Confidence proxy from top fused score mass
+            top_scores = [float(h.score) for h in output[:8]] or [0.0]
+            conf_proxy = max(0.0, min(1.0, sum(top_scores) / max(1, len(top_scores))))
+            output = rerank_hits(
+                store,
+                repo,
+                output,
+                retrieval_confidence=conf_proxy,
+                primary=True,
+                enrich_spectral=bool(enrich_spectral),
             )
-        )
-    except Exception:
-        pass
+            # Keep rerank_hits order (includes soft pin for hybrid-prior winners).
+            # Do not re-sort solely by ranker_score — that undoes prior pins.
+        except Exception:
+            pass
     floor = _aria_evidence_floor(
         store, repo, text, output, limit=limit, prove=prove
     )
@@ -447,6 +450,87 @@ def query(
     except Exception:
         pass
     return floor
+
+
+_EVIDENCE_PATH_RE = re.compile(
+    r"(?:^|[\s\"'`(\[,])((?:cortex|thalamus|docs|tests)/[A-Za-z0-9_./-]+\.(?:py|md|json))"
+)
+
+
+def _expand_evidence_paths(
+    store: Any,
+    repo: str,
+    hits: list[Hit],
+    *,
+    limit: int = 24,
+) -> list[Hit]:
+    """If top hits cite implementation paths (teach packets/cards), inject those files.
+
+    Turns doctrine evidence strings into retrievable source paths so measure-gate
+    and agents land on modules, not only the packet/card that names them.
+    """
+    if not hits:
+        return hits
+    seen_paths = {str(h.path or "").replace("\\", "/") for h in hits}
+    seen_ids = {int(h.memory_id) for h in hits if h.memory_id is not None}
+    extras: list[Hit] = []
+    for hit in hits[:14]:
+        blob = f"{hit.path or ''}\n{hit.text or ''}"
+        cited = _EVIDENCE_PATH_RE.findall(blob)
+        # Also scan metadata-free JSON-ish evidence lists in packet files.
+        for raw in cited:
+            path = raw.replace("\\", "/").lstrip("./")
+            if path in seen_paths:
+                continue
+            try:
+                rows = store.memories_for_path(repo, path)
+            except Exception:
+                rows = []
+            if not rows:
+                # try posix vs native
+                try:
+                    rows = store.memories_for_path(repo, path.replace("/", "\\"))
+                except Exception:
+                    rows = []
+            if not rows:
+                continue
+            row = rows[0]
+            mid = int(row["id"])
+            if mid in seen_ids:
+                continue
+            seen_ids.add(mid)
+            seen_paths.add(path)
+            try:
+                meta = json.loads(row["metadata"] or "{}")
+            except (TypeError, json.JSONDecodeError):
+                meta = {}
+            meta["selection_source"] = "evidence_expansion"
+            meta["expanded_from"] = str(hit.path or "")
+            # Score just under the parent hit so expansion stays local.
+            parent_score = float(hit.score or 0.0)
+            extras.append(
+                Hit(
+                    memory_id=mid,
+                    repo=row["repo"],
+                    path=row["path"],
+                    start_line=row["start_line"],
+                    end_line=row["end_line"],
+                    text=row["text"],
+                    kind=row["kind"],
+                    score=round(parent_score * 0.97, 8),
+                    content_hash=row["content_hash"],
+                    metadata=meta,
+                )
+            )
+            if len(hits) + len(extras) >= limit:
+                break
+        if len(hits) + len(extras) >= limit:
+            break
+    if not extras:
+        return hits
+    merged = list(hits) + extras
+    merged.sort(key=lambda h: (-float(h.score or 0.0), h.path, h.start_line))
+    return merged
 
 
 def _aria_evidence_floor(
