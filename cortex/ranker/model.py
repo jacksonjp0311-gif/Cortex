@@ -306,10 +306,14 @@ def rerank_hits(
                 }
             except Exception:
                 pass
+        # Note: sigmoid model scores often saturate (~0.98), so ppr/heat features
+        # alone rarely reorder. Measure-gate hard suite + MRR detect this honestly
+        # (spectral_helps stays false until ranking is de-saturated / re-trained).
+        prior_c = min(1.0, max(0.0, prior))
         if primary:
-            final = 0.82 * s + 0.18 * min(1.0, max(0.0, prior))
+            final = 0.82 * s + 0.18 * prior_c
         else:
-            final = 0.55 * s + 0.45 * min(1.0, max(0.0, prior))
+            final = 0.55 * s + 0.45 * prior_c
         scored.append((final, hit))
     scored.sort(key=lambda x: x[0], reverse=True)
     return [h for _, h in scored]

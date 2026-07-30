@@ -574,7 +574,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Measure gate ⌖⧉ — fixed corpus + ablations (spectral/ranker); directs evolution.",
     )
     eval_c.add_argument("--repo", required=True)
-    eval_c.add_argument("--limit", type=int, default=12)
+    eval_c.add_argument(
+        "--suite",
+        choices=["easy", "hard", "full"],
+        default="full",
+        help="easy=keyword corpus; hard=paraphrases; full=both (default).",
+    )
+    eval_c.add_argument("--limit", type=int, default=16)
     eval_c.add_argument("--top-k", type=int, default=5)
     eval_c.add_argument("--json", action="store_true")
     organism.add_argument("--task", required=True)
@@ -1561,7 +1567,8 @@ def main(argv: list[str] | None = None) -> None:
                     store,
                     governor,
                     args.repo,
-                    limit=max(4, int(args.limit or 12)),
+                    suite=str(getattr(args, "suite", None) or "full"),
+                    limit=max(4, int(args.limit or 16)),
                     top_k=max(1, int(getattr(args, "top_k", None) or 5)),
                     on_progress=_prog,
                 ),

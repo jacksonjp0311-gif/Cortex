@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.15.0-0ea5e9?style=for-the-badge" alt="v6.15.0" />
+  <img src="https://img.shields.io/badge/version-6.15.1-0ea5e9?style=for-the-badge" alt="v6.15.1" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.15.0** — **Measure gate** (`eval-coupling`): fixed corpus + ablations prove whether spectral/ranker lift recall. Plus fusion co-process, coherence couples, emergence log. See [`docs/intelligence/PHASE_V6.15_MEASURE_GATE.md`](docs/intelligence/PHASE_V6.15_MEASURE_GATE.md).
+**Current release: v6.15.1** — **Measure gate hard suite** (`eval-coupling --suite full|hard|easy`): paraphrase corpus + MRR + spectral geometry residual so ablations can diverge. See [`docs/intelligence/PHASE_V6.15_MEASURE_GATE.md`](docs/intelligence/PHASE_V6.15_MEASURE_GATE.md).
 
 ```bash
 pip install -e .
@@ -157,8 +157,9 @@ Use directives in the log to **enhance progress** (spectral-primary, fuse, evolv
 Frozen path-substring corpus under three ablations: **baseline** (spectral enrich + ranker primary), **no_spectral**, **no_ranker**. Winner and gate flags direct evolution — not universal answer quality.
 
 ```bash
-python -m cortex eval-coupling --repo CortexTeach --json
-# gate.spectral_helps / gate.ranker_helps / winner
+python -m cortex eval-coupling --repo CortexTeach --suite full --json
+# suites: easy | hard | full — metrics: recall@k + MRR
+# gate.spectral_helps / gate.ranker_helps / winner / divergence_cases
 # logs under CORTEX_HOME/logs/eval-coupling-*.json + emergence measure_gate
 ```
 

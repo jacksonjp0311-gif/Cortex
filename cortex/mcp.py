@@ -333,15 +333,20 @@ TOOLS = [
         "name": "cortex_eval_coupling",
         "description": (
             "Measure gate ⌖⧉: fixed corpus + ablations (baseline / no_spectral / "
-            "no_ranker). Proves whether spectral+ranker lifts recall. Directs evolution. "
-            "Not consciousness. " + _REFUSE
+            "no_ranker). Suites: easy|hard|full. Proves spectral+ranker lift via "
+            "recall@k + MRR. Directs evolution. Not consciousness. " + _REFUSE
         ),
         "inputSchema": {
             "type": "object",
             "required": ["repo"],
             "properties": {
                 "repo": {"type": "string"},
-                "limit": {"type": "integer", "default": 12},
+                "suite": {
+                    "type": "string",
+                    "enum": ["easy", "hard", "full"],
+                    "default": "full",
+                },
+                "limit": {"type": "integer", "default": 16},
                 "top_k": {"type": "integer", "default": 5},
             },
         },
@@ -585,7 +590,8 @@ class CortexMCP:
                 self.store,
                 self.governor,
                 str(arguments["repo"]),
-                limit=max(4, int(arguments.get("limit") or 12)),
+                suite=str(arguments.get("suite") or "full"),
+                limit=max(4, int(arguments.get("limit") or 16)),
                 top_k=max(1, int(arguments.get("top_k") or 5)),
             )
         if name == "cortex_breathe":
