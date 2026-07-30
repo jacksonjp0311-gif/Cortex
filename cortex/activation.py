@@ -110,16 +110,18 @@ def activate_repository(
         context["efficiency"]["surprise"] = surprise
     # v6.13: end-to-end spectral memory pulse (U, Λ_g, fit δ, diffusion fuel)
     spectral_memory: dict[str, Any] | None = None
+    conf = float(
+        ((context.get("governance") or {}).get("components") or {}).get(
+            "retrieval_confidence"
+        )
+        or ((context.get("governor") or {}).get("components") or {}).get(
+            "retrieval_confidence"
+        )
+        or 0.5
+    )
     try:
         from .math_net.spectral_memory import spectral_memory_pulse
 
-        conf = float(
-            ((context.get("governance") or {}).get("components") or {}).get(
-                "retrieval_confidence"
-            )
-            or (context.get("retrieval") or {}).get("confidence")
-            or 0.5
-        )
         cert_st = str((certificate or {}).get("status") or "unknown")
         spectral_memory = spectral_memory_pulse(
             store,
@@ -137,9 +139,34 @@ def activate_repository(
                 **context["governance"],
                 "uncertainty": spectral_memory["u"],
             }
+        elif isinstance(context.get("governor"), dict) and spectral_memory.get("u"):
+            context["governor"] = {
+                **context["governor"],
+                "uncertainty": spectral_memory["u"],
+            }
     except Exception as exc:
         spectral_memory = {"error": f"{type(exc).__name__}: {exc}", "end_to_end": False}
         context["spectral_memory"] = spectral_memory
+    # Seam: soft-bind fusion when CORTEX_FUSE_AUTO=1; always measure coherence
+    fusion_bind: dict[str, Any] | None = None
+    try:
+        from .coherence import measure_coherence, soft_bind_fusion
+
+        fusion_bind = soft_bind_fusion(home, store, governor, repo, task=task)
+        context["fusion_bind"] = fusion_bind
+        conf_for_c = conf
+        if context.get("u") is not None:
+            conf_for_c = max(0.0, min(1.0, 1.0 - float(context.get("u") or 0.5)))
+        context["coherence"] = measure_coherence(
+            store,
+            repo,
+            governor=governor,
+            home=home,
+            retrieval_confidence=conf_for_c,
+        )
+    except Exception as exc:
+        context["coherence"] = {"error": f"{type(exc).__name__}: {exc}"}
+        fusion_bind = None
     session = begin_session(home, store, repo, task)
     from . import __version__
     from .organism import (
@@ -395,6 +422,8 @@ def activate_repository(
         "stream": stream_env,
         "spectral_memory": full_context.get("spectral_memory") or spectral_memory,
         "u": full_context.get("u"),
+        "coherence": full_context.get("coherence"),
+        "fusion_bind": full_context.get("fusion_bind") or fusion_bind,
         "aria_language": aria_language,
         "packs": full_context.get("packs") or context.get("packs"),
         "connect_pass": connect,

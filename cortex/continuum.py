@@ -360,8 +360,17 @@ def run_continuum(
     except Exception:
         grow_line = "❖ continuum"
 
+    # Seam: system coherence after multi-lane pass
+    coherence: dict[str, Any] | None = None
+    try:
+        from .coherence import measure_coherence
+
+        coherence = measure_coherence(store, repo, governor=governor, home=home)
+    except Exception as exc:
+        coherence = {"error": f"{type(exc).__name__}: {exc}"}
+
     report: dict[str, Any] = {
-        "schema_version": "cortex-continuum/1.0",
+        "schema_version": "cortex-continuum/1.1",
         "glyph": "⟲❖〰✂▣",
         "phrase": grow_line,
         "version": __version__,
@@ -369,6 +378,7 @@ def run_continuum(
         "elapsed_s": elapsed,
         "cycles": cycles,
         "lanes": lanes,
+        "coherence": coherence,
         "summary": {
             "lanes_ok": ops["lanes_ok"],
             "lanes_total": ops["lanes_total"],
@@ -386,6 +396,9 @@ def run_continuum(
                 (lanes.get("prune_graph") or {}).get("integrate_soft_dry") or {}
             ).get("would_prune"),
             "packs_count": (lanes.get("packs") or {}).get("count_after"),
+            "coherence_score": (coherence or {}).get("score"),
+            "coherence_above_threshold": (coherence or {}).get("above_threshold"),
+            "emergent_coupling": (coherence or {}).get("emergent_coupling"),
         },
         "claim_boundary": ops["claim_boundary"],
     }

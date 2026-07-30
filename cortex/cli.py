@@ -549,6 +549,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="No upstream; mock stream for local demo/tests.",
     )
+
+    coherence_p = sub.add_parser(
+        "coherence",
+        help="System coherence ⧉≈ — seam coupling score (U, geometry, spectral, fusion, ranker).",
+    )
+    coherence_p.add_argument("--repo", required=True)
+    coherence_p.add_argument("--json", action="store_true")
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1491,6 +1498,16 @@ def main(argv: list[str] | None = None) -> None:
                 emit(fuse_state(store, args.repo), args.json)
             else:
                 emit(fuse_close(store, args.repo), args.json)
+
+        elif command == "coherence":
+            from .coherence import measure_coherence
+
+            emit(
+                measure_coherence(
+                    store, args.repo, governor=governor, home=home
+                ),
+                args.json,
+            )
 
         elif command == "fuse-proxy":
             from .fuse_proxy import serve_fuse_proxy

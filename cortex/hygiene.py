@@ -81,8 +81,29 @@ def body_hygiene(
     except Exception:
         glyph_line = compact_line(["graph_prune", "spectral_kernels", "identity"])
 
+    coherence: dict[str, Any] | None = None
+    try:
+        from .coherence import measure_coherence
+
+        coherence = measure_coherence(store, repo, home=home)
+        if coherence.get("above_threshold"):
+            advice = list(advice) + ["coherence_above_threshold"]
+        for a in coherence.get("advice") or []:
+            if a not in advice:
+                advice.append(a)
+    except Exception:
+        coherence = None
+
+    dual: dict[str, Any] | None = None
+    try:
+        from .math_net.operator import dual_graph_report
+
+        dual = dual_graph_report(store, repo)
+    except Exception:
+        dual = None
+
     return {
-        "schema_version": "cortex-body-hygiene/1.1",
+        "schema_version": "cortex-body-hygiene/1.2",
         "glyph": "✂",
         "glyph_line": glyph_line,
         "repo": repo,
@@ -97,6 +118,8 @@ def body_hygiene(
             "weak_unused": int(weak),
             "aria_path_nodes": int(aria_nodes),
         },
+        "dual_graph": dual,
+        "coherence": coherence,
         "prune_preview": preview,
         "recommended_prune_policy": recommended,
         "ranker": {
@@ -113,8 +136,11 @@ def body_hygiene(
             "kernels": f"cortex kernels --repo {repo} --json",
             "identity": f"cortex identity --repo {repo} --json",
             "harness": f"cortex harness --repo {repo} --json",
+            "coherence": f"cortex coherence --repo {repo} --json",
+            "fuse_proxy": f"cortex fuse-proxy --repo {repo} --mock --port 8787",
         },
         "claim_boundary": (
-            "Hygiene is recommend-only telemetry; prune never deletes evidence rows."
+            "Hygiene is recommend-only telemetry; prune never deletes evidence rows. "
+            "Coherence wires dual-graph + U + spectral + fusion seams."
         ),
     }

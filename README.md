@@ -107,6 +107,16 @@ python -m cortex fuse close --repo MyProject --json
 
 **Honest boundary:** the proxy fuses **generation I/O** to Cortex geometry. It does **not** merge model weights, invent host source files, or claim sentience. Details: [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
 
+### System coherence (seams wired)
+
+One score over blood / geometry / spectral / ranker / fusion / hygiene:
+
+```bash
+python -m cortex coherence --repo MyProject --json
+# score ≥ 0.62 → above_threshold; emergent_coupling if ≥3 seam couples fire
+# Optional: CORTEX_FUSE_AUTO=1 python -m cortex activate ...  # soft-opens fusion
+```
+
 **Teach the body:** ARIA memory packets under `examples/memory-packets/` distill interconnect
 intelligence into durable cards via `cortex teach --seed` — so interconnect recalls doctrine,
 not chat lore. Cortex is SQLite-backed, dependency-free in core install, and **recommend-only**.

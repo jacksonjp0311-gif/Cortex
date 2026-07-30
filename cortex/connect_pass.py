@@ -414,6 +414,13 @@ def persist_connect_pass(
         graph["dominant_kernel"] = spectral.get("dominant")
         graph["regime_priors"] = True
         graph["Lambda"] = update_lambda_on_pulse(store, repo).get("Lambda")
+        # Seam: dual-graph snapshot on each connect
+        try:
+            from .math_net.operator import dual_graph_report
+
+            graph["dual_graph"] = dual_graph_report(store, repo)
+        except Exception:
+            pass
     except Exception as exc:
         spectral = {"error": f"{type(exc).__name__}: {exc}"}
 
