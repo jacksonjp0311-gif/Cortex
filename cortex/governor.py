@@ -77,6 +77,10 @@ class Governor:
                 governor_stability=None,  # avoid circular use of S
             )
             unified_conf = float(u_packet.get("confidence") or confidence)
+            # U may only *lower* confidence for S (never inflate past retrieval).
+            # Prevents verified-cert soft blend from pushing mode to normal after drift.
+            if confidence > 0:
+                unified_conf = min(confidence, unified_conf)
         except Exception:
             unified_conf = confidence
             u_packet = {"u": round(1.0 - confidence, 6), "confidence": confidence}
