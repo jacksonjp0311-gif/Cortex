@@ -1,4 +1,8 @@
-"""System coherence — emergent coupling indicators across seams.
+"""System coherence — operational coupling indicators across seams.
+
+v6.18: Primary metric is also exposed as ``operational_coupling_index``.
+It is an engineered health score of multi-seam co-activation — not proof of
+emergence, consciousness, or validated task utility.
 
 Whole picture (four bands):
   blood     — U, Governor mode
@@ -8,7 +12,7 @@ Whole picture (four bands):
 
 COHERENCE_THRESHOLD (0.62): operating point where multi-seam coupling
 is "one enough loop." emergent_coupling = above threshold AND ≥3 active
-couples. Not consciousness.
+couples. Validated utility requires holdout/foreign eval, not this score alone.
 """
 
 from __future__ import annotations
@@ -297,12 +301,16 @@ def measure_coherence(
             advice.append("coherence_sustained")
 
     panel = _component_panel(components)
+    score_r = round(score, 4)
     report = {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "version": __version__,
         "repo": repo,
-        "score": round(score, 4),
+        "score": score_r,
+        # v6.18 alias: engineered multi-seam health, not validated task utility
+        "operational_coupling_index": score_r,
+        "metric_kind": "operational_coupling_index",
         "threshold": COHERENCE_THRESHOLD,
         "above_threshold": above,
         "components": {k: round(float(v), 4) for k, v in components.items()},
@@ -324,8 +332,9 @@ def measure_coherence(
         "advice": advice,
         "auto_fuse_env": os.environ.get("CORTEX_FUSE_AUTO", ""),
         "claim_boundary": (
-            "Emergent coupling indicators = multi-seam co-activation of independent "
-            "telemetry channels. Not consciousness, not one mind, not host authority."
+            "operational_coupling_index (score) = multi-seam co-activation of independent "
+            "telemetry channels. Not validated utility, not consciousness, not host authority. "
+            "Use holdout/foreign eval for utility claims."
         ),
         "at": time.time(),
     }

@@ -55,22 +55,81 @@ def _synapse_count(store: Any, repo: str) -> int:
         return 0
 
 
-def _classify_role(name: str, path: str, home_engine: Path | None) -> str:
+MESH_ROLES = frozenset(
+    {
+        "durable_body",
+        "engine_tree",
+        "engine_alias",
+        "sandbox",
+        "foreign_host",
+        "unknown",
+    }
+)
+
+
+def _metadata_dict(row: dict[str, Any]) -> dict[str, Any]:
+    raw = row.get("metadata")
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str) and raw.strip():
+        try:
+            import json
+
+            val = json.loads(raw)
+            return val if isinstance(val, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _classify_role(
+    name: str,
+    path: str,
+    home_engine: Path | None,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> str:
+    """Prefer explicit mesh_role metadata; fall back to conservative heuristics."""
+    meta = metadata or {}
+    explicit = str(meta.get("mesh_role") or meta.get("role") or "").strip()
+    if explicit in MESH_ROLES:
+        return explicit
     n = name.casefold()
-    p = path.replace("\\", "/").casefold()
-    if "teach" in n:
+    if n == "cortexteach" or n.endswith("teach"):
         return "durable_body"
     if home_engine and path:
         try:
             if Path(path).resolve() == home_engine.resolve():
-                return "engine_tree"
+                return "engine_tree" if n == "cortex" else "durable_body"
         except Exception:
             pass
     if "sandbox" in n:
         return "sandbox"
-    if "cortex" in n and "teach" not in n:
+    if n == "cortex":
         return "engine_alias"
     return "foreign_host"
+
+
+def set_mesh_role(store: Any, repo: str, role: str, **extra: Any) -> dict[str, Any]:
+    """Persist explicit mesh_role on repository metadata (v6.18)."""
+    if role not in MESH_ROLES:
+        raise ValueError(f"Unknown mesh_role {role!r}; choose {sorted(MESH_ROLES)}")
+    row = store.repo(repo)
+    if not row:
+        raise ValueError(f"Unknown repository: {repo}")
+    rd = _row_dict(row)
+    meta = _metadata_dict(rd)
+    meta["mesh_role"] = role
+    meta["authority_domain"] = extra.get(
+        "authority_domain",
+        "isolated" if role == "foreign_host" else "body",
+    )
+    meta["learning_policy"] = extra.get(
+        "learning_policy", "verified_outcomes_only"
+    )
+    meta["topology_class"] = "G_federated" if role == "foreign_host" else "G_learned"
+    store.update_repo_state(repo, metadata=meta)
+    return meta
 
 
 def observe_host(
@@ -89,7 +148,14 @@ def observe_host(
     path = str(rd.get("path") or "")
     path_ok = bool(path and Path(path).exists())
     engine = Path(__file__).resolve().parents[1]
-    role = _classify_role(repo, path, engine)
+    meta = _metadata_dict(rd)
+    role = _classify_role(repo, path, engine, metadata=meta)
+    # Auto-stamp explicit role once so future pulses are not heuristic-only.
+    if not meta.get("mesh_role") and path_ok:
+        try:
+            meta = set_mesh_role(store, repo, role)
+        except Exception:
+            pass
 
     coh: dict[str, Any] = {}
     if measure_coherence_field and path_ok:
@@ -116,6 +182,9 @@ def observe_host(
         "name": repo,
         "attached": True,
         "role": role,
+        "mesh_role": meta.get("mesh_role") or role,
+        "authority_domain": meta.get("authority_domain"),
+        "learning_policy": meta.get("learning_policy"),
         "path": path,
         "path_exists": path_ok,
         "repository_id": rd.get("repository_id"),

@@ -227,6 +227,96 @@ STRESS_CORPUS: list[dict[str, Any]] = [
     },
 ]
 
+# Train split: may feed self-org ranker warm / invent seeds (v6.18).
+TRAIN_CORPUS: list[dict[str, Any]] = [
+    {**c, "split": "train"} for c in (EASY_CORPUS + HARD_CORPUS[:5])
+]
+
+# Sealed holdout: never used for ranker warm or concept-route construction.
+# Distinct phrasing from HARD/STRESS train material.
+HOLDOUT_CORPUS: list[dict[str, Any]] = [
+    {
+        "id": "holdout_u_scalar",
+        "query": (
+            "where is the single uncertainty number built for the whole organism "
+            "so certainty never gets inflated against immune stress"
+        ),
+        "expected_substrings": ["math_net/uncertainty", "uncertainty.py"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_adjacency_builder",
+        "query": (
+            "module that assembles the weighted undirected adjacency from synapse "
+            "mass for spectral operators"
+        ),
+        "expected_substrings": ["math_net/operator", "operator.py"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_proxy_sse",
+        "query": (
+            "local http front that streams chat completions and fires geometry "
+            "regen on each content delta"
+        ),
+        "expected_substrings": ["fuse_proxy"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_progress_journal",
+        "query": (
+            "append-only agent progress journal that must be read before work "
+            "with couple activation history"
+        ),
+        "expected_substrings": ["emergence_log"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_cofire_edges",
+        "query": (
+            "gated creation of weak integrate synapses when two neural nodes "
+            "fire together and lack an edge"
+        ),
+        "expected_substrings": ["structure_invent"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_shadow_weights",
+        "query": (
+            "online shadow profile nudging constitutional and governor weights "
+            "from outcome rewards without live promotion"
+        ),
+        "expected_substrings": ["math_net/calibration", "calibration.py"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_info_budget",
+        "query": (
+            "delta uncertainty per log-token budget and promotion score product "
+            "for information accounting"
+        ),
+        "expected_substrings": ["info_account"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+    {
+        "id": "holdout_mesh_observe",
+        "query": (
+            "pulse that lists every attached repository with role coherence and "
+            "ranker trains without merging identities"
+        ),
+        "expected_substrings": ["host_mesh"],
+        "suite": "holdout",
+        "split": "holdout",
+    },
+]
+
 # Back-compat alias
 DEFAULT_CORPUS = EASY_CORPUS
 
@@ -235,7 +325,9 @@ SUITES: dict[str, list[dict[str, Any]]] = {
     "hard": HARD_CORPUS,
     "full": EASY_CORPUS + HARD_CORPUS,
     "stress": STRESS_CORPUS,
-    "all": EASY_CORPUS + HARD_CORPUS + STRESS_CORPUS,
+    "train": TRAIN_CORPUS,
+    "holdout": HOLDOUT_CORPUS,
+    "all": EASY_CORPUS + HARD_CORPUS + STRESS_CORPUS + HOLDOUT_CORPUS,
 }
 
 ABLATIONS: tuple[str, ...] = (
@@ -249,7 +341,7 @@ def resolve_corpus(suite: str | None = None) -> list[dict[str, Any]]:
     key = (suite or "full").strip().lower()
     if key not in SUITES:
         raise ValueError(
-            f"Unknown suite {suite!r}; choose easy|hard|full|stress|all"
+            f"Unknown suite {suite!r}; choose easy|hard|full|stress|train|holdout|all"
         )
     return list(SUITES[key])
 
@@ -425,8 +517,10 @@ def run_eval_coupling(
     if ceiling:
         keep_spectral = True
         keep_ranker = True
-        # At perfect recall, prefer baseline as winner for policy stability
-        winner = "baseline"
+        # Policy stability only — do NOT force winner for promotion (v6.18).
+        winner_for_policy = "baseline"
+    else:
+        winner_for_policy = winner
 
     prog("coherence_after")
     coh_after = measure_coherence(
@@ -434,16 +528,37 @@ def run_eval_coupling(
     )
     ranker_after = ranker_status(store, repo)
 
+    # Promotion requires true baseline win without perfect-ceiling force, and
+    # non-ceiling suites preferred for utility claims (holdout/train).
+    suite_name = (suite or "full").strip().lower()
+    promote_ok = (
+        winner == "baseline"
+        and not ceiling
+        and bool(coh_after.get("emergent_coupling"))
+        and suite_name in {"holdout", "train", "hard", "stress", "full"}
+    )
+    # Holdout suite is the sealed utility exam.
+    if suite_name == "holdout":
+        promote_ok = (
+            winner == "baseline"
+            and bool(coh_after.get("emergent_coupling"))
+            and baseline_r >= 0.5
+        )
+
     gate = {
         "baseline_is_winner": winner == "baseline",
-        "promote_calibration": bool(
-            coh_after.get("emergent_coupling") and winner == "baseline"
-        ),
+        "promote_calibration": promote_ok,
         "spectral_helps": spectral_helps,
         "ranker_helps": ranker_helps,
         "keep_spectral_features": keep_spectral,
         "keep_ranker_primary": keep_ranker,
         "perfect_recall_ceiling": ceiling,
+        "winner_for_policy": winner_for_policy,
+        "eval_split": (
+            "holdout"
+            if suite_name == "holdout"
+            else ("train" if suite_name == "train" else "mixed")
+        ),
     }
 
     # Per-case divergence summary (where modes disagree on hit@k or rank)

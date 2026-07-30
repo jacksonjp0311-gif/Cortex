@@ -14,7 +14,10 @@ Environment profiles, Discovery Cards, relationship resolution, and neural assoc
 
 ## Neural plasticity
 
-Plasticity can only update bounded internal association weights for existing compiled relationships. It cannot change source files, create arbitrary graph topology, or operate in `read_only` mode.
+Plasticity can only update bounded internal association weights and, under Governor
+gates, create weak reversible **G_learned** edges (e.g. coactivation invent). It
+cannot change source files (**G_host**), invent host topology, or operate in
+`read_only` mode. See `docs/intelligence/TOPOLOGY_LAW.md`.
 
 ## Authority
 

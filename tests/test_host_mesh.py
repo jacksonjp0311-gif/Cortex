@@ -9,8 +9,9 @@ from pathlib import Path
 from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
 from cortex.governor import Governor
-from cortex.host_mesh import observe_host, run_host_mesh
+from cortex.host_mesh import observe_host, run_host_mesh, set_mesh_role
 from cortex.store import Store
+from cortex.topology_law import G_LEARNED, classify_edge_kind, topology_law_packet
 
 
 class HostMeshTests(unittest.TestCase):
@@ -50,6 +51,17 @@ class HostMeshTests(unittest.TestCase):
         self.assertGreaterEqual(report["host_count"], 1)
         self.assertTrue(report["directives"])
         self.assertIn("next", report)
+
+    def test_explicit_mesh_role_and_topology_law(self) -> None:
+        meta = set_mesh_role(self.store, "MeshHost", "foreign_host")
+        self.assertEqual(meta["mesh_role"], "foreign_host")
+        one = observe_host(
+            self.home, self.store, self.gov, "MeshHost", measure_coherence_field=False
+        )
+        self.assertEqual(one["role"], "foreign_host")
+        law = topology_law_packet()
+        self.assertIn("G_host", law["law"])
+        self.assertEqual(classify_edge_kind(invented=True), G_LEARNED)
 
 
 if __name__ == "__main__":

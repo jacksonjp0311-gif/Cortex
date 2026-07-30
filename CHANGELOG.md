@@ -1,3 +1,27 @@
+## 6.18.0 - Boundary Consolidation
+
+- **Self-org:** fix `returned_paths` slicing; Governor failure → `read_only`; train/holdout split (no ranker warm from holdout).
+- **Eval:** suites `train` / `holdout`; promote_calibration not forced by perfect-recall ceiling.
+- **Topology law:** `G_host` / `G_evidence` / `G_learned` / `G_federated` (`topology_law.py`, docs).
+- **Host mesh:** persist explicit `mesh_role` metadata; heuristics are fallback only.
+- **Coherence:** expose `operational_coupling_index` (engineered coupling, not validated utility).
+- **Fuse proxy:** restore SQLite WAL + busy_timeout after reconnect; optional `CORTEX_FUSE_TOKEN`.
+- Docs: SECURITY/README plasticity wording; `PHASE_V6.18_BOUNDARY.md`.
+
+## 6.17.0 - Host mesh
+
+- `host-mesh` pulse: multi-host observe + federated query boundaries.
+- Roles, mean coherence, directives for cold foreign rankers.
+
+## 6.16.x - Self-org + foreign distill
+
+- `self-org` alignment pulse; stress suite; foreign PulseFlow loop distill.
+- fuse_tick signature fix in self-org.
+
+## 6.15.x - Measure gate + hard paraphrases
+
+- eval-coupling ablations; concept routes; path-token IR; continuum large-graph throttle.
+
 ## 6.10.0 - Spectral prune policies + graph census
 
 - **Policies:** `safe` | `integrate_soft` | `aggressive` (authorize required to apply aggressive).

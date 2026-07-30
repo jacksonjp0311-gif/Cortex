@@ -12,10 +12,13 @@ from cortex.eval_coupling import (
     DEFAULT_CORPUS,
     EASY_CORPUS,
     HARD_CORPUS,
+    HOLDOUT_CORPUS,
     STRESS_CORPUS,
+    TRAIN_CORPUS,
     resolve_corpus,
     run_eval_coupling,
 )
+from cortex.self_org import _gov_mode
 from cortex.governor import Governor
 from cortex.retrieval import (
     path_token_overlap,
@@ -114,7 +117,16 @@ class EvalCouplingTests(unittest.TestCase):
             len(resolve_corpus("full")), len(EASY_CORPUS) + len(HARD_CORPUS)
         )
         self.assertEqual(len(resolve_corpus("stress")), len(STRESS_CORPUS))
+        self.assertEqual(len(resolve_corpus("train")), len(TRAIN_CORPUS))
+        self.assertEqual(len(resolve_corpus("holdout")), len(HOLDOUT_CORPUS))
         self.assertIs(DEFAULT_CORPUS, EASY_CORPUS)
+
+    def test_gov_mode_fail_closed(self) -> None:
+        class Boom:
+            def evaluate(self, *a: object, **k: object) -> dict:
+                raise RuntimeError("nope")
+
+        self.assertEqual(_gov_mode(Boom(), self.store, "EvalHost"), "read_only")
 
     def test_eval_coupling_runs(self) -> None:
         report = run_eval_coupling(

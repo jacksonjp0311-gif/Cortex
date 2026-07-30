@@ -92,6 +92,9 @@ class FusionBridge:
         self.store.db.row_factory = sqlite3.Row
         try:
             self.store.db.execute("PRAGMA foreign_keys=ON")
+            # Restore Store-equivalent busy timeout (ms) after reconnect.
+            self.store.db.execute("PRAGMA busy_timeout=5000")
+            self.store.db.execute("PRAGMA journal_mode=WAL")
         except Exception:
             pass
         self.governor = Governor(self.home, self.store)
@@ -100,6 +103,8 @@ class FusionBridge:
         self._lock = threading.Lock()
         self.last_injection: dict[str, Any] | None = None
         self.stats = {"tokens": 0, "ticks": 0, "requests": 0}
+        # v6.18: optional local bearer (CORTEX_FUSE_TOKEN); empty = loopback trust only
+        self.bearer_token = (os.environ.get("CORTEX_FUSE_TOKEN") or "").strip()
 
     def open(self) -> dict[str, Any]:
         return fuse_open(
@@ -266,9 +271,21 @@ def make_handler(
             self.end_headers()
             self.wfile.write(body)
 
+        def _auth_ok(self) -> bool:
+            token = getattr(bridge, "bearer_token", "") or ""
+            if not token:
+                return True  # loopback trust when CORTEX_FUSE_TOKEN unset
+            auth = self.headers.get("Authorization") or ""
+            if auth == f"Bearer {token}":
+                return True
+            if self.headers.get("X-Cortex-Fuse-Token") == token:
+                return True
+            return False
+
         def do_GET(self) -> None:  # noqa: N802
             path = urlparse(self.path).path
             if path in {"/", "/health", "/v1/health"}:
+                # Health is redacted by default (v6.18); full fusion state needs auth.
                 body = _json_bytes(
                     {
                         "schema_version": SCHEMA,
@@ -276,7 +293,12 @@ def make_handler(
                         "ok": True,
                         "version": __version__,
                         "repo": bridge.repo,
-                        "fusion": bridge.state(),
+                        "stats": {
+                            "tokens": bridge.stats.get("tokens"),
+                            "ticks": bridge.stats.get("ticks"),
+                            "requests": bridge.stats.get("requests"),
+                        },
+                        "auth_required": bool(bridge.bearer_token),
                         "claim_boundary": (
                             "Proxy ticks Cortex on each streamed token; "
                             "not model-weight fusion; recommend-only."
@@ -286,11 +308,17 @@ def make_handler(
                 self._send(200, body)
                 return
             if path in {"/v1/fusion/state", "/fusion/state"}:
+                if not self._auth_ok():
+                    self._send(401, _json_bytes({"error": "unauthorized"}))
+                    return
                 self._send(200, _json_bytes(bridge.state()))
                 return
             self._send(404, _json_bytes({"error": "not_found"}))
 
         def do_POST(self) -> None:  # noqa: N802
+            if not self._auth_ok():
+                self._send(401, _json_bytes({"error": "unauthorized"}))
+                return
             path = urlparse(self.path).path
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"

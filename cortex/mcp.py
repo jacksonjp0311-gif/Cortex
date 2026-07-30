@@ -343,7 +343,7 @@ TOOLS = [
                 "repo": {"type": "string"},
                 "suite": {
                     "type": "string",
-                    "enum": ["easy", "hard", "full", "stress", "all"],
+                    "enum": ["easy", "hard", "full", "stress", "train", "holdout", "all"],
                     "default": "full",
                 },
                 "limit": {"type": "integer", "default": 16},

@@ -576,9 +576,9 @@ def build_parser() -> argparse.ArgumentParser:
     eval_c.add_argument("--repo", required=True)
     eval_c.add_argument(
         "--suite",
-        choices=["easy", "hard", "full", "stress", "all"],
+        choices=["easy", "hard", "full", "stress", "train", "holdout", "all"],
         default="full",
-        help="easy|hard|full|stress|all measure corpora.",
+        help="easy|hard|full|stress|train|holdout|all measure corpora.",
     )
     eval_c.add_argument("--limit", type=int, default=16)
     eval_c.add_argument("--top-k", type=int, default=5)

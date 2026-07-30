@@ -152,6 +152,20 @@ CONCEPT_ROUTES: list[dict[str, Any]] = [
             "emergence log",
             "couple history",
             "progress journal",
+            "append-only agent progress",
+            "couple activation history",
+        ),
+    },
+    {
+        "id": "host_mesh",
+        "paths": ["cortex/host_mesh.py"],
+        "phrases": (
+            "host mesh",
+            "attached repository with role",
+            "without merging identities",
+            "mesh_role",
+            "multi-host mesh",
+            "lists every attached repository",
         ),
     },
 ]

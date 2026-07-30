@@ -37,11 +37,16 @@ GLYPH = "⧉⟳"
 
 
 def _gov_mode(governor: Any, store: Any, repo: str) -> str:
+    """Fail closed: authority unavailable → read_only (never default normal)."""
     try:
         env = governor.evaluate(repo, retrieval_confidence=0.55)
-        return str(env.get("mode") or "normal")
+        mode = str(env.get("mode") or "").strip()
+        if mode in {"normal", "constrained", "read_only"}:
+            return mode
+        # Unknown mode string — do not invent privileges.
+        return "read_only"
     except Exception:
-        return "normal"
+        return "read_only"
 
 
 def _paths_to_node_ids(store: Any, repo: str, paths: list[str]) -> list[str]:
@@ -82,7 +87,7 @@ def _warm_ranker_from_gate(
     for i, case in enumerate(results):
         if not case.get("hit_at_k"):
             continue
-        for j, p in enumerate(case.get("returned_paths") or [][:3]):
+        for j, p in enumerate((case.get("returned_paths") or [])[:3]):
             pn = str(p).replace("\\", "/")
             paths.append(pn)
             vectors.append(
@@ -91,7 +96,10 @@ def _warm_ranker_from_gate(
                         "path": pn,
                         "kind": "source" if pn.endswith(".py") else "documentation",
                         "score": max(0.2, 0.9 - 0.1 * j),
-                        "metadata": {"selection_source": "measure_gate_hit"},
+                        "metadata": {
+                            "selection_source": "measure_gate_hit",
+                            "eval_split": "train",
+                        },
                     },
                     rank=j,
                     retrieval_confidence=0.7,
@@ -154,47 +162,69 @@ def run_self_org(
     mode = _gov_mode(governor, store, repo)
     ranker_before = ranker_status(store, repo)
 
-    # ── Measure gate ───────────────────────────────────────────────────
-    prog("measure_gate:full")
-    full_report = run_eval_coupling(
+    # ── Measure gate (train / holdout separation — v6.18) ──────────────
+    # Train suite: allowed for ranker warm / invent seeds.
+    # Holdout suite: sealed; never trains ranker; drives keep/promote decisions.
+    prog("measure_gate:train")
+    train_report = run_eval_coupling(
         home,
         store,
         governor,
         repo,
-        suite="full",
+        suite="train",
         persist=True,
-        on_progress=lambda m: prog(f"full:{m}"),
+        on_progress=lambda m: prog(f"train:{m}"),
     )
-    gate = full_report.get("gate") or {}
-    ceiling = bool(gate.get("perfect_recall_ceiling"))
-    stress_report: dict[str, Any] | None = None
-    if ceiling and run_stress_if_ceiling:
-        prog("measure_gate:stress (ceiling → harder exam)")
-        stress_report = run_eval_coupling(
+    prog("measure_gate:holdout (sealed — no ranker train)")
+    holdout_report = run_eval_coupling(
+        home,
+        store,
+        governor,
+        repo,
+        suite="holdout",
+        persist=True,
+        on_progress=lambda m: prog(f"holdout:{m}"),
+    )
+    # Optional full for continuity telemetry (not used to train)
+    full_report = train_report
+    if run_stress_if_ceiling:
+        prog("measure_gate:full (telemetry only)")
+        full_report = run_eval_coupling(
             home,
             store,
             governor,
             repo,
-            suite="stress",
+            suite="full",
             persist=True,
-            on_progress=lambda m: prog(f"stress:{m}"),
+            on_progress=lambda m: prog(f"full:{m}"),
         )
+    gate = holdout_report.get("gate") or {}
+    ceiling = bool((full_report.get("gate") or {}).get("perfect_recall_ceiling"))
+    stress_report = holdout_report  # holdout is the promotion exam
+    active_report = train_report  # warm from train only
+    active_gate = gate
 
-    active_report = stress_report or full_report
-    active_gate = active_report.get("gate") or gate
-
-    # ── Ranker warm ────────────────────────────────────────────────────
+    # ── Ranker warm (train split only) ─────────────────────────────────
     ranker_train: dict[str, Any] = {"trained": False, "skipped": not warm_ranker}
     if warm_ranker:
-        prog("warm_ranker")
+        prog("warm_ranker (train split only)")
         ranker_train = _warm_ranker_from_gate(
-            store, repo, active_report, governance_mode=mode
+            store, repo, train_report, governance_mode=mode
         )
+        ranker_train["eval_split"] = "train"
 
     # ── Shadow calibration observe ─────────────────────────────────────
     calibration: dict[str, Any] = {"observed": False}
-    if active_gate.get("promote_calibration") or gate.get("promote_calibration"):
-        prog("calibration_shadow")
+    # Promote only when holdout utility is real — not perfect-ceiling force-winner.
+    holdout_recall = float(
+        ((holdout_report.get("ablations") or {}).get("baseline") or {}).get(
+            "recall_at_k"
+        )
+        or 0.0
+    )
+    may_promote = bool(active_gate.get("promote_calibration")) and holdout_recall >= 0.5
+    if may_promote and mode != "read_only":
+        prog("calibration_shadow (holdout-gated)")
         try:
             from .math_net.calibration import observe_outcome_for_calibration
 
@@ -211,13 +241,21 @@ def run_self_org(
                         "integrity": 0.85,
                     },
                 ),
-                "note": "shadow only — not live Governor replacement",
+                "note": "shadow only — not live Governor replacement; holdout-gated",
+                "holdout_recall": holdout_recall,
             }
         except Exception as exc:
             calibration = {
                 "observed": False,
                 "error": f"{type(exc).__name__}: {exc}",
             }
+    else:
+        calibration = {
+            "observed": False,
+            "skipped": True,
+            "reason": "holdout_or_gate_blocked_promote",
+            "holdout_recall": holdout_recall,
+        }
 
     # ── Structure invent (self-org topology, not host files) ───────────
     invent_result: dict[str, Any] = {"invented": 0, "skipped": not invent}
@@ -230,7 +268,7 @@ def run_self_org(
             base = (active_report.get("ablations") or {}).get("baseline") or {}
             for case in base.get("results") or []:
                 if case.get("hit_at_k"):
-                    hit_paths.extend(case.get("returned_paths") or [][:2])
+                    hit_paths.extend((case.get("returned_paths") or [])[:2])
             node_ids = _paths_to_node_ids(store, repo, hit_paths[:16])
             invent_result = invent_from_coactivation(
                 store,
@@ -285,13 +323,14 @@ def run_self_org(
     # ── Seal ───────────────────────────────────────────────────────────
     seal_note: dict[str, Any] = {"sealed": False}
     summary = (
-        f"self-org align: full_recall="
-        f"{(full_report.get('ablations') or {}).get('baseline', {}).get('recall_at_k')} "
-        f"stress="
-        f"{((stress_report or {}).get('ablations') or {}).get('baseline', {}).get('recall_at_k')} "
+        f"self-org align: train_recall="
+        f"{(train_report.get('ablations') or {}).get('baseline', {}).get('recall_at_k')} "
+        f"holdout_recall="
+        f"{(holdout_report.get('ablations') or {}).get('baseline', {}).get('recall_at_k')} "
         f"ranker_trained={ranker_train.get('trained')} "
         f"invented={invent_result.get('invented')} "
         f"fuse_tick={fuse.get('ticked')} "
+        f"gov={mode} "
         f"coh={coh_after.get('score')} emergent={coh_after.get('emergent_coupling')}"
     )
     if seal:
@@ -392,31 +431,31 @@ def run_self_org(
             "coherence_advice": coh_before.get("advice") or coh_after.get("advice"),
         },
         "measure": {
-            "full": {
-                "winner": full_report.get("winner"),
-                "gate": gate,
-                "baseline_recall": (full_report.get("ablations") or {})
+            "train": {
+                "winner": train_report.get("winner"),
+                "gate": train_report.get("gate"),
+                "baseline_recall": (train_report.get("ablations") or {})
                 .get("baseline", {})
                 .get("recall_at_k"),
-                "baseline_mrr": (full_report.get("ablations") or {})
+                "baseline_mrr": (train_report.get("ablations") or {})
                 .get("baseline", {})
                 .get("mrr"),
+                "split": "train",
             },
-            "stress": None
-            if not stress_report
-            else {
-                "winner": stress_report.get("winner"),
-                "gate": stress_report.get("gate"),
-                "baseline_recall": (stress_report.get("ablations") or {})
+            "holdout": {
+                "winner": holdout_report.get("winner"),
+                "gate": holdout_report.get("gate"),
+                "baseline_recall": (holdout_report.get("ablations") or {})
                 .get("baseline", {})
                 .get("recall_at_k"),
-                "baseline_mrr": (stress_report.get("ablations") or {})
+                "baseline_mrr": (holdout_report.get("ablations") or {})
                 .get("baseline", {})
                 .get("mrr"),
+                "split": "holdout",
                 "misses": [
                     r["id"]
                     for r in (
-                        (stress_report.get("ablations") or {})
+                        (holdout_report.get("ablations") or {})
                         .get("baseline", {})
                         .get("results")
                         or []
@@ -424,7 +463,16 @@ def run_self_org(
                     if not r.get("hit_at_k")
                 ],
             },
-            "ceiling_broke_into_stress": bool(stress_report),
+            "full": {
+                "winner": full_report.get("winner"),
+                "gate": full_report.get("gate"),
+                "baseline_recall": (full_report.get("ablations") or {})
+                .get("baseline", {})
+                .get("recall_at_k"),
+                "split": "telemetry",
+            },
+            "train_holdout_separated": True,
+            "ceiling_on_full": ceiling,
         },
         "self_organization": {
             "ranker": ranker_train,
