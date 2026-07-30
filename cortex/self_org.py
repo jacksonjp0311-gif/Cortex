@@ -259,7 +259,6 @@ def run_self_org(
                 fuse = {
                     "ticked": True,
                     "tick": do_tick(
-                        home,
                         store,
                         governor,
                         repo,

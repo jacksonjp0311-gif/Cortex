@@ -1,0 +1,57 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "☰⧉",
+  "title": "Foreign host + distill intelligence (operational)",
+  "kind": "lesson",
+  "claims": [
+    {
+      "id": "foreign-loop",
+      "text": "Foreign host loop: bootstrap → activate → query → remember → seal. Exercises retrieval without self-path monopoly; never mutates host source.",
+      "evidence": [
+        "docs/intelligence/PHASE_V6.16_SELF_ORG.md",
+        "cortex/self_org.py"
+      ]
+    },
+    {
+      "id": "pulseflow-governor-map",
+      "text": "On PulseFlow, governor/policy surfaces map to src/policy.rs and tests/policy_tests.rs under recommend-only retrieval; foreign coherence can be below emergent while body stays emergent.",
+      "evidence": [
+        "src/policy.rs",
+        "tests/policy_tests.rs"
+      ]
+    },
+    {
+      "id": "distill-both",
+      "text": "Distill intelligence on both durable body and foreign host folds doctrine + live mesh observation into sealed cards; body brightness resonant, foreign can be in_phase without full emergent couples.",
+      "evidence": [
+        "cortex/distill_intel.py",
+        "docs/intelligence/DISTILLED.md"
+      ]
+    },
+    {
+      "id": "ranker-warms-on-body",
+      "text": "Self-org warms the durable body ranker from measure-gate hits; foreign hosts may still have train_count=0 until verified outcomes are recorded there — keep using real tasks.",
+      "evidence": [
+        "cortex/self_org.py",
+        "cortex/ranker/model.py"
+      ]
+    },
+    {
+      "id": "hold-course-after-distill",
+      "text": "After foreign+distill: KEEP spectral+ranker; fuse continuity; no prune thrash; no live continuum on large graphs; recommend-only; raise stress difficulty or keep real tasks.",
+      "evidence": [
+        "cortex/emergence_log.py",
+        "docs/intelligence/PHASE_V6.15_MEASURE_GATE.md"
+      ]
+    }
+  ],
+  "refuse": [
+    "mutate_foreign_host_from_cortex",
+    "claim_consciousness",
+    "auto_execute_aria",
+    "second_memory_database",
+    "treat_distill_as_authorization"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Foreign distill packet is operational intelligence; never host authority."
+}
