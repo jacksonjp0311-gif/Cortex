@@ -9,6 +9,7 @@
 - **CLI:** `geometry assess|path|enumerate`.
 - **Research:** `docs/research/CONSTITUTIONAL_*`, `CSG_DISCOVERY_LEDGER.md`.
 - **Follow-up:** `foreign_emerge` warm issues capability (ranker train no longer no-ops); operator align note `docs/intelligence/OPERATOR_ALIGN_V71.md`.
+- **Research:** `docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md` + `docs/research/README.md`; `llms.txt` + `AGENTS.md` / `AI_INTEGRATION` pointers for GitHub agents.
 - Claim: experimental four-axis model — not consciousness, not physical tesseract, not universal law.
 
 ## 7.0.0 - Resonant Continuity

@@ -19,7 +19,12 @@ from .store import Store
 
 PACKET_GLOB = "examples/memory-packets/*.packet.json"
 INTELLIGENCE_DOCS = (
+    "docs/research/README.md",
+    "docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md",
+    "docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md",
     "docs/intelligence/INTERCONNECT.md",
+    "docs/intelligence/TOPOLOGY_LAW.md",
+    "docs/intelligence/PHASE_V7.0_RESONANT_CONTINUITY.md",
     "docs/intelligence/GLYPH_CANON.md",
     "docs/intelligence/DISTILLED.md",
     "docs/intelligence/PACKS.md",

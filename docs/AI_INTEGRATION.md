@@ -1,5 +1,21 @@
 # AI Integration
 
+## Constitutional math (read before redesign)
+
+When working on Cortex **constitution, epochs, geometry, promotion, federation, or spectral coupling**, agents should load:
+
+1. [`docs/research/README.md`](research/README.md) — research index  
+2. [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) — **primary math map**  
+3. [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md)  
+4. [`docs/intelligence/TOPOLOGY_LAW.md`](intelligence/TOPOLOGY_LAW.md)
+
+**Hard rules:**
+
+- Coherence / emergence scores are **not** authority.  
+- Diagnostics must use `observe_current_epoch` (never silent seal).  
+- Promote / repair_readmit / federate respect four-bit geometry \(q=(e,a,t,w)\).  
+- Recommend-only: never treat Cortex as host mutation authority.
+
 ## Required startup behavior
 
 Before broad repository reading, planning, or code generation, an agent should run the repository-local activation wrapper.

@@ -42,7 +42,9 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v7.1.0** — **Constitutional Geometry**: four-axis coordinate \(q=(e,a,t,w)\), illegal diagonals, legal path compiler; promote/repair-readmit/federate boundaries. Builds on v7.0 Resonant Continuity. Research: [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
+**Current release: v7.1.0** — **Constitutional Geometry**: four-axis coordinate \(q=(e,a,t,w)\), illegal diagonals, legal path compiler; promote/repair-readmit/federate boundaries. Builds on v7.0 Resonant Continuity.
+
+**Research (agents: read first):** [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
 
 ```bash
 pip install -e .
@@ -976,6 +978,12 @@ See `docs/SECURITY.md` for the full threat model.
 
 ## Documentation
 
+- `docs/research/README.md` — **research index (AI agents start here for math/constitution)**
+- `docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md` — spectral vs constitutional geometry, epochs, Hamming paths
+- `docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md` — \(G=(X,R,B,T,A,W)\)
+- `docs/research/CSG_DISCOVERY_LEDGER.md` — discovery sequence
+- `docs/intelligence/PHASE_V7.0_RESONANT_CONTINUITY.md` — body epochs + phases
+- `docs/intelligence/TOPOLOGY_LAW.md` — G_host / G_evidence / G_learned / G_federated
 - `docs/ORGANISM.md` — session co-process bond (⊛)
 - `docs/TRANSCEND.md` — packet-first agent loop and progress glyphs
 - `docs/ARCHITECTURE_V4.md` — v4.0→v5.0 upgrade design (multi-res graph, ranker, prefetch, contracts, multi-agent, HNSW, causal ledger)

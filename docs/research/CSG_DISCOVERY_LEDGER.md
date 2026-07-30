@@ -38,3 +38,10 @@ governed memory
 
 - Earlier “governed memory” lineage predates the listed window; entries above are the sealed arc visible in recent `main` history.
 - Constitutional geometry is additive: it does not rewrite epochs, capabilities, or planes; it coordinates them.
+
+## Math map (agents)
+
+Primary synthesis of spectral + constitutional composition:
+
+- **[`EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](EMERGENT_MATH_AND_COMPOSITION_V0.1.md)** — two geometries, \(\Delta E\), Hamming paths, multi-host product, claim residual  
+- Index: [`README.md`](README.md)
