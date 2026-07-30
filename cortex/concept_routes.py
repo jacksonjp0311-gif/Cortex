@@ -180,6 +180,66 @@ CONCEPT_ROUTES: list[dict[str, Any]] = [
             "one body many hosts",
         ),
     },
+    # Foreign transfer IR (v6.22) — path tokens for non-Cortex hosts (e.g. PulseFlow).
+    # Paths are relative to the *queried* repo; inject only hits present in that body.
+    {
+        "id": "foreign_policy_impl",
+        "paths": ["src/policy.rs", "policy.rs"],
+        "phrases": (
+            "policy.rs",
+            "enforcement rules for the governor",
+            "governor engine",
+            "policy enforcement",
+            "src/policy",
+        ),
+    },
+    {
+        "id": "foreign_policy_tests",
+        "paths": ["tests/policy_tests.rs", "policy_tests.rs"],
+        "phrases": (
+            "policy_tests.rs",
+            "policy_tests",
+            "verify policy boundaries",
+            "tests/policy",
+        ),
+    },
+    {
+        "id": "foreign_storage",
+        "paths": ["src/storage.rs", "storage.rs"],
+        "phrases": (
+            "storage.rs",
+            "persistence for decisions",
+            "src/storage",
+            "decisions and state",
+        ),
+    },
+    {
+        "id": "foreign_entry",
+        "paths": ["src/main.rs", "main.rs"],
+        "phrases": (
+            "main.rs",
+            "application entrypoint",
+            "entrypoint wiring",
+            "src/main",
+        ),
+    },
+    {
+        "id": "foreign_server",
+        "paths": ["src/server.rs", "server.rs"],
+        "phrases": (
+            "server.rs",
+            "http request handling",
+            "src/server",
+        ),
+    },
+    {
+        "id": "foreign_readme",
+        "paths": ["README.md"],
+        "phrases": (
+            "project overview for this governor",
+            "readme.md project overview",
+        ),
+    },
 ]
 
 

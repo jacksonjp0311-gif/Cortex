@@ -222,8 +222,20 @@ def measure_coherence(
             components["geometry_mass"] = 0.15
 
         if struct_e is not None and int(struct_e) > 0 and neural_e > 0:
+            # Neural denser than structural is expected (activation-over-structure).
+            # Peak dual_align near ratio ≈ 6; soft falloff — do not zero at ~13×.
             ratio = neural_e / max(1, int(struct_e))
-            components["dual_align"] = _clip01(1.0 - abs(math.log1p(ratio)) / 2.5)
+            ideal = 6.0
+            dist = abs(math.log(max(ratio, 1e-9)) - math.log(ideal))
+            dual_score = _clip01(1.0 - dist / 2.8)
+            if neural_e >= 100 and int(struct_e) >= 50:
+                dual_score = max(dual_score, 0.45)
+            components["dual_align"] = dual_score
+            seams["dual_ratio_band"] = {
+                "ratio": round(ratio, 4),
+                "ideal": ideal,
+                "law": "neural denser than structural is normal; peak dual_align near ratio~6",
+            }
         else:
             components["dual_align"] = 0.55
             if struct_e is None or int(struct_e or 0) == 0:
@@ -438,6 +450,11 @@ def measure_coherence(
             advice.append("optional_fuse_proxy_for_token_regen")
         if sustained:
             advice.append("coherence_sustained")
+        # Dark-seam hygiene (v6.22) — advice only, never auto-prune thrash
+        if components.get("prune_hygiene", 1.0) < 0.45:
+            advice.append("bounded_integrate_soft_prune_cap_protect_triads")
+        if components.get("dual_align", 1.0) < COUPLE_ACTIVE:
+            advice.append("dual_align_check_neural_structural_ratio_band")
 
     panel = _component_panel(components)
     score_r = round(score, 4)

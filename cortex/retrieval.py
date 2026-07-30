@@ -589,6 +589,29 @@ def _inject_concept_routes(
                     h.score = round(float(h.score or 0.0) * 0.82, 8)
             except Exception:
                 pass
+    # Foreign path-token routes: prefer real src/*.rs over discovery cards (v6.22)
+    foreign_ids = {
+        "foreign_policy_impl",
+        "foreign_policy_tests",
+        "foreign_storage",
+        "foreign_entry",
+        "foreign_server",
+        "foreign_readme",
+    }
+    if route_ids & foreign_ids:
+        for h in merged:
+            pn = str(h.path or "").replace("\\", "/")
+            try:
+                if pn.startswith("src/") and pn.endswith(".rs"):
+                    h.score = round(float(h.score or 0.0) * 1.28, 8)
+                elif "tests/" in pn and pn.endswith(".rs"):
+                    h.score = round(float(h.score or 0.0) * 1.18, 8)
+                elif pn.endswith("README.md") or pn == "README.md":
+                    h.score = round(float(h.score or 0.0) * 1.12, 8)
+                elif ".cortex/cards/" in pn or pn.startswith(".cortex/"):
+                    h.score = round(float(h.score or 0.0) * 0.72, 8)
+            except Exception:
+                pass
     if "host_mesh" in route_ids:
         for h in merged:
             pn = str(h.path or "").replace("\\", "/")

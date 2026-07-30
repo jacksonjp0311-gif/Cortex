@@ -63,6 +63,19 @@ class PrunePolicyTests(unittest.TestCase):
         r = prune_graph(self.store, "PHost", policy="aggressive", dry_run=False)
         self.assertEqual(r.get("error"), "aggressive_requires_authorize")
 
+    def test_bounded_max_prune(self) -> None:
+        dry = prune_graph(
+            self.store,
+            "PHost",
+            policy="integrate_soft",
+            dry_run=True,
+            max_prune=2,
+            protect_triads=True,
+        )
+        self.assertLessEqual(int(dry.get("would_prune") or 0), 2)
+        self.assertIn("triad_protected", dry)
+        self.assertEqual(dry.get("schema_version"), "cortex-prune/1.2")
+
     def test_census(self) -> None:
         c = graph_census(self.store, "PHost")
         self.assertGreater(c["synapses"]["total"], 0)

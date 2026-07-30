@@ -1,3 +1,11 @@
+## 6.22.0 - Foreign Geometry
+
+- **Foreign IR:** concept routes for policy/storage/server/main/tests + damp cards vs `src/*.rs`.
+- **Bounded prune:** `max_prune` + `protect_triads` (default); CLI `--max-prune`, `--no-protect-triads`.
+- **Dual-align:** score band for neural-over-structural ratios (peak ~6×); floor when both layers healthy.
+- **Coherence advice** for dark prune hygiene / dual seams.
+- Docs: `PHASE_V6.22_FOREIGN_GEOMETRY.md`.
+
 ## 6.21.0 - Ratio Lattice
 
 - **Triadic closure:** `math_net.ratio_lattice` — global \(T\), local clustering; stamped on hits as `triadic_closure`.

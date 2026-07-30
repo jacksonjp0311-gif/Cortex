@@ -959,6 +959,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Required to apply aggressive policy (not dry-run).",
     )
+    prune_p.add_argument(
+        "--max-prune",
+        type=int,
+        default=None,
+        help="Cap number of synapses removed (v6.22 bounded hygiene; no thrash).",
+    )
+    prune_p.add_argument(
+        "--no-protect-triads",
+        action="store_true",
+        help="Allow pruning edges that close triangles (default protects them).",
+    )
     prune_p.add_argument("--decay", action="store_true", help="Also decay unused weights.")
     prune_p.add_argument("--preview", action="store_true", help="Preview all policies.")
     prune_p.add_argument("--json", action="store_true")
@@ -2259,6 +2270,8 @@ def main(argv: list[str] | None = None) -> None:
                     min_weight=args.min_weight,
                     dry_run=args.dry_run,
                     authorize_aggressive=bool(args.authorize_aggressive),
+                    max_prune=getattr(args, "max_prune", None),
+                    protect_triads=not bool(getattr(args, "no_protect_triads", False)),
                 )
                 if args.decay and not args.dry_run:
                     result["decay"] = decay_unused_weights(store, args.repo)

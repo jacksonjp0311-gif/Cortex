@@ -13,7 +13,7 @@ import json
 import time
 from typing import Any
 
-SCHEMA = "cortex-prune/1.1"
+SCHEMA = "cortex-prune/1.2"
 GLYPH = "✂"
 
 # Named policies — operator-facing, spectral class aware.
@@ -72,11 +72,16 @@ def prune_graph(
     protect_retain: bool | None = None,
     policy: str | None = "safe",
     authorize_aggressive: bool = False,
+    max_prune: int | None = None,
+    protect_triads: bool = True,
 ) -> dict[str, Any]:
     """Prune synapses with very low weight and zero plasticity updates.
 
     Hierarchical contains/child_of and retain-class edges protected by default.
     Prefer pruning reset/integrate dead weight (spectral organism hygiene).
+
+    v6.22: max_prune caps apply size (no thrash); protect_triads skips edges
+    that close at least one triangle (concept stabilizers).
     """
 
     cfg = resolve_policy(
@@ -104,9 +109,27 @@ def prune_graph(
     protect_ret = bool(cfg["protect_retain"])
     keep_hier = bool(cfg["keep_hierarchical"])
 
+    # Optional triad protect map (edge key → triangle count)
+    triangle_edges: set[tuple[str, str]] = set()
+    if protect_triads:
+        try:
+            from .math_net.ratio_lattice import (
+                build_undirected_adj,
+                edge_triangle_count,
+            )
+
+            adj = build_undirected_adj(store, repo, max_nodes=500)
+            for u, nbrs in adj.items():
+                for v in nbrs:
+                    if u < v and edge_triangle_count(adj, u, v) > 0:
+                        triangle_edges.add((u, v))
+        except Exception:
+            triangle_edges = set()
+
     synapses = store.neural_synapses(repo)
     candidates: list[dict[str, Any]] = []
     kept = 0
+    triad_protected = 0
     by_class_cand: dict[str, int] = {"reset": 0, "integrate": 0, "retain": 0, "other": 0}
     for row in synapses:
         relation = str(row["relation"] or "")
@@ -131,6 +154,13 @@ def prune_graph(
         if kernel_class == "integrate":
             threshold = min_w * 0.75
         if weight <= threshold and updates <= max_unused_age_updates:
+            s = str(row["source_id"] or "")
+            t = str(row["target_id"] or "")
+            ek = (s, t) if s < t else (t, s)
+            if protect_triads and ek in triangle_edges:
+                triad_protected += 1
+                kept += 1
+                continue
             candidates.append(
                 {
                     "synapse_id": row["synapse_id"],
@@ -146,6 +176,12 @@ def prune_graph(
             by_class_cand[key] = by_class_cand.get(key, 0) + 1
         else:
             kept += 1
+
+    # Weakest first; optional cap (v6.22 bounded hygiene)
+    candidates.sort(key=lambda c: float(c.get("weight") or 0.0))
+    pool_n = len(candidates)
+    if max_prune is not None and int(max_prune) >= 0:
+        candidates = candidates[: int(max_prune)]
 
     pruned = 0
     if not dry_run and candidates:
@@ -166,7 +202,11 @@ def prune_graph(
                     "kept": kept,
                     "min_weight": min_w,
                     "policy": cfg["policy"],
-                    "candidates": len(candidates),
+                    "candidates": pool_n,
+                    "capped_to": len(candidates),
+                    "max_prune": max_prune,
+                    "triad_protected": triad_protected,
+                    "protect_triads": protect_triads,
                     "by_class": by_class_cand,
                 },
             )
@@ -180,6 +220,8 @@ def prune_graph(
                 "at": time.time(),
                 "min_weight": min_w,
                 "policy": cfg["policy"],
+                "max_prune": max_prune,
+                "triad_protected": triad_protected,
             },
         )
     elif dry_run:
@@ -195,6 +237,10 @@ def prune_graph(
         "min_weight": min_w,
         "protect_retain": protect_ret,
         "keep_hierarchical": keep_hier,
+        "protect_triads": protect_triads,
+        "triad_protected": triad_protected,
+        "max_prune": max_prune,
+        "candidates_pool": pool_n,
         "candidates": len(candidates),
         "pruned": pruned if not dry_run else 0,
         "would_prune": len(candidates) if dry_run else pruned,
@@ -204,7 +250,7 @@ def prune_graph(
         "applied": (not dry_run) and pruned > 0,
         "claim_boundary": (
             "Prune removes weak unused associations only; never host source "
-            "and never evidence memories."
+            "and never evidence memories. Triad protect + max_prune bound thrash."
         ),
     }
 
