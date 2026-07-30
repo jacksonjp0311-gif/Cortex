@@ -102,6 +102,14 @@ def _warm_ranker(
         oid = "out_fe_" + sha256(
             f"{repo}|{time.time()}|{trained_steps}".encode()
         ).hexdigest()[:14]
+        try:
+            from .capabilities import issue_for_controller
+
+            cap = issue_for_controller(
+                repo, "advanced", store=store, reason="foreign_emerge_warm"
+            )
+        except Exception:
+            cap = None
         last = train_from_outcome(
             store,
             repo,
@@ -112,6 +120,7 @@ def _warm_ranker(
             verification_type="foreign_emerge_path_tokens",
             governance_mode="normal",
             feature_vectors=vecs,
+            capability=cap,
         )
         trained_steps += 1
         if not last.get("trained"):

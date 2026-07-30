@@ -8,6 +8,7 @@
 - **Boundaries:** promote_gate, repair readmit, federation admission.
 - **CLI:** `geometry assess|path|enumerate`.
 - **Research:** `docs/research/CONSTITUTIONAL_*`, `CSG_DISCOVERY_LEDGER.md`.
+- **Follow-up:** `foreign_emerge` warm issues capability (ranker train no longer no-ops); operator align note `docs/intelligence/OPERATOR_ALIGN_V71.md`.
 - Claim: experimental four-axis model — not consciousness, not physical tesseract, not universal law.
 
 ## 7.0.0 - Resonant Continuity
