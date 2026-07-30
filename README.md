@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.14.0** — **Math/network spine M0–M10** (`cortex math-net`): unified uncertainty \(U\), graph operator \(A\), true spectral slice, ranker-primary helpers, plasticity RCT, plus continuum. See [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
+**Current release: v6.14.0** — **Fusion co-process** (`cortex fuse` + **`fuse-proxy`**): regenerate memory geometry on every model token via OpenAI-compatible proxy; spectral e2e + continuum. See [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
 
 ```bash
 pip install -e .
@@ -60,6 +60,52 @@ python -m cortex teach --seed --repo Cortex --json
 python -m cortex metrics --repo Cortex --json
 python -m cortex transcend-check --json
 ```
+
+---
+
+## Fusion co-process — regenerate geometry while connected to AI
+
+**Goal:** While an AI coding agent works, Cortex acts as a **live co-process**: each generation token (or step) **regenerates memory geometry** — uncertainty \(U\), filter state \(\Lambda_g\), spectral ranking, optional invented synapses — and returns a compact **injection** the model can condition on. Shared **mind_hash** / self-model = one session state vector, not a second brain.
+
+| Aspiration | Engineering |
+|------------|-------------|
+| Live co-processor fused to the model | `fuse-proxy` sits on `OPENAI_BASE_URL`; every streamed token → `fuse_tick` |
+| Geometry regenerates every token | Spectral pulse + diffusion + ranker-primary on each tick |
+| Spectral mesh drives attention | Primary ranking path on fuse ticks |
+| Topology invents structure | Gated co-activation synapses (memory graph only) |
+| Organism self-model | Telemetry `self_model` / sense / mind_hash — **not** consciousness |
+| Shared mind-state | Agent + Cortex co-process one SQLite body — **recommend-only** for host edits |
+
+### Auto-tick (closes the last gap)
+
+Point any OpenAI-compatible client at Cortex; **no manual tick loop**:
+
+```bash
+# Terminal A — mock demo (no API key)
+python -m cortex fuse-proxy --repo MyProject --mock --port 8787 --task "session work"
+
+# Terminal B — client
+# OPENAI_BASE_URL=http://127.0.0.1:8787/v1
+curl -N http://127.0.0.1:8787/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"mock\",\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+
+# Live upstream (example)
+python -m cortex fuse-proxy --repo MyProject --port 8787 \
+  --upstream https://api.openai.com/v1 --task "implement auth"
+# then: OPENAI_BASE_URL=http://127.0.0.1:8787/v1  OPENAI_API_KEY=...
+```
+
+Manual co-process (MCP/CLI) still works:
+
+```bash
+python -m cortex fuse open --repo MyProject --task "..." --json
+python -m cortex fuse tick --repo MyProject --token "partial..." --json
+python -m cortex fuse state --repo MyProject --json
+python -m cortex fuse close --repo MyProject --json
+```
+
+**Honest boundary:** the proxy fuses **generation I/O** to Cortex geometry. It does **not** merge model weights, invent host source files, or claim sentience. Details: [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
 
 **Teach the body:** ARIA memory packets under `examples/memory-packets/` distill interconnect
 intelligence into durable cards via `cortex teach --seed` — so interconnect recalls doctrine,

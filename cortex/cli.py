@@ -524,6 +524,31 @@ def build_parser() -> argparse.ArgumentParser:
     fuse_p.add_argument("--budget", type=int, default=600)
     fuse_p.add_argument("--no-invent", action="store_true", help="Disable structure invention.")
     fuse_p.add_argument("--json", action="store_true")
+
+    fuse_proxy_p = sub.add_parser(
+        "fuse-proxy",
+        help="OpenAI-compatible proxy: auto fuse_tick on every streamed token (closes last fusion gap).",
+    )
+    fuse_proxy_p.add_argument("--repo", required=True)
+    fuse_proxy_p.add_argument("--host", default="127.0.0.1")
+    fuse_proxy_p.add_argument("--port", type=int, default=8787)
+    fuse_proxy_p.add_argument(
+        "--upstream",
+        default=None,
+        help="Upstream OpenAI-compatible base (default: https://api.openai.com/v1)",
+    )
+    fuse_proxy_p.add_argument("--task", default="")
+    fuse_proxy_p.add_argument(
+        "--tick-every",
+        type=int,
+        default=1,
+        help="Call fuse_tick every N streamed pieces (default 1 = every token).",
+    )
+    fuse_proxy_p.add_argument(
+        "--mock",
+        action="store_true",
+        help="No upstream; mock stream for local demo/tests.",
+    )
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1466,6 +1491,49 @@ def main(argv: list[str] | None = None) -> None:
                 emit(fuse_state(store, args.repo), args.json)
             else:
                 emit(fuse_close(store, args.repo), args.json)
+
+        elif command == "fuse-proxy":
+            from .fuse_proxy import serve_fuse_proxy
+            import json as _json
+
+            upstream = args.upstream or os.environ.get(
+                "CORTEX_FUSE_UPSTREAM", "https://api.openai.com/v1"
+            )
+            server = serve_fuse_proxy(
+                home=home,
+                repo=args.repo,
+                host=args.host,
+                port=int(args.port),
+                upstream=upstream,
+                task=args.task or "",
+                tick_every=max(1, int(args.tick_every or 1)),
+                mock=bool(args.mock),
+            )
+            print(
+                _json.dumps(
+                    {
+                        "listening": f"http://{args.host}:{args.port}/v1",
+                        "repo": args.repo,
+                        "mock": bool(args.mock),
+                        "opened": getattr(server, "cortex_opened", {}),
+                        "set_env": f"OPENAI_BASE_URL=http://{args.host}:{args.port}/v1",
+                        "claim_boundary": (
+                            "Proxy auto-ticks fusion on each streamed token; "
+                            "not weight merger; recommend-only."
+                        ),
+                    },
+                    indent=2,
+                ),
+                flush=True,
+            )
+            try:
+                server.serve_forever()
+            except KeyboardInterrupt:
+                bridge = getattr(server, "cortex_bridge", None)
+                if bridge:
+                    print(_json.dumps(bridge.close(), indent=2))
+                server.shutdown()
+            return
 
         elif command == "breathe":
             from .organism import breathe as organism_breathe
