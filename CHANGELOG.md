@@ -1,3 +1,14 @@
+## 6.21.0 - Ratio Lattice
+
+- **Triadic closure:** `math_net.ratio_lattice` — global \(T\), local clustering; stamped on hits as `triadic_closure`.
+- **Ranker:** new feature `triadic_closure` (seed weight 0.14); pad-on-evolve.
+- **Prune preview:** `triad_attention` + open-bridge edges (preview only, never auto-delete).
+- **Budget partition:** schemes `fib` (default) / `phi` / `double_square` / `flat` on context packing; `--budget-scheme`; packet field `budget_partition`.
+- **M9 residual pyramid:** path residual + `envelope_cell_ok` (`cortex-multiscale/1.1`).
+- **Coherence history:** lean phase object (`occupied_bonds`, `phase_emergent`, bottlenecks); schema 1.2.
+- **Rational ratio tables** for audit (fib, 1:2, quarter). Docs: `PHASE_V6.21_RATIO_LATTICE.md`.
+- Claim boundary absolute: operators only — not sacred geometry or host authority.
+
 ## 6.20.0 - Validated utility & bottleneck action
 
 - **Promotion gate:** holdout + foreign transfer + emergent required (`promote_gate.py`).

@@ -81,6 +81,8 @@ class MathNetTests(unittest.TestCase):
         ms = multiscale_conservation(self.store, "MathHost", fired_node_ids=[], budget=50)
         self.assertIn("mass_conservation", ms)
         self.assertIn("distortion_delta", ms["mass_conservation"])
+        self.assertIn("residual_pyramid", ms)
+        self.assertIn("envelope_cell_ok", ms["residual_pyramid"])
 
     def test_full_pass_m0_m10(self) -> None:
         report = run_math_network_pass(

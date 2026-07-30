@@ -110,6 +110,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="Proactive evidence prefetch (v5); never grants mutation rights.",
     )
+    activate.add_argument(
+        "--budget-scheme",
+        choices=["fib", "phi", "double_square", "flat"],
+        default="fib",
+        help="Multi-res budget partition (v6.21 ratio lattice; flat=pre-6.21).",
+    )
     activate.add_argument("--json", action="store_true")
 
     index = sub.add_parser("index", help="Incrementally index an attached repository.")
@@ -1024,6 +1030,7 @@ def main(argv: list[str] | None = None) -> None:
                 refresh=refresh,
                 profile=args.profile,
                 prefetch=getattr(args, "prefetch", "auto"),
+                budget_scheme=getattr(args, "budget_scheme", "fib") or "fib",
             )
             result["requested_mode"] = args.refresh
             emit(result, args.json)

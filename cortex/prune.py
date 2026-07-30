@@ -252,13 +252,41 @@ def policy_preview(store: Any, repo: str) -> dict[str, Any]:
     except Exception as exc:
         bottleneck = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
+    # v6.21: open-bridge (zero-triangle) edges for triad hygiene attention
+    triad_attn: dict[str, Any] = {"ok": False}
+    try:
+        from .math_net.ratio_lattice import triadic_metrics
+
+        tm = triadic_metrics(store, repo, max_nodes=300)
+        triad_attn = {
+            "ok": bool(tm.get("ok")),
+            "global_closure_T": tm.get("global_closure_T"),
+            "triangles": tm.get("triangles"),
+            "mean_local_closure": tm.get("mean_local_closure"),
+            "triad_open_bridges": (tm.get("open_bridges_sample") or [])[:10],
+            "advice": (
+                "Open-bridge edges (0 triangles) are association bridges, not closed "
+                "concepts — prefer strengthen/close or dry-run attention; never auto-delete."
+            ),
+            "claim_boundary": (
+                "Triadic open-bridge list is graph hygiene telemetry for prune *preview* — "
+                "not authorization to delete host or evidence."
+            ),
+        }
+        if isinstance(bottleneck, dict) and bottleneck.get("ok"):
+            bottleneck["triad_open_bridges"] = triad_attn.get("triad_open_bridges")
+            bottleneck["global_closure_T"] = triad_attn.get("global_closure_T")
+    except Exception as exc:
+        triad_attn = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
     return {
-        "schema_version": "cortex-prune-preview/1.1",
+        "schema_version": "cortex-prune-preview/1.2",
         "glyph": GLYPH,
         "repo": repo,
         "policies": previews,
         "recommended": recommended,
         "bottleneck_attention": bottleneck,
+        "triad_attention": triad_attn,
         "claim_boundary": "Preview only; apply requires explicit prune without --dry-run.",
     }
 

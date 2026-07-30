@@ -25,6 +25,7 @@ def activate_repository(
     refresh: str = "auto",
     profile: str = "agent",
     prefetch: str = "auto",
+    budget_scheme: str = "fib",
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -104,6 +105,7 @@ def activate_repository(
         budget,
         manifest_current=manifest_current,
         certificate=certificate,
+        budget_scheme=budget_scheme or "fib",
     )
     # Attach surprise to efficiency for agent-visible economics.
     if isinstance(context.get("efficiency"), dict):

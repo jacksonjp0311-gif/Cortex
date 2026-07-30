@@ -239,6 +239,7 @@ class V5SubstrateTests(unittest.TestCase):
         denied = promote_ranker_snapshot(self.store, "V5Host", promotion_authorized=False)
         self.assertFalse(denied.get("promoted"))
         self.assertGreaterEqual(len(FEATURE_NAMES), 20)
+        self.assertIn("triadic_closure", FEATURE_NAMES)
 
     def test_lean_agent_profile_and_multi_agent_gate(self) -> None:
         from cortex.agents.tokens import (

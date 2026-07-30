@@ -50,6 +50,8 @@ class PrunePolicyTests(unittest.TestCase):
         self.assertEqual(
             prev["policies"]["integrate_soft"]["would_prune"], soft["would_prune"]
         )
+        self.assertIn("triad_attention", prev)
+        self.assertIn("bottleneck_attention", prev)
         hy = body_hygiene(self.home, self.store, "PHost")
         self.assertIn("prune_preview", hy)
         self.assertTrue(

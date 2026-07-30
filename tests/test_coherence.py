@@ -40,7 +40,7 @@ class CoherenceTests(unittest.TestCase):
         c = measure_coherence(
             self.store, "CohHost", governor=self.gov, home=self.home
         )
-        self.assertEqual(c["schema_version"], "cortex-coherence/1.1")
+        self.assertEqual(c["schema_version"], "cortex-coherence/1.2")
         self.assertIn("score", c)
         self.assertEqual(c["threshold"], COHERENCE_THRESHOLD)
         self.assertIn("components", c)

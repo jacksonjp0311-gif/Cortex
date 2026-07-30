@@ -312,6 +312,7 @@ def build_context(
     budget: int = 1200,
     manifest_current: bool | None = None,
     certificate: dict[str, Any] | None = None,
+    budget_scheme: str = "fib",
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -479,6 +480,23 @@ def build_context(
     # v6 bottleneck reduction: diversify paths (organism-like fan-out, not monopoly)
     # v6.2 efficiency: tighter path fan-out → fewer tokens, more diversity
     max_chunks_per_path = 1 if aria_mode == "active" else 2
+
+    # v6.21 ratio lattice: multi-res budget pools (fib default; flat = pre-6.21)
+    from .math_net.ratio_lattice import hit_resolution, partition_budgets
+
+    part = partition_budgets(
+        effective_budget,
+        ("symbol", "file", "module"),
+        scheme=budget_scheme or "fib",
+    )
+    pools = dict(part.get("pools") or {})
+    used_by_level: dict[str, int] = {k: 0 for k in pools}
+    envelope_stress = 0
+    # flat scheme: single shared pool on first key
+    if (part.get("scheme") or "fib") == "flat":
+        pools = {"all": effective_budget}
+        used_by_level = {"all": 0}
+
     selected: list[dict[str, Any]] = []
     used_tokens = 0
     aria_paths_selected = 0
@@ -487,8 +505,35 @@ def build_context(
         path_key = str(hit.path or "").replace("\\", "/")
         if path_chunk_counts.get(path_key, 0) >= max_chunks_per_path:
             continue
+        meta_hit = getattr(hit, "metadata", None) or {}
+        if isinstance(hit, dict):
+            meta_hit = hit.get("metadata") or {}
+        level = hit_resolution(path_key, meta_hit if isinstance(meta_hit, dict) else {})
+        if (part.get("scheme") or "fib") == "flat":
+            level = "all"
+        elif level not in pools:
+            level = "file" if "file" in pools else next(iter(pools), "file")
+
         prefix = f"[{hit.path}:{hit.start_line}-{hit.end_line}]\n"
         remaining_budget = effective_budget - used_tokens
+        pool_remaining = int(pools.get(level, 0)) - int(used_by_level.get(level, 0))
+        # Envelope absorbs fine residual: borrow from coarser pools if fine exhausted
+        if pool_remaining <= 0 and level != "module" and (part.get("scheme") or "") != "flat":
+            for coarser in ("file", "module"):
+                if coarser == level:
+                    continue
+                cr = int(pools.get(coarser, 0)) - int(used_by_level.get(coarser, 0))
+                if cr > 0:
+                    level = coarser
+                    pool_remaining = cr
+                    break
+            else:
+                envelope_stress += 1
+                continue
+        elif pool_remaining <= 0:
+            envelope_stress += 1
+            continue
+
         # Reserve tokens for a second ARIA path when substrate is active.
         reserve = 0
         if (
@@ -498,7 +543,7 @@ def build_context(
         ):
             reserve = min(180, max(0, remaining_budget // 3))
         available_chars = max(
-            0, (remaining_budget - reserve) * 4 - len(prefix)
+            0, (min(remaining_budget, pool_remaining) - reserve) * 4 - len(prefix)
         )
         if available_chars <= 80:
             continue
@@ -509,6 +554,17 @@ def build_context(
             continue
         if used_tokens + token_cost > effective_budget:
             continue
+        if token_cost > pool_remaining:
+            # try truncate to pool remainder
+            if pool_remaining < 20:
+                envelope_stress += 1
+                continue
+            max_chars = min(max_chars, pool_remaining * 4)
+            text = hit.text[:max_chars]
+            token_cost = estimate_tokens(prefix + text)
+            if token_cost > pool_remaining or token_cost <= 0:
+                envelope_stress += 1
+                continue
         selected.append(
             {
                 "memory_id": hit.memory_id,
@@ -519,9 +575,11 @@ def build_context(
                 "content_hash": hit.content_hash,
                 "text": text,
                 "metadata": hit.metadata,
+                "budget_level": level,
             }
         )
         used_tokens += token_cost
+        used_by_level[level] = int(used_by_level.get(level, 0)) + token_cost
         path_chunk_counts[path_key] = path_chunk_counts.get(path_key, 0) + 1
         if path_key.startswith("cortex/aria_meta/vendor/"):
             aria_paths_selected += 1
@@ -649,6 +707,18 @@ def build_context(
         "governor": governance,
         "context_budget": effective_budget,
         "estimated_tokens": used_tokens,
+        "budget_partition": {
+            "scheme": part.get("scheme"),
+            "pools": pools,
+            "used_by_level": used_by_level,
+            "envelope_stress": envelope_stress,
+            "sum_check": part.get("sum_check"),
+            "claim_boundary": part.get("claim_boundary")
+            or (
+                "Budget heuristic from self-similar / rational partition — "
+                "not golden-ratio activation or sacred geometry."
+            ),
+        },
         "environment": environment,
         "thalamus": route_plan.to_dict() if route_plan else {"available": False, "reason": "disabled"},
         "neural_interlink": neural_payload,

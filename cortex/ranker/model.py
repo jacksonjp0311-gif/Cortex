@@ -41,6 +41,8 @@ FEATURE_NAMES: tuple[str, ...] = (
     "lambda2_gap",
     # M1 uncertainty
     "unified_confidence",
+    # v6.21 ratio lattice — local triadic closure
+    "triadic_closure",
 )
 
 
@@ -78,6 +80,7 @@ def default_weights() -> list[float]:
         "degree_centrality": 0.12,
         "lambda2_gap": 0.08,
         "unified_confidence": 0.12,
+        "triadic_closure": 0.14,
     }
     for i, name in enumerate(FEATURE_NAMES):
         w[i] = mapping.get(name, 0.0)
@@ -237,6 +240,9 @@ def features_from_hit(
         "degree_centrality": _clip(deg_c, 0.0, 1.0),
         "lambda2_gap": _clip(lam_gap, 0.0, 1.0),
         "unified_confidence": _clip(u_conf, 0.0, 1.0),
+        "triadic_closure": _clip(
+            float(meta.get("triadic_closure") or 0.0), 0.0, 1.0
+        ),
     }
     return [_clip(feats[name], -1.0, 1.0) for name in FEATURE_NAMES]
 

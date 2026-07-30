@@ -99,11 +99,60 @@ def enrich_hits_with_diffusion(
                 hit.metadata = meta
             except Exception:
                 pass
+    # v6.21: stamp triadic_closure (local clustering) for ranker feature
+    triad_stamped = 0
+    try:
+        from .ratio_lattice import local_closure_map
+
+        closure_by_node = local_closure_map(store, repo, max_nodes=max_nodes)
+        path_closure: dict[str, float] = {}
+        try:
+            for row in store.neural_nodes(repo) or []:
+                nid = str(row["node_id"])
+                if nid not in closure_by_node:
+                    continue
+                rp = str(row["path"] or "").replace("\\", "/")
+                c = float(closure_by_node[nid])
+                path_closure[rp] = max(path_closure.get(rp, 0.0), c)
+                path_closure[rp.split("::")[0]] = max(
+                    path_closure.get(rp.split("::")[0], 0.0), c
+                )
+        except Exception:
+            pass
+        for hit in hits:
+            if isinstance(hit, dict):
+                path = str(hit.get("path") or "").replace("\\", "/")
+                meta = dict(hit.get("metadata") or {})
+            else:
+                path = str(getattr(hit, "path", "") or "").replace("\\", "/")
+                meta = dict(getattr(hit, "metadata", None) or {})
+            nid = path_to_node_guess(store, repo, path)
+            c = 0.0
+            if nid and nid in closure_by_node:
+                c = float(closure_by_node[nid])
+            else:
+                c = float(
+                    path_closure.get(path)
+                    or path_closure.get(path.split("::")[0])
+                    or 0.0
+                )
+            meta["triadic_closure"] = c
+            triad_stamped += 1
+            if isinstance(hit, dict):
+                hit["metadata"] = meta
+            else:
+                try:
+                    hit.metadata = meta
+                except Exception:
+                    pass
+    except Exception:
+        triad_stamped = 0
     return {
         "enriched": enriched,
         "diffusion_ok": bool(diff.get("ok")),
         "n_graph": diff.get("n"),
         "seed_node_ids": diff.get("seed_node_ids"),
+        "triadic_stamped": triad_stamped,
     }
 
 

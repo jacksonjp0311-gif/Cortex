@@ -23,7 +23,7 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-coherence/1.1"
+SCHEMA = "cortex-coherence/1.2"
 GLYPH = "⧉≈"
 COHERENCE_THRESHOLD = 0.62
 COUPLE_ACTIVE = 0.45  # component/couple lit when ≥ this
@@ -528,6 +528,7 @@ def _load_history(store: Any, repo: str) -> list[dict[str, Any]]:
 
 def _persist(store: Any, repo: str, report: dict[str, Any]) -> None:
     try:
+        perc = report.get("couple_percolation") or {}
         point = {
             "at": report.get("at"),
             "score": report.get("score"),
@@ -536,6 +537,10 @@ def _persist(store: Any, repo: str, report: dict[str, Any]) -> None:
             "coupled_seams": report.get("coupled_seams"),
             "active_indicator_ids": report.get("active_indicator_ids"),
             "lyapunov_v": (report.get("lyapunov") or {}).get("V"),
+            # v6.21 phase object history (lean)
+            "occupied_bonds": perc.get("occupied_bonds"),
+            "phase_emergent": perc.get("phase_emergent"),
+            "bottleneck_couples": (perc.get("bottleneck_couples") or [])[:2],
         }
         hist = _load_history(store, repo)
         hist.append(point)
