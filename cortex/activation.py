@@ -423,6 +423,7 @@ def activate_repository(
         "spectral_memory": full_context.get("spectral_memory") or spectral_memory,
         "u": full_context.get("u"),
         "coherence": full_context.get("coherence"),
+        "emergence_log": full_context.get("emergence_log"),
         "fusion_bind": full_context.get("fusion_bind") or fusion_bind,
         "aria_language": aria_language,
         "packs": full_context.get("packs") or context.get("packs"),

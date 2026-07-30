@@ -310,6 +310,26 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_emergence_log",
+        "description": (
+            "MUST READ each turn ⧉◎: emergence/progress log (threshold crosses, "
+            "couple activations, directives). Enhance work; not consciousness. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "limit": {"type": "integer", "default": 16},
+                "note": {
+                    "type": "string",
+                    "description": "Optional milestone to append",
+                },
+            },
+        },
+    },
+    {
         "name": "cortex_distill",
         "description": (
             "Distill mesh observation + doctrine into durable memory (☰). " + _REFUSE
@@ -520,6 +540,25 @@ class CortexMCP:
                 str(arguments["repo"]),
                 governor=self.governor,
                 home=self.home,
+            )
+        if name == "cortex_emergence_log":
+            from .emergence_log import log_milestone, read_emergence_log
+
+            repo = str(arguments["repo"])
+            if arguments.get("note"):
+                log_milestone(
+                    self.home,
+                    self.store,
+                    repo,
+                    summary=str(arguments["note"]),
+                    kind="agent_note",
+                    source="mcp",
+                )
+            return read_emergence_log(
+                self.home,
+                self.store,
+                repo,
+                limit=int(arguments.get("limit") or 16),
             )
         if name == "cortex_breathe":
             from .organism import breathe as organism_breathe

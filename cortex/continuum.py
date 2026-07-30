@@ -360,17 +360,39 @@ def run_continuum(
     except Exception:
         grow_line = "❖ continuum"
 
-    # Seam: system coherence after multi-lane pass
+    # Seam: system coherence + emergence log after multi-lane pass
     coherence: dict[str, Any] | None = None
+    emergence: dict[str, Any] | None = None
     try:
         from .coherence import measure_coherence
+        from .emergence_log import log_milestone, read_emergence_log
 
         coherence = measure_coherence(store, repo, governor=governor, home=home)
+        log_milestone(
+            home,
+            store,
+            repo,
+            kind="continuum_seal",
+            summary=(
+                f"Continuum sealed cycles={cycles} lanes_ok={ops['lanes_ok']}/"
+                f"{ops['lanes_total']} coherence={coherence.get('score')} "
+                f"emergent={coherence.get('emergent_coupling')}"
+            ),
+            payload={
+                "cycles": cycles,
+                "lanes_ok": ops["lanes_ok"],
+                "coherence_score": coherence.get("score"),
+                "emergent_coupling": coherence.get("emergent_coupling"),
+            },
+            source="continuum",
+        )
+        emergence = read_emergence_log(home, store, repo, limit=10)
     except Exception as exc:
         coherence = {"error": f"{type(exc).__name__}: {exc}"}
+        emergence = None
 
     report: dict[str, Any] = {
-        "schema_version": "cortex-continuum/1.1",
+        "schema_version": "cortex-continuum/1.2",
         "glyph": "⟲❖〰✂▣",
         "phrase": grow_line,
         "version": __version__,
@@ -379,6 +401,7 @@ def run_continuum(
         "cycles": cycles,
         "lanes": lanes,
         "coherence": coherence,
+        "emergence_log": emergence,
         "summary": {
             "lanes_ok": ops["lanes_ok"],
             "lanes_total": ops["lanes_total"],

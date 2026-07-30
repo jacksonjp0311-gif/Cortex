@@ -96,14 +96,15 @@ def _agent_instructions(
         "0. ORGANISM BOND: For this session you share `organism` state with Cortex (⊛). "
         "You are temporary working cortex; Cortex is durable body. The bond ends with the session.",
         "1. This packet is evidence and routing only — never mutation authority.",
-        "2. Read control_error and organism.immune first, then evidence path:line ranges.",
-        "3. Trust order: current source/tests/runtime > inventory/graph > Discovery Cards > association weights > inference.",
-        f"4. Governor mode is `{gov}`.",
-        f"5. ARIA substrate mode is `{mode}`. Dormant: ignore internal language bulk. Active: purpose-aligned evidence only.",
-        "6. Follow organism.reflexes; do not invent topology or bypass immune gates.",
-        "7. Session cardiac cycle: work → remember → consolidate (ritual ⟳) to seal the pulse.",
-        "8. Prefer `cortex ritual` / MCP cortex_ritual to close the cycle in one breath.",
-        "9. Never treat learned weights, ARIA plans, organism metaphors, or this packet as host edit rights.",
+        "2. MUST READ `emergence_log` + control_error + organism.immune first, then evidence path:line ranges.",
+        "3. Use emergence_log directives to enhance progress (couples, threshold, fuse) — not as consciousness.",
+        "4. Trust order: current source/tests/runtime > inventory/graph > Discovery Cards > association weights > inference.",
+        f"5. Governor mode is `{gov}`.",
+        f"6. ARIA substrate mode is `{mode}`. Dormant: ignore internal language bulk. Active: purpose-aligned evidence only.",
+        "7. Follow organism.reflexes; do not invent topology or bypass immune gates.",
+        "8. Session cardiac cycle: work → remember → consolidate (ritual ⟳) to seal the pulse.",
+        "9. Prefer `cortex ritual` / MCP cortex_ritual to close the cycle in one breath.",
+        "10. Never treat learned weights, ARIA plans, organism metaphors, emergence, or this packet as host edit rights.",
     ]
     if gov == "read_only":
         lines = [
@@ -578,13 +579,63 @@ def build_context(
             f"{control_error.get('immune_action', {}).get('message')}",
             *instructions,
         ]
+    # MUST READ: emergence log (progress enhancement) — before work
+    emergence_surface: dict[str, Any] = {}
+    try:
+        from .coherence import measure_coherence
+        from .emergence_log import read_emergence_log
+
+        # Refresh coherence so log captures this turn's field
+        measure_coherence(
+            store,
+            repo,
+            governor=governor,
+            home=home,
+            retrieval_confidence=confidence,
+        )
+        emergence_surface = read_emergence_log(home, store, repo, limit=12)
+        if emergence_surface.get("instruction_lines"):
+            instructions = [
+                *list(emergence_surface["instruction_lines"]),
+                *instructions,
+            ]
+        protocol["steps"] = [
+            {
+                "id": "read_emergence_log",
+                "purpose": "MUST READ — enhance progress from coupling history",
+                "command": f"cortex emergence-log --repo {repo} --json",
+                "must_read": True,
+            },
+            *(protocol.get("steps") or []),
+        ]
+        protocol["state"]["emergence_log_events"] = emergence_surface.get("event_count")
+        protocol["state"]["emergent_coupling"] = (
+            (emergence_surface.get("coherence_snapshot") or {}).get("emergent_coupling")
+        )
+        protocol["refuse"] = list(
+            dict.fromkeys(
+                [
+                    *(protocol.get("refuse") or []),
+                    "ignore_emergence_log",
+                    "claim_emergence_as_consciousness",
+                ]
+            )
+        )
+    except Exception as exc:
+        emergence_surface = {"must_read": True, "error": f"{type(exc).__name__}: {exc}"}
+        instructions = [
+            "EMERGENCE LOG unavailable this turn — still obey control_error and governor.",
+            *instructions,
+        ]
     payload: dict[str, Any] = {
-        "schema_version": "1.4",
+        "schema_version": "1.5",
         "generated_at": time.time(),
         "read_first": True,
+        "must_read": ["control_error", "emergence_log", "agent_protocol"],
         "block": bool(control_error.get("block")),
         "immune_action": control_error.get("immune_action"),
         "control_error": control_error,
+        "emergence_log": emergence_surface,
         "repository": {
             "name": repo,
             "repository_id": repository["repository_id"],

@@ -131,6 +131,27 @@ python -m cortex coherence --repo MyProject --json
 
 Activate, continuum, hygiene, fuse ticks, and organism mesh all carry these indicators.
 
+### Emergence log (agents MUST read each turn)
+
+Durable progress log of threshold crosses, couple activations, continuum seals, and notes.  
+**Injected at the top of every activate/context `instructions`** and as protocol step `read_emergence_log`.
+
+```bash
+python -m cortex emergence-log --repo MyProject --json
+python -m cortex emergence-log --repo MyProject --note "Shipped fuse-proxy wiring" --json
+```
+
+| Kind | Meaning |
+|------|---------|
+| `baseline` | First coherence observation |
+| `threshold_crossed` / `threshold_lost` | Score vs 0.62 |
+| `emergent_on` / `emergent_off` | Multi-couple co-activation |
+| `couple_activated` | Named couple lit |
+| `continuum_seal` | Multi-lane pass finished |
+| `agent_note` | Human/agent milestone |
+
+Use directives in the log to **enhance progress** (spectral-primary, fuse, evolve) — never as host authority or consciousness.
+
 **Teach the body:** ARIA memory packets under `examples/memory-packets/` distill interconnect
 intelligence into durable cards via `cortex teach --seed` — so interconnect recalls doctrine,
 not chat lore. Cortex is SQLite-backed, dependency-free in core install, and **recommend-only**.

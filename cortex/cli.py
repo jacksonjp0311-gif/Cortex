@@ -556,6 +556,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     coherence_p.add_argument("--repo", required=True)
     coherence_p.add_argument("--json", action="store_true")
+
+    emergence_p = sub.add_parser(
+        "emergence-log",
+        help="Emergence log ⧉◎ — MUST READ progress history (coupling events). Agents: read each turn.",
+    )
+    emergence_p.add_argument("--repo", required=True)
+    emergence_p.add_argument(
+        "--note",
+        help="Append a milestone note to the emergence log.",
+    )
+    emergence_p.add_argument("--limit", type=int, default=16)
+    emergence_p.add_argument("--json", action="store_true")
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1505,6 +1517,25 @@ def main(argv: list[str] | None = None) -> None:
             emit(
                 measure_coherence(
                     store, args.repo, governor=governor, home=home
+                ),
+                args.json,
+            )
+
+        elif command == "emergence-log":
+            from .emergence_log import log_milestone, read_emergence_log
+
+            if args.note:
+                log_milestone(
+                    home,
+                    store,
+                    args.repo,
+                    summary=str(args.note),
+                    kind="agent_note",
+                    source="cli",
+                )
+            emit(
+                read_emergence_log(
+                    home, store, args.repo, limit=max(1, int(args.limit or 16))
                 ),
                 args.json,
             )
