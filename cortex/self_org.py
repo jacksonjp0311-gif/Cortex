@@ -138,6 +138,7 @@ def run_self_org(
     fuse_tick: bool = True,
     warm_ranker: bool = True,
     run_stress_if_ceiling: bool = True,
+    foreign_repo: str | None = "PulseFlow",
     seal: bool = True,
     on_progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
@@ -204,6 +205,29 @@ def run_self_org(
     active_report = train_report  # warm from train only
     active_gate = gate
 
+    # ── Foreign transfer suite (v6.20) ─────────────────────────────────
+    foreign_report: dict[str, Any] | None = None
+    f_repo = (foreign_repo or "").strip() or None
+    if f_repo and f_repo != repo and store.repo(f_repo):
+        prog(f"measure_gate:foreign ({f_repo})")
+        try:
+            foreign_report = run_eval_coupling(
+                home,
+                store,
+                governor,
+                f_repo,
+                suite="foreign",
+                persist=True,
+                on_progress=lambda m: prog(f"foreign:{m}"),
+            )
+        except Exception as exc:
+            foreign_report = {
+                "error": f"{type(exc).__name__}: {exc}",
+                "repo": f_repo,
+            }
+    elif f_repo:
+        foreign_report = {"error": "foreign_repo_missing", "repo": f_repo}
+
     # ── Ranker warm (train split only) ─────────────────────────────────
     ranker_train: dict[str, Any] = {"trained": False, "skipped": not warm_ranker}
     if warm_ranker:
@@ -213,18 +237,29 @@ def run_self_org(
         )
         ranker_train["eval_split"] = "train"
 
-    # ── Shadow calibration observe ─────────────────────────────────────
-    calibration: dict[str, Any] = {"observed": False}
-    # Promote only when holdout utility is real — not perfect-ceiling force-winner.
+    # ── Promotion gate (holdout + foreign) ─────────────────────────────
+    from .promote_gate import evaluate_promotion
+
     holdout_recall = float(
         ((holdout_report.get("ablations") or {}).get("baseline") or {}).get(
             "recall_at_k"
         )
         or 0.0
     )
-    may_promote = bool(active_gate.get("promote_calibration")) and holdout_recall >= 0.5
+    promotion = evaluate_promotion(
+        holdout_report=holdout_report,
+        foreign_report=foreign_report,
+        train_report=train_report,
+        emergent_coupling=bool(coh_before.get("emergent_coupling")),
+        governance_mode=mode,
+        require_foreign=bool(f_repo),
+    )
+    may_promote = bool(promotion.get("allow_shadow_calibration"))
+
+    # ── Shadow calibration observe ─────────────────────────────────────
+    calibration: dict[str, Any] = {"observed": False}
     if may_promote and mode != "read_only":
-        prog("calibration_shadow (holdout-gated)")
+        prog("calibration_shadow (holdout+foreign gate)")
         try:
             from .math_net.calibration import observe_outcome_for_calibration
 
@@ -241,20 +276,23 @@ def run_self_org(
                         "integrity": 0.85,
                     },
                 ),
-                "note": "shadow only — not live Governor replacement; holdout-gated",
+                "note": "shadow only — holdout+foreign promotion gate",
                 "holdout_recall": holdout_recall,
+                "promotion": promotion,
             }
         except Exception as exc:
             calibration = {
                 "observed": False,
                 "error": f"{type(exc).__name__}: {exc}",
+                "promotion": promotion,
             }
     else:
         calibration = {
             "observed": False,
             "skipped": True,
-            "reason": "holdout_or_gate_blocked_promote",
+            "reason": "promotion_gate_denied",
             "holdout_recall": holdout_recall,
+            "promotion": promotion,
         }
 
     # ── Structure invent (self-org topology, not host files) ───────────
@@ -471,6 +509,18 @@ def run_self_org(
                 .get("recall_at_k"),
                 "split": "telemetry",
             },
+            "foreign": None
+            if not foreign_report
+            else {
+                "repo": foreign_report.get("repo") or f_repo,
+                "winner": foreign_report.get("winner"),
+                "baseline_recall": (foreign_report.get("ablations") or {})
+                .get("baseline", {})
+                .get("recall_at_k"),
+                "error": foreign_report.get("error"),
+                "split": "foreign",
+            },
+            "promotion": promotion,
             "train_holdout_separated": True,
             "ceiling_on_full": ceiling,
         },

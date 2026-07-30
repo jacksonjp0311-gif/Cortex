@@ -18,6 +18,7 @@ from cortex.eval_coupling import (
     resolve_corpus,
     run_eval_coupling,
 )
+from cortex.promote_gate import evaluate_promotion
 from cortex.self_org import _gov_mode
 from cortex.governor import Governor
 from cortex.retrieval import (
@@ -127,6 +128,34 @@ class EvalCouplingTests(unittest.TestCase):
                 raise RuntimeError("nope")
 
         self.assertEqual(_gov_mode(Boom(), self.store, "EvalHost"), "read_only")
+
+    def test_promotion_gate_requires_foreign(self) -> None:
+        holdout = {
+            "repo": "Body",
+            "winner": "baseline",
+            "gate": {"baseline_is_winner": True},
+            "ablations": {"baseline": {"recall_at_k": 0.8}},
+        }
+        denied = evaluate_promotion(
+            holdout_report=holdout,
+            foreign_report=None,
+            emergent_coupling=True,
+            require_foreign=True,
+        )
+        self.assertFalse(denied["allow_promote"])
+        foreign = {
+            "repo": "Foreign",
+            "winner": "baseline",
+            "gate": {"baseline_is_winner": True},
+            "ablations": {"baseline": {"recall_at_k": 0.6}},
+        }
+        ok = evaluate_promotion(
+            holdout_report=holdout,
+            foreign_report=foreign,
+            emergent_coupling=True,
+            require_foreign=True,
+        )
+        self.assertTrue(ok["allow_promote"])
 
     def test_eval_coupling_runs(self) -> None:
         report = run_eval_coupling(

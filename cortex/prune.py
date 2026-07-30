@@ -227,12 +227,38 @@ def policy_preview(store: Any, repo: str) -> dict[str, Any]:
         recommended = "integrate_soft"
     if (previews.get("safe") or {}).get("would_prune", 0) > 0:
         recommended = "safe"
+    # Cheeger / Fiedler-cut underuse → attention candidates (v6.20), never auto-apply.
+    bottleneck: dict[str, Any] = {"ok": False}
+    try:
+        from .math_net.spectral import spectral_slice
+
+        spec = spectral_slice(store, repo, max_nodes=200)
+        if spec.get("ok"):
+            bottleneck = {
+                "ok": True,
+                "cheeger": spec.get("cheeger"),
+                "fiedler_cut_underuse_top": (spec.get("fiedler_cut_underuse_top") or [])[
+                    :10
+                ],
+                "advice": (
+                    "Prefer dry-run attention on Fiedler-cut underuse edges; "
+                    "do not thrash prune apply."
+                ),
+                "claim_boundary": (
+                    "Bottleneck candidates are spectral telemetry for prune *preview* — "
+                    "not authorization to delete host or evidence."
+                ),
+            }
+    except Exception as exc:
+        bottleneck = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
     return {
-        "schema_version": "cortex-prune-preview/1.0",
+        "schema_version": "cortex-prune-preview/1.1",
         "glyph": GLYPH,
         "repo": repo,
         "policies": previews,
         "recommended": recommended,
+        "bottleneck_attention": bottleneck,
         "claim_boundary": "Preview only; apply requires explicit prune without --dry-run.",
     }
 

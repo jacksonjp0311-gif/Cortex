@@ -232,8 +232,12 @@ TRAIN_CORPUS: list[dict[str, Any]] = [
     {**c, "split": "train"} for c in (EASY_CORPUS + HARD_CORPUS[:5])
 ]
 
+# Freeze id — bump when this list intentionally changes (v6.20 utility law).
+HOLDOUT_FREEZE_ID = "holdout-v1-2026-07-30"
+
 # Sealed holdout: never used for ranker warm or concept-route construction.
 # Distinct phrasing from HARD/STRESS train material.
+# DO NOT edit without bumping HOLDOUT_FREEZE_ID and CHANGELOG.
 HOLDOUT_CORPUS: list[dict[str, Any]] = [
     {
         "id": "holdout_u_scalar",
@@ -317,6 +321,53 @@ HOLDOUT_CORPUS: list[dict[str, Any]] = [
     },
 ]
 
+# Foreign transfer suite — real non-Cortex host paths (PulseFlow defaults).
+# Run with --repo PulseFlow (or other foreign). Never use to train body ranker.
+FOREIGN_TRANSFER_CORPUS: list[dict[str, Any]] = [
+    {
+        "id": "foreign_policy_impl",
+        "query": "policy.rs enforcement rules for the governor engine",
+        "expected_substrings": ["policy.rs", "src/policy"],
+        "suite": "foreign",
+        "split": "foreign",
+    },
+    {
+        "id": "foreign_policy_tests",
+        "query": "policy_tests.rs verify policy boundaries",
+        "expected_substrings": ["policy_tests", "tests/policy"],
+        "suite": "foreign",
+        "split": "foreign",
+    },
+    {
+        "id": "foreign_storage",
+        "query": "storage.rs persistence for decisions and state",
+        "expected_substrings": ["storage.rs", "src/storage"],
+        "suite": "foreign",
+        "split": "foreign",
+    },
+    {
+        "id": "foreign_entry",
+        "query": "main.rs application entrypoint wiring",
+        "expected_substrings": ["main.rs", "src/main"],
+        "suite": "foreign",
+        "split": "foreign",
+    },
+    {
+        "id": "foreign_server",
+        "query": "server.rs http request handling",
+        "expected_substrings": ["server.rs", "src/server"],
+        "suite": "foreign",
+        "split": "foreign",
+    },
+    {
+        "id": "foreign_readme",
+        "query": "README.md project overview for this governor",
+        "expected_substrings": ["README"],
+        "suite": "foreign",
+        "split": "foreign",
+    },
+]
+
 # Back-compat alias
 DEFAULT_CORPUS = EASY_CORPUS
 
@@ -327,6 +378,7 @@ SUITES: dict[str, list[dict[str, Any]]] = {
     "stress": STRESS_CORPUS,
     "train": TRAIN_CORPUS,
     "holdout": HOLDOUT_CORPUS,
+    "foreign": FOREIGN_TRANSFER_CORPUS,
     "all": EASY_CORPUS + HARD_CORPUS + STRESS_CORPUS + HOLDOUT_CORPUS,
 }
 
@@ -341,7 +393,8 @@ def resolve_corpus(suite: str | None = None) -> list[dict[str, Any]]:
     key = (suite or "full").strip().lower()
     if key not in SUITES:
         raise ValueError(
-            f"Unknown suite {suite!r}; choose easy|hard|full|stress|train|holdout|all"
+            f"Unknown suite {suite!r}; "
+            "choose easy|hard|full|stress|train|holdout|foreign|all"
         )
     return list(SUITES[key])
 
@@ -584,12 +637,15 @@ def run_eval_coupling(
                     }
                 )
 
+    from .promote_gate import HOLDOUT_FREEZE_ID as _HO_FREEZE
+
     report = {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "version": __version__,
         "repo": repo,
         "suite": suite if corpus is None else "custom",
+        "holdout_freeze_id": _HO_FREEZE if (suite or "") == "holdout" else None,
         "elapsed_s": round(time.time() - t0, 3),
         "top_k": top_k,
         "limit": limit,

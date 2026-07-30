@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.19.0-0ea5e9?style=for-the-badge" alt="v6.19.0" />
+  <img src="https://img.shields.io/badge/version-6.20.0-0ea5e9?style=for-the-badge" alt="v6.20.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.19.0** — **Emergent math explicit**: Cheeger/Fiedler bottleneck, couple percolation, Lyapunov V, multi-scale mass δ, Fisher ranker, free-energy *accounting only*. OCI = vitals; **holdout** = utility. See [`docs/intelligence/PHASE_V6.19_EMERGENT_MATH.md`](docs/intelligence/PHASE_V6.19_EMERGENT_MATH.md).
+**Current release: v6.20.0** — **Validated utility spine**: holdout freeze + **foreign transfer** suite + promotion gate; Cheeger bottleneck in prune preview; couple/Lyapunov advice; Fisher-scaled ranker LR; CI release receipt. See [`docs/intelligence/PHASE_V6.20_VALIDATED_UTILITY.md`](docs/intelligence/PHASE_V6.20_VALIDATED_UTILITY.md).
 
 ```bash
 pip install -e .

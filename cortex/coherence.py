@@ -414,6 +414,11 @@ def measure_coherence(
     advice: list[str] = []
     if advice_pre:
         advice.append(advice_pre)
+    # Percolation bottlenecks → explicit advice (v6.20)
+    for bid in (percolation.get("bottleneck_couples") or [])[:2]:
+        advice.append(f"couple_bottleneck:{bid}")
+    if (percolation.get("occupied_bonds") or 0) < MIN_COUPLES_FOR_EMERGENT + 1 and above:
+        advice.append("couple_phase_near_threshold_keep_fuse_and_ranker_warm")
     if not above:
         if components.get("geometry_mass", 0) < 0.4:
             advice.append("compile_interlink_or_bootstrap")
@@ -481,9 +486,31 @@ def measure_coherence(
     if persist:
         # Log transitions against prior snapshot BEFORE overwriting coherence_latest
         try:
-            from .emergence_log import log_from_coherence
+            from .emergence_log import log_from_coherence, log_milestone
 
             log_from_coherence(home, store, repo, report, source="coherence")
+            # Lyapunov drift event when V rises past epsilon (v6.20)
+            if (
+                home is not None
+                and lyapunov.get("delta_V") is not None
+                and float(lyapunov["delta_V"]) > 0.05
+            ):
+                log_milestone(
+                    home,
+                    store,
+                    repo,
+                    kind="lyapunov_drift",
+                    summary=(
+                        f"Lyapunov V rising ΔV={lyapunov.get('delta_V')} "
+                        f"V={lyapunov.get('V')} (stability telemetry)"
+                    ),
+                    payload={
+                        "V": lyapunov.get("V"),
+                        "delta_V": lyapunov.get("delta_V"),
+                        "stable": lyapunov.get("stable"),
+                    },
+                    source="coherence",
+                )
         except Exception:
             pass
         _persist(store, repo, report)

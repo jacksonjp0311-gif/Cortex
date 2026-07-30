@@ -1,3 +1,14 @@
+## 6.20.0 - Validated utility & bottleneck action
+
+- **Promotion gate:** holdout + foreign transfer + emergent required (`promote_gate.py`).
+- **Foreign suite:** `eval-coupling --suite foreign` (PulseFlow path oracles).
+- **Holdout freeze id** stamped on holdout reports.
+- **Self-org:** runs foreign suite; shadow cal only if promotion allows.
+- **Prune preview:** Fiedler-cut underuse bottleneck attention (dry-run only).
+- **Coherence:** couple bottleneck advice; `lyapunov_drift` emergence events.
+- **Ranker:** Fisher-scaled per-feature learning rates.
+- **CI:** `scripts/ci/release_receipt.py`.
+
 ## 6.19.0 - Emergent math made explicit
 
 - **Spectral:** Cheeger/Fiedler cut bottleneck, cut-crossing underuse priority, heat wavelet tops.

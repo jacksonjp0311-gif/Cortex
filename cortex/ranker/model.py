@@ -481,7 +481,15 @@ def train_from_outcome(
     label = 1.0 if status in {"verified", "helpful"} else -1.0
     if status == "irrelevant":
         label = -0.5
-    lr = 0.05 if governance_mode == "normal" else 0.02
+    base_lr = 0.05 if governance_mode == "normal" else 0.02
+    # Fisher-scaled LR (v6.20): step ∝ 1/(1+I_ii) when examples exist.
+    fisher = ranker_fisher_diag(store, repo)
+    fisher_map = {
+        str(r["feature"]): float(r["I_ii"])
+        for r in (fisher.get("fisher_diag_top") or [])
+        if isinstance(r, dict) and r.get("feature") is not None
+    }
+    names = list(model.get("feature_names") or FEATURE_NAMES)
     vectors = feature_vectors or [features_from_hit({"score": abs(reward), "path": "outcome"})]
     weights = list(model["weights"])
     bias = float(model["bias"])
@@ -491,8 +499,11 @@ def train_from_outcome(
         y = 1.0 if label > 0 else 0.0
         err = pred - y
         for i in range(min(len(weights), len(feats))):
-            weights[i] = _clip(weights[i] - lr * err * feats[i], -3.0, 3.0)
-        bias = _clip(bias - lr * err, -2.0, 2.0)
+            fname = names[i] if i < len(names) else str(i)
+            i_ii = float(fisher_map.get(fname, 0.0))
+            lr_i = base_lr / (1.0 + i_ii)
+            weights[i] = _clip(weights[i] - lr_i * err * feats[i], -3.0, 3.0)
+        bias = _clip(bias - base_lr * err, -2.0, 2.0)
 
     # L2 light decay
     for i in range(len(weights)):
