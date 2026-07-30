@@ -10,7 +10,28 @@ from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
 from cortex.eval_coupling import DEFAULT_CORPUS, run_eval_coupling
 from cortex.governor import Governor
+from cortex.retrieval import (
+    path_token_overlap,
+    path_token_quality_boost,
+    query_has_impl_markers,
+)
 from cortex.store import Store
+
+
+class PathTokenBoostTests(unittest.TestCase):
+    def test_fusion_paths_align_with_impl_query(self) -> None:
+        q = "fusion co-process fuse tick regenerate geometry mind_hash"
+        self.assertTrue(query_has_impl_markers(q))
+        self.assertGreater(path_token_overlap(q, "cortex/coprocess.py"), 0.0)
+        self.assertGreater(path_token_overlap(q, "cortex/fuse_proxy.py"), 0.0)
+        self.assertGreater(path_token_quality_boost(q, "cortex/coprocess.py"), 1.0)
+        # Doctrine packet without module stems should not get path boost.
+        self.assertEqual(
+            path_token_overlap(
+                q, "examples/memory-packets/interconnect.memory.aria"
+            ),
+            0.0,
+        )
 
 
 class EvalCouplingTests(unittest.TestCase):

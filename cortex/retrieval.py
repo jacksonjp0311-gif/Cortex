@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,65 @@ from .aria_meta.substrate import (
 from .embeddings import cosine, get_embedder, deserialize_vector
 from .models import Hit
 
+# Stop-ish tokens: too common to count as path/query stem overlap.
+_PATH_MATCH_STOP = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "to",
+        "of",
+        "in",
+        "on",
+        "for",
+        "with",
+        "is",
+        "py",
+        "md",
+        "json",
+        "txt",
+        "html",
+        "js",
+        "ts",
+        "src",
+        "lib",
+        "test",
+        "tests",
+        "docs",
+        "doc",
+        "file",
+        "path",
+        "cortex",
+        "examples",
+        "memory",
+        "packets",
+    }
+)
+
+# When these appear in the query, prefer implementation paths over teach-mass packets.
+_IMPL_QUERY_MARKERS = frozenset(
+    {
+        "fuse",
+        "coprocess",
+        "fuseproxy",
+        "fuse_proxy",
+        "mindhash",
+        "mind_hash",
+        "regenerate",
+        "tick",
+        "proxy",
+        "laplacian",
+        "lambda2",
+        "spectral",
+        "ranker",
+        "ppr",
+        "heat",
+        "geometry",
+    }
+)
+
 
 def reciprocal_rank_fusion(
     rankings: list[list[int]], weights: list[float] | None = None, k: int = 60
@@ -28,6 +88,59 @@ def reciprocal_rank_fusion(
         for rank, item in enumerate(ranking, 1):
             scores[item] += weight / (k + rank)
     return dict(scores)
+
+
+def _token_stems(text: str) -> set[str]:
+    """Tokenize path/query stems; keep both split and collapsed forms.
+
+    ``co-process`` → {process, coprocess}; ``fuse_proxy`` → {fuse, proxy, fuseproxy}.
+    """
+    folded = text.casefold()
+    split_parts = re.findall(
+        r"[a-z0-9]+", folded.replace("-", " ").replace("_", " ")
+    )
+    collapsed = re.findall(
+        r"[a-z0-9]{3,}", folded.replace("-", "").replace("_", "")
+    )
+    stems = {t for t in split_parts if len(t) >= 3 and t not in _PATH_MATCH_STOP}
+    stems |= {t for t in collapsed if t not in _PATH_MATCH_STOP}
+    return stems
+
+
+def path_token_overlap(query: str, path: str) -> float:
+    """0..1 overlap score of query stems with path/filename stems."""
+    q = _token_stems(query)
+    if not q:
+        return 0.0
+    path_n = path.replace("\\", "/")
+    base = path_n.rsplit("/", 1)[-1]
+    p_base = _token_stems(base)
+    p_full = _token_stems(path_n.replace("/", " ").replace(".", " "))
+    base_hits = len(q & p_base)
+    full_hits = len(q & p_full)
+    if base_hits == 0 and full_hits == 0:
+        return 0.0
+    # Basename hits dominate (module name in query beats ambient path noise).
+    score = 0.55 * min(3, base_hits) + 0.20 * min(3, max(0, full_hits - base_hits))
+    return min(1.0, score)
+
+
+def path_token_quality_boost(query: str, path: str) -> float:
+    """Quality multiplier (>=1) when path/filename stems appear in the query."""
+    ov = path_token_overlap(query, path)
+    if ov <= 0.0:
+        return 1.0
+    # Strong enough to outrank teach-mass ambient hits when the module is named.
+    return 1.0 + 1.15 * ov
+
+
+def query_has_impl_markers(text: str) -> bool:
+    stems = _token_stems(text)
+    # also check raw fold for multiword markers already collapsed
+    folded = text.casefold().replace("-", "").replace("_", "")
+    if any(m.replace("_", "") in folded for m in _IMPL_QUERY_MARKERS):
+        return True
+    return bool(stems & {m.replace("_", "") for m in _IMPL_QUERY_MARKERS})
 
 
 def materialize_aria_for_task(store: Any, repo: str, text: str) -> dict[str, Any]:
@@ -167,7 +280,13 @@ def query(
         # Teaching mass: interconnect doctrine and memory packets rank up for
         # organism / protocol / teach tasks without becoming authority.
         path_norm = row["path"].replace("\\", "/")
-        if any(
+        # Path/filename stem overlap — promote modules named in the query
+        # (e.g. "fuse" / "coprocess" → cortex/fuse_proxy.py, cortex/coprocess.py).
+        path_ov = path_token_overlap(text, path_norm)
+        if path_ov > 0.0:
+            quality *= path_token_quality_boost(text, path_norm)
+            metadata["path_token_overlap"] = round(path_ov, 4)
+        is_teach_mass = any(
             marker in path_norm
             for marker in (
                 "docs/intelligence/",
@@ -177,7 +296,8 @@ def query(
                 "examples/memory-packets/",
                 ".cortex/cards/",
             )
-        ):
+        )
+        if is_teach_mass:
             teach_terms = (
                 "organism",
                 "interconnect",
@@ -192,7 +312,12 @@ def query(
                 "aria",
             )
             if any(term in text.casefold() for term in teach_terms):
-                quality *= 1.28 if not prove else 1.12
+                # When the query is implementation-shaped (fuse/tick/spectral…),
+                # do not let doctrine packets bury the modules they describe.
+                if query_has_impl_markers(text) and not prove:
+                    quality *= 0.92
+                else:
+                    quality *= 1.28 if not prove else 1.12
         if row["kind"] == "discovery_card":
             # Cards are retain-class memory; when proving ARIA/implementation,
             # do not let cards monopolize the packet over substrate source.

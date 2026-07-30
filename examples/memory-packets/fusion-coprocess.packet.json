@@ -1,0 +1,59 @@
+{
+  "schema_version": "cortex-memory-packet/1.0",
+  "glyph": "⊛⇄",
+  "title": "Fusion co-process law (geometry while connected)",
+  "kind": "invariant",
+  "claims": [
+    {
+      "id": "fuse-open-tick-close",
+      "text": "Fusion co-process is fuse open / fuse tick / fuse state / fuse close: regenerate memory geometry (U, Lambda_g, spectral, attention) on every host-reported token or step.",
+      "evidence": [
+        "cortex/coprocess.py",
+        "docs/intelligence/PHASE_V6.14_FUSION.md"
+      ]
+    },
+    {
+      "id": "fuse-proxy-auto-tick",
+      "text": "fuse-proxy is an OpenAI-compatible front that auto-ticks the fusion co-process on each SSE content delta; mind_hash is shared state not one mind.",
+      "evidence": [
+        "cortex/fuse_proxy.py",
+        "cortex/coprocess.py"
+      ]
+    },
+    {
+      "id": "spectral-primary-on-tick",
+      "text": "Each fuse tick prefers spectral-primary ranking and structure invent under Governor; never invents host source files.",
+      "evidence": [
+        "cortex/coprocess.py",
+        "cortex/structure_invent.py",
+        "cortex/math_net/spectral_memory.py"
+      ]
+    },
+    {
+      "id": "not-model-weights",
+      "text": "Fusion couples generation I/O to Cortex geometry; it does not merge model weights, claim consciousness, or grant host mutation authority.",
+      "evidence": [
+        "docs/intelligence/PHASE_V6.14_FUSION.md",
+        "docs/COVENANT.md"
+      ]
+    },
+    {
+      "id": "measure-gate-paths",
+      "text": "When retrieving fusion co-process, prefer cortex/coprocess.py and cortex/fuse_proxy.py over ambient interconnect doctrine packets.",
+      "evidence": [
+        "cortex/coprocess.py",
+        "cortex/fuse_proxy.py",
+        "docs/intelligence/PHASE_V6.15_MEASURE_GATE.md"
+      ]
+    }
+  ],
+  "refuse": [
+    "merge_model_weights",
+    "claim_consciousness",
+    "fuse_as_host_mutation_authority",
+    "second_fusion_database",
+    "auto_execute_aria"
+  ],
+  "ritual_seed": true,
+  "claim_boundary": "Fusion packet teaches co-process geometry coupling; never host authority or sentience."
+}
