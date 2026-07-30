@@ -81,22 +81,36 @@ class Governor:
             unified_conf = confidence
             u_packet = {"u": round(1.0 - confidence, 6), "confidence": confidence}
 
-        # M5: shadow governor weights if present; else prior linear form (documented priors)
+        # M5/v6.13: live calibration if promoted; else shadow blend; else priors
         w_i, w_f, w_r, w_c, w_k = 0.30, 0.25, 0.20, 0.15, 0.10
+        coeff_source = "prior"
         try:
             from .math_net.calibration import load_shadow_calibration
+            from .math_net.spectral_memory import load_live_calibration
 
-            shadow = load_shadow_calibration(self.store, repo)
-            gw = shadow.get("governor_weights") or {}
-            if shadow.get("n_outcomes", 0) >= 5 and gw:
-                # blend shadow with prior (never fully replace without promote)
-                w_i = 0.7 * w_i + 0.3 * float(gw.get("integrity", w_i))
-                w_f = 0.7 * w_f + 0.3 * float(gw.get("focus", w_f))
-                w_r = 0.7 * w_r + 0.3 * float(gw.get("freshness", w_r))
-                w_c = 0.7 * w_c + 0.3 * float(gw.get("confidence", w_c))
-                w_k = 0.7 * w_k + 0.3 * float(gw.get("continuity", w_k))
-                s = w_i + w_f + w_r + w_c + w_k
+            live = load_live_calibration(self.store, repo)
+            if live and live.get("governor_weights"):
+                gw = live["governor_weights"]
+                w_i = float(gw.get("integrity", w_i))
+                w_f = float(gw.get("focus", w_f))
+                w_r = float(gw.get("freshness", w_r))
+                w_c = float(gw.get("confidence", w_c))
+                w_k = float(gw.get("continuity", w_k))
+                s = w_i + w_f + w_r + w_c + w_k or 1.0
                 w_i, w_f, w_r, w_c, w_k = w_i / s, w_f / s, w_r / s, w_c / s, w_k / s
+                coeff_source = "live_calibrated"
+            else:
+                shadow = load_shadow_calibration(self.store, repo)
+                gw = shadow.get("governor_weights") or {}
+                if shadow.get("n_outcomes", 0) >= 5 and gw:
+                    w_i = 0.7 * w_i + 0.3 * float(gw.get("integrity", w_i))
+                    w_f = 0.7 * w_f + 0.3 * float(gw.get("focus", w_f))
+                    w_r = 0.7 * w_r + 0.3 * float(gw.get("freshness", w_r))
+                    w_c = 0.7 * w_c + 0.3 * float(gw.get("confidence", w_c))
+                    w_k = 0.7 * w_k + 0.3 * float(gw.get("continuity", w_k))
+                    s = w_i + w_f + w_r + w_c + w_k
+                    w_i, w_f, w_r, w_c, w_k = w_i / s, w_f / s, w_r / s, w_c / s, w_k / s
+                    coeff_source = "shadow_blend"
         except Exception:
             pass
 
@@ -143,6 +157,7 @@ class Governor:
                 "confidence": round(w_c, 4),
                 "continuity": round(w_k, 4),
             },
+            "coeffs_source": coeff_source,
             "components": {
                 "integrity": round(integrity, 6),
                 "focus": round(focus, 6),

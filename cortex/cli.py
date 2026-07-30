@@ -399,13 +399,27 @@ def build_parser() -> argparse.ArgumentParser:
     math_net_p.add_argument("--repo", required=True)
     math_net_p.add_argument(
         "action",
-        choices=["pass", "phases", "spectral", "diffusion", "uncertainty", "dual"],
+        choices=[
+            "pass",
+            "phases",
+            "spectral",
+            "diffusion",
+            "uncertainty",
+            "dual",
+            "pulse",
+            "promote-calibration",
+        ],
         nargs="?",
         default="pass",
-        help="pass (default)=run all phases; or a single probe",
+        help="pass=M0–M10; pulse=end-to-end spectral memory; promote-calibration=live coeffs",
     )
     math_net_p.add_argument("--confidence", type=float, default=0.5)
     math_net_p.add_argument("--budget", type=int, default=400)
+    math_net_p.add_argument(
+        "--force",
+        action="store_true",
+        help="Force promote-calibration even if outcome count is low.",
+    )
     math_net_p.add_argument("--json", action="store_true")
 
     identity_p = sub.add_parser(
@@ -1479,6 +1493,7 @@ def main(argv: list[str] | None = None) -> None:
             from .math_net.diffusion import diffusion_features
             from .math_net.operator import dual_graph_report
             from .math_net.spectral import spectral_slice
+            from .math_net.spectral_memory import promote_calibration, spectral_memory_pulse
             from .math_net.uncertainty import compute_uncertainty
 
             action = getattr(args, "action", None) or "pass"
@@ -1498,6 +1513,27 @@ def main(argv: list[str] | None = None) -> None:
                 emit(diffusion_features(store, args.repo), args.json)
             elif action == "dual":
                 emit(dual_graph_report(store, args.repo), args.json)
+            elif action == "pulse":
+                emit(
+                    spectral_memory_pulse(
+                        store,
+                        args.repo,
+                        retrieval_confidence=float(args.confidence or 0.5),
+                        budget_tokens=int(args.budget or 400),
+                        auto_promote=True,
+                    ),
+                    args.json,
+                )
+            elif action == "promote-calibration":
+                emit(
+                    promote_calibration(
+                        store,
+                        args.repo,
+                        min_outcomes=1 if args.force else 8,
+                        force=bool(args.force),
+                    ),
+                    args.json,
+                )
             else:
                 emit(
                     run_math_network_pass(

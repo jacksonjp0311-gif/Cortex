@@ -6,5 +6,14 @@ Recommend-only telemetry and ranking features. Never host mutation rights.
 from __future__ import annotations
 
 from .phases import phase_status, run_math_network_pass
+from .spectral_memory import (
+    promote_calibration,
+    spectral_memory_pulse,
+)
 
-__all__ = ["phase_status", "run_math_network_pass"]
+__all__ = [
+    "phase_status",
+    "run_math_network_pass",
+    "spectral_memory_pulse",
+    "promote_calibration",
+]

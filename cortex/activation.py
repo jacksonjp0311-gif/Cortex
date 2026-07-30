@@ -108,6 +108,38 @@ def activate_repository(
     # Attach surprise to efficiency for agent-visible economics.
     if isinstance(context.get("efficiency"), dict):
         context["efficiency"]["surprise"] = surprise
+    # v6.13: end-to-end spectral memory pulse (U, Λ_g, fit δ, diffusion fuel)
+    spectral_memory: dict[str, Any] | None = None
+    try:
+        from .math_net.spectral_memory import spectral_memory_pulse
+
+        conf = float(
+            ((context.get("governance") or {}).get("components") or {}).get(
+                "retrieval_confidence"
+            )
+            or (context.get("retrieval") or {}).get("confidence")
+            or 0.5
+        )
+        cert_st = str((certificate or {}).get("status") or "unknown")
+        spectral_memory = spectral_memory_pulse(
+            store,
+            repo,
+            retrieval_confidence=conf,
+            certificate_status=cert_st,
+            manifest_current=manifest_current,
+            budget_tokens=budget,
+            auto_promote=True,
+        )
+        context["spectral_memory"] = spectral_memory
+        context["u"] = (spectral_memory.get("u") or {}).get("u")
+        if isinstance(context.get("governance"), dict) and spectral_memory.get("u"):
+            context["governance"] = {
+                **context["governance"],
+                "uncertainty": spectral_memory["u"],
+            }
+    except Exception as exc:
+        spectral_memory = {"error": f"{type(exc).__name__}: {exc}", "end_to_end": False}
+        context["spectral_memory"] = spectral_memory
     session = begin_session(home, store, repo, task)
     from . import __version__
     from .organism import (
@@ -361,6 +393,8 @@ def activate_repository(
             (glyph_state or {}).get("line") if isinstance(glyph_state, dict) else None
         ),
         "stream": stream_env,
+        "spectral_memory": full_context.get("spectral_memory") or spectral_memory,
+        "u": full_context.get("u"),
         "aria_language": aria_language,
         "packs": full_context.get("packs") or context.get("packs"),
         "connect_pass": connect,

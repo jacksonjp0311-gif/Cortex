@@ -175,9 +175,22 @@ def features_from_hit(
     hnsw = 1.0 if str(meta.get("source") or meta.get("selection_source") or "") == "hnsw_v1" else 0.0
     if meta.get("hnsw_lane"):
         hnsw = 1.0
-    kernel = str(meta.get("kernel_class") or "")
+    kernel = str(meta.get("kernel_class") or meta.get("retention_regime") or "")
     if not kernel and kind == "discovery_card":
         kernel = "retain"
+    # M3/M4/M1 end-to-end: diffusion + unified confidence from metadata when present
+    ppr = float(meta.get("ppr") or 0.0)
+    heat = float(meta.get("heat") or 0.0)
+    deg_c = float(meta.get("degree_centrality") or 0.0)
+    lam_gap = float(meta.get("lambda2_gap") or meta.get("lambda2") or 0.0)
+    # squash lambda2 into 0..1-ish
+    if lam_gap > 1.0:
+        lam_gap = min(1.0, lam_gap / 10.0)
+    u_conf = float(
+        meta.get("unified_confidence")
+        if meta.get("unified_confidence") is not None
+        else retrieval_confidence
+    )
     feats = {
         "thalamus_lane": thalamus_lane,
         "fts_rank": fts,
@@ -200,6 +213,11 @@ def features_from_hit(
         "coact_strength": _clip(float(coact_strength or meta.get("coact_strength") or 0.0), 0.0, 1.0),
         "kernel_retain": 1.0 if kernel == "retain" else 0.0,
         "kernel_integrate": 1.0 if kernel == "integrate" else 0.0,
+        "ppr": _clip(ppr, 0.0, 1.0),
+        "heat": _clip(heat, 0.0, 1.0),
+        "degree_centrality": _clip(deg_c, 0.0, 1.0),
+        "lambda2_gap": _clip(lam_gap, 0.0, 1.0),
+        "unified_confidence": _clip(u_conf, 0.0, 1.0),
     }
     return [_clip(feats[name], -1.0, 1.0) for name in FEATURE_NAMES]
 
@@ -221,12 +239,47 @@ def rerank_hits(
     retrieval_confidence: float = 0.0,
     surprise_ratio: float = 0.0,
     immune_block: bool = False,
+    primary: bool = True,
+    enrich_spectral: bool = True,
 ) -> list[Any]:
+    """Ranker-primary path (v6.13): model score dominates; heuristics are prior features.
+
+    primary=True → final = 0.82 * P(model) + 0.18 * prior (was 0.55/0.45).
+    enrich_spectral=True → attach PPR/heat into metadata before features.
+    """
     if not hits:
         return hits
+    if enrich_spectral:
+        try:
+            from ..math_net.spectral_memory import enrich_hits_with_diffusion
+
+            # Hit objects may be Hit dataclasses — convert path via metadata inject
+            enrich_hits_with_diffusion(store, repo, hits)
+        except Exception:
+            pass
+    # Stamp unified confidence for features
+    try:
+        from ..math_net.uncertainty import compute_uncertainty
+
+        u_pkt = compute_uncertainty(retrieval_confidence=retrieval_confidence)
+        u_conf = float(u_pkt.get("confidence") or retrieval_confidence)
+    except Exception:
+        u_conf = retrieval_confidence
+
     model = ensure_ranker(store, repo)
     scored: list[tuple[float, Any]] = []
     for i, hit in enumerate(hits):
+        if isinstance(hit, dict):
+            meta = dict(hit.get("metadata") or {})
+            meta["unified_confidence"] = u_conf
+            hit = {**hit, "metadata": meta}
+        else:
+            try:
+                md = dict(getattr(hit, "metadata", None) or {})
+                md["unified_confidence"] = u_conf
+                hit.metadata = md
+            except Exception:
+                pass
         feats = features_from_hit(
             hit,
             rank=i,
@@ -235,18 +288,29 @@ def rerank_hits(
             immune_block=immune_block,
         )
         s = score_features(model, feats)
-        # Blend with original score for stability
         prior = 0.0
         if isinstance(hit, dict):
             prior = float(hit.get("score") or 0.0)
-            hit = {**hit, "ranker_score": round(s, 6)}
+            hit = {
+                **hit,
+                "ranker_score": round(s, 6),
+                "ranker_primary": bool(primary),
+            }
         else:
             prior = float(getattr(hit, "score", 0.0) or 0.0)
             try:
-                hit.metadata = {**(hit.metadata or {}), "ranker_score": round(s, 6)}
+                hit.metadata = {
+                    **(hit.metadata or {}),
+                    "ranker_score": round(s, 6),
+                    "ranker_primary": bool(primary),
+                }
             except Exception:
                 pass
-        scored.append((0.55 * s + 0.45 * min(1.0, prior), hit))
+        if primary:
+            final = 0.82 * s + 0.18 * min(1.0, max(0.0, prior))
+        else:
+            final = 0.55 * s + 0.45 * min(1.0, max(0.0, prior))
+        scored.append((final, hit))
     scored.sort(key=lambda x: x[0], reverse=True)
     return [h for _, h in scored]
 

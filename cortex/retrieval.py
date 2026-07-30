@@ -277,11 +277,21 @@ def query(
             metadata=metadata,
         ))
     output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
-    # Tiny local ranker (v5) — operational reordering only; never authority.
+    # Ranker-primary + spectral diffusion features (v6.13) — never authority.
     try:
         from .ranker.model import rerank_hits
 
-        output = rerank_hits(store, repo, output)
+        # Confidence proxy from top fused score mass
+        top_scores = [float(h.score) for h in output[:8]] or [0.0]
+        conf_proxy = max(0.0, min(1.0, sum(top_scores) / max(1, len(top_scores))))
+        output = rerank_hits(
+            store,
+            repo,
+            output,
+            retrieval_confidence=conf_proxy,
+            primary=True,
+            enrich_spectral=True,
+        )
         output.sort(
             key=lambda hit: (
                 -float((hit.metadata or {}).get("ranker_score") or hit.score),
