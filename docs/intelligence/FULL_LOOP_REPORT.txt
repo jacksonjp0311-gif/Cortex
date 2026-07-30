@@ -1,0 +1,6 @@
+PRE (from interrupted run): score=0.7865 emergent=True couples=5 active=blood_geometry,geometry_learning,ops_geometry,blood_learning,spectral_ops
+FUSE OPEN: opened=True mind=4dc62ee5701e2be9
+POST score=0.7865 emergent=True couples=5 active=['blood_geometry', 'geometry_learning', 'ops_geometry', 'blood_learning', 'spectral_ops']
+advice=['hold_course_spectral_primary', 'emergent_coupling_indicators_active', 'coherence_sustained']
+fusion={'open': True, 'tick': 3, 'mind_hash': 'bada5202a65933aa', 'token_count': 3, 'sense': 'coupled'}
+Lambda={'integrate': 2.197591, 'reset': 0.0, 'retain': 5.0}

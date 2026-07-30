@@ -173,8 +173,13 @@ def fuse_tick(
     token: str = "",
     tokens: int = 1,
     invent: bool | None = None,
+    measure_coherence_every: int = 5,
 ) -> dict[str, Any]:
-    """One fusion tick = one geometry regeneration step (host reports a token/step)."""
+    """One fusion tick = one geometry regeneration step (host reports a token/step).
+
+    measure_coherence_every: full coherence field is expensive on large graphs;
+    measure on tick 1 and every N ticks (default 5). Set 1 for every tick.
+    """
     state = store.get_setting(_fusion_key(repo), None)
     if not isinstance(state, dict) or not state.get("open"):
         return {
@@ -262,23 +267,27 @@ def fuse_tick(
             "updated_at": time.time(),
         }
     )
-    # Weave emergent coupling indicators into fusion state each tick
-    coherence_compact: dict[str, Any] = {}
-    try:
-        from .coherence import compact_coherence, measure_coherence
+    # Weave emergent coupling indicators (not every tick — spectral measure is heavy)
+    coherence_compact: dict[str, Any] = state.get("coherence") or {}
+    do_measure = tick == 1 or (
+        measure_coherence_every > 0 and tick % max(1, measure_coherence_every) == 0
+    )
+    if do_measure:
+        try:
+            from .coherence import compact_coherence, measure_coherence
 
-        coh = measure_coherence(
-            store,
-            repo,
-            governor=governor,
-            retrieval_confidence=float(
-                (gov.get("components") or {}).get("unified_confidence") or 0.55
-            ),
-        )
-        coherence_compact = compact_coherence(coh)
-        state["coherence"] = coherence_compact
-    except Exception:
-        coherence_compact = {"available": False}
+            coh = measure_coherence(
+                store,
+                repo,
+                governor=governor,
+                retrieval_confidence=float(
+                    (gov.get("components") or {}).get("unified_confidence") or 0.55
+                ),
+            )
+            coherence_compact = compact_coherence(coh)
+            state["coherence"] = coherence_compact
+        except Exception:
+            coherence_compact = {"available": False}
 
     state["self_model"] = build_self_model(state)
     state["mind_hash"] = _mind_hash(state)
