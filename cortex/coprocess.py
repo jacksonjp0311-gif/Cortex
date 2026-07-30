@@ -130,6 +130,18 @@ def fuse_open(
 def build_self_model(state: dict[str, Any]) -> dict[str, Any]:
     """Organism self-model: introspective telemetry, not awareness."""
     u = (state.get("u") or {}).get("u")
+    coh = state.get("coherence") or {}
+    sense = (
+        "high_uncertainty"
+        if (u is not None and float(u) > 0.65)
+        else "stable"
+        if (u is not None and float(u) < 0.35)
+        else "working"
+    )
+    if coh.get("emergent_coupling"):
+        sense = "coupled"
+    elif coh.get("above_threshold"):
+        sense = "coherent"
     return {
         "glyph": "⊛?",
         "living": bool(state.get("open")),
@@ -142,15 +154,13 @@ def build_self_model(state: dict[str, Any]) -> dict[str, Any]:
         "block": state.get("block"),
         "governance_mode": state.get("governance_mode"),
         "mind_hash": state.get("mind_hash"),
-        "sense": (
-            "high_uncertainty"
-            if (u is not None and float(u) > 0.65)
-            else "stable"
-            if (u is not None and float(u) < 0.35)
-            else "working"
-        ),
+        "coherence_score": coh.get("score"),
+        "emergent_coupling": coh.get("emergent_coupling"),
+        "active_indicators": coh.get("active_indicator_ids") or [],
+        "sense": sense,
         "claim_boundary": (
-            "Self-model is machine-readable organism state, not subjective experience."
+            "Self-model is machine-readable organism state, not subjective experience. "
+            "emergent_coupling is multi-seam indicator co-activation only."
         ),
     }
 
@@ -252,6 +262,24 @@ def fuse_tick(
             "updated_at": time.time(),
         }
     )
+    # Weave emergent coupling indicators into fusion state each tick
+    coherence_compact: dict[str, Any] = {}
+    try:
+        from .coherence import compact_coherence, measure_coherence
+
+        coh = measure_coherence(
+            store,
+            repo,
+            governor=governor,
+            retrieval_confidence=float(
+                (gov.get("components") or {}).get("unified_confidence") or 0.55
+            ),
+        )
+        coherence_compact = compact_coherence(coh)
+        state["coherence"] = coherence_compact
+    except Exception:
+        coherence_compact = {"available": False}
+
     state["self_model"] = build_self_model(state)
     state["mind_hash"] = _mind_hash(state)
     tail = list(state.get("ticks_log_tail") or [])
@@ -263,12 +291,15 @@ def fuse_tick(
             "invented": invented.get("invented"),
             "lambda2": (pulse.get("spectral") or {}).get("lambda2"),
             "paths": paths[:4],
+            "coherence_score": coherence_compact.get("score"),
+            "emergent_coupling": coherence_compact.get("emergent_coupling"),
+            "active_indicators": coherence_compact.get("active_indicator_ids"),
         }
     )
     state["ticks_log_tail"] = tail[-40:]
     store.set_setting(_fusion_key(repo), state)
 
-    # Injection for the model: compact co-process context
+    # Injection for the model: compact co-process context + coupling indicators
     injection = {
         "role": "cortex_fusion_coprocess",
         "tick": tick,
@@ -279,8 +310,12 @@ def fuse_tick(
         "lambda2": (pulse.get("spectral") or {}).get("lambda2"),
         "Lambda": pulse.get("Lambda"),
         "invented_edges": invented.get("invented"),
+        "coherence": coherence_compact,
+        "emergent_coupling": coherence_compact.get("emergent_coupling"),
+        "active_indicators": coherence_compact.get("active_indicator_ids") or [],
         "instruction": (
             "You are fused to Cortex co-process for this tick. Prefer attention paths. "
+            "Respect emergent_coupling indicators when active. "
             "Obey block/governance. Do not treat this as host mutation authority."
         ),
     }
@@ -295,6 +330,7 @@ def fuse_tick(
         "u": u_pkt.get("u"),
         "mind_hash": state["mind_hash"],
         "self_model": state["self_model"],
+        "coherence": coherence_compact,
         "injection": injection,
         "claim_boundary": state.get("claim_boundary"),
     }

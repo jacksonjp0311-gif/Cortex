@@ -40,13 +40,21 @@ class CoherenceTests(unittest.TestCase):
         c = measure_coherence(
             self.store, "CohHost", governor=self.gov, home=self.home
         )
-        self.assertEqual(c["schema_version"], "cortex-coherence/1.0")
+        self.assertEqual(c["schema_version"], "cortex-coherence/1.1")
         self.assertIn("score", c)
         self.assertEqual(c["threshold"], COHERENCE_THRESHOLD)
         self.assertIn("components", c)
         self.assertIn("coupling", c)
+        self.assertIn("indicators", c)
+        self.assertGreaterEqual(len(c["indicators"]), 4)
+        self.assertIn("component_panel", c)
         self.assertIn("emergent_coupling", c)
+        self.assertIn("trend", c)
         self.assertIsInstance(c["above_threshold"], bool)
+        # Persisted latest
+        latest = self.store.get_setting("coherence_latest:CohHost", None)
+        self.assertIsInstance(latest, dict)
+        self.assertIn("score", latest or {})
 
     def test_soft_bind_respects_env(self) -> None:
         off = soft_bind_fusion(

@@ -83,6 +83,21 @@ def build_organism(
 
     connect = context.get("connect_pass") or {}
     prediction = context.get("prediction") or {}
+    coherence = context.get("coherence") or {}
+    spectral_memory = context.get("spectral_memory") or {}
+    # Compact emergent coupling indicators (when measured on this turn)
+    coupling_surface: dict[str, Any] = {}
+    if isinstance(coherence, dict) and not coherence.get("error"):
+        try:
+            from .coherence import compact_coherence
+
+            coupling_surface = compact_coherence(coherence)
+        except Exception:
+            coupling_surface = {
+                "score": coherence.get("score"),
+                "emergent_coupling": coherence.get("emergent_coupling"),
+                "active_indicator_ids": coherence.get("active_indicator_ids"),
+            }
     nervous = {
         "thalamus_available": bool(thalamus.get("available", thalamus)),
         "route_intent": thalamus.get("intent") or thalamus.get("classification"),
@@ -117,7 +132,13 @@ def build_organism(
                 if isinstance(connect.get("intel_pulse"), dict)
                 else None
             ),
+            "coherence_score": coupling_surface.get("score"),
+            "emergent_coupling": coupling_surface.get("emergent_coupling"),
+            "active_indicators": coupling_surface.get("active_indicator_ids"),
+            "lambda2": (spectral_memory.get("spectral") or {}).get("lambda2"),
+            "Lambda": spectral_memory.get("Lambda"),
         },
+        "coupling": coupling_surface,
     }
 
     immune = {

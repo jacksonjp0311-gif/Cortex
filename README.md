@@ -107,15 +107,29 @@ python -m cortex fuse close --repo MyProject --json
 
 **Honest boundary:** the proxy fuses **generation I/O** to Cortex geometry. It does **not** merge model weights, invent host source files, or claim sentience. Details: [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
 
-### System coherence (seams wired)
+### System coherence — emergent coupling indicators
 
-One score over blood / geometry / spectral / ranker / fusion / hygiene:
+One field over **blood · geometry · spectral · Λ_g · ranker · fusion · hygiene**.  
+Not consciousness: multi-seam **co-activation** of independent telemetry.
+
+| Indicator | Meaning when active |
+|-----------|---------------------|
+| `blood_geometry` | Certainty co-moves with spectral mesh |
+| `geometry_learning` | Graph mass co-moves with ranker warmth |
+| `ops_geometry` | Fusion/ops co-moves with \(\Lambda_g\) |
+| `gates_aligned` | Governor open + prune hygiene |
+| `blood_learning` | Certainty + ranker |
+| `spectral_ops` | Spectral live under fuse traffic |
 
 ```bash
 python -m cortex coherence --repo MyProject --json
-# score ≥ 0.62 → above_threshold; emergent_coupling if ≥3 seam couples fire
-# Optional: CORTEX_FUSE_AUTO=1 python -m cortex activate ...  # soft-opens fusion
+# score ≥ 0.62 → above_threshold
+# emergent_coupling → ≥3 active couples AND above threshold
+# component_panel: active | latent | dark per channel
+# Optional: CORTEX_FUSE_AUTO=1  # soft-opens fusion on activate
 ```
+
+Activate, continuum, hygiene, fuse ticks, and organism mesh all carry these indicators.
 
 **Teach the body:** ARIA memory packets under `examples/memory-packets/` distill interconnect
 intelligence into durable cards via `cortex teach --seed` — so interconnect recalls doctrine,

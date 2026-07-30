@@ -298,6 +298,18 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_coherence",
+        "description": (
+            "Emergent coupling indicators ⧉≈: score, threshold, active couples "
+            "(blood/geometry/spectral/ranker/fusion). Not consciousness. " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
         "name": "cortex_distill",
         "description": (
             "Distill mesh observation + doctrine into durable memory (☰). " + _REFUSE
@@ -500,6 +512,15 @@ class CortexMCP:
             from .coprocess import fuse_close
 
             return fuse_close(self.store, str(arguments["repo"]))
+        if name == "cortex_coherence":
+            from .coherence import measure_coherence
+
+            return measure_coherence(
+                self.store,
+                str(arguments["repo"]),
+                governor=self.governor,
+                home=self.home,
+            )
         if name == "cortex_breathe":
             from .organism import breathe as organism_breathe
 
