@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -98,57 +99,141 @@ def activate_repository(
             neural = {"available": False, "disabled": True}
         certificate = verify_repository(home, store, repo, config, write_certificate=False)
 
-    # Memory Simplex: Governor read_only or explicit force → EVIDENCE_BASELINE
-    gov_pre = {}
+    # v6.25 fail-closed controller resolution → EVIDENCE_BASELINE on any control fault
+    from .controller_scope import (
+        ADAPTIVE_WRITE,
+        allowed_write_classes,
+        check_adaptive_op,
+        normalize_controller,
+        scope_receipt,
+    )
+
+    blocked_ops: list[str] = []
+    fail_closed = False
+    resolve_reason = "advanced_allowed"
+    gov_pre: dict[str, Any] = {}
     try:
         gov_pre = governor.evaluate(
             repo, retrieval_confidence=0.5, manifest_current=manifest_current
         )
-    except Exception:
-        gov_pre = {}
+    except Exception as exc:
+        gov_pre = {
+            "mode": "read_only",
+            "reason": f"governor_eval_failed:{type(exc).__name__}",
+            "stability": 0.0,
+        }
+        fail_closed = True
+        resolve_reason = "internal_control_failure:governor"
+
+    sx: dict[str, Any] = {}
     try:
         from .memory_simplex import (
             budget_scheme_for_controller,
+            is_evidence_baseline,
             resolve_controller,
         )
 
         sx = resolve_controller(
             requested=memory_controller,
-            governance_mode=str(gov_pre.get("mode") or "normal"),
-            force_baseline=bool(force_evidence_baseline),
+            governance_mode=str(gov_pre.get("mode") or "read_only"),
+            force_baseline=bool(force_evidence_baseline) or fail_closed,
         )
-        active_controller = str(sx.get("controller") or "advanced")
+        active_controller = str(sx.get("controller") or "evidence_baseline")
+        if fail_closed:
+            active_controller = "evidence_baseline"
+            sx = {
+                **sx,
+                "controller": "evidence_baseline",
+                "transfer_to_baseline": True,
+                "reason": resolve_reason,
+            }
         scheme = budget_scheme_for_controller(
             active_controller, default=budget_scheme or "fib"
         )
-    except Exception:
-        sx = {}
-        active_controller = memory_controller or "advanced"
-        scheme = budget_scheme or "fib"
-
-    context = build_context(
-        home,
-        store,
-        governor,
-        repo,
-        task,
-        budget,
-        manifest_current=manifest_current,
-        certificate=certificate,
-        budget_scheme=scheme,
-        memory_controller=active_controller,
-    )
-    if isinstance(context, dict):
-        context["memory_simplex"] = {
-            **(sx if isinstance(sx, dict) else {}),
-            "controller": active_controller,
-            "budget_scheme": scheme,
+        if not fail_closed:
+            resolve_reason = str(sx.get("reason") or resolve_reason)
+    except Exception as exc:
+        fail_closed = True
+        resolve_reason = f"internal_control_failure:simplex:{type(exc).__name__}"
+        active_controller = "evidence_baseline"
+        scheme = "flat"
+        sx = {
+            "controller": "evidence_baseline",
+            "transfer_to_baseline": True,
+            "reason": resolve_reason,
+            "error": f"{type(exc).__name__}: {exc}",
         }
+
+    active_controller = normalize_controller(active_controller)
+    baseline_mode = active_controller == "evidence_baseline"
+
+    # Context: Evidence Kernel path when baseline; else advanced build_context
+    if baseline_mode:
+        from .evidence_kernel import evidence_kernel_context
+
+        ek_ctx = evidence_kernel_context(
+            store,
+            repo,
+            task,
+            budget=budget,
+            certificate=certificate if isinstance(certificate, dict) else None,
+        )
+        context = {
+            "schema_version": "1.5",
+            "task": task,
+            "repository": {
+                "name": repo,
+                "path": str(root),
+                "manifest_current": manifest_current,
+            },
+            "governor": gov_pre,
+            "governance": gov_pre,
+            "context_budget": budget,
+            "estimated_tokens": ek_ctx.get("estimated_tokens"),
+            "budget_partition": ek_ctx.get("budget_partition"),
+            "evidence": ek_ctx.get("evidence") or [],
+            "structural_neighborhood": ek_ctx.get("structural_neighborhood") or [],
+            "evidence_kernel": ek_ctx,
+            "memory_simplex": {
+                **sx,
+                "controller": "evidence_baseline",
+                "budget_scheme": "flat",
+            },
+            "control_error": {
+                "block": False,
+                "immune_action": None,
+                "errors": [],
+            },
+            "claim_boundary": (
+                "EVIDENCE_BASELINE packet via Evidence Kernel — no adaptive machinery."
+            ),
+        }
+        scheme = "flat"
+    else:
+        context = build_context(
+            home,
+            store,
+            governor,
+            repo,
+            task,
+            budget,
+            manifest_current=manifest_current,
+            certificate=certificate,
+            budget_scheme=scheme,
+            memory_controller=active_controller,
+        )
+        if isinstance(context, dict):
+            context["memory_simplex"] = {
+                **(sx if isinstance(sx, dict) else {}),
+                "controller": active_controller,
+                "budget_scheme": scheme,
+            }
     # Attach surprise to efficiency for agent-visible economics.
     if isinstance(context.get("efficiency"), dict):
         context["efficiency"]["surprise"] = surprise
-    # v6.13: end-to-end spectral memory pulse (U, Λ_g, fit δ, diffusion fuel)
-    spectral_memory: dict[str, Any] | None = None
+    elif baseline_mode:
+        context["efficiency"] = {"surprise": surprise}
+
     conf = float(
         ((context.get("governance") or {}).get("components") or {}).get(
             "retrieval_confidence"
@@ -158,54 +243,126 @@ def activate_repository(
         )
         or 0.5
     )
-    try:
-        from .math_net.spectral_memory import spectral_memory_pulse
 
-        cert_st = str((certificate or {}).get("status") or "unknown")
-        spectral_memory = spectral_memory_pulse(
-            store,
-            repo,
-            retrieval_confidence=conf,
-            certificate_status=cert_st,
-            manifest_current=manifest_current,
-            budget_tokens=budget,
-            auto_promote=True,
-        )
-        context["spectral_memory"] = spectral_memory
-        context["u"] = (spectral_memory.get("u") or {}).get("u")
-        if isinstance(context.get("governance"), dict) and spectral_memory.get("u"):
-            context["governance"] = {
-                **context["governance"],
-                "uncertainty": spectral_memory["u"],
-            }
-        elif isinstance(context.get("governor"), dict) and spectral_memory.get("u"):
-            context["governor"] = {
-                **context["governor"],
-                "uncertainty": spectral_memory["u"],
-            }
-    except Exception as exc:
-        spectral_memory = {"error": f"{type(exc).__name__}: {exc}", "end_to_end": False}
-        context["spectral_memory"] = spectral_memory
-    # Seam: soft-bind fusion when CORTEX_FUSE_AUTO=1; always measure coherence
+    # Adaptive ops — skip under baseline with explicit receipts (never silent)
+    spectral_memory: dict[str, Any] | None = None
     fusion_bind: dict[str, Any] | None = None
-    try:
-        from .coherence import measure_coherence, soft_bind_fusion
-
-        fusion_bind = soft_bind_fusion(home, store, governor, repo, task=task)
+    if baseline_mode:
+        for op in (
+            "spectral_promote",
+            "fusion_open",
+            "prefetch_write",
+            "auto_distill",
+            "structure_invent",
+            "foreign_emerge",
+            "ranker_train",
+        ):
+            d = check_adaptive_op(active_controller, op)
+            if not d.allowed:
+                blocked_ops.append(op)
+        spectral_memory = {
+            "skipped": True,
+            "reason": "evidence_baseline_forbids_adaptive",
+            "operation": "spectral_memory_pulse",
+        }
+        context["spectral_memory"] = spectral_memory
+        fusion_bind = {
+            "skipped": True,
+            "reason": "evidence_baseline_forbids_adaptive",
+            "operation": "soft_bind_fusion",
+        }
         context["fusion_bind"] = fusion_bind
-        conf_for_c = conf
-        if context.get("u") is not None:
-            conf_for_c = max(0.0, min(1.0, 1.0 - float(context.get("u") or 0.5)))
-        context["coherence"] = measure_coherence(
-            store,
-            repo,
-            governor=governor,
-            home=home,
-            retrieval_confidence=conf_for_c,
-        )
-    except Exception as exc:
-        context["coherence"] = {"error": f"{type(exc).__name__}: {exc}"}
-        fusion_bind = None
+        # Coherence measure is audit telemetry — allowed
+        try:
+            from .coherence import measure_coherence
+
+            context["coherence"] = measure_coherence(
+                store,
+                repo,
+                governor=governor,
+                home=home,
+                retrieval_confidence=conf,
+                persist=False,
+            )
+        except Exception as exc:
+            context["coherence"] = {
+                "error": f"{type(exc).__name__}: {exc}",
+                "skipped_persist": True,
+            }
+    else:
+        try:
+            from .math_net.spectral_memory import spectral_memory_pulse
+
+            cert_st = str((certificate or {}).get("status") or "unknown")
+            spectral_memory = spectral_memory_pulse(
+                store,
+                repo,
+                retrieval_confidence=conf,
+                certificate_status=cert_st,
+                manifest_current=manifest_current,
+                budget_tokens=budget,
+                auto_promote=True,
+            )
+            context["spectral_memory"] = spectral_memory
+            context["u"] = (spectral_memory.get("u") or {}).get("u")
+            if isinstance(context.get("governance"), dict) and spectral_memory.get("u"):
+                context["governance"] = {
+                    **context["governance"],
+                    "uncertainty": spectral_memory["u"],
+                }
+            elif isinstance(context.get("governor"), dict) and spectral_memory.get("u"):
+                context["governor"] = {
+                    **context["governor"],
+                    "uncertainty": spectral_memory["u"],
+                }
+        except Exception as exc:
+            spectral_memory = {
+                "error": f"{type(exc).__name__}: {exc}",
+                "end_to_end": False,
+            }
+            context["spectral_memory"] = spectral_memory
+        try:
+            from .coherence import measure_coherence, soft_bind_fusion
+
+            fusion_bind = soft_bind_fusion(home, store, governor, repo, task=task)
+            context["fusion_bind"] = fusion_bind
+            conf_for_c = conf
+            if context.get("u") is not None:
+                conf_for_c = max(0.0, min(1.0, 1.0 - float(context.get("u") or 0.5)))
+            context["coherence"] = measure_coherence(
+                store,
+                repo,
+                governor=governor,
+                home=home,
+                retrieval_confidence=conf_for_c,
+            )
+        except Exception as exc:
+            context["coherence"] = {"error": f"{type(exc).__name__}: {exc}"}
+            fusion_bind = None
+
+    # Controller execution receipt (v6.25)
+    _exec = {
+        "requested": memory_controller or "advanced",
+        "resolved": active_controller,
+        "fail_closed": bool(
+            fail_closed
+            or (
+                baseline_mode
+                and str(resolve_reason).startswith("internal_control_failure")
+            )
+        ),
+        "reason": resolve_reason,
+        "allowed_write_classes": allowed_write_classes(active_controller),
+        "blocked_operations": blocked_ops,
+        "claim_boundary": (
+            "Controller execution receipt — fail-closed to EVIDENCE_BASELINE on control faults."
+        ),
+    }
+    _exec["receipt_hash"] = hashlib.sha256(
+        json.dumps(_exec, sort_keys=True, default=str).encode()
+    ).hexdigest()
+    context["controller_execution"] = _exec
+    context["controller_scope"] = scope_receipt(active_controller, blocked_ops)
     session = begin_session(home, store, repo, task)
     from . import __version__
     from .organism import (
@@ -230,12 +387,9 @@ def activate_repository(
     )
     context["organism"] = organism
     # Re-hash packet including organism bond.
-    import hashlib
-    import json as _json
-
     to_hash = {k: v for k, v in context.items() if k not in {"packet_path", "packet_hash"}}
     context["packet_hash"] = hashlib.sha256(
-        _json.dumps(to_hash, sort_keys=True, separators=(",", ":"), default=str).encode(
+        json.dumps(to_hash, sort_keys=True, separators=(",", ":"), default=str).encode(
             "utf-8"
         )
     ).hexdigest()
@@ -296,9 +450,18 @@ def activate_repository(
     # Prefetch (v5): proactive evidence proposal — never ARIA surprise-wake.
     prediction: dict[str, Any] | None = None
     gov_mode = str((context.get("governor") or {}).get("mode") or "normal")
-    do_prefetch = prefetch == "aggressive" or (
-        prefetch == "auto" and gov_mode != "read_only"
+    do_prefetch = (
+        not baseline_mode
+        and (
+            prefetch == "aggressive"
+            or (prefetch == "auto" and gov_mode != "read_only")
+        )
     )
+    if baseline_mode:
+        context["prediction"] = {
+            "skipped": True,
+            "reason": "evidence_baseline_forbids_prefetch_write",
+        }
     if do_prefetch:
         try:
             from .predict import predict_context

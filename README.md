@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.24.0-0ea5e9?style=for-the-badge" alt="v6.24.0" />
+  <img src="https://img.shields.io/badge/version-6.25.0-0ea5e9?style=for-the-badge" alt="v6.25.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.24.0** — **Memory Simplex**: EVIDENCE_BASELINE trusted controller vs advanced adaptive path; measure lift; Governor transfer under `read_only`. See [`docs/intelligence/PHASE_V6.24_MEMORY_SIMPLEX.md`](docs/intelligence/PHASE_V6.24_MEMORY_SIMPLEX.md).
+**Current release: v6.25.0** — **Constitutional Immunity**: Evidence Kernel, adaptive write firewall, causal lineage, quarantine, selective unlearning, independent witness. See [`docs/intelligence/PHASE_V6.25_CONSTITUTIONAL_IMMUNITY.md`](docs/intelligence/PHASE_V6.25_CONSTITUTIONAL_IMMUNITY.md).
 
 ```bash
 pip install -e .

@@ -515,6 +515,7 @@ class Store:
         self.db.execute("PRAGMA busy_timeout=5000")
         self.db.executescript(SCHEMA)
         self._ensure_v5_columns()
+        self._ensure_v625_tables()
 
     def _ensure_v5_columns(self) -> None:
         """Additive columns on pre-v5 neural_nodes without rebuilding the table."""
@@ -540,6 +541,22 @@ class Store:
             self.db.execute(stmt)
         if alters:
             self.db.commit()
+
+    def _ensure_v625_tables(self) -> None:
+        """Constitutional Immunity tables (lineage, quarantine, wounds, repairs)."""
+        try:
+            from .lineage import ensure_lineage_tables
+            from .quarantine import ensure_quarantine_tables
+            from .unlearning import ensure_unlearning_tables
+            from .immunity import ensure_immunity_tables
+
+            ensure_lineage_tables(self)
+            ensure_quarantine_tables(self)
+            ensure_unlearning_tables(self)
+            ensure_immunity_tables(self)
+        except Exception:
+            # Fail open on migration import only — tables created on first use
+            pass
 
     def close(self) -> None:
         self.db.close()

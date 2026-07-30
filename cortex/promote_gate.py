@@ -1,18 +1,24 @@
-"""Promotion gate — holdout + foreign transfer required for big claims (v6.20).
+"""Promotion gate — utility + witness + lineage; coupling is safety only (v6.25).
 
-System learning / calibration observe / KEEP-style claims must not fire on
-train-set or perfect-ceiling victories alone.
+Coupling health may *block* when unhealthy, but must not alone *certify* utility.
+Foreign transfer suite is development_transfer utility, not sealed witness proof.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-SCHEMA = "cortex-promote-gate/1.0"
+SCHEMA = "cortex-promote-gate/1.1"
 GLYPH = "⌗⌘"
 
 # Holdout corpus freeze id — bump when HOLDOUT_CORPUS intentionally changes.
 HOLDOUT_FREEZE_ID = "holdout-v1-2026-07-30"
+
+CLAIM = (
+    "Promotion gate is evaluation policy: sealed holdout + transfer utility + "
+    "governance + lineage/wound hygiene. Coupling is a safety prerequisite only, "
+    "not independent utility certification. Not host authority. Not consciousness."
+)
 
 
 def evaluate_promotion(
@@ -25,6 +31,11 @@ def evaluate_promotion(
     min_holdout_recall: float = 0.5,
     min_foreign_recall: float = 0.4,
     require_foreign: bool = True,
+    witness_report: dict[str, Any] | None = None,
+    require_witness: bool = False,
+    min_witness_recall: float = 0.5,
+    lineage_ok: bool = True,
+    has_critical_wound: bool = False,
 ) -> dict[str, Any]:
     """Decide whether promotion / shadow-calibrate / big KEEP claims may fire."""
 
@@ -36,33 +47,30 @@ def evaluate_promotion(
     ho_base = (ho.get("ablations") or {}).get("baseline") or {}
     ho_recall = float(ho_base.get("recall_at_k") or 0.0)
     ho_winner = str(ho.get("winner") or "")
-    ho_ceiling = bool(ho_gate.get("perfect_recall_ceiling"))
 
     reasons: list[str] = []
     if ho_recall < min_holdout_recall:
         reasons.append(f"holdout_recall<{min_holdout_recall}")
     if ho_winner != "baseline" and not ho_gate.get("baseline_is_winner"):
         reasons.append("holdout_baseline_not_winner")
-    if ho_ceiling and ho_recall >= 0.999:
-        # Perfect holdout is ok for promote; perfect *train-only* is not.
-        pass
+
+    # Coupling: safety prerequisite only — blocks when off, never sole proof
     if not emergent_coupling:
-        reasons.append("emergent_coupling_off")
+        reasons.append("coupling_health_off_safety_block")
 
     foreign_ok = True
     fr_recall = None
     if require_foreign:
         if not foreign_report or foreign_report.get("error"):
             foreign_ok = False
-            reasons.append("foreign_suite_missing_or_error")
+            reasons.append("development_transfer_suite_missing_or_error")
         else:
             fr_base = (foreign_report.get("ablations") or {}).get("baseline") or {}
             fr_recall = float(fr_base.get("recall_at_k") or 0.0)
             if fr_recall < min_foreign_recall:
                 foreign_ok = False
-                reasons.append(f"foreign_recall<{min_foreign_recall}")
+                reasons.append(f"development_transfer_recall<{min_foreign_recall}")
             if foreign_report.get("repo") == (holdout_report or {}).get("repo"):
-                # Same repo is not a transfer proof
                 foreign_ok = False
                 reasons.append("foreign_repo_same_as_body")
 
@@ -74,7 +82,6 @@ def evaluate_promotion(
             )
             or 0.0
         )
-        # Refuse if only train is perfect and holdout is weak (already covered)
         if train_recall >= 0.999 and ho_recall < min_holdout_recall:
             reasons.append("train_perfect_holdout_weak")
 
@@ -83,12 +90,37 @@ def evaluate_promotion(
     if governance_mode not in {"normal", "constrained"}:
         reasons.append(f"governance_mode={governance_mode}")
 
+    if not lineage_ok:
+        reasons.append("lineage_integrity_failed")
+    if has_critical_wound:
+        reasons.append("active_critical_wound")
+
+    witness_ok = True
+    wit_recall = None
+    if require_witness:
+        if not witness_report or witness_report.get("error"):
+            witness_ok = False
+            reasons.append("sealed_witness_missing")
+        else:
+            wit_recall = float(witness_report.get("recall_at_k") or 0.0)
+            if wit_recall < min_witness_recall:
+                witness_ok = False
+                reasons.append(f"witness_recall<{min_witness_recall}")
+
+    # Advanced must not lose to evidence baseline when simplex present
+    if ho_gate.get("advanced_beats_evidence_baseline") is False:
+        reasons.append("advanced_loses_to_evidence_baseline")
+
     allow = (
         ho_recall >= min_holdout_recall
         and bool(ho_gate.get("baseline_is_winner") or ho_winner == "baseline")
-        and emergent_coupling
+        and emergent_coupling  # safety block only when false
         and foreign_ok
+        and witness_ok
+        and lineage_ok
+        and not has_critical_wound
         and governance_mode in {"normal", "constrained"}
+        and ho_gate.get("advanced_beats_evidence_baseline") is not False
     )
 
     return {
@@ -99,17 +131,20 @@ def evaluate_promotion(
         "allow_system_learning_claim": allow,
         "holdout_recall": ho_recall,
         "foreign_recall": fr_recall,
+        "development_transfer_recall": fr_recall,
+        "witness_recall": wit_recall,
         "train_recall": train_recall,
         "emergent_coupling": emergent_coupling,
+        "coupling_role": "safety_prerequisite_only",
         "holdout_freeze_id": HOLDOUT_FREEZE_ID,
-        "reasons_if_denied": [] if allow else (reasons or ["denied"]),
+        "reasons_if_denied": [] if allow else list(dict.fromkeys(reasons)),
         "law": (
-            "Promote only when sealed holdout utility holds AND foreign transfer "
-            "suite holds AND emergent coupling is on. Train-set wins never suffice."
+            "Promote when sealed holdout utility holds AND development-transfer utility "
+            "holds AND coupling health is on (safety) AND lineage/wounds clean AND "
+            "governance allows. Coupling does not certify utility. "
+            "Optional sealed witness when require_witness=True."
         ),
-        "claim_boundary": (
-            "Promotion gate is evaluation policy, not host authority or consciousness."
-        ),
+        "claim_boundary": CLAIM,
     }
 
 
@@ -120,27 +155,13 @@ def _deny(reason: str) -> dict[str, Any]:
         "allow_promote": False,
         "allow_shadow_calibration": False,
         "allow_system_learning_claim": False,
+        "holdout_recall": None,
+        "foreign_recall": None,
+        "train_recall": None,
+        "emergent_coupling": False,
+        "coupling_role": "safety_prerequisite_only",
+        "holdout_freeze_id": HOLDOUT_FREEZE_ID,
         "reasons_if_denied": [reason],
-        "claim_boundary": (
-            "Promotion gate is evaluation policy, not host authority or consciousness."
-        ),
+        "law": "Denied.",
+        "claim_boundary": CLAIM,
     }
-
-
-def _deny_reasons(
-    ho_recall: float,
-    min_ho: float,
-    foreign_ok: bool,
-    emergent: bool,
-    mode: str,
-) -> list[str]:
-    r = []
-    if ho_recall < min_ho:
-        r.append(f"holdout_recall<{min_ho}")
-    if not foreign_ok:
-        r.append("foreign_transfer_failed")
-    if not emergent:
-        r.append("emergent_coupling_off")
-    if mode == "read_only":
-        r.append("governor_read_only")
-    return r or ["denied"]

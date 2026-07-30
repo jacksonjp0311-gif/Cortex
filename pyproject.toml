@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "6.24.0"
+version = "6.25.0"
 description = "Governed continuation memory, repository assimilation, and sparse neural interlinking for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"

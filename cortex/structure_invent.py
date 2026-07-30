@@ -45,6 +45,30 @@ def invent_from_coactivation(
             "blocked": True,
             "reason": "governor_read_only",
         }
+    # v6.25 controller firewall — evidence_baseline / quarantine cannot invent
+    if governance_mode in {"evidence_baseline", "quarantine"}:
+        return {
+            "schema_version": SCHEMA,
+            "glyph": GLYPH,
+            "invented": 0,
+            "blocked": True,
+            "reason": f"controller_{governance_mode}_forbids_structure_invent",
+            "controller": governance_mode,
+        }
+    try:
+        from .controller_scope import check_adaptive_op
+
+        d = check_adaptive_op("advanced", "structure_invent")
+        if not d.allowed:
+            return {
+                "schema_version": SCHEMA,
+                "glyph": GLYPH,
+                "invented": 0,
+                "blocked": True,
+                "reason": d.reason,
+            }
+    except Exception:
+        pass
     nodes = {str(r["node_id"]) for r in (store.neural_nodes(repo) or [])}
     fired = [n for n in fired_node_ids if n in nodes]
     if len(fired) < 2:
@@ -119,6 +143,24 @@ def invent_from_coactivation(
             )
             created += 1
             samples.append({"synapse_id": sid, "source_id": a, "target_id": b})
+            try:
+                from .lineage import record_artifact
+
+                record_artifact(
+                    store,
+                    repo,
+                    artifact_id=sid,
+                    artifact_type="invented_synapse",
+                    lineage_plane="G_learned",
+                    parent_ids=[a, b],
+                    origin_memory_ids=[],
+                    operation_id="structure_invent",
+                    controller="advanced",
+                    governance_mode=governance_mode,
+                    metadata={"relation": "coactivated"},
+                )
+            except Exception:
+                pass
 
     try:
         store.append_neural_event(

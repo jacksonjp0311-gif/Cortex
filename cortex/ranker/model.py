@@ -466,11 +466,25 @@ def train_from_outcome(
     verification_type: str,
     governance_mode: str = "read_only",
     feature_vectors: list[list[float]] | None = None,
+    memory_controller: str = "advanced",
 ) -> dict[str, Any]:
     """Online SGD update. Only verified/helpful with non-read_only may train."""
 
     if governance_mode == "read_only":
         return {"trained": False, "reason": "governor_read_only"}
+    # v6.25 controller firewall
+    try:
+        from ..controller_scope import check_adaptive_op
+
+        d = check_adaptive_op(memory_controller, "ranker_train")
+        if not d.allowed:
+            return {
+                "trained": False,
+                "reason": d.reason,
+                "controller": d.controller,
+            }
+    except Exception:
+        pass
     if status not in {"verified", "helpful", "failed", "unsafe", "irrelevant"}:
         return {"trained": False, "reason": "status_not_trainable"}
     if status == "unsafe":

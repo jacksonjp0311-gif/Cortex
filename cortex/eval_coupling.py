@@ -321,52 +321,55 @@ HOLDOUT_CORPUS: list[dict[str, Any]] = [
     },
 ]
 
-# Foreign transfer suite — real non-Cortex host paths (PulseFlow defaults).
-# Run with --repo PulseFlow (or other foreign). Never use to train body ranker.
+# Development transfer suite (v6.25): formerly overclaimed as sealed foreign proof.
+# Vocabulary/paths are encoded in concept routes and foreign_emerge warm procedures.
+# Use witness.run for sealed independent evaluation. Never train primary body ranker.
 FOREIGN_TRANSFER_CORPUS: list[dict[str, Any]] = [
     {
         "id": "foreign_policy_impl",
         "query": "policy.rs enforcement rules for the governor engine",
         "expected_substrings": ["policy.rs", "src/policy"],
-        "suite": "foreign",
-        "split": "foreign",
+        "suite": "development_transfer",
+        "split": "development_transfer",
     },
     {
         "id": "foreign_policy_tests",
         "query": "policy_tests.rs verify policy boundaries",
         "expected_substrings": ["policy_tests", "tests/policy"],
-        "suite": "foreign",
-        "split": "foreign",
+        "suite": "development_transfer",
+        "split": "development_transfer",
     },
     {
         "id": "foreign_storage",
         "query": "storage.rs persistence for decisions and state",
         "expected_substrings": ["storage.rs", "src/storage"],
-        "suite": "foreign",
-        "split": "foreign",
+        "suite": "development_transfer",
+        "split": "development_transfer",
     },
     {
         "id": "foreign_entry",
         "query": "main.rs application entrypoint wiring",
         "expected_substrings": ["main.rs", "src/main"],
-        "suite": "foreign",
-        "split": "foreign",
+        "suite": "development_transfer",
+        "split": "development_transfer",
     },
     {
         "id": "foreign_server",
         "query": "server.rs http request handling",
         "expected_substrings": ["server.rs", "src/server"],
-        "suite": "foreign",
-        "split": "foreign",
+        "suite": "development_transfer",
+        "split": "development_transfer",
     },
     {
         "id": "foreign_readme",
         "query": "README.md project overview for this governor",
         "expected_substrings": ["README"],
-        "suite": "foreign",
-        "split": "foreign",
+        "suite": "development_transfer",
+        "split": "development_transfer",
     },
 ]
+# Back-compat alias
+DEVELOPMENT_TRANSFER_CORPUS = FOREIGN_TRANSFER_CORPUS
 
 # Back-compat alias
 DEFAULT_CORPUS = EASY_CORPUS

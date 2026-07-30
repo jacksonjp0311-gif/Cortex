@@ -674,6 +674,55 @@ def build_parser() -> argparse.ArgumentParser:
     fe_p.add_argument("--budget", type=int, default=600)
     fe_p.add_argument("--json", action="store_true")
 
+    ek_p = sub.add_parser(
+        "evidence-kernel",
+        help="Evidence Kernel ◈E — trusted host-evidence retrieval (no adaptive path).",
+    )
+    ek_p.add_argument("--repo", required=True)
+    ek_p.add_argument("--task", required=True)
+    ek_p.add_argument("--budget", type=int, default=800)
+    ek_p.add_argument("--json", action="store_true")
+
+    imm_p = sub.add_parser(
+        "immunity",
+        help="Constitutional Immunology 🛡 — scan/trace/quarantine/plan/apply/verify/readmit.",
+    )
+    imm_p.add_argument(
+        "action",
+        choices=[
+            "scan",
+            "trace",
+            "quarantine",
+            "plan-repair",
+            "apply-repair",
+            "verify",
+            "readmit",
+            "status",
+        ],
+    )
+    imm_p.add_argument("--repo", required=True)
+    imm_p.add_argument("--artifact-id")
+    imm_p.add_argument("--wound-id")
+    imm_p.add_argument("--plan-id")
+    imm_p.add_argument("--repair-id")
+    imm_p.add_argument("--reason", default="operator_quarantine")
+    imm_p.add_argument("--authorize", action="store_true")
+    imm_p.add_argument("--json", action="store_true")
+
+    wit_p = sub.add_parser(
+        "witness",
+        help="Independent Witness ⚖ — sealed evaluation outside adaptive geometry.",
+    )
+    wit_p.add_argument("action", choices=["run", "commit"], default="run", nargs="?")
+    wit_p.add_argument("--repo", required=True)
+    wit_p.add_argument("--manifest", help="Path to sealed witness manifest JSON.")
+    wit_p.add_argument(
+        "--controller",
+        choices=["evidence_baseline", "advanced"],
+        default="evidence_baseline",
+    )
+    wit_p.add_argument("--json", action="store_true")
+
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1770,6 +1819,145 @@ def main(argv: list[str] | None = None) -> None:
                 ),
                 args.json,
             )
+
+        elif command == "evidence-kernel":
+            from .evidence_kernel import evidence_kernel_context
+
+            emit(
+                evidence_kernel_context(
+                    store,
+                    args.repo,
+                    args.task,
+                    budget=int(getattr(args, "budget", 800) or 800),
+                ),
+                args.json,
+            )
+
+        elif command == "immunity":
+            from .immunity import (
+                apply_repair,
+                immunity_status,
+                plan_repair,
+                quarantine_from_wound,
+                readmit,
+                scan_wounds,
+                trace_artifact,
+                verify_repair,
+            )
+
+            act = str(args.action)
+            if act == "scan":
+                emit(scan_wounds(store, args.repo), args.json)
+            elif act == "status":
+                emit(immunity_status(store, args.repo), args.json)
+            elif act == "trace":
+                if not args.artifact_id:
+                    raise ValueError("--artifact-id required")
+                emit(trace_artifact(store, args.repo, args.artifact_id), args.json)
+            elif act == "quarantine":
+                emit(
+                    quarantine_from_wound(
+                        store,
+                        args.repo,
+                        wound_id=args.wound_id,
+                        artifact_id=args.artifact_id,
+                        reason=args.reason,
+                    ),
+                    args.json,
+                )
+            elif act == "plan-repair":
+                if not args.wound_id:
+                    raise ValueError("--wound-id required")
+                emit(plan_repair(store, args.repo, args.wound_id), args.json)
+            elif act == "apply-repair":
+                if not args.plan_id:
+                    raise ValueError("--plan-id required")
+                mode = "normal"
+                try:
+                    mode = str(
+                        governor.evaluate(args.repo, retrieval_confidence=0.5).get(
+                            "mode"
+                        )
+                        or "normal"
+                    )
+                except Exception:
+                    mode = "read_only"
+                emit(
+                    apply_repair(
+                        store,
+                        args.repo,
+                        args.plan_id,
+                        authorize=bool(args.authorize),
+                        governance_mode=mode,
+                    ),
+                    args.json,
+                )
+            elif act == "verify":
+                if not args.repair_id:
+                    raise ValueError("--repair-id required")
+                emit(
+                    verify_repair(
+                        store,
+                        args.repo,
+                        args.repair_id,
+                        governor=governor,
+                        home=home,
+                    ),
+                    args.json,
+                )
+            elif act == "readmit":
+                if not args.repair_id:
+                    raise ValueError("--repair-id required")
+                emit(
+                    readmit(
+                        store,
+                        args.repo,
+                        args.repair_id,
+                        authorize=bool(args.authorize),
+                    ),
+                    args.json,
+                )
+
+        elif command == "witness":
+            from .witness import commit_manifest, run_witness
+
+            if str(getattr(args, "action", "run") or "run") == "commit":
+                # empty commit helper
+                emit(
+                    commit_manifest(
+                        [],
+                        evaluator_identity="operator",
+                    ),
+                    args.json,
+                )
+            else:
+                cases = []
+                if args.manifest:
+                    import json as _json
+                    from pathlib import Path as _P
+
+                    man = _json.loads(_P(args.manifest).read_text(encoding="utf-8"))
+                    cases = man.get("cases") or man.get("corpus") or []
+                else:
+                    # minimal smoke cases from repo name only — no sealed answers baked in
+                    cases = [
+                        {
+                            "id": "wit_readme",
+                            "query": "README project overview",
+                            "expected_substrings": ["README"],
+                        }
+                    ]
+                emit(
+                    run_witness(
+                        store,
+                        args.repo,
+                        cases=cases,
+                        controller=str(
+                            getattr(args, "controller", None) or "evidence_baseline"
+                        ),
+                    ),
+                    args.json,
+                )
 
         elif command == "fuse-proxy":
             from .fuse_proxy import serve_fuse_proxy

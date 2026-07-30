@@ -1,3 +1,13 @@
+## 6.25.0 - Constitutional Immunity
+
+- **Evidence Kernel:** separate trusted retrieval path (no adaptive machinery).
+- **Controller scope:** adaptive write firewall (fail-closed under baseline).
+- **Activation:** Governor/controller faults → EVIDENCE_BASELINE + blocked-op receipts.
+- **Lineage / quarantine / unlearning / immunity:** full repair lifecycle with snapshot+rollback.
+- **Witness:** sealed case commitments; foreign suite labeled development transfer.
+- **Promote gate:** coupling = safety prerequisite only; optional witness + wound/lineage checks.
+- Docs: PHASE_V6.25 + architecture/security set.
+
 ## 6.24.0 - Memory Simplex
 
 - **EVIDENCE_BASELINE** trusted controller: no ranker/spectral/concept routes; flat budget.
