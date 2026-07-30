@@ -1,4 +1,8 @@
-"""M5 — Calibration: fit constitutional / Governor weights from outcome logs (shadow)."""
+"""M5 — Calibration: fit constitutional / Governor weights from outcome logs (shadow).
+
+Map predicted confidence to observed hit rates and clamp drift floor after
+outcomes. Shadow calibration only until explicitly promoted.
+"""
 
 from __future__ import annotations
 

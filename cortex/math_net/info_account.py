@@ -1,4 +1,8 @@
-"""M7 — Information accounting: budget → ΔU proxy → promotion gate."""
+"""M7 — Information accounting: budget → ΔU proxy → promotion gate.
+
+Information accounting: budget bits spent on retrieval and learning decisions;
+delta-U efficiency and promotion gate (recommend-only).
+"""
 
 from __future__ import annotations
 

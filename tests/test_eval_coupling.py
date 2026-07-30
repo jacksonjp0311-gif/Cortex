@@ -36,6 +36,45 @@ class RankerDesaturateTests(unittest.TestCase):
         self.assertTrue(all(0.0 < x < 1.0 for x in rel))
 
 
+class ConceptRouteTests(unittest.TestCase):
+    def test_hard_paraphrases_match_modules(self) -> None:
+        from cortex.concept_routes import concept_route_paths, match_concept_routes
+
+        cases = [
+            (
+                "propose new coactivation topology edges from simultaneous path fire under governor gates",
+                "structure_invent.py",
+            ),
+            (
+                "randomized controlled trial arm for optional synapse weight updates only when opted in",
+                "plasticity_rct.py",
+            ),
+            (
+                "build graph adjacency operator and dual reverse-edge operator for spectral work",
+                "operator.py",
+            ),
+            (
+                "single scalar that may only decrease when immune stress rises never inflate certainty for governor",
+                "uncertainty.py",
+            ),
+            (
+                "map predicted confidence to observed hit rates and clamp drift floor after outcomes",
+                "calibration.py",
+            ),
+            (
+                "information accounting budget bits spent on retrieval and learning decisions",
+                "info_account.py",
+            ),
+        ]
+        for q, needle in cases:
+            self.assertTrue(match_concept_routes(q), msg=q)
+            paths = concept_route_paths(q)
+            self.assertTrue(
+                any(needle in p for p in paths),
+                msg=f"{q} -> {paths}",
+            )
+
+
 class PathTokenBoostTests(unittest.TestCase):
     def test_fusion_paths_align_with_impl_query(self) -> None:
         q = "fusion co-process fuse tick regenerate geometry mind_hash"

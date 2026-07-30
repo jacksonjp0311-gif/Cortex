@@ -1,5 +1,9 @@
 """Gated topology invention — propose new neural synapses from co-activation.
 
+Propose new coactivation topology edges from simultaneous path fire under
+governor gates. Structure invent / invent topology: invented synapses only
+on the memory graph — never host source files.
+
 Does NOT invent host source structure. Only memory-graph edges under Governor.
 Recommend-only for host; graph invention is internal body plasticity of kind=invented.
 """

@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.15.2-0ea5e9?style=for-the-badge" alt="v6.15.2" />
+  <img src="https://img.shields.io/badge/version-6.15.3-0ea5e9?style=for-the-badge" alt="v6.15.3" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.15.2** — **Hard teach + de-saturated ranker**: math-net/structure packets + batch-relative ranking so spectral PPR/heat can reorder. Measure gate: `eval-coupling --suite full`. See [`docs/intelligence/PHASE_V6.15_MEASURE_GATE.md`](docs/intelligence/PHASE_V6.15_MEASURE_GATE.md).
+**Current release: v6.15.3** — **Hard paraphrase IR** (concept routes) + body policy directives + large-graph continuum throttle. Measure: `eval-coupling --suite full`. See [`docs/intelligence/PHASE_V6.15_MEASURE_GATE.md`](docs/intelligence/PHASE_V6.15_MEASURE_GATE.md).
 
 ```bash
 pip install -e .

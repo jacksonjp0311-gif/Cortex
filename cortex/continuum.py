@@ -42,6 +42,10 @@ def _progress(msg: str, enabled: bool) -> None:
         print(f"  ⟲ {msg}", file=sys.stderr, flush=True)
 
 
+# Large bodies: full cadence continuum is too slow live (~4k+ synapses).
+LARGE_GRAPH_SYNAPSE_THRESHOLD = 2500
+
+
 def run_continuum(
     home: Path,
     store: Any,
@@ -53,14 +57,65 @@ def run_continuum(
     pack_dir: Path | None = None,
     progress: bool = True,
     apply_prune: bool = False,
+    force_full: bool = False,
     on_lane: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
-    """Run all evolution lanes once; return a unified continuum report."""
+    """Run all evolution lanes once; return a unified continuum report.
+
+    On large graphs (many synapses), auto-throttles cadence unless force_full=True.
+    Prune apply remains opt-in (default False) — do not thrash cleanup.
+    """
 
     t0 = time.time()
     pack_dir = pack_dir or (_engine_root() / "packs" / "cortex-core-intel-v1")
     lanes: dict[str, Any] = {}
     checklist: list[dict[str, Any]] = []
+    large_graph_note: dict[str, Any] = {"throttled": False}
+
+    # ── Large-graph guard (live continuum too slow) ─────────────────────
+    try:
+        from .prune import graph_census
+
+        census0 = graph_census(store, repo)
+        syn_blk0 = census0.get("synapses") if isinstance(census0.get("synapses"), dict) else {}
+        syn_n = int(
+            syn_blk0.get("total")
+            if syn_blk0 and syn_blk0.get("total") is not None
+            else (census0.get("synapses") or 0)
+            or 0
+        )
+        if syn_n >= LARGE_GRAPH_SYNAPSE_THRESHOLD and not force_full:
+            # Fast path: tiny cadence, no prune apply, mark deferred full continuum
+            cycles = min(int(cycles), 3)
+            budget = min(int(budget), 280)
+            apply_prune = False
+            large_graph_note = {
+                "throttled": True,
+                "synapse_count": syn_n,
+                "threshold": LARGE_GRAPH_SYNAPSE_THRESHOLD,
+                "cycles_capped": cycles,
+                "advice": (
+                    "Large graph — live continuum throttled. Prefer fuse continuity + "
+                    "eval-coupling + remember/seal; run full continuum offline with "
+                    "--force-full if needed."
+                ),
+            }
+            _progress(
+                f"large graph · synapses={syn_n} · continuum throttled "
+                f"cycles={cycles} (use force_full for full run)",
+                progress,
+            )
+        else:
+            large_graph_note = {
+                "throttled": False,
+                "synapse_count": syn_n,
+                "force_full": bool(force_full),
+            }
+    except Exception as exc:
+        large_graph_note = {
+            "throttled": False,
+            "census_error": f"{type(exc).__name__}: {exc}",
+        }
 
     def lane_done(name: str, payload: dict[str, Any], ok: bool = True) -> None:
         lanes[name] = {"ok": ok, **payload}
@@ -392,13 +447,14 @@ def run_continuum(
         emergence = None
 
     report: dict[str, Any] = {
-        "schema_version": "cortex-continuum/1.2",
+        "schema_version": "cortex-continuum/1.3",
         "glyph": "⟲❖〰✂▣",
         "phrase": grow_line,
         "version": __version__,
         "repo": repo,
         "elapsed_s": elapsed,
         "cycles": cycles,
+        "large_graph": large_graph_note,
         "lanes": lanes,
         "coherence": coherence,
         "emergence_log": emergence,

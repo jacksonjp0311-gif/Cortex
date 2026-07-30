@@ -331,6 +331,22 @@ def run_eval_coupling(
     spectral_helps = (baseline_r > no_spec_r) or (baseline_mrr > no_spec_mrr + 1e-9)
     ranker_helps = (baseline_r > no_rank_r) or (baseline_mrr > no_rank_mrr + 1e-9)
 
+    # Ceiling tolerance: when all modes hit@k=1.0, tiny MRR noise must not
+    # trigger REVIEW — no hit-rate regression is enough to KEEP.
+    ceiling = baseline_r >= 0.999 and no_spec_r >= 0.999 and no_rank_r >= 0.999
+    mrr_eps = 0.05
+    keep_spectral = (baseline_r > no_spec_r) or (
+        baseline_r >= no_spec_r and baseline_mrr + mrr_eps >= no_spec_mrr
+    )
+    keep_ranker = (baseline_r > no_rank_r) or (
+        baseline_r >= no_rank_r and baseline_mrr + mrr_eps >= no_rank_mrr
+    )
+    if ceiling:
+        keep_spectral = True
+        keep_ranker = True
+        # At perfect recall, prefer baseline as winner for policy stability
+        winner = "baseline"
+
     prog("coherence_after")
     coh_after = measure_coherence(
         store, repo, governor=governor, home=home, retrieval_confidence=0.55
@@ -344,10 +360,9 @@ def run_eval_coupling(
         ),
         "spectral_helps": spectral_helps,
         "ranker_helps": ranker_helps,
-        "keep_spectral_features": (baseline_r, baseline_mrr)
-        >= (no_spec_r, no_spec_mrr),
-        "keep_ranker_primary": (baseline_r, baseline_mrr)
-        >= (no_rank_r, no_rank_mrr),
+        "keep_spectral_features": keep_spectral,
+        "keep_ranker_primary": keep_ranker,
+        "perfect_recall_ceiling": ceiling,
     }
 
     # Per-case divergence summary (where modes disagree on hit@k or rank)

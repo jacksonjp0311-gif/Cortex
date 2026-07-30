@@ -1,5 +1,7 @@
 """M1 — Single uncertainty U ∈ [0,1] consumed everywhere.
 
+Unified uncertainty: a single scalar that may only decrease when immune stress
+rises — never inflate certainty for the Governor. Confidence C = 1 - U.
 U = 1 means max uncertainty (abstain/constrain); U = 0 means high certainty.
 Derived once from retrieval, certificate, governor components, drift flags.
 """

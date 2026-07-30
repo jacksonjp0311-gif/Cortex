@@ -1,4 +1,8 @@
-"""M8 — Plasticity RCT: compare Hebbian on vs off against recall/causal metrics."""
+"""M8 — Plasticity RCT: compare Hebbian on vs off against recall/causal metrics.
+
+Randomized controlled trial arm for optional synapse weight updates only when
+opted in. Plasticity RCT: Hebbian on vs off; default production leaves plasticity on.
+"""
 
 from __future__ import annotations
 

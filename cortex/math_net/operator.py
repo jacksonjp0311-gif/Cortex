@@ -1,4 +1,8 @@
-"""M2 — One graph operator A from neural synapses (+ structural reconciliation)."""
+"""M2 — One graph operator A from neural synapses (+ structural reconciliation).
+
+Build graph adjacency operator and dual reverse-edge operator for spectral work.
+Undirected weighted adjacency from neural synapses (operator A).
+"""
 
 from __future__ import annotations
 

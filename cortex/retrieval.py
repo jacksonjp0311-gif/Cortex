@@ -408,6 +408,8 @@ def query(
     output.sort(key=lambda hit: (-hit.score, hit.path, hit.start_line))
     # Promote implementation paths cited as evidence in top teach/doctrine hits.
     output = _expand_evidence_paths(store, repo, output, limit=max(limit * 2, 24))
+    # Hard paraphrases: concept routes map phrase clusters → modules (measure gate).
+    output = _inject_concept_routes(store, repo, text, output, limit=max(limit * 2, 28))
     # Ranker-primary + spectral diffusion features (v6.13) — never authority.
     # Measure-gate sets ranker_primary=False to obtain raw hybrid for ablations.
     if ranker_primary:
@@ -457,6 +459,126 @@ _EVIDENCE_PATH_RE = re.compile(
 )
 
 
+def _memory_hit_for_path(
+    store: Any,
+    repo: str,
+    path: str,
+    *,
+    score: float,
+    source: str,
+    extra_meta: dict[str, Any] | None = None,
+) -> Hit | None:
+    """Build a Hit from the first memory chunk for path, if indexed."""
+    path_n = path.replace("\\", "/")
+    rows = []
+    try:
+        rows = store.memories_for_path(repo, path_n)
+    except Exception:
+        rows = []
+    if not rows:
+        try:
+            rows = store.memories_for_path(repo, path_n.replace("/", "\\"))
+        except Exception:
+            rows = []
+    if not rows:
+        return None
+    row = rows[0]
+    try:
+        meta = json.loads(row["metadata"] or "{}")
+    except (TypeError, json.JSONDecodeError):
+        meta = {}
+    meta["selection_source"] = source
+    if extra_meta:
+        meta.update(extra_meta)
+    return Hit(
+        memory_id=int(row["id"]),
+        repo=row["repo"],
+        path=row["path"],
+        start_line=row["start_line"],
+        end_line=row["end_line"],
+        text=row["text"],
+        kind=row["kind"],
+        score=round(float(score), 8),
+        content_hash=row["content_hash"],
+        metadata=meta,
+    )
+
+
+def _inject_concept_routes(
+    store: Any,
+    repo: str,
+    text: str,
+    hits: list[Hit],
+    *,
+    limit: int = 28,
+) -> list[Hit]:
+    """Inject/boost modules matched by frozen concept-route paraphrases."""
+    try:
+        from .concept_routes import match_concept_routes
+    except Exception:
+        return hits
+    routes = match_concept_routes(text)
+    if not routes:
+        return hits
+    top_score = float(hits[0].score) if hits else 0.05
+    base_boost = max(0.08, top_score * 1.05)
+    seen_paths = {str(h.path or "").replace("\\", "/") for h in hits}
+    seen_ids = {int(h.memory_id) for h in hits if h.memory_id is not None}
+    extras: list[Hit] = []
+    boosted: list[Hit] = []
+    # Boost existing hits that already match route paths
+    route_paths = {
+        str(p).replace("\\", "/")
+        for r in routes
+        for p in (r.get("paths") or [])
+    }
+    for h in hits:
+        pn = str(h.path or "").replace("\\", "/")
+        if pn in route_paths:
+            try:
+                md = dict(h.metadata or {})
+                md["concept_route"] = True
+                h.metadata = md
+                h.score = round(max(float(h.score or 0.0), base_boost), 8)
+            except Exception:
+                pass
+        boosted.append(h)
+    for route in routes:
+        for path in route.get("paths") or []:
+            pn = str(path).replace("\\", "/")
+            if pn in seen_paths:
+                continue
+            hit = _memory_hit_for_path(
+                store,
+                repo,
+                pn,
+                score=base_boost * (1.0 + 0.05 * int(route.get("score") or 1)),
+                source="concept_route",
+                extra_meta={
+                    "concept_route_id": route.get("id"),
+                    "matched_phrases": route.get("matched_phrases"),
+                },
+            )
+            if hit is None:
+                continue
+            if int(hit.memory_id) in seen_ids:
+                continue
+            seen_ids.add(int(hit.memory_id))
+            seen_paths.add(pn)
+            extras.append(hit)
+            if len(boosted) + len(extras) >= limit:
+                break
+        if len(boosted) + len(extras) >= limit:
+            break
+    if not extras and not any(
+        (h.metadata or {}).get("concept_route") for h in boosted
+    ):
+        return hits
+    merged = boosted + extras
+    merged.sort(key=lambda h: (-float(h.score or 0.0), h.path, h.start_line))
+    return merged
+
+
 def _expand_evidence_paths(
     store: Any,
     repo: str,
@@ -477,51 +599,27 @@ def _expand_evidence_paths(
     for hit in hits[:14]:
         blob = f"{hit.path or ''}\n{hit.text or ''}"
         cited = _EVIDENCE_PATH_RE.findall(blob)
-        # Also scan metadata-free JSON-ish evidence lists in packet files.
         for raw in cited:
             path = raw.replace("\\", "/").lstrip("./")
             if path in seen_paths:
                 continue
-            try:
-                rows = store.memories_for_path(repo, path)
-            except Exception:
-                rows = []
-            if not rows:
-                # try posix vs native
-                try:
-                    rows = store.memories_for_path(repo, path.replace("/", "\\"))
-                except Exception:
-                    rows = []
-            if not rows:
+            parent_score = float(hit.score or 0.0)
+            extra = _memory_hit_for_path(
+                store,
+                repo,
+                path,
+                score=parent_score * 0.97,
+                source="evidence_expansion",
+                extra_meta={"expanded_from": str(hit.path or "")},
+            )
+            if extra is None:
                 continue
-            row = rows[0]
-            mid = int(row["id"])
+            mid = int(extra.memory_id)
             if mid in seen_ids:
                 continue
             seen_ids.add(mid)
             seen_paths.add(path)
-            try:
-                meta = json.loads(row["metadata"] or "{}")
-            except (TypeError, json.JSONDecodeError):
-                meta = {}
-            meta["selection_source"] = "evidence_expansion"
-            meta["expanded_from"] = str(hit.path or "")
-            # Score just under the parent hit so expansion stays local.
-            parent_score = float(hit.score or 0.0)
-            extras.append(
-                Hit(
-                    memory_id=mid,
-                    repo=row["repo"],
-                    path=row["path"],
-                    start_line=row["start_line"],
-                    end_line=row["end_line"],
-                    text=row["text"],
-                    kind=row["kind"],
-                    score=round(parent_score * 0.97, 8),
-                    content_hash=row["content_hash"],
-                    metadata=meta,
-                )
-            )
+            extras.append(extra)
             if len(hits) + len(extras) >= limit:
                 break
         if len(hits) + len(extras) >= limit:

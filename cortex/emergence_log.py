@@ -322,13 +322,21 @@ def read_emergence_log(
                 f"  - [{ev.get('ts') or ev.get('kind')}] {ev.get('kind')}: {ev.get('summary')}"
             )
 
-    # Progress enhancement directives
+    # Progress enhancement directives (body policy — recommend-only)
     directives: list[str] = []
     if isinstance(coh, dict):
         if coh.get("emergent_coupling"):
             directives.append(
-                "Emergent coupling is ON — keep spectral-primary path; prefer fuse continuity; "
-                "do not thrash prune; record verified outcomes to warm ranker."
+                "KEEP spectral + ranker primary — do not rip them out; measure gate "
+                "proved both help on hard paraphrases."
+            )
+            directives.append(
+                "Fuse continuity: if a fusion session is open, prefer tick/state over "
+                "thrash open/close."
+            )
+            directives.append(
+                "Do not spam prune — dry-run only unless apply is explicit; thrashing "
+                "cleanup hurts this body."
             )
         elif coh.get("above_threshold"):
             directives.append(
@@ -341,8 +349,12 @@ def read_emergence_log(
                 "bootstrap/compile/evolve before large host edits."
             )
     directives.append(
-        "Update progress: after meaningful work call remember + consolidate, "
-        "or continuum; never claim host authority from this log."
+        "When you learn something real: remember + consolidate (seal) so the ranker "
+        "warms; offline continuum only on large graphs — skip live continuum if slow."
+    )
+    directives.append(
+        "Recommend-only: this log is not permission to mutate host source, run "
+        "ARIA plans, or claim consciousness."
     )
 
     for d in directives:

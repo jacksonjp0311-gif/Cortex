@@ -797,6 +797,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Opt-in: apply integrate_soft prune if would_prune>=50 (default dry-run only).",
     )
     continuum_p.add_argument(
+        "--force-full",
+        action="store_true",
+        help="Disable large-graph throttle (full cadence cycles). Prefer offline on big bodies.",
+    )
+    continuum_p.add_argument(
         "--quiet",
         action="store_true",
         help="Suppress stderr progress (default: progress on).",
@@ -2056,6 +2061,7 @@ def main(argv: list[str] | None = None) -> None:
                     budget=max(200, int(args.budget or 400)),
                     progress=not bool(getattr(args, "quiet", False)),
                     apply_prune=bool(getattr(args, "apply_prune", False)),
+                    force_full=bool(getattr(args, "force_full", False)),
                 ),
                 args.json,
             )

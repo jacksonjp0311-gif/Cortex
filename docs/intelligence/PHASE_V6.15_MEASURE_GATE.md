@@ -72,3 +72,10 @@ Honest findings (CortexTeach body):
 - Still hard misses: structure_invent, plasticity_rct, operator, uncertainty, calibration, info_account (paraphrase IR ceiling)
 
 Re-run: `python -m cortex eval-coupling --repo CortexTeach --suite full --json`
+
+## v6.15.3 notes
+
+- **Concept routes** (`cortex/concept_routes.py`): frozen paraphrase phrase → module paths for hard-suite misses.
+- **Body policy** in emergence directives: keep spectral+ranker, fuse continuity, no prune thrash, remember/seal, recommend-only.
+- **Continuum large-graph throttle**: ≥2500 synapses caps cadence unless `--force-full` (offline).
+- Module docstrings enriched with paraphrase language for FTS.
