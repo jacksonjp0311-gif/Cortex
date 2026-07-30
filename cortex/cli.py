@@ -116,6 +116,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="fib",
         help="Multi-res budget partition (v6.21 ratio lattice; flat=pre-6.21).",
     )
+    activate.add_argument(
+        "--memory-controller",
+        choices=["advanced", "evidence_baseline"],
+        default=None,
+        help="v6.24 Memory Simplex: advanced adaptive vs EVIDENCE_BASELINE trusted.",
+    )
+    activate.add_argument(
+        "--evidence-baseline",
+        action="store_true",
+        help="Force EVIDENCE_BASELINE trusted controller (Memory Simplex).",
+    )
     activate.add_argument("--json", action="store_true")
 
     index = sub.add_parser("index", help="Incrementally index an attached repository.")
@@ -1064,6 +1075,10 @@ def main(argv: list[str] | None = None) -> None:
                 profile=args.profile,
                 prefetch=getattr(args, "prefetch", "auto"),
                 budget_scheme=getattr(args, "budget_scheme", "fib") or "fib",
+                memory_controller=getattr(args, "memory_controller", None),
+                force_evidence_baseline=bool(
+                    getattr(args, "evidence_baseline", False)
+                ),
             )
             result["requested_mode"] = args.refresh
             emit(result, args.json)

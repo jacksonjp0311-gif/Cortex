@@ -156,6 +156,8 @@ def project_packet(context: dict[str, Any], profile: str = "agent") -> dict[str,
         "budget_partition": full.get("budget_partition"),
         "context_budget": full.get("context_budget"),
         "estimated_tokens": full.get("estimated_tokens"),
+        # v6.24 Memory Simplex controller
+        "memory_simplex": full.get("memory_simplex"),
         "evidence": evidence,
         "active_focus": full.get("active_focus"),
         "context_budget": full.get("context_budget"),

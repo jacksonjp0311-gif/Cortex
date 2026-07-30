@@ -383,9 +383,11 @@ SUITES: dict[str, list[dict[str, Any]]] = {
 }
 
 ABLATIONS: tuple[str, ...] = (
-    "baseline",  # spectral enrich + ranker primary + geometry residual
+    "baseline",  # ADVANCED path: spectral + ranker primary + geometry residual
     "no_spectral",  # ranker primary, no diffusion enrich / residual
-    "no_ranker",  # raw hybrid query order only
+    "no_ranker",  # raw hybrid (still may include concept routes)
+    # v6.24 Memory Simplex trusted controller — no ranker, spectral, or concept routes
+    "evidence_baseline",
 )
 
 
@@ -425,8 +427,29 @@ def _run_case(
 ) -> dict[str, Any]:
     q = str(case["query"])
     expected = [str(x) for x in case.get("expected_substrings") or []]
-    # Raw hybrid only — query() ranker path is off so ablations are honest.
-    hits = query(store, repo, q, limit=limit, ranker_primary=False)
+    # Ablations start from hybrid; concept routes only when not evidence_baseline.
+    if mode == "evidence_baseline":
+        hits = query(
+            store,
+            repo,
+            q,
+            limit=limit,
+            ranker_primary=False,
+            enrich_spectral=False,
+            concept_routes=False,
+            memory_controller="evidence_baseline",
+        )
+    else:
+        # Raw hybrid only — query() ranker path is off so ablations are honest.
+        # Concept routes remain for advanced / no_spectral / no_ranker (IR table).
+        hits = query(
+            store,
+            repo,
+            q,
+            limit=limit,
+            ranker_primary=False,
+            concept_routes=True,
+        )
     if mode == "baseline":
         hits = rerank_hits(
             store,
@@ -445,7 +468,7 @@ def _run_case(
             primary=True,
             enrich_spectral=False,
         )
-    elif mode == "no_ranker":
+    elif mode in {"no_ranker", "evidence_baseline"}:
         pass
     else:
         raise ValueError(f"unknown ablation mode: {mode}")
@@ -534,6 +557,8 @@ def run_eval_coupling(
     no_spec_mrr = float((by_mode.get("no_spectral") or {}).get("mrr") or 0.0)
     no_rank_r = float((by_mode.get("no_ranker") or {}).get("recall_at_k") or 0.0)
     no_rank_mrr = float((by_mode.get("no_ranker") or {}).get("mrr") or 0.0)
+    ebase_r = float((by_mode.get("evidence_baseline") or {}).get("recall_at_k") or 0.0)
+    ebase_mrr = float((by_mode.get("evidence_baseline") or {}).get("mrr") or 0.0)
 
     lifts = {
         mode: {
@@ -556,10 +581,17 @@ def run_eval_coupling(
     # Strict lift on recall OR on mean reciprocal rank
     spectral_helps = (baseline_r > no_spec_r) or (baseline_mrr > no_spec_mrr + 1e-9)
     ranker_helps = (baseline_r > no_rank_r) or (baseline_mrr > no_rank_mrr + 1e-9)
+    # Memory Simplex: advanced (eval "baseline") vs trusted evidence_baseline
+    advanced_beats_trusted = (baseline_r, baseline_mrr) >= (ebase_r, ebase_mrr)
 
     # Ceiling tolerance: when all modes hit@k=1.0, tiny MRR noise must not
     # trigger REVIEW — no hit-rate regression is enough to KEEP.
-    ceiling = baseline_r >= 0.999 and no_spec_r >= 0.999 and no_rank_r >= 0.999
+    ceiling = (
+        baseline_r >= 0.999
+        and no_spec_r >= 0.999
+        and no_rank_r >= 0.999
+        and (ebase_r >= 0.999 or "evidence_baseline" not in by_mode)
+    )
     mrr_eps = 0.05
     keep_spectral = (baseline_r > no_spec_r) or (
         baseline_r >= no_spec_r and baseline_mrr + mrr_eps >= no_spec_mrr
@@ -574,6 +606,18 @@ def run_eval_coupling(
         winner_for_policy = "baseline"
     else:
         winner_for_policy = winner
+
+    try:
+        from .memory_simplex import simplex_lift_report
+
+        simplex = simplex_lift_report(
+            by_mode.get("baseline"), by_mode.get("evidence_baseline")
+        )
+    except Exception as exc:
+        simplex = {
+            "error": f"{type(exc).__name__}: {exc}",
+            "advanced_beats_trusted": advanced_beats_trusted,
+        }
 
     prog("coherence_after")
     coh_after = measure_coherence(
@@ -607,6 +651,7 @@ def run_eval_coupling(
         "keep_ranker_primary": keep_ranker,
         "perfect_recall_ceiling": ceiling,
         "winner_for_policy": winner_for_policy,
+        "advanced_beats_evidence_baseline": advanced_beats_trusted,
         "eval_split": (
             "holdout"
             if suite_name == "holdout"
@@ -656,6 +701,7 @@ def run_eval_coupling(
         "baseline_beats_ablation": baseline_beats,
         "divergence_cases": divergence,
         "gate": gate,
+        "memory_simplex": simplex,
         "coherence_before": {
             "score": coh_before.get("score"),
             "emergent_coupling": coh_before.get("emergent_coupling"),
@@ -673,6 +719,7 @@ def run_eval_coupling(
         "recommendation": _recommendation(gate, winner, baseline_r, by_mode),
         "claim_boundary": (
             "Measure gate: path-substring recall@k + MRR under ablations only. "
+            "memory_simplex compares advanced path vs EVIDENCE_BASELINE trusted controller. "
             "Not universal answer quality. Not consciousness. Directs evolution."
         ),
     }
@@ -742,6 +789,10 @@ def _recommendation(
         rec.append("spectral_enrichment_helps_recall_or_mrr")
     if gate.get("ranker_helps"):
         rec.append("ranker_primary_helps_recall_or_mrr")
+    if gate.get("advanced_beats_evidence_baseline"):
+        rec.append("advanced_beats_EVIDENCE_BASELINE_simplex_ok")
+    elif "evidence_baseline" in by_mode:
+        rec.append("REVIEW_advanced_loses_to_EVIDENCE_BASELINE")
     if winner != "baseline":
         rec.append(f"investigate_why_{winner}_beat_baseline")
     rec.append("hold_course_if_emergent_coupling_unless_ablation_regresses")
@@ -751,7 +802,10 @@ def _recommendation(
         f"no_spectral={ (by_mode.get('no_spectral') or {}).get('recall_at_k') }/"
         f"{(by_mode.get('no_spectral') or {}).get('mrr')}; "
         f"no_ranker={ (by_mode.get('no_ranker') or {}).get('recall_at_k') }/"
-        f"{(by_mode.get('no_ranker') or {}).get('mrr')}"
+        f"{(by_mode.get('no_ranker') or {}).get('mrr')}; "
+        f"evidence_baseline="
+        f"{(by_mode.get('evidence_baseline') or {}).get('recall_at_k')}/"
+        f"{(by_mode.get('evidence_baseline') or {}).get('mrr')}"
     )
     # Misses under baseline — next teach/index targets
     misses = [r["id"] for r in (base.get("results") or []) if not r.get("hit_at_k")]

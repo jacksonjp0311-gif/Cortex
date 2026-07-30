@@ -26,6 +26,8 @@ def activate_repository(
     profile: str = "agent",
     prefetch: str = "auto",
     budget_scheme: str = "fib",
+    memory_controller: str | None = None,
+    force_evidence_baseline: bool = False,
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -96,6 +98,34 @@ def activate_repository(
             neural = {"available": False, "disabled": True}
         certificate = verify_repository(home, store, repo, config, write_certificate=False)
 
+    # Memory Simplex: Governor read_only or explicit force → EVIDENCE_BASELINE
+    gov_pre = {}
+    try:
+        gov_pre = governor.evaluate(
+            repo, retrieval_confidence=0.5, manifest_current=manifest_current
+        )
+    except Exception:
+        gov_pre = {}
+    try:
+        from .memory_simplex import (
+            budget_scheme_for_controller,
+            resolve_controller,
+        )
+
+        sx = resolve_controller(
+            requested=memory_controller,
+            governance_mode=str(gov_pre.get("mode") or "normal"),
+            force_baseline=bool(force_evidence_baseline),
+        )
+        active_controller = str(sx.get("controller") or "advanced")
+        scheme = budget_scheme_for_controller(
+            active_controller, default=budget_scheme or "fib"
+        )
+    except Exception:
+        sx = {}
+        active_controller = memory_controller or "advanced"
+        scheme = budget_scheme or "fib"
+
     context = build_context(
         home,
         store,
@@ -105,8 +135,15 @@ def activate_repository(
         budget,
         manifest_current=manifest_current,
         certificate=certificate,
-        budget_scheme=budget_scheme or "fib",
+        budget_scheme=scheme,
+        memory_controller=active_controller,
     )
+    if isinstance(context, dict):
+        context["memory_simplex"] = {
+            **(sx if isinstance(sx, dict) else {}),
+            "controller": active_controller,
+            "budget_scheme": scheme,
+        }
     # Attach surprise to efficiency for agent-visible economics.
     if isinstance(context.get("efficiency"), dict):
         context["efficiency"]["surprise"] = surprise

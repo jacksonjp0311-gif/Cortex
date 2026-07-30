@@ -1,3 +1,12 @@
+## 6.24.0 - Memory Simplex
+
+- **EVIDENCE_BASELINE** trusted controller: no ranker/spectral/concept routes; flat budget.
+- **Measure:** ablation `evidence_baseline` + `memory_simplex` lift vs advanced path.
+- **Governor:** `read_only` transfers to evidence_baseline.
+- **CLI:** `--evidence-baseline` / `--memory-controller` on activate.
+- **Lineage prep:** invent edges stamp `ancestors` for future unlearning.
+- Docs: `PHASE_V6.24_MEMORY_SIMPLEX.md`.
+
 ## 6.23.0 - Foreign Emergence
 
 - **`foreign_emerge`:** fuse open + ticks + ranker path-token warm toward host emergent phase.

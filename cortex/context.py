@@ -313,6 +313,7 @@ def build_context(
     manifest_current: bool | None = None,
     certificate: dict[str, Any] | None = None,
     budget_scheme: str = "fib",
+    memory_controller: str | None = None,
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
@@ -337,6 +338,9 @@ def build_context(
     # Every standard context retrieval is planned by Thalamus before candidates are read.
     # If ARIA just materialized (or is active/ready), query with substrate included.
     aria_mode_pre = (aria_materialization.get("mode") or "dormant")
+    # Memory Simplex controller (v6.24)
+    mc = memory_controller
+    use_baseline = bool(mc and str(mc).casefold().startswith("evidence"))
     direct_hits = query(
         store,
         repo,
@@ -344,7 +348,11 @@ def build_context(
         limit=24,
         semantic_scan_limit=config.semantic_scan_limit,
         materialize_substrate=False,
-        prove_implementation=(aria_mode_pre == "active"),
+        prove_implementation=(aria_mode_pre == "active") and not use_baseline,
+        ranker_primary=not use_baseline,
+        enrich_spectral=not use_baseline,
+        concept_routes=not use_baseline,
+        memory_controller=mc,
     )
     # Second chance: active but sparse ARIA evidence → force materialize once more
     # then re-query (evidence selection gap: cards without substrate proof).
@@ -375,7 +383,11 @@ def build_context(
                 limit=24,
                 semantic_scan_limit=config.semantic_scan_limit,
                 materialize_substrate=False,
-                prove_implementation=True,
+                prove_implementation=(not use_baseline),
+                ranker_primary=not use_baseline,
+                enrich_spectral=not use_baseline,
+                concept_routes=not use_baseline,
+                memory_controller=mc,
             )
     if route_plan:
         direct_hits = apply_feedback(store, repo, direct_hits)
@@ -717,6 +729,13 @@ def build_context(
             or (
                 "Budget heuristic from self-similar / rational partition — "
                 "not golden-ratio activation or sacred geometry."
+            ),
+        },
+        "memory_simplex": {
+            "controller": mc or "advanced",
+            "claim_boundary": (
+                "Memory Simplex controller for this packet — advanced adaptive vs "
+                "EVIDENCE_BASELINE trusted path. Not host authority."
             ),
         },
         "environment": environment,

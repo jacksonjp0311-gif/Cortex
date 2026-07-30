@@ -140,10 +140,29 @@ class Governor:
             mode = "read_only"
             reason = "stability is below the mutation-support threshold"
 
+        # v6.24 Memory Simplex — recommend trusted controller under read_only
+        memory_controller = "advanced"
+        transfer_to_baseline = False
+        if mode == "read_only":
+            memory_controller = "evidence_baseline"
+            transfer_to_baseline = True
+        try:
+            from .memory_simplex import resolve_controller
+
+            sx = resolve_controller(
+                governance_mode=mode, force_baseline=transfer_to_baseline
+            )
+            memory_controller = str(sx.get("controller") or memory_controller)
+            transfer_to_baseline = bool(sx.get("transfer_to_baseline"))
+        except Exception:
+            pass
+
         return {
             "stability": stability,
             "mode": mode,
             "reason": reason,
+            "memory_controller": memory_controller,
+            "transfer_to_baseline": transfer_to_baseline,
             "uncertainty": u_packet,
             "u": u_packet.get("u"),
             "coeffs_prior": {

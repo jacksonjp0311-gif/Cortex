@@ -84,6 +84,10 @@ def invent_from_coactivation(
                 "retention_regime": "integrate",
                 "source": "structure_invent",
                 "at": now,
+                # v6.24 lineage prep for causal unlearning (ancestors = co-fired nodes)
+                "ancestors": [a, b],
+                "derived_from_coactivation": True,
+                "lineage_plane": "G_learned",
             }
             conn.execute(
                 """

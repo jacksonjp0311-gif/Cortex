@@ -182,6 +182,8 @@ def query(
     prove_implementation: bool = False,
     ranker_primary: bool = True,
     enrich_spectral: bool = True,
+    concept_routes: bool = True,
+    memory_controller: str | None = None,
 ) -> list[Hit]:
     """Hybrid retrieval. Substrate materialization is opt-in (activation/CLI).
 
@@ -191,7 +193,24 @@ def query(
     host heading evidence (e.g. README) is not reordered away by prove mode.
 
     ranker_primary=False returns hybrid order only (measure-gate ablations).
+    concept_routes=False disables IR phrase→path inject (EVIDENCE_BASELINE).
+    memory_controller: advanced | evidence_baseline (v6.24 Memory Simplex).
     """
+    # Memory Simplex: force trusted controller kwargs when requested.
+    if memory_controller:
+        try:
+            from .memory_simplex import (
+                is_evidence_baseline,
+                query_kwargs_for_controller,
+            )
+
+            if is_evidence_baseline(memory_controller):
+                kw = query_kwargs_for_controller(memory_controller)
+                ranker_primary = bool(kw.get("ranker_primary", False))
+                enrich_spectral = bool(kw.get("enrich_spectral", False))
+                concept_routes = bool(kw.get("concept_routes", False))
+        except Exception:
+            pass
 
     if materialize_substrate:
         materialize_aria_for_task(store, repo, text)
@@ -409,7 +428,11 @@ def query(
     # Promote implementation paths cited as evidence in top teach/doctrine hits.
     output = _expand_evidence_paths(store, repo, output, limit=max(limit * 2, 24))
     # Hard paraphrases: concept routes map phrase clusters → modules (measure gate).
-    output = _inject_concept_routes(store, repo, text, output, limit=max(limit * 2, 28))
+    # EVIDENCE_BASELINE / concept_routes=False skips IR inject (Memory Simplex trusted).
+    if concept_routes:
+        output = _inject_concept_routes(
+            store, repo, text, output, limit=max(limit * 2, 28)
+        )
     # Ranker-primary + spectral diffusion features (v6.13) — never authority.
     # Measure-gate sets ranker_primary=False to obtain raw hybrid for ablations.
     if ranker_primary:
