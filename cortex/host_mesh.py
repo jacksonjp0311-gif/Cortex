@@ -181,25 +181,30 @@ def observe_host(
     except Exception:
         latest = None
 
-    # v7.0: per-host body epoch + runtime phase (distributed alignment inputs)
+    # v7.1: per-host body epoch + runtime phase (observe-only; never seals)
     continuity: dict[str, Any] = {}
     try:
-        from .epoch import ensure_current_epoch, verify_body_epoch
+        from .epoch import observe_current_epoch
         from .phases import current_phase
 
-        ep = ensure_current_epoch(store, repo, reason="host_mesh_observe")
+        obs = observe_current_epoch(store, repo)
         ph = current_phase(store, repo)
-        ver = verify_body_epoch(store, repo, ep)
+        sealed = obs.get("sealed") or {}
+        eid = obs.get("epoch_id")
         continuity = {
-            "body_epoch_id": ep.epoch_id,
-            "epoch_verified": bool(ver.get("ok")),
+            "body_epoch_id": eid,
+            "epoch_verified": bool(obs.get("verified")),
+            "epoch_present": bool(obs.get("present")),
             "runtime_phase": ph.phase,
-            "phase_bound": ph.epoch_id == ep.epoch_id,
-            "cortex_version": ep.cortex_version,
-            "repository_id": ep.repository_id,
-            "evidence_root_prefix": (ep.evidence_root_hash or "")[:12],
-            "adaptive_root_prefix": (ep.adaptive_root_hash or "")[:12],
-            "constitutional_prefix": (ep.constitutional_config_hash or "")[:12],
+            "phase_bound": (not eid) or ph.epoch_id == eid,
+            "cortex_version": sealed.get("cortex_version"),
+            "repository_id": sealed.get("repository_id"),
+            "evidence_root_prefix": str(sealed.get("evidence_root_hash") or "")[:12],
+            "adaptive_root_prefix": str(sealed.get("adaptive_root_hash") or "")[:12],
+            "constitutional_prefix": str(
+                sealed.get("constitutional_config_hash") or ""
+            )[:12],
+            "observe_only": True,
         }
     except Exception as exc:
         continuity = {"error": f"{type(exc).__name__}: {exc}"}

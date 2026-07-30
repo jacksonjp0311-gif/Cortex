@@ -447,8 +447,86 @@ def seal_epoch_transition(
     return epoch
 
 
+def observe_current_epoch(store: Any, repo: str) -> dict[str, Any]:
+    """Read-only epoch observation. Never creates or seals.
+
+    Returns presence, live vs sealed comparison, and verification flags.
+    Safe for mesh, continuity reports, dashboards, and diagnostics.
+    """
+    ensure_epoch_tables(store)
+    cur = current_body_epoch(store, repo)
+    live = compute_body_epoch(store, repo, transition_reason="observe")
+    if cur is None:
+        return {
+            "present": False,
+            "verified": False,
+            "stale": True,
+            "epoch_id": None,
+            "live_epoch_id": live.epoch_id,
+            "receipt_hash": None,
+            "live": live.to_dict(),
+            "sealed": None,
+            "mismatches": ["epoch_absent"],
+            "claim_boundary": CLAIM,
+        }
+    mismatches: list[str] = []
+    if cur.epoch_id != live.epoch_id:
+        for field in (
+            "manifest_hash",
+            "certificate_hash",
+            "schema_hash",
+            "constitutional_config_hash",
+            "evidence_root_hash",
+            "adaptive_root_hash",
+            "lineage_root_hash",
+            "cortex_version",
+        ):
+            if getattr(live, field) != getattr(cur, field):
+                mismatches.append(field)
+    verified = cur.epoch_id == live.epoch_id
+    return {
+        "present": True,
+        "verified": verified,
+        "stale": not verified,
+        "epoch_id": cur.epoch_id,
+        "live_epoch_id": live.epoch_id,
+        "receipt_hash": cur.receipt_hash,
+        "runtime_compatible": verified,
+        "mismatches": mismatches,
+        "sealed": cur.to_dict(),
+        "live_roots": {
+            "evidence_root_hash": live.evidence_root_hash,
+            "adaptive_root_hash": live.adaptive_root_hash,
+            "constitutional_config_hash": live.constitutional_config_hash,
+        },
+        "claim_boundary": CLAIM,
+    }
+
+
+def require_current_epoch(store: Any, repo: str) -> BodyEpoch:
+    """Read-only: return sealed epoch if present and not stale; else raise.
+
+    Never creates or seals. Use at gates that must not mutate.
+    """
+    obs = observe_current_epoch(store, repo)
+    if not obs.get("present"):
+        raise LookupError(f"body_epoch_absent:{repo}")
+    if not obs.get("verified"):
+        raise ValueError(
+            f"body_epoch_stale:{repo}:mismatches={obs.get('mismatches')}"
+        )
+    cur = current_body_epoch(store, repo)
+    if cur is None:
+        raise LookupError(f"body_epoch_absent:{repo}")
+    return cur
+
+
 def ensure_current_epoch(store: Any, repo: str, *, reason: str = "ensure") -> BodyEpoch:
-    """Return sealed current epoch; create if missing or roots drifted."""
+    """May mutate: create/seal if missing or roots drifted.
+
+    Only for explicit mutation paths (activation, seal, self-org, phase init).
+    Diagnostics, mesh, continuity reports must use observe_current_epoch.
+    """
     live = compute_body_epoch(store, repo, transition_reason=reason)
     cur = current_body_epoch(store, repo)
     if cur is None or cur.epoch_id != live.epoch_id:

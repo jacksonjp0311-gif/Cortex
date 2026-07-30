@@ -29,6 +29,9 @@ class ContinuityTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_snapshot_planes(self) -> None:
+        from cortex.epoch import ensure_current_epoch
+
+        ensure_current_epoch(self.store, "CHost", reason="test_setup")
         s = snapshot_continuity(self.store, "CHost")
         d = s.to_dict()
         self.assertIn("body_epoch", d)
@@ -37,6 +40,7 @@ class ContinuityTests(unittest.TestCase):
         self.assertIn("forbidden_flows", d)
         r = continuity_report(self.store, "CHost")
         self.assertTrue(r.get("epoch_verified", {}).get("ok"))
+        self.assertTrue(r.get("observe_only"))
 
     def test_capability_epoch_mismatch(self) -> None:
         ep = ensure_current_epoch(self.store, "CHost")
@@ -61,7 +65,9 @@ class ContinuityTests(unittest.TestCase):
 
     def test_same_repo_influence_and_mesh_report(self) -> None:
         from cortex.continuity import epoch_compatible_influence, mesh_continuity_report
+        from cortex.epoch import ensure_current_epoch
 
+        ensure_current_epoch(self.store, "CHost", reason="test_setup")
         inf = epoch_compatible_influence("CHost", "CHost", self.store)
         self.assertTrue(inf["allowed"], inf)
         mesh = mesh_continuity_report(self.store, repos=["CHost"])

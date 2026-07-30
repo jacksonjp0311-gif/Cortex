@@ -1,3 +1,15 @@
+## 7.1.0 - Constitutional Geometry
+
+- **Four-axis coordinate** \(q=(e,a,t,w)\): evidence, authority, epoch, witness.
+- **Operation requirements** for retrieve/adapt/promote/repair/repair_readmit/federate.
+- **Transition + diagonal** detection; compound paths require internal steps.
+- **Legal path compiler** (observe-only; never mutates or issues caps).
+- **observe_current_epoch / require_current_epoch** vs mutating `ensure_current_epoch`.
+- **Boundaries:** promote_gate, repair readmit, federation admission.
+- **CLI:** `geometry assess|path|enumerate`.
+- **Research:** `docs/research/CONSTITUTIONAL_*`, `CSG_DISCOVERY_LEDGER.md`.
+- Claim: experimental four-axis model — not consciousness, not physical tesseract, not universal law.
+
 ## 7.0.0 - Resonant Continuity
 
 - **Body Epoch:** deterministic continuity identity (evidence/adaptive/constitution roots).

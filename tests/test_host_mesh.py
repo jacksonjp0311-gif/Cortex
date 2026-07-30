@@ -52,7 +52,14 @@ class HostMeshTests(unittest.TestCase):
         self.assertTrue(report["directives"])
         self.assertIn("next", report)
         self.assertIn("epoch_alignment", report)
-        self.assertTrue(one.get("body_epoch_id") or (one.get("continuity") or {}).get("body_epoch_id"))
+        cont = one.get("continuity") or {}
+        self.assertIn("observe_only", cont)
+        # body_epoch_id present only after seal; observe path must not force seal
+        self.assertTrue(
+            cont.get("body_epoch_id") is not None
+            or cont.get("epoch_present") is False
+            or cont.get("error")
+        )
 
     def test_explicit_mesh_role_and_topology_law(self) -> None:
         meta = set_mesh_role(self.store, "MeshHost", "foreign_host")

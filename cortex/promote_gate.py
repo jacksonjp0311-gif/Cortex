@@ -38,6 +38,11 @@ def evaluate_promotion(
     has_critical_wound: bool = False,
     body_epoch_id: str | None = None,
     epoch_verified: bool | None = None,
+    store: Any = None,
+    repo: str | None = None,
+    capability: Any | None = None,
+    authority_ok: bool | None = None,
+    skip_geometry: bool = False,
 ) -> dict[str, Any]:
     """Decide whether promotion / shadow-calibrate / big KEEP claims may fire."""
 
@@ -46,6 +51,46 @@ def evaluate_promotion(
     # v7.0: promotion must not certify a different/stale epoch when bound
     if epoch_verified is False:
         return _deny("body_epoch_not_verified")
+
+    # v7.1 constitutional geometry boundary
+    geometry: dict[str, Any] | None = None
+    if not skip_geometry and store is not None and repo:
+        try:
+            from .constitutional_path import assess_operation_at_boundary
+
+            wit_ok = None
+            if witness_report is not None:
+                wit_ok = bool(
+                    not witness_report.get("error")
+                    and float(witness_report.get("recall_at_k") or 0) >= min_witness_recall
+                )
+            elif require_witness:
+                wit_ok = False
+            geometry = assess_operation_at_boundary(
+                store,
+                repo,
+                "promote",
+                capability=capability,
+                authority_ok=authority_ok if authority_ok is not None else True,
+                witness_ok=wit_ok if wit_ok is not None else (True if not require_witness else False),
+                require_witness=True,
+            )
+            if not geometry.get("allowed"):
+                denied = _deny("constitutional_geometry_denied")
+                denied["geometry"] = geometry
+                denied["coordinate"] = geometry.get("coordinate")
+                denied["missing_axes"] = geometry.get("missing_axes")
+                denied["required_legal_path"] = geometry.get("required_legal_path")
+                denied["reasons_if_denied"] = list(
+                    dict.fromkeys(
+                        ["constitutional_geometry_denied"]
+                        + list(geometry.get("reasons") or [])
+                        + [f"missing_{a}" for a in (geometry.get("missing_axes") or [])]
+                    )
+                )
+                return denied
+        except Exception as exc:
+            geometry = {"error": f"{type(exc).__name__}:{exc}"}
 
     ho = holdout_report or {}
     ho_gate = ho.get("gate") or {}
@@ -128,7 +173,7 @@ def evaluate_promotion(
         and ho_gate.get("advanced_beats_evidence_baseline") is not False
     )
 
-    return {
+    out = {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "allow_promote": allow,
@@ -148,12 +193,17 @@ def evaluate_promotion(
         "law": (
             "Promote when sealed holdout utility holds AND development-transfer utility "
             "holds AND coupling health is on (safety) AND lineage/wounds clean AND "
-            "governance allows AND body epoch is verified when bound. "
+            "governance allows AND body epoch is verified when bound AND "
+            "constitutional geometry (e,a,t,w)=(1,1,1,1) when store bound. "
             "Coupling does not certify utility. "
             "Optional sealed witness when require_witness=True."
         ),
         "claim_boundary": CLAIM,
     }
+    if geometry is not None:
+        out["geometry"] = geometry
+        out["coordinate"] = geometry.get("coordinate")
+    return out
 
 
 def _deny(reason: str) -> dict[str, Any]:

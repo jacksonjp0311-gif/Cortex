@@ -10,7 +10,13 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from . import __version__
-from .epoch import BodyEpoch, ensure_current_epoch, verify_body_epoch
+from .epoch import (
+    BodyEpoch,
+    ensure_current_epoch,
+    observe_current_epoch,
+    require_current_epoch,
+    verify_body_epoch,
+)
 from .phases import current_phase, phase_report, transition_phase
 
 SCHEMA = "cortex-continuity/1.0"
@@ -53,17 +59,27 @@ class CortexState:
 
 
 def snapshot_continuity(store: Any, repo: str) -> CortexState:
-    """Assemble five-plane continuity snapshot for a repository."""
-    ep = ensure_current_epoch(store, repo, reason="continuity_snapshot")
+    """Assemble five-plane continuity snapshot (observe-only; never seals)."""
+    obs = observe_current_epoch(store, repo)
+    sealed = obs.get("sealed")
+    if sealed:
+        ep_dict = sealed
+    else:
+        # Present live computation for reporting only — not sealed
+        from .epoch import compute_body_epoch
+
+        ep_dict = compute_body_epoch(store, repo, transition_reason="observe").to_dict()
+        ep_dict["sealed"] = False
+        ep_dict["observe_only_unsealed"] = True
     ph = current_phase(store, repo)
     evidence = {
-        "manifest_hash": ep.manifest_hash,
-        "evidence_root_hash": ep.evidence_root_hash,
-        "certificate_hash": ep.certificate_hash,
+        "manifest_hash": ep_dict.get("manifest_hash"),
+        "evidence_root_hash": ep_dict.get("evidence_root_hash"),
+        "certificate_hash": ep_dict.get("certificate_hash"),
     }
     adaptive = {
-        "adaptive_root_hash": ep.adaptive_root_hash,
-        "lineage_root_hash": ep.lineage_root_hash,
+        "adaptive_root_hash": ep_dict.get("adaptive_root_hash"),
+        "lineage_root_hash": ep_dict.get("lineage_root_hash"),
     }
     immunity: dict[str, Any] = {}
     try:
@@ -73,9 +89,9 @@ def snapshot_continuity(store: Any, repo: str) -> CortexState:
     except Exception as exc:
         immunity = {"error": f"{type(exc).__name__}:{exc}"}
     constitutional = {
-        "constitutional_config_hash": ep.constitutional_config_hash,
-        "schema_hash": ep.schema_hash,
-        "cortex_version": ep.cortex_version,
+        "constitutional_config_hash": ep_dict.get("constitutional_config_hash"),
+        "schema_hash": ep_dict.get("schema_hash"),
+        "cortex_version": ep_dict.get("cortex_version"),
     }
     witness: dict[str, Any] = {}
     try:
@@ -91,7 +107,7 @@ def snapshot_continuity(store: Any, repo: str) -> CortexState:
 
     return CortexState(
         repo=repo,
-        body_epoch=ep.to_dict(),
+        body_epoch=ep_dict,
         runtime_phase=ph.to_dict(),
         evidence_plane=evidence,
         adaptive_plane=adaptive,
@@ -103,11 +119,30 @@ def snapshot_continuity(store: Any, repo: str) -> CortexState:
 
 def continuity_report(store: Any, repo: str) -> dict[str, Any]:
     state = snapshot_continuity(store, repo)
-    ver = verify_body_epoch(store, repo, BodyEpoch.from_dict(state.body_epoch))
+    obs = observe_current_epoch(store, repo)
+    ver = {
+        "ok": bool(obs.get("verified")),
+        "present": bool(obs.get("present")),
+        "claimed_epoch_id": obs.get("epoch_id"),
+        "live_epoch_id": obs.get("live_epoch_id"),
+        "mismatches": list(obs.get("mismatches") or []),
+        "observe_only": True,
+    }
+    if obs.get("present") and obs.get("sealed"):
+        try:
+            ver = {
+                **verify_body_epoch(
+                    store, repo, BodyEpoch.from_dict(obs["sealed"])
+                ),
+                "observe_only": True,
+            }
+        except Exception:
+            pass
     return {
         **state.to_dict(),
         "epoch_verified": ver,
         "phase": phase_report(store, repo),
+        "observe_only": True,
         "at": time.time(),
     }
 
@@ -129,19 +164,37 @@ def epoch_compatible_influence(
     cortex_version and constitutional_config_hash match and both epochs verify.
     Adaptive roots may differ — influence still blocked if constitution/version skew.
     """
-    from .epoch import compare_epochs, ensure_current_epoch, verify_body_epoch
+    from .epoch import BodyEpoch, compare_epochs, observe_current_epoch
 
-    left = ensure_current_epoch(store, left_repo, reason="influence_check")
-    right = ensure_current_epoch(store, right_repo, reason="influence_check")
-    lv = verify_body_epoch(store, left_repo, left)
-    rv = verify_body_epoch(store, right_repo, right)
+    def _side(repo: str) -> tuple[dict[str, Any], BodyEpoch | None]:
+        obs = observe_current_epoch(store, repo)
+        ep = None
+        if obs.get("sealed"):
+            ep = BodyEpoch.from_dict(obs["sealed"])
+        return obs, ep
+
+    lo, left = _side(left_repo)
+    ro, right = _side(right_repo)
+    reasons: list[str] = []
+    if not lo.get("present") or left is None:
+        reasons.append("left_epoch_absent")
+    if not ro.get("present") or right is None:
+        reasons.append("right_epoch_absent")
+    if left is None or right is None:
+        return {
+            "schema_version": "cortex-epoch-compatible-influence/1.0",
+            "allowed": False,
+            "left": {"repo": left_repo, "verified": False},
+            "right": {"repo": right_repo, "verified": False},
+            "reasons_if_denied": reasons,
+            "claim_boundary": CLAIM,
+        }
+    if not lo.get("verified"):
+        reasons.append("left_epoch_stale")
+    if not ro.get("verified"):
+        reasons.append("right_epoch_stale")
     version_ok = left.cortex_version == right.cortex_version
     constitution_ok = left.constitutional_config_hash == right.constitutional_config_hash
-    reasons: list[str] = []
-    if not lv.get("ok"):
-        reasons.append("left_epoch_stale")
-    if not rv.get("ok"):
-        reasons.append("right_epoch_stale")
     if left.repo != right.repo and left.epoch_id == right.epoch_id:
         reasons.append("cross_repo_epoch_id_collision")
     if not version_ok:
@@ -149,32 +202,32 @@ def epoch_compatible_influence(
     if not constitution_ok:
         reasons.append("constitutional_config_mismatch")
     if left.repo == right.repo:
-        allowed = bool(lv.get("ok")) and bool(rv.get("ok"))
+        allowed = bool(lo.get("verified")) and bool(ro.get("verified"))
     else:
         allowed = (
-            bool(lv.get("ok"))
-            and bool(rv.get("ok"))
+            bool(lo.get("verified"))
+            and bool(ro.get("verified"))
             and version_ok
             and constitution_ok
             and left.epoch_id != right.epoch_id
         )
     return {
         "schema_version": "cortex-epoch-compatible-influence/1.0",
-        "allowed": allowed,
+        "allowed": allowed and not reasons,
         "left": {
             "repo": left.repo,
             "epoch_id": left.epoch_id,
             "version": left.cortex_version,
-            "verified": lv.get("ok"),
+            "verified": lo.get("verified"),
         },
         "right": {
             "repo": right.repo,
             "epoch_id": right.epoch_id,
             "version": right.cortex_version,
-            "verified": rv.get("ok"),
+            "verified": ro.get("verified"),
         },
         "compare": compare_epochs(left, right).to_dict(),
-        "reasons_if_denied": [] if allowed else reasons,
+        "reasons_if_denied": [] if allowed and not reasons else reasons,
         "claim_boundary": CLAIM,
     }
 

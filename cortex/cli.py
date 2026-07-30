@@ -736,12 +736,39 @@ def build_parser() -> argparse.ArgumentParser:
     epoch_p.add_argument("--repo", required=True)
     epoch_p.add_argument(
         "action",
-        choices=["current", "compute", "verify", "seal"],
+        choices=["current", "compute", "verify", "seal", "observe"],
         nargs="?",
         default="current",
     )
     epoch_p.add_argument("--reason", default="operator")
     epoch_p.add_argument("--json", action="store_true")
+
+    geom_p = sub.add_parser(
+        "geometry",
+        help="v7.1 Constitutional Geometry ◆ — four-axis (e,a,t,w) assess/path/enumerate.",
+    )
+    geom_p.add_argument(
+        "action",
+        choices=["assess", "path", "enumerate"],
+        help="assess | path | enumerate",
+    )
+    geom_p.add_argument("--repo", help="Repository (required for assess/path)")
+    geom_p.add_argument(
+        "--operation",
+        default="promote",
+        help="retrieve|adapt|promote|repair|repair_readmit|federate",
+    )
+    geom_p.add_argument(
+        "--authority",
+        action="store_true",
+        help="Treat authority axis as valid for assessment.",
+    )
+    geom_p.add_argument(
+        "--witness",
+        action="store_true",
+        help="Treat witness axis as valid for assessment.",
+    )
+    geom_p.add_argument("--json", action="store_true")
 
     wit_p = sub.add_parser(
         "witness",
@@ -1897,6 +1924,7 @@ def main(argv: list[str] | None = None) -> None:
                 compute_body_epoch,
                 current_body_epoch,
                 ensure_current_epoch,
+                observe_current_epoch,
                 seal_epoch_transition,
                 verify_body_epoch,
             )
@@ -1904,6 +1932,8 @@ def main(argv: list[str] | None = None) -> None:
             act = str(getattr(args, "action", "current") or "current")
             if act == "compute":
                 emit(compute_body_epoch(store, args.repo).to_dict(), args.json)
+            elif act == "observe":
+                emit(observe_current_epoch(store, args.repo), args.json)
             elif act == "seal":
                 emit(
                     seal_epoch_transition(
@@ -1921,6 +1951,55 @@ def main(argv: list[str] | None = None) -> None:
                     ensure_current_epoch(store, args.repo, reason="cli").to_dict(),
                     args.json,
                 )
+
+        elif command == "geometry":
+            from .constitutional_geometry import (
+                CLAIM as GEOM_CLAIM,
+                assess_repo_coordinate,
+                enumerate_coordinates,
+                enumerate_coordinates_hash,
+            )
+            from .constitutional_path import compile_legal_path
+            from .constitutional_requirements import requirements_report
+
+            act = str(getattr(args, "action", "assess") or "assess")
+            if act == "enumerate":
+                emit(
+                    {
+                        "coordinates": enumerate_coordinates(),
+                        "count": 16,
+                        "enumeration_hash": enumerate_coordinates_hash(),
+                        "requirements": requirements_report(),
+                        "claim_boundary": GEOM_CLAIM,
+                    },
+                    args.json,
+                )
+            else:
+                if not args.repo:
+                    raise SystemExit("geometry assess/path requires --repo")
+                op = str(args.operation)
+                coord = assess_repo_coordinate(
+                    store,
+                    args.repo,
+                    authority_ok=True if getattr(args, "authority", False) else False,
+                    witness_ok=True if getattr(args, "witness", False) else None,
+                    require_witness=op.casefold() in {"promote", "repair_readmit"},
+                )
+                if act == "path":
+                    emit(
+                        compile_legal_path(
+                            op, coord, context={"store": store, "repo": args.repo}
+                        ),
+                        args.json,
+                    )
+                else:
+                    from .constitutional_requirements import assess_operation
+
+                    gate = assess_operation(op, coord)
+                    path = compile_legal_path(
+                        op, coord, context={"store": store, "repo": args.repo}
+                    )
+                    emit({**gate, "path": path}, args.json)
 
         elif command == "immunity":
             from .immunity import (

@@ -151,21 +151,40 @@ def ensure_phase_tables(store: Any) -> None:
     store.db.commit()
 
 
-def current_phase(store: Any, repo: str) -> RuntimePhaseState:
+def current_phase(store: Any, repo: str, *, persist_default: bool = False) -> RuntimePhaseState:
+    """Return phase state. Default is observe-only when no row exists.
+
+    persist_default=True (mutation paths) may bind QUIESCENT under ensure_current_epoch.
+    Diagnostics/mesh must leave persist_default=False so no epoch seal / no phase write.
+    """
     ensure_phase_tables(store)
     row = store.db.execute(
         "SELECT * FROM runtime_phase_state WHERE repo=?", (repo,)
     ).fetchone()
     if not row:
-        ep = ensure_current_epoch(store, repo, reason="phase_init")
+        from .epoch import observe_current_epoch
+
+        obs = observe_current_epoch(store, repo)
+        eid = str(obs.get("epoch_id") or "")
         st = RuntimePhaseState(
             repo=repo,
-            epoch_id=ep.epoch_id,
+            epoch_id=eid or "unbound",
             phase=QUIESCENT,
             entered_at=time.time(),
             previous_phase=None,
+            metadata={"ephemeral": True, "observe_only": not persist_default},
         )
-        _persist(store, st)
+        if persist_default:
+            # Explicit mutation path only
+            ep = ensure_current_epoch(store, repo, reason="phase_init")
+            st = RuntimePhaseState(
+                repo=repo,
+                epoch_id=ep.epoch_id,
+                phase=QUIESCENT,
+                entered_at=time.time(),
+                previous_phase=None,
+            )
+            _persist(store, st)
         return st
     import json
 
@@ -234,12 +253,12 @@ def transition_phase(
     to_phase = (to_phase or "").upper().strip()
     if to_phase not in ALL_PHASES:
         return {"ok": False, "error": "unknown_phase", "phase": to_phase}
-    cur = current_phase(store, repo)
+    cur = current_phase(store, repo, persist_default=True)
     if force_epoch_refresh:
         ep = ensure_current_epoch(store, repo, reason=f"phase:{to_phase}")
     else:
         ep = ensure_current_epoch(store, repo, reason="phase_touch")
-    if cur.epoch_id != ep.epoch_id:
+    if cur.epoch_id != ep.epoch_id and cur.epoch_id not in {"", "unbound"}:
         # epoch drifted — rebind quiescent then continue if legal from QUIESCENT
         cur = RuntimePhaseState(
             repo=repo,

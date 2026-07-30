@@ -22,28 +22,44 @@ GLYPH = "⧉"
 
 
 def _continuity_slice(store: Any, repo: str) -> dict[str, Any]:
-    """v7.0: body epoch + phase + plane roots for mesh (read/seal, no host mutation)."""
+    """v7.1: body epoch + phase via observe-only (never seals)."""
     try:
-        from .epoch import ensure_current_epoch, verify_body_epoch
+        from .epoch import observe_current_epoch
         from .phases import current_phase
 
-        ep = ensure_current_epoch(store, repo, reason="interconnect_mesh")
+        obs = observe_current_epoch(store, repo)
         ph = current_phase(store, repo)
-        ver = verify_body_epoch(store, repo, ep)
+        sealed = obs.get("sealed") or {}
+        live_roots = obs.get("live_roots") or {}
+        eid = obs.get("epoch_id") or live_roots.get("epoch_id")
         return {
             "plane": "continuity",
-            "body_epoch_id": ep.epoch_id,
-            "epoch_verified": bool(ver.get("ok")),
-            "epoch_mismatches": list(ver.get("mismatches") or []),
+            "body_epoch_id": eid,
+            "epoch_verified": bool(obs.get("verified")),
+            "epoch_present": bool(obs.get("present")),
+            "epoch_mismatches": list(obs.get("mismatches") or []),
             "runtime_phase": ph.phase,
             "phase_epoch_id": ph.epoch_id,
-            "phase_bound": ph.epoch_id == ep.epoch_id,
-            "evidence_root_hash": ep.evidence_root_hash[:16],
-            "adaptive_root_hash": ep.adaptive_root_hash[:16],
-            "constitutional_config_hash": ep.constitutional_config_hash[:16],
-            "cortex_version": ep.cortex_version,
-            "repository_id": ep.repository_id,
-            "receipt_hash": ep.receipt_hash[:16],
+            "phase_bound": (not eid) or ph.epoch_id == eid,
+            "evidence_root_hash": str(
+                sealed.get("evidence_root_hash")
+                or live_roots.get("evidence_root_hash")
+                or ""
+            )[:16],
+            "adaptive_root_hash": str(
+                sealed.get("adaptive_root_hash")
+                or live_roots.get("adaptive_root_hash")
+                or ""
+            )[:16],
+            "constitutional_config_hash": str(
+                sealed.get("constitutional_config_hash")
+                or live_roots.get("constitutional_config_hash")
+                or ""
+            )[:16],
+            "cortex_version": sealed.get("cortex_version"),
+            "repository_id": sealed.get("repository_id"),
+            "receipt_hash": str(obs.get("receipt_hash") or "")[:16],
+            "observe_only": True,
         }
     except Exception as exc:
         return {"plane": "continuity", "error": f"{type(exc).__name__}: {exc}"}

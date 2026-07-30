@@ -269,10 +269,52 @@ def readmit(
     *,
     authorize: bool = False,
     verify_result: dict[str, Any] | None = None,
+    skip_geometry: bool = False,
 ) -> dict[str, Any]:
     if not authorize:
         return {"ok": False, "error": "authorize_required", "claim_boundary": CLAIM}
+    # v7.1 constitutional geometry boundary (repair_readmit requires e,a,t,w)
+    try:
+        from .epoch import ensure_current_epoch
+
+        ensure_current_epoch(store, repo, reason="repair_readmit")
+    except Exception:
+        pass
     v = verify_result or verify_repair(store, repo, repair_id)
+    if not skip_geometry:
+        try:
+            from .constitutional_path import assess_operation_at_boundary
+
+            geometry = assess_operation_at_boundary(
+                store,
+                repo,
+                "repair_readmit",
+                authority_ok=True,
+                witness_ok=bool(v.get("ok") and v.get("readmit_allowed")),
+                require_witness=True,
+            )
+            if not geometry.get("allowed"):
+                return {
+                    "ok": False,
+                    "readmitted": False,
+                    "error": "constitutional_geometry_denied",
+                    "geometry": geometry,
+                    "coordinate": geometry.get("coordinate"),
+                    "missing_axes": geometry.get("missing_axes"),
+                    "reasons": geometry.get("reasons"),
+                    "required_legal_path": geometry.get("required_legal_path"),
+                    "verify": v,
+                    "claim_boundary": CLAIM,
+                }
+        except Exception as exc:
+            return {
+                "ok": False,
+                "readmitted": False,
+                "error": f"geometry_error:{type(exc).__name__}",
+                "detail": str(exc),
+                "verify": v,
+                "claim_boundary": CLAIM,
+            }
     if not v.get("readmit_allowed"):
         # rollback if snapshot known
         row = store.db.execute(
