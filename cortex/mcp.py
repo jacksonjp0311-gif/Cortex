@@ -237,8 +237,60 @@ TOOLS = [
     {
         "name": "cortex_kernels",
         "description": (
-            "Spectral memory kernels (≋): reset/integrate/retain spectrum. " + _REFUSE
+            "Retention regimes (≋): reset/integrate/retain priors — not consciousness. "
+            + _REFUSE
         ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
+        "name": "cortex_fuse_open",
+        "description": (
+            "Open fusion co-process (⊛⇄): shared mind-state; host must tick each token. "
+            + _REFUSE
+            + " Not model-weight fusion; not consciousness."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "task": {"type": "string"},
+                "budget": {"type": "integer", "default": 600},
+            },
+        },
+    },
+    {
+        "name": "cortex_fuse_tick",
+        "description": (
+            "Fusion tick: regenerate geometry for this token/step; returns injection for the model. "
+            + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "token": {"type": "string", "description": "Current token or step text"},
+                "tokens": {"type": "integer", "default": 1},
+            },
+        },
+    },
+    {
+        "name": "cortex_fuse_state",
+        "description": "Read fusion self-model / mind_hash / U / attention. " + _REFUSE,
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {"repo": {"type": "string"}},
+        },
+    },
+    {
+        "name": "cortex_fuse_close",
+        "description": "Close fusion co-process session. " + _REFUSE,
         "inputSchema": {
             "type": "object",
             "required": ["repo"],
@@ -419,6 +471,35 @@ class CortexMCP:
                     "Organism is session co-process state; not consciousness or authority."
                 ),
             }
+        if name == "cortex_fuse_open":
+            from .coprocess import fuse_open
+
+            return fuse_open(
+                self.home,
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                task=str(arguments.get("task") or "fusion"),
+                budget=int(arguments.get("budget", 600)),
+            )
+        if name == "cortex_fuse_tick":
+            from .coprocess import fuse_tick
+
+            return fuse_tick(
+                self.store,
+                self.governor,
+                str(arguments["repo"]),
+                token=str(arguments.get("token") or ""),
+                tokens=int(arguments.get("tokens") or 1),
+            )
+        if name == "cortex_fuse_state":
+            from .coprocess import fuse_state
+
+            return fuse_state(self.store, str(arguments["repo"]))
+        if name == "cortex_fuse_close":
+            from .coprocess import fuse_close
+
+            return fuse_close(self.store, str(arguments["repo"]))
         if name == "cortex_breathe":
             from .organism import breathe as organism_breathe
 

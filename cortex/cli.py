@@ -507,6 +507,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Emit living organism interlink state for a task (session co-process).",
     )
     organism.add_argument("--repo", required=True)
+
+    fuse_p = sub.add_parser(
+        "fuse",
+        help="Fusion co-process ⊛⇄ — tick geometry each model token/step (not consciousness).",
+    )
+    fuse_p.add_argument(
+        "action",
+        choices=["open", "tick", "state", "close"],
+        help="open session | tick (per token) | state | close",
+    )
+    fuse_p.add_argument("--repo", required=True)
+    fuse_p.add_argument("--task", default="", help="Task for open.")
+    fuse_p.add_argument("--token", default="", help="Current token/step text for tick.")
+    fuse_p.add_argument("--tokens", type=int, default=1, help="Token count advanced this tick.")
+    fuse_p.add_argument("--budget", type=int, default=600)
+    fuse_p.add_argument("--no-invent", action="store_true", help="Disable structure invention.")
+    fuse_p.add_argument("--json", action="store_true")
     organism.add_argument("--task", required=True)
     organism.add_argument("--budget", type=int, default=800)
     organism.add_argument(
@@ -1415,6 +1432,40 @@ def main(argv: list[str] | None = None) -> None:
                 },
                 args.json,
             )
+
+        elif command == "fuse":
+            from .coprocess import fuse_close, fuse_open, fuse_state, fuse_tick
+
+            if args.action == "open":
+                emit(
+                    fuse_open(
+                        home,
+                        store,
+                        governor,
+                        args.repo,
+                        task=args.task or "fusion co-process",
+                        budget=int(args.budget or 600),
+                        invent_structure=not bool(args.no_invent),
+                        spectral_primary=True,
+                    ),
+                    args.json,
+                )
+            elif args.action == "tick":
+                emit(
+                    fuse_tick(
+                        store,
+                        governor,
+                        args.repo,
+                        token=args.token or "",
+                        tokens=max(1, int(args.tokens or 1)),
+                        invent=None if not args.no_invent else False,
+                    ),
+                    args.json,
+                )
+            elif args.action == "state":
+                emit(fuse_state(store, args.repo), args.json)
+            else:
+                emit(fuse_close(store, args.repo), args.json)
 
         elif command == "breathe":
             from .organism import breathe as organism_breathe

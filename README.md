@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-6.13.0-0ea5e9?style=for-the-badge" alt="v6.13.0" />
+  <img src="https://img.shields.io/badge/version-6.14.0-0ea5e9?style=for-the-badge" alt="v6.14.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v6.13.0** — **Math/network spine M0–M10** (`cortex math-net`): unified uncertainty \(U\), graph operator \(A\), true spectral slice, ranker-primary helpers, plasticity RCT, plus continuum. See [`docs/intelligence/PHASE_V6.13_SPECTRAL_E2E.md`](docs/intelligence/PHASE_V6.13_SPECTRAL_E2E.md).
+**Current release: v6.14.0** — **Math/network spine M0–M10** (`cortex math-net`): unified uncertainty \(U\), graph operator \(A\), true spectral slice, ranker-primary helpers, plasticity RCT, plus continuum. See [`docs/intelligence/PHASE_V6.14_FUSION.md`](docs/intelligence/PHASE_V6.14_FUSION.md).
 
 ```bash
 pip install -e .
