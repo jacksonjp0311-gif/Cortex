@@ -221,9 +221,16 @@ def activate_evidence_baseline(
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(full_context, indent=2, default=str) + "\n", encoding="utf-8")
 
+    cert_status = (certificate or {}).get("status") if isinstance(certificate, dict) else None
+    bootstrap_status = str(
+        repository["bootstrap_status"]
+        if repository is not None and repository["bootstrap_status"]
+        else (cert_status or "unknown")
+    )
     return {
         "profile": profile,
         "context": projected,
+        "context_full": full_context,
         "controller_execution": exec_receipt,
         "memory_simplex": full_context["memory_simplex"],
         "evidence_kernel": ek_ctx,
@@ -232,6 +239,10 @@ def activate_evidence_baseline(
         "sterile_baseline": True,
         "capability": cap.to_dict(),
         "packet_path": str(runtime_path),
+        "bootstrap_status": bootstrap_status,
+        "activation": "ready" if bootstrap_status == "verified" or cert_status == "verified" else "read_only",
+        "block": False,
+        "control_error": full_context.get("control_error") or {"block": False},
         "claim_boundary": full_context["claim_boundary"],
     }
 
@@ -484,9 +495,14 @@ def activate_advanced(
         block=bool((context.get("control_error") or {}).get("block")),
         auto_distill=True,
     )
+    # Keep connect_pass surface rich for mesh/pulse tests (pass_id + intel_pulse)
     context["connect_pass"] = {
         "pass_id": connect.get("pass_id"),
         "pass_count": connect.get("pass_count"),
+        "intel_pulse": connect.get("intel_pulse"),
+        "metric_graph": connect.get("metric_graph"),
+        "spectral": connect.get("spectral"),
+        "surface": connect.get("surface"),
     }
 
     exec_receipt = {
@@ -510,9 +526,19 @@ def activate_advanced(
     runtime_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_path.write_text(json.dumps(full_context, indent=2, default=str) + "\n", encoding="utf-8")
 
-    return {
+    cert_status = (certificate or {}).get("status") if isinstance(certificate, dict) else None
+    bootstrap_status = str(
+        repository["bootstrap_status"]
+        if repository is not None and repository["bootstrap_status"]
+        else (cert_status or "unknown")
+    )
+    activation_state = "ready" if cert_status == "verified" or bootstrap_status == "verified" else "read_only"
+    control = full_context.get("control_error") or {}
+    glyph_state = full_context.get("glyph_state") or {}
+    out = {
         "profile": profile,
         "context": projected,
+        "context_full": full_context,
         "controller_execution": exec_receipt,
         "memory_simplex": full_context.get("memory_simplex"),
         "certificate": certificate,
@@ -525,8 +551,47 @@ def activate_advanced(
         "neural": neural,
         "environment": environment,
         "refresh": refresh_result,
+        "surprise": surprise,
+        "bootstrap_status": bootstrap_status,
+        "activation": activation_state,
+        "block": bool(control.get("block")),
+        "control_error": control,
+        "connect_pass": full_context.get("connect_pass"),
+        "stream": full_context.get("stream"),
+        "glyph_state": glyph_state,
+        "glyph_line": full_context.get("glyph_line")
+        or (glyph_state.get("line") if isinstance(glyph_state, dict) else None),
+        "aria_language": full_context.get("aria_language")
+        or full_context.get("aria_materialization")
+        or full_context.get("glyph_canon"),
+        "prediction": full_context.get("prediction"),
         "claim_boundary": "Advanced activation under capability-scoped adaptive writes.",
     }
+    # Envelope parity: aria_language + phrasebook for agents/signal harness
+    try:
+        from .glyphs.canon import phrasebook as _phrasebook
+
+        pb = _phrasebook()
+    except Exception:
+        pb = {"phrases": {}}
+    al = out.get("aria_language")
+    if not isinstance(al, dict) or not al.get("phrasebook"):
+        out["aria_language"] = {
+            "glyph": "◈",
+            "phrasebook": pb,
+            "automatic_execution": False,
+            "aria_role": "meta_medium",
+            "schema_version": "cortex-aria-language/1.0",
+        }
+    else:
+        al.setdefault("glyph", "◈")
+        al.setdefault("automatic_execution", False)
+        al.setdefault("phrasebook", pb)
+    if not out.get("glyph_state"):
+        out["glyph_state"] = {"line": "◈", "expand": []}
+    if not out.get("glyph_line"):
+        out["glyph_line"] = (out.get("glyph_state") or {}).get("line") or "◈"
+    return out
 
 
 def activate_repository(
@@ -589,11 +654,62 @@ def activate_repository(
     except Exception:
         pass
 
-    # Phase 2a: sterile baseline — early return (no index/organism/connect)
+    # Evidence refresh may run before path split: re-index is G_evidence (not A-plane).
+    # When drift forces read_only→baseline, refresh first, then re-resolve controller.
+    refresh_result: dict[str, Any] | None = None
+    if refresh == "always" or (refresh == "auto" and not manifest_current):
+        try:
+            refresh_result = index_repository(store, repo, config, force=False)
+            resolve_graph(store, repo)
+            try:
+                ingest_git(store, repo, root, config.git_commit_limit)
+            except Exception:
+                pass
+            repository = store.repo(repo) or repository
+            observed_manifest = current_manifest_hash(root, config)
+            manifest_current = observed_manifest == (repository["manifest_hash"] or "")
+            # Re-resolve after evidence catch-up (may lift read_only → advanced)
+            if not force_evidence_baseline:
+                resolution = resolve_activation_controller(
+                    governor,
+                    repo,
+                    memory_controller=memory_controller,
+                    force_evidence_baseline=False,
+                    manifest_current=manifest_current,
+                )
+                controller = resolution["controller"]
+                cap = CapabilityIssuer("activation").issue(
+                    repo=repo,
+                    controller=controller,
+                    reason=resolution.get("reason") or "activation_post_refresh",
+                    ttl_s=7200.0,
+                    body_epoch_id=epoch.epoch_id,
+                    evidence_root_hash=epoch.evidence_root_hash,
+                    constitutional_config_hash=epoch.constitutional_config_hash,
+                )
+                resolution["capability"] = cap
+                resolution["body_epoch"] = epoch.to_dict()
+        except Exception as exc:
+            refresh_result = {
+                "error": f"{type(exc).__name__}:{exc}",
+                "refreshed": False,
+            }
+
+    # Phase 2a: sterile baseline — no adaptive machinery after optional evidence refresh
     if controller == "evidence_baseline":
         certificate = verify_repository(
-            home, store, repo, config, write_certificate=False
+            home,
+            store,
+            repo,
+            config,
+            write_certificate=bool(refresh_result),
         )
+        if isinstance(certificate, dict) and certificate.get("status") == "verified":
+            try:
+                store.update_repo_state(repo, bootstrap_status="verified")
+                repository = store.repo(repo) or repository
+            except Exception:
+                pass
         out = activate_evidence_baseline(
             home,
             store,
@@ -609,9 +725,20 @@ def activate_repository(
             certificate=certificate,
         )
         out["body_epoch"] = epoch.to_dict()
+        out["refresh"] = refresh_result
+        out["manifest_current"] = manifest_current
+        cert_status = (certificate or {}).get("status") if isinstance(certificate, dict) else None
+        out["bootstrap_status"] = str(
+            (repository["bootstrap_status"] if repository is not None else None)
+            or cert_status
+            or out.get("bootstrap_status")
+            or "unknown"
+        )
+        if cert_status == "verified" or out["bootstrap_status"] == "verified":
+            out["activation"] = "ready"
         return out
 
-    # Phase 2b: advanced — refresh/index allowed under capability
+    # Phase 2b: advanced — may still refresh if not already done above
     surprise: dict[str, Any] = {
         "schema_version": "cortex-surprise/1.0",
         "glyph": "Δ",
@@ -622,8 +749,39 @@ def activate_repository(
         "surprise_ratio": 0.0,
         "claim_boundary": "Surprise is an incremental work proxy, not biological prediction error.",
     }
-    refresh_result: dict[str, Any] | None = None
-    if refresh == "always" or (refresh == "auto" and not manifest_current):
+    if refresh_result is not None and not refresh_result.get("error"):
+        reindexed = int(refresh_result.get("indexed_files_this_run") or 0)
+        unchanged = int(refresh_result.get("unchanged_files") or 0)
+        denom = max(1, reindexed + unchanged)
+        surprise = {
+            "schema_version": "cortex-surprise/1.0",
+            "glyph": "Δ",
+            "refreshed": True,
+            "manifest_current_before": False,
+            "files_reindexed": reindexed,
+            "files_unchanged": unchanged,
+            "deferred_files": int(
+                (refresh_result.get("aria_substrate") or {}).get("deferred_files") or 0
+            ),
+            "surprise_ratio": round(reindexed / denom, 6),
+            "claim_boundary": (
+                "Surprise is an incremental work proxy, not biological prediction error."
+            ),
+        }
+        environment = (
+            learn_environment(root, store, repo, runtime_directory(root, config))
+            if config.environment_learning_enabled
+            else {"available": False, "disabled": True}
+        )
+        neural = (
+            compile_interlink(store, repo)
+            if config.neural_interlink_enabled
+            else {"available": False, "disabled": True}
+        )
+        certificate = verify_repository(home, store, repo, config, write_certificate=True)
+        manifest_current = certificate["manifest"]["current"]
+    elif refresh == "always" or (refresh == "auto" and not manifest_current):
+        # Fallback if early refresh was skipped
         refresh_result = index_repository(store, repo, config, force=False)
         reindexed = int(refresh_result.get("indexed_files_this_run") or 0)
         unchanged = int(refresh_result.get("unchanged_files") or 0)
