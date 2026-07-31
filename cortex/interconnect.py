@@ -22,7 +22,11 @@ GLYPH = "⧉"
 
 
 def _continuity_slice(store: Any, repo: str) -> dict[str, Any]:
-    """v7.1: body epoch + phase via observe-only (never seals)."""
+    """v7.1: body epoch + phase via observe-only (never seals).
+
+    When no epoch is sealed yet, surface the live computed epoch_id (identity
+    material only) so mesh diagnostics still report continuity without mutation.
+    """
     try:
         from .epoch import observe_current_epoch
         from .phases import current_phase
@@ -30,35 +34,52 @@ def _continuity_slice(store: Any, repo: str) -> dict[str, Any]:
         obs = observe_current_epoch(store, repo)
         ph = current_phase(store, repo)
         sealed = obs.get("sealed") or {}
+        live = obs.get("live") or {}
         live_roots = obs.get("live_roots") or {}
-        eid = obs.get("epoch_id") or live_roots.get("epoch_id")
+        # Prefer sealed identity; else live compute (observe-only, not persisted)
+        eid = (
+            obs.get("epoch_id")
+            or obs.get("live_epoch_id")
+            or live.get("epoch_id")
+        )
         return {
             "plane": "continuity",
             "body_epoch_id": eid,
+            "live_epoch_id": obs.get("live_epoch_id") or live.get("epoch_id"),
             "epoch_verified": bool(obs.get("verified")),
             "epoch_present": bool(obs.get("present")),
+            "epoch_sealed": bool(obs.get("present")),
             "epoch_mismatches": list(obs.get("mismatches") or []),
             "runtime_phase": ph.phase,
             "phase_epoch_id": ph.epoch_id,
-            "phase_bound": (not eid) or ph.epoch_id == eid,
+            "phase_bound": (not eid)
+            or ph.epoch_id in {eid, "unbound", ""}
+            or ph.epoch_id == eid,
             "evidence_root_hash": str(
                 sealed.get("evidence_root_hash")
                 or live_roots.get("evidence_root_hash")
+                or live.get("evidence_root_hash")
                 or ""
             )[:16],
             "adaptive_root_hash": str(
                 sealed.get("adaptive_root_hash")
                 or live_roots.get("adaptive_root_hash")
+                or live.get("adaptive_root_hash")
                 or ""
             )[:16],
             "constitutional_config_hash": str(
                 sealed.get("constitutional_config_hash")
                 or live_roots.get("constitutional_config_hash")
+                or live.get("constitutional_config_hash")
                 or ""
             )[:16],
-            "cortex_version": sealed.get("cortex_version"),
-            "repository_id": sealed.get("repository_id"),
-            "receipt_hash": str(obs.get("receipt_hash") or "")[:16],
+            "cortex_version": sealed.get("cortex_version")
+            or live.get("cortex_version"),
+            "repository_id": sealed.get("repository_id")
+            or live.get("repository_id"),
+            "receipt_hash": str(
+                obs.get("receipt_hash") or live.get("receipt_hash") or ""
+            )[:16],
             "observe_only": True,
         }
     except Exception as exc:

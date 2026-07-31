@@ -565,6 +565,8 @@ def activate_advanced(
         or full_context.get("aria_materialization")
         or full_context.get("glyph_canon"),
         "prediction": full_context.get("prediction"),
+        "spectral_memory": full_context.get("spectral_memory"),
+        "u": full_context.get("u"),
         "claim_boundary": "Advanced activation under capability-scoped adaptive writes.",
     }
     # Envelope parity: aria_language + phrasebook for agents/signal harness
