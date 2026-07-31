@@ -648,6 +648,7 @@ def run_self_org(
         },
         "body_epoch": body_epoch_seal,
         "promotion_epoch": epoch_for_promote,
+        "claim_receipt": (promotion.get("claim_receipt") if isinstance(promotion, dict) else None),
         "held_course": {
             "spectral_kept": bool(
                 active_gate.get("keep_spectral_features")

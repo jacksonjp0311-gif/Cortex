@@ -83,6 +83,36 @@ def evaluate_promotion(
                         + [f"missing_{a}" for a in (geometry.get("missing_axes") or [])]
                     )
                 )
+                # Still stamp a denied claim receipt for audit (v7.1.2)
+                try:
+                    from .claim_receipt import issue_promote_claim_receipt
+                    from .epoch import observe_current_epoch
+
+                    obs = observe_current_epoch(store, repo)
+                    denied["body_epoch_id"] = str(
+                        obs.get("epoch_id") or obs.get("live_epoch_id") or ""
+                    )
+                    denied["epoch_verified"] = bool(obs.get("verified"))
+                    rec = issue_promote_claim_receipt(
+                        store,
+                        repo,
+                        promotion=denied,
+                        geometry=geometry,
+                        holdout_report=holdout_report,
+                        foreign_report=foreign_report,
+                        witness_report=witness_report,
+                        persist=True,
+                    )
+                    denied["claim_receipt"] = {
+                        "claim_id": rec.get("claim_id"),
+                        "status": rec.get("status"),
+                        "receipt_hash": rec.get("receipt_hash"),
+                        "body_epoch_id": rec.get("body_epoch_id"),
+                        "gate_bits": rec.get("gate_bits"),
+                    }
+                    denied["claim_receipt_full"] = rec
+                except Exception as exc:
+                    denied["claim_receipt_error"] = f"{type(exc).__name__}:{exc}"
                 return denied
         except Exception as exc:
             geometry = {"error": f"{type(exc).__name__}:{exc}"}
@@ -191,13 +221,55 @@ def evaluate_promotion(
             "governance allows AND body epoch is verified when bound AND "
             "constitutional geometry (e,a,t,w)=(1,1,1,1) when store bound. "
             "Coupling does not certify utility. "
-            "Optional sealed witness when require_witness=True."
+            "Optional sealed witness when require_witness=True. "
+            "When allowed, a claim receipt may be stamped (v7.1.2)."
         ),
         "claim_boundary": CLAIM,
     }
     if geometry is not None:
         out["geometry"] = geometry
         out["coordinate"] = geometry.get("coordinate")
+        if not body_epoch_id:
+            try:
+                out["body_epoch_id"] = (
+                    (geometry.get("coordinate_detail") or {})
+                    .get("epoch", {})
+                    .get("epoch_id")
+                ) or body_epoch_id
+            except Exception:
+                pass
+
+    # v7.1.2: stamp claim receipt when store+repo bound (allowed or denied)
+    if store is not None and repo:
+        try:
+            from .claim_receipt import issue_promote_claim_receipt
+
+            # Prefer geometry epoch if promotion lacked body_epoch_id
+            if not out.get("body_epoch_id") and geometry:
+                out["body_epoch_id"] = (
+                    (geometry.get("phase_binding") or {}).get("body_epoch_id")
+                    or out.get("body_epoch_id")
+                )
+            receipt = issue_promote_claim_receipt(
+                store,
+                repo,
+                promotion=out,
+                geometry=geometry,
+                holdout_report=holdout_report,
+                foreign_report=foreign_report,
+                witness_report=witness_report,
+                persist=True,
+            )
+            out["claim_receipt"] = {
+                "claim_id": receipt.get("claim_id"),
+                "status": receipt.get("status"),
+                "receipt_hash": receipt.get("receipt_hash"),
+                "body_epoch_id": receipt.get("body_epoch_id"),
+                "gate_bits": receipt.get("gate_bits"),
+            }
+            out["claim_receipt_full"] = receipt
+        except Exception as exc:
+            out["claim_receipt_error"] = f"{type(exc).__name__}:{exc}"
     return out
 
 

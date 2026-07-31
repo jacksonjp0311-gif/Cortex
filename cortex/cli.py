@@ -743,6 +743,19 @@ def build_parser() -> argparse.ArgumentParser:
     epoch_p.add_argument("--reason", default="operator")
     epoch_p.add_argument("--json", action="store_true")
 
+    claim_p = sub.add_parser(
+        "claim",
+        help="v7.1.2 Claim receipt ⌘◆ — latest/verify stamped promote claims.",
+    )
+    claim_p.add_argument("--repo", required=True)
+    claim_p.add_argument(
+        "action",
+        choices=["latest", "verify", "report"],
+        nargs="?",
+        default="report",
+    )
+    claim_p.add_argument("--json", action="store_true")
+
     geom_p = sub.add_parser(
         "geometry",
         help="v7.1 Constitutional Geometry ◆ — four-axis (e,a,t,w) assess/path/enumerate.",
@@ -1951,6 +1964,21 @@ def main(argv: list[str] | None = None) -> None:
                     ensure_current_epoch(store, args.repo, reason="cli").to_dict(),
                     args.json,
                 )
+
+        elif command == "claim":
+            from .claim_receipt import (
+                claim_report,
+                latest_claim_receipt,
+                verify_claim_receipt,
+            )
+
+            act = str(getattr(args, "action", "report") or "report")
+            if act == "latest":
+                emit(latest_claim_receipt(store, args.repo) or {"error": "none"}, args.json)
+            elif act == "verify":
+                emit(verify_claim_receipt(store, args.repo), args.json)
+            else:
+                emit(claim_report(store, args.repo), args.json)
 
         elif command == "geometry":
             from .constitutional_geometry import (

@@ -1,3 +1,11 @@
+## 7.1.2 - Claim Receipts
+
+- **Promote claim receipt:** when `evaluate_promotion` runs with store+repo, stamp a hashed claim (`claim_id`, `body_epoch_id`, `gate_bits`, axis truth panel, holdout/foreign/witness digests).
+- **Verify:** recompute receipt hash + epoch still verified (observe-only).
+- **CLI:** `python -m cortex claim --repo X [--json]` (`report` / `latest` / `verify`).
+- Self-org surfaces `claim_receipt` from promotion gate.
+- Docs: `docs/intelligence/PHASE_V7.1.2_CLAIM_RECEIPTS.md`.
+
 ## 7.1.1 - Geometry Seal
 
 - **CI:** `release_receipt_v711.py` hard gate (no continue-on-error).
