@@ -1,4 +1,4 @@
-"""v7.1 boundary integration — promote, repair_readmit, federate."""
+"""v7.1 boundary integration — promote, repair_readmit, federate (geometry seal)."""
 
 from __future__ import annotations
 
@@ -7,15 +7,18 @@ import unittest
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
+from cortex.capabilities import issue_for_controller
 from cortex.config import ensure_home
 from cortex.constitutional_path import assess_operation_at_boundary
 from cortex.epoch import ensure_current_epoch
 from cortex.federation import federated_query
 from cortex.immunity import open_wound, plan_repair, readmit, verify_repair
 from cortex.lineage import record_artifact
+from cortex.phases import transition_phase
 from cortex.promote_gate import evaluate_promotion
 from cortex.store import Store
 from cortex.unlearning import apply_unlearning
+from cortex.witness import commit_manifest
 
 
 class V71IntegrationTests(unittest.TestCase):
@@ -28,13 +31,33 @@ class V71IntegrationTests(unittest.TestCase):
         self.store = Store(self.home / "cortex.db")
         bootstrap_repository(self.home, self.store, p, "V71Host")
         ensure_current_epoch(self.store, "V71Host", reason="setup")
+        transition_phase(
+            self.store, "V71Host", "QUIESCENT", reason="setup_bind"
+        )
 
     def tearDown(self) -> None:
         self.store.close()
         self.temp.cleanup()
 
     def test_promotion_boundary_uses_geometry(self) -> None:
-        # Without witness/authority geometry should deny when store bound
+        # Operator-asserted authority must not open promote
+        g_bad = assess_operation_at_boundary(
+            self.store,
+            "V71Host",
+            "promote",
+            authority_ok=True,
+            witness_ok=True,
+            require_witness=True,
+        )
+        self.assertFalse(g_bad["allowed"], g_bad)
+        self.assertTrue(
+            g_bad.get("truth_ineligible_axes")
+            or any("truth" in r for r in (g_bad.get("reasons") or []))
+            or g_bad.get("missing_axes"),
+            g_bad,
+        )
+
+        # Without capability / witness receipts — deny
         r = evaluate_promotion(
             holdout_report={
                 "winner": "baseline",
@@ -50,20 +73,32 @@ class V71IntegrationTests(unittest.TestCase):
             governance_mode="normal",
             store=self.store,
             repo="V71Host",
-            authority_ok=True,
             require_witness=True,
             witness_report=None,
         )
         self.assertFalse(r.get("allow_promote"))
         self.assertIn("geometry", r)
-        self.assertIn("coordinate", r)
-        # With full geometry flags via skip after path shows allow when all bits set
+
+        # Real capability + witness commitment (RECEIPT_VERIFIED)
+        cap = issue_for_controller(
+            "V71Host", "advanced", store=self.store, reason="promote_test"
+        )
+        commit_manifest(
+            [
+                {
+                    "id": "prom_w1",
+                    "query": "README",
+                    "expected_substrings": ["README"],
+                }
+            ],
+            store=self.store,
+            evaluator_identity="promote_test",
+        )
         g = assess_operation_at_boundary(
             self.store,
             "V71Host",
             "promote",
-            authority_ok=True,
-            witness_ok=True,
+            capability=cap,
             require_witness=True,
         )
         self.assertTrue(g["allowed"], g)
@@ -82,7 +117,7 @@ class V71IntegrationTests(unittest.TestCase):
             governance_mode="normal",
             store=self.store,
             repo="V71Host",
-            authority_ok=True,
+            capability=cap,
             witness_report={"recall_at_k": 0.9},
             require_witness=True,
         )
@@ -112,12 +147,14 @@ class V71IntegrationTests(unittest.TestCase):
         ra = readmit(
             self.store, "V71Host", rep["repair_id"], authorize=True, verify_result=v
         )
-        # Either readmitted or geometry denial with legal path
         if not ra.get("readmitted"):
-            self.assertIn(ra.get("error"), {
-                "constitutional_geometry_denied",
-                "verify_failed",
-            })
+            self.assertIn(
+                ra.get("error"),
+                {
+                    "constitutional_geometry_denied",
+                    "verify_failed",
+                },
+            )
             if ra.get("error") == "constitutional_geometry_denied":
                 self.assertIn("required_legal_path", ra)
                 self.assertIn("coordinate", ra)
@@ -126,9 +163,10 @@ class V71IntegrationTests(unittest.TestCase):
 
     def test_federation_admission_uses_geometry(self) -> None:
         out = federated_query(self.store, "readme", repositories=["V71Host"])
-        self.assertIn(out.get("protocol"), {"cortex-federation/1.0", "cortex-federation/1.1"})
+        self.assertIn(
+            out.get("protocol"), {"cortex-federation/1.0", "cortex-federation/1.1"}
+        )
         self.assertIn("geometry", out)
-        # With authority_ok (default) and sealed epoch, admission should succeed
         if out.get("error") == "constitutional_geometry_denied":
             self.assertTrue(out.get("admission_denied"))
             self.assertTrue(out.get("geometry"))

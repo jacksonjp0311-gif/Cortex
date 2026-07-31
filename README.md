@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-7.1.0-0ea5e9?style=for-the-badge" alt="v7.1.0" />
+  <img src="https://img.shields.io/badge/version-7.1.1-0ea5e9?style=for-the-badge" alt="v7.1.1" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,7 +42,7 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v7.1.0** — **Constitutional Geometry**: four-axis coordinate \(q=(e,a,t,w)\), illegal diagonals, legal path compiler; promote/repair-readmit/federate boundaries. Builds on v7.0 Resonant Continuity.
+**Current release: v7.1.1** — **Geometry Seal**: axis truth sources (measured/receipt only at live gates), phase binding BOUND-only, audited evidence-refresh edge, hard CI receipt. Builds on v7.1 Constitutional Geometry.
 
 **Research (agents: read first):** [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · agent guide [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md) · [`llms.txt`](llms.txt) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
 

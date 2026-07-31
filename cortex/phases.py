@@ -8,12 +8,24 @@ from typing import Any, FrozenSet
 
 from .epoch import ensure_current_epoch
 
-SCHEMA = "cortex-runtime-phases/1.0"
+SCHEMA = "cortex-runtime-phases/1.1"
 GLYPH = "⟳"
 
 CLAIM = (
     "Runtime phases constrain which plane operations may run under a body epoch. "
-    "Illegal transitions are denied. Not consciousness."
+    "Illegal transitions are denied. Phase binding BOUND is required for "
+    "constitutional phase compatibility. Not consciousness."
+)
+
+# Phase↔epoch binding status (v7.1.1 Geometry Seal)
+BOUND = "BOUND"
+BOOTSTRAP_UNBOUND = "BOOTSTRAP_UNBOUND"
+STALE = "STALE"
+MISMATCHED = "MISMATCHED"
+UNKNOWN = "UNKNOWN"
+
+PHASE_BINDING_STATES = frozenset(
+    {BOUND, BOOTSTRAP_UNBOUND, STALE, MISMATCHED, UNKNOWN}
 )
 
 # Legal phases
@@ -308,12 +320,68 @@ def assert_phase_operation(store: Any, repo: str, operation: str) -> None:
         )
 
 
+def phase_binding_status(
+    store: Any,
+    repo: str,
+    st: RuntimePhaseState | None = None,
+) -> dict[str, Any]:
+    """Classify phase↔epoch binding. Only BOUND satisfies constitutional compatibility."""
+    from .epoch import observe_current_epoch
+
+    st = st or current_phase(store, repo)
+    obs = observe_current_epoch(store, repo)
+    sealed_id = obs.get("epoch_id")
+    live_id = obs.get("live_epoch_id")
+    phase_eid = st.epoch_id or ""
+
+    if phase_eid in {"", "unbound"} and not sealed_id:
+        binding = BOOTSTRAP_UNBOUND
+        reason = "phase_unbound_no_sealed_epoch"
+    elif phase_eid in {"", "unbound"} and sealed_id:
+        binding = BOOTSTRAP_UNBOUND
+        reason = "phase_ephemeral_or_unbound"
+    elif not sealed_id:
+        binding = UNKNOWN
+        reason = "sealed_epoch_absent"
+    elif not obs.get("verified"):
+        if sealed_id and live_id and sealed_id != live_id:
+            binding = STALE
+            reason = "sealed_epoch_stale_vs_live"
+        else:
+            binding = STALE
+            reason = "epoch_not_verified"
+    elif phase_eid != sealed_id:
+        binding = MISMATCHED
+        reason = "phase_epoch_ne_body_epoch"
+    elif st.metadata.get("ephemeral") and not st.receipt_hash:
+        binding = BOOTSTRAP_UNBOUND
+        reason = "ephemeral_phase_not_persisted"
+    else:
+        binding = BOUND
+        reason = "phase_bound_to_verified_epoch"
+
+    compatible = binding == BOUND
+    return {
+        "schema_version": "cortex-phase-binding/1.0",
+        "binding": binding,
+        "constitutionally_compatible": compatible,
+        "reason": reason,
+        "phase": st.phase,
+        "phase_epoch_id": phase_eid,
+        "body_epoch_id": sealed_id,
+        "live_epoch_id": live_id,
+        "claim_boundary": CLAIM,
+    }
+
+
 def phase_report(store: Any, repo: str) -> dict[str, Any]:
     st = current_phase(store, repo)
+    binding = phase_binding_status(store, repo, st)
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "state": st.to_dict(),
+        "binding": binding,
         "legal_next": sorted(LEGAL_TRANSITIONS.get(st.phase, frozenset())),
         "allowed_operations": sorted(PHASE_OPERATIONS.get(st.phase, frozenset())),
         "claim_boundary": CLAIM,

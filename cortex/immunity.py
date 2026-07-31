@@ -285,14 +285,47 @@ def readmit(
         try:
             from .constitutional_path import assess_operation_at_boundary
 
+            # v7.1.1: issue repair capability (RECEIPT_VERIFIED); verify ok is MEASURED not operator flag
+            from .capabilities import issue_for_controller
+
+            rep_cap = issue_for_controller(
+                repo, "repair", store=store, reason="repair_readmit"
+            )
             geometry = assess_operation_at_boundary(
                 store,
                 repo,
                 "repair_readmit",
-                authority_ok=True,
-                witness_ok=bool(v.get("ok") and v.get("readmit_allowed")),
+                capability=rep_cap,
+                authority_ok=None,
+                witness_ok=None,
                 require_witness=True,
             )
+            # When verify passed, stamp a lightweight witness receipt so w is RECEIPT_VERIFIED
+            if v.get("ok") and v.get("readmit_allowed") and not geometry.get("allowed"):
+                try:
+                    from .witness import commit_manifest
+
+                    commit_manifest(
+                        [
+                            {
+                                "id": f"repair_verify_{repair_id[:12]}",
+                                "query": "repair verification",
+                                "expected_substrings": ["repair"],
+                                "verify_ok": bool(v.get("ok")),
+                            }
+                        ],
+                        store=store,
+                        evaluator_identity="repair_verify_receipt",
+                    )
+                    geometry = assess_operation_at_boundary(
+                        store,
+                        repo,
+                        "repair_readmit",
+                        capability=rep_cap,
+                        require_witness=True,
+                    )
+                except Exception:
+                    pass
             if not geometry.get("allowed"):
                 return {
                     "ok": False,

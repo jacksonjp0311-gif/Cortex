@@ -16,7 +16,7 @@ def federated_query(
     per_repo: int = 8,
     semantic_scan_limit: int = 5000,
     skip_geometry: bool = False,
-    authority_ok: bool = True,
+    capability: Any = None,
 ) -> dict[str, Any]:
     available = {row["name"] for row in store.repos()}
     selected = sorted(set(repositories or available))
@@ -40,11 +40,25 @@ def federated_query(
                     ensure_current_epoch(store, repo, reason="federate_admission")
                 except Exception:
                     pass
+                from .capabilities import issue_for_controller
+                from .phases import transition_phase
+
+                # Bind phase under verified epoch for constitutional compatibility
+                try:
+                    transition_phase(
+                        store, repo, "QUIESCENT", reason="federate_admission_bind"
+                    )
+                except Exception:
+                    pass
+                cap = capability or issue_for_controller(
+                    repo, "advanced", store=store, reason="federate_admission"
+                )
                 g = assess_operation_at_boundary(
                     store,
                     repo,
                     "federate",
-                    authority_ok=authority_ok,
+                    capability=cap,
+                    authority_ok=None,  # never operator-asserted for live federate
                     require_witness=False,
                 )
                 geometry_by_repo[repo] = {

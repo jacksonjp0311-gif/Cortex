@@ -656,30 +656,47 @@ def activate_repository(
     except Exception:
         pass
 
-    # Evidence refresh may run before path split: re-index is G_evidence (not A-plane).
-    # When drift forces read_only→baseline, refresh first, then re-resolve controller.
+    # Evidence refresh edge (v7.1.1): observe → authorize → refresh E only → recompute → path
     refresh_result: dict[str, Any] | None = None
+    evidence_refresh_audit: dict[str, Any] | None = None
     if refresh == "always" or (refresh == "auto" and not manifest_current):
         try:
-            refresh_result = index_repository(store, repo, config, force=False)
-            resolve_graph(store, repo)
-            try:
-                ingest_git(store, repo, root, config.git_commit_limit)
-            except Exception:
-                pass
-            repository = store.repo(repo) or repository
-            observed_manifest = current_manifest_hash(root, config)
-            manifest_current = observed_manifest == (repository["manifest_hash"] or "")
-            # Re-resolve after evidence catch-up (may lift read_only → advanced)
-            if not force_evidence_baseline:
-                resolution = resolve_activation_controller(
-                    governor,
-                    repo,
-                    memory_controller=memory_controller,
-                    force_evidence_baseline=False,
-                    manifest_current=manifest_current,
+            from .evidence_refresh import run_evidence_refresh_edge
+
+            evidence_refresh_audit = run_evidence_refresh_edge(
+                home,
+                store,
+                repo,
+                root=root,
+                config=config,
+                refresh_mode=refresh,
+                governor=governor,
+                memory_controller=memory_controller,
+                force_evidence_baseline=force_evidence_baseline,
+            )
+            if evidence_refresh_audit.get("refreshed"):
+                refresh_result = evidence_refresh_audit.get("refresh_result") or {
+                    "refreshed": True
+                }
+                repository = store.repo(repo) or repository
+                observed_manifest = current_manifest_hash(root, config)
+                manifest_current = bool(
+                    evidence_refresh_audit.get("manifest_current", False)
+                ) or (
+                    observed_manifest == (repository["manifest_hash"] or "")
                 )
-                controller = resolution["controller"]
+                # Re-issue capability under post-refresh epoch/controller
+                from .epoch import ensure_current_epoch as _ensure_ep
+
+                epoch = _ensure_ep(store, repo, reason="activation_post_evidence_refresh")
+                cr = evidence_refresh_audit.get("controller_resolution") or {}
+                if cr.get("controller") and not force_evidence_baseline:
+                    controller = str(cr["controller"])
+                    resolution = {
+                        **resolution,
+                        **{k: cr.get(k) for k in ("controller", "reason", "fail_closed") if k in cr},
+                        "governor": cr.get("governor") or resolution.get("governor"),
+                    }
                 cap = CapabilityIssuer("activation").issue(
                     repo=repo,
                     controller=controller,
@@ -691,10 +708,21 @@ def activate_repository(
                 )
                 resolution["capability"] = cap
                 resolution["body_epoch"] = epoch.to_dict()
+            else:
+                refresh_result = {
+                    "refreshed": False,
+                    "reason": (evidence_refresh_audit.get("authorize") or {}).get(
+                        "reason"
+                    ),
+                }
         except Exception as exc:
             refresh_result = {
                 "error": f"{type(exc).__name__}:{exc}",
                 "refreshed": False,
+            }
+            evidence_refresh_audit = {
+                "ok": False,
+                "error": f"{type(exc).__name__}:{exc}",
             }
 
     # Phase 2a: sterile baseline — no adaptive machinery after optional evidence refresh
@@ -728,6 +756,7 @@ def activate_repository(
         )
         out["body_epoch"] = epoch.to_dict()
         out["refresh"] = refresh_result
+        out["evidence_refresh_edge"] = evidence_refresh_audit
         out["manifest_current"] = manifest_current
         cert_status = (certificate or {}).get("status") if isinstance(certificate, dict) else None
         out["bootstrap_status"] = str(
@@ -856,6 +885,9 @@ def activate_repository(
         neural=neural,
     )
     out["body_epoch"] = epoch.to_dict()
+    out["refresh"] = refresh_result
+    if evidence_refresh_audit is not None:
+        out["evidence_refresh_edge"] = evidence_refresh_audit
     # seal epoch if adaptive roots changed during advanced activation
     try:
         from .epoch import seal_epoch_transition

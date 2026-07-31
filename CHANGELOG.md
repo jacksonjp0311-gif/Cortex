@@ -1,3 +1,12 @@
+## 7.1.1 - Geometry Seal
+
+- **CI:** `release_receipt_v711.py` hard gate (no continue-on-error).
+- **Axis truth sources:** MEASURED / RECEIPT_VERIFIED / OPERATOR_ASSERTED / SIMULATED / UNKNOWN; only measured+receipt satisfy live promote/repair/federate.
+- **Phase binding:** BOUND / BOOTSTRAP_UNBOUND / STALE / MISMATCHED / UNKNOWN; only BOUND is constitutionally compatible.
+- **Evidence refresh edge:** audited `observe → authorize → refresh E → recompute → select_path`.
+- **Tests:** `test_geometry_seal.py` including foreign-repository prediction of unencoded failures.
+- Docs: `PHASE_V7.1.1_GEOMETRY_SEAL.md`.
+
 ## 7.1.0 - Constitutional Geometry
 
 - **Four-axis coordinate** \(q=(e,a,t,w)\): evidence, authority, epoch, witness.

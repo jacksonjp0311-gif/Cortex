@@ -50,22 +50,24 @@ jobs:
           tests/test_constitutional_geometry.py
           tests/test_constitutional_path.py
           tests/test_observation_nonmutation.py
+          tests/test_geometry_seal.py
           -q --tb=line
       - name: Constitutional seal release receipt
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v6251.py
-      - name: Resonant Continuity / Geometry receipt
+      - name: Geometry Seal receipt (v7.1.1 hard gate)
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python scripts/ci/release_receipt_v710.py
-        continue-on-error: true
-      - name: Upload release receipt
+        run: python scripts/ci/release_receipt_v711.py
+      - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: constitutional-seal-receipt-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: work/release_receipt_v6251.json
+          path: |
+            work/release_receipt_v6251.json
+            work/release_receipt_v711.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

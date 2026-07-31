@@ -58,21 +58,16 @@ def evaluate_promotion(
         try:
             from .constitutional_path import assess_operation_at_boundary
 
-            wit_ok = None
-            if witness_report is not None:
-                wit_ok = bool(
-                    not witness_report.get("error")
-                    and float(witness_report.get("recall_at_k") or 0) >= min_witness_recall
-                )
-            elif require_witness:
-                wit_ok = False
+            # v7.1.1: never pass operator-asserted True as gate-satisfying authority.
+            # Witness from report is measured only when receipt-backed commitment exists;
+            # do not inject OPERATOR_ASSERTED witness flags into the live gate.
             geometry = assess_operation_at_boundary(
                 store,
                 repo,
                 "promote",
                 capability=capability,
-                authority_ok=authority_ok if authority_ok is not None else True,
-                witness_ok=wit_ok if wit_ok is not None else (True if not require_witness else False),
+                authority_ok=authority_ok,  # if set, OPERATOR_ASSERTED — gate rejects
+                witness_ok=None,  # measure from store only (RECEIPT_VERIFIED)
                 require_witness=True,
             )
             if not geometry.get("allowed"):

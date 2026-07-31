@@ -53,22 +53,33 @@ def compile_legal_path(
             coordinate = coordinate_from_bits((0, 0, 0, 0))
 
     op = (operation or "").casefold().strip()
-    gate = assess_operation(op, coordinate)
+    live_gate = bool(ctx.get("live_gate"))
+    gate = assess_operation(op, coordinate, live_gate=live_gate)
     try:
         req = list(required_bits(op))
     except KeyError:
         req = [None, None, None, None]
 
-    missing = missing_axes(op, coordinate) if gate.get("missing_axes") != ["unknown_operation"] else ["unknown_operation"]
-    bits = coordinate.bits()
+    missing = (
+        missing_axes(op, coordinate, live_gate=live_gate)
+        if gate.get("missing_axes") != ["unknown_operation"]
+        else ["unknown_operation"]
+    )
+    # For path display under live_gate, show gate-eligible bits as validity
+    bits = coordinate.gate_bits() if live_gate else coordinate.bits()
+    raw_bits = coordinate.bits()
 
     # Next legal steps: single-axis fills in AXIS_ORDER (evidence→authority→epoch→witness)
     next_steps: list[str] = []
-    for ax in AXIS_ORDER:
-        if ax in missing:
+    for ax in missing:
+        if ax.endswith("_truth_ineligible"):
+            next_steps.append(f"UPGRADE_TRUTH_{ax.replace('_truth_ineligible', '').upper()}")
+            continue
+        if ax in AXIS_ORDER:
             next_steps.append(SINGLE_AXIS_STEPS.get(ax, f"SATISFY_{ax.upper()}"))
 
     # Transition toward required target
+    missing_axes_clean = [m for m in missing if m in AXIS_ORDER]
     target_bits = []
     for i, r in enumerate(req):
         if r is None:
@@ -80,24 +91,32 @@ def compile_legal_path(
         op,
         coordinate,
         target,
-        compound=len(missing) > 1,
-        compound_steps=tuple(next_steps) if len(missing) > 1 else None,
+        compound=len(missing_axes_clean) > 1,
+        compound_steps=tuple(next_steps) if len(missing_axes_clean) > 1 else None,
     )
 
     axis_rows = []
     for i, name in enumerate(AXIS_ORDER):
         required = req[i] is not None
-        valid = bool(bits[i])
-        status = "PASS" if valid else ("MISSING" if required else "N/A")
-        glyph = PASS if valid else (MISS if required else META)
         assessment = coordinate.axis(name)
+        gate_ok = assessment.gate_eligible() if live_gate else bool(raw_bits[i])
+        status = "PASS" if gate_ok else ("MISSING" if required else "N/A")
+        if required and assessment.valid and not assessment.gate_eligible() and live_gate:
+            status = "TRUTH_INELIGIBLE"
+        glyph = PASS if gate_ok else (MISS if required else META)
         axis_rows.append(
             {
                 "axis": name,
                 "glyph": glyph,
                 "status": status,
                 "required": required,
-                "valid": valid,
+                "valid": bool(raw_bits[i]),
+                "gate_eligible": assessment.gate_eligible(),
+                "truth_source": (
+                    assessment.truth_source.value
+                    if hasattr(assessment.truth_source, "value")
+                    else str(assessment.truth_source)
+                ),
                 "reason": assessment.reason,
             }
         )
@@ -118,10 +137,13 @@ def compile_legal_path(
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "operation": op,
-        "coordinate": list(bits),
+        "coordinate": list(raw_bits),
+        "gate_bits": list(coordinate.gate_bits()),
+        "live_gate": live_gate,
         "required": req,
-        "missing_axes": missing,
-        "missing_proofs": missing,
+        "missing_axes": missing_axes_clean,
+        "missing_proofs": missing_axes_clean,
+        "truth_ineligible_axes": gate.get("truth_ineligible_axes") or [],
         "next_legal_steps": next_steps,
         "next_legal_step": primary_next,
         "allowed": gate["allowed"],
@@ -202,16 +224,60 @@ def assess_operation_at_boundary(
             "require_witness": require_witness,
             "witness_ok": witness_ok,
             "authority_ok": authority_ok,
+            "live_gate": True,
         },
     )
+    # Phase binding: only BOUND is constitutionally compatible for live gates
+    phase_binding: dict[str, Any] = {}
+    reasons_extra: list[str] = []
+    try:
+        from .phases import BOUND, phase_binding_status, transition_phase
+
+        # Attempt bind QUIESCENT under verified epoch (mutation path at boundary)
+        try:
+            transition_phase(
+                store, repo, "QUIESCENT", reason=f"geometry_boundary:{op}"
+            )
+        except Exception:
+            pass
+        phase_binding = phase_binding_status(store, repo)
+        if not phase_binding.get("constitutionally_compatible"):
+            path = {
+                **path,
+                "allowed": False,
+                "blocked": True,
+                "missing_axes": list(path.get("missing_axes") or [])
+                + ["phase_binding"],
+                "next_legal_step": "BIND_PHASE_TO_VERIFIED_EPOCH",
+                "next_legal_steps": list(path.get("next_legal_steps") or [])
+                + ["BIND_PHASE_TO_VERIFIED_EPOCH"],
+            }
+            reasons_extra = [
+                f"phase_binding_{phase_binding.get('binding')}",
+                str(phase_binding.get("reason") or "phase_not_bound"),
+            ]
+    except Exception as exc:
+        phase_binding = {"error": f"{type(exc).__name__}:{exc}"}
+        reasons_extra = ["phase_binding_unavailable"]
+
+    gate = path.get("assessment") or {}
+    reasons = list(gate.get("reasons") or [])
+    reasons.extend(reasons_extra)
+    for ax in gate.get("truth_ineligible_axes") or []:
+        reasons.append(f"truth_ineligible_{ax}")
+
+    allowed = bool(path.get("allowed")) and not reasons_extra
     return {
-        "allowed": path["allowed"],
+        "allowed": allowed,
         "operation": op,
-        "coordinate": path["coordinate"],
+        "coordinate": path.get("coordinate") or list(coord.bits()),
+        "gate_bits": list(coord.gate_bits()),
         "coordinate_detail": coord.to_dict(),
-        "missing_axes": path["missing_axes"],
-        "reasons": list(path.get("assessment", {}).get("reasons") or []),
-        "required_legal_path": path["next_legal_steps"],
+        "missing_axes": path.get("missing_axes") or [],
+        "truth_ineligible_axes": gate.get("truth_ineligible_axes") or [],
+        "reasons": list(dict.fromkeys(reasons)),
+        "required_legal_path": path.get("next_legal_steps") or [],
+        "phase_binding": phase_binding,
         "path": path,
         "claim_boundary": CLAIM,
     }

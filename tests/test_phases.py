@@ -10,13 +10,16 @@ from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
 from cortex.phases import (
     ADAPT,
+    BOUND,
     OBSERVE,
     QUIESCENT,
     can_transition,
     current_phase,
     phase_allows_operation,
+    phase_binding_status,
     transition_phase,
 )
+from cortex.epoch import ensure_current_epoch
 from cortex.store import Store
 
 
@@ -54,6 +57,13 @@ class PhaseTests(unittest.TestCase):
     def test_phase_ops(self) -> None:
         self.assertTrue(phase_allows_operation(ADAPT, "ranker_train"))
         self.assertFalse(phase_allows_operation(OBSERVE, "ranker_train"))
+
+    def test_phase_binding_bound_after_seal(self) -> None:
+        ensure_current_epoch(self.store, "PhHost", reason="bind_test")
+        transition_phase(self.store, "PhHost", QUIESCENT, reason="bind_test")
+        b = phase_binding_status(self.store, "PhHost")
+        self.assertEqual(b["binding"], BOUND)
+        self.assertTrue(b["constitutionally_compatible"])
 
 
 if __name__ == "__main__":

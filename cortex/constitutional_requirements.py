@@ -37,13 +37,21 @@ def required_bits(operation: str) -> tuple[int | None, ...]:
 
 
 def coordinate_satisfies(
-    operation: str, coordinate: ConstitutionalCoordinate
+    operation: str,
+    coordinate: ConstitutionalCoordinate,
+    *,
+    live_gate: bool = False,
 ) -> bool:
+    """Whether coordinate meets requirements.
+
+    live_gate=True uses gate_bits (MEASURED/RECEIPT_VERIFIED only) for promote,
+    repair_readmit, and federate. Simulated/operator axes never satisfy live gates.
+    """
     try:
         req = required_bits(operation)
     except KeyError:
         return False
-    bits = coordinate.bits()
+    bits = coordinate.gate_bits() if live_gate else coordinate.bits()
     for i, r in enumerate(req):
         if r is None:
             continue
@@ -53,19 +61,27 @@ def coordinate_satisfies(
 
 
 def missing_axes(
-    operation: str, coordinate: ConstitutionalCoordinate
+    operation: str,
+    coordinate: ConstitutionalCoordinate,
+    *,
+    live_gate: bool = False,
 ) -> list[str]:
     try:
         req = required_bits(operation)
     except KeyError:
         return ["unknown_operation"]
-    bits = coordinate.bits()
+    bits = coordinate.gate_bits() if live_gate else coordinate.bits()
     missing: list[str] = []
     for i, r in enumerate(req):
         if r is None:
             continue
         if bits[i] != r:
             missing.append(AXIS_ORDER[i])
+            # Tag ineligible truth when raw valid but not gate-eligible
+            if live_gate and coordinate.bits()[i] == 1 and bits[i] == 0:
+                ax = coordinate.axis(AXIS_ORDER[i])
+                if ax.valid and not ax.gate_eligible():
+                    missing.append(f"{AXIS_ORDER[i]}_truth_ineligible")
     return missing
 
 
@@ -97,6 +113,8 @@ def requirements_report() -> dict[str, Any]:
 def assess_operation(
     operation: str,
     coordinate: ConstitutionalCoordinate,
+    *,
+    live_gate: bool | None = None,
 ) -> dict[str, Any]:
     """Gate check: does coordinate satisfy operation requirements?"""
     op = (operation or "").casefold().strip()
@@ -105,25 +123,38 @@ def assess_operation(
             "allowed": False,
             "operation": operation,
             "coordinate": list(coordinate.bits()),
+            "gate_bits": list(coordinate.gate_bits()),
             "required": None,
             "missing_axes": ["unknown_operation"],
             "reasons": [f"unknown_operation:{operation}"],
             "claim_boundary": CLAIM,
         }
+    # live_gate must be explicit (True at promote/repair/federate boundaries only)
+    if live_gate is None:
+        live_gate = False
     req = required_bits(op)
-    missing = missing_axes(op, coordinate)
-    allowed = coordinate_satisfies(op, coordinate)
+    missing = missing_axes(op, coordinate, live_gate=live_gate)
+    allowed = coordinate_satisfies(op, coordinate, live_gate=live_gate)
     reasons: list[str] = []
     if not allowed:
         for ax in missing:
             reasons.append(f"missing_{ax}")
+            if ax.endswith("_truth_ineligible"):
+                reasons.append("axis_truth_not_gate_eligible")
     return {
         "allowed": allowed,
         "operation": op,
         "coordinate": list(coordinate.bits()),
+        "gate_bits": list(coordinate.gate_bits()),
+        "live_gate": live_gate,
         "coordinate_detail": coordinate.to_dict(),
         "required": list(req),
-        "missing_axes": missing,
-        "reasons": reasons,
+        "missing_axes": [m for m in missing if not m.endswith("_truth_ineligible")],
+        "truth_ineligible_axes": [
+            m.replace("_truth_ineligible", "")
+            for m in missing
+            if m.endswith("_truth_ineligible")
+        ],
+        "reasons": list(dict.fromkeys(reasons)),
         "claim_boundary": CLAIM,
     }
