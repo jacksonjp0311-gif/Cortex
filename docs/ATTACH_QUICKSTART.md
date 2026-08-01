@@ -105,6 +105,38 @@ python -m cortex attach . --name MyApp
 | `CORTEX_ATTACH_DEMO=1` | Public demo: ritual + report show `./your-project` and `~/.cortex` only — never real machine paths |
 | `CORTEX_ATTACH_DEMO_HOST` | Override demo host display (default `./your-project`) |
 | `CORTEX_ATTACH_DEMO_BODY` | Override demo body display (default `~/.cortex`) |
+
+### Public screen recording demo
+
+**Do not `cd` into the temp host** — that only changes your *shell prompt* (e.g. `PS C:\Users\…\Temp\…>`), which is not Cortex output.
+
+```powershell
+# stay where you are; pass path as argument
+$env:CORTEX_ATTACH_DEMO = "1"
+$env:CORTEX_HOME = Join-Path $env:TEMP "cortex-demo-body"
+$demo = Join-Path $env:TEMP "cortex-attach-demo"
+Remove-Item $demo -Recurse -Force -ErrorAction SilentlyContinue
+git clone --depth 1 https://github.com/pallets/flask.git $demo | Out-Null
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach $demo
+```
+
+```bash
+export CORTEX_ATTACH_DEMO=1
+export CORTEX_HOME="${TMPDIR:-/tmp}/cortex-demo-body"
+DEMO="${TMPDIR:-/tmp}/cortex-attach-demo"
+rm -rf "$DEMO"
+git clone --depth 1 https://github.com/pallets/flask.git "$DEMO" >/dev/null
+# stay in current directory — pass $DEMO as arg
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach "$DEMO"
+```
+
+Ritual ends with symbolic paths only:
+
+```text
+Returned to ROOT.
+   host  ./your-project
+   body  ~/.cortex
+```
 | `CORTEX_ATTACH_RITUAL=1` | Force ritual even in CI |
 | `NO_COLOR=1` | No ANSI |
 
