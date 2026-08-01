@@ -769,6 +769,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     claim_p.add_argument("--json", action="store_true")
 
+    realign_p = sub.add_parser(
+        "realign",
+        help="v7.4 Continuity Realignment ∿◆ — diagnose/plan/apply epoch rebind (explicit auth).",
+    )
+    realign_p.add_argument("--repo", required=True)
+    realign_p.add_argument(
+        "action",
+        choices=["diagnose", "plan", "apply", "warm", "status"],
+        nargs="?",
+        default="diagnose",
+    )
+    realign_p.add_argument(
+        "--i-authorize-realign",
+        action="store_true",
+        help="Required for apply when epoch seal is needed. Never implied.",
+    )
+    realign_p.add_argument(
+        "--no-warm",
+        action="store_true",
+        help="Skip Resonant Frame warm seeds on apply.",
+    )
+    realign_p.add_argument("--warm-ticks", type=int, default=3)
+    realign_p.add_argument("--reason", default="continuity_realign_v74")
+    realign_p.add_argument("--json", action="store_true")
+
     field_p = sub.add_parser(
         "field",
         help="v7.3 Resonant Frames ◈⟳ — temporal field report/trace/close/verify (advisory).",
@@ -2050,6 +2075,68 @@ def main(argv: list[str] | None = None) -> None:
                 emit(verify_claim_receipt(store, args.repo), args.json)
             else:
                 emit(claim_report(store, args.repo), args.json)
+
+        elif command == "realign":
+            from .realign import (
+                CLAIM as REALIGN_CLAIM,
+                apply_realign,
+                diagnose_realign,
+                plan_realign,
+                realign_status,
+                warm_field_baseline,
+            )
+
+            act = str(getattr(args, "action", "diagnose") or "diagnose")
+            if act == "plan":
+                emit(
+                    plan_realign(
+                        store, args.repo, warm_field=not bool(args.no_warm)
+                    ),
+                    args.json,
+                )
+            elif act == "apply":
+                emit(
+                    apply_realign(
+                        store,
+                        args.repo,
+                        authorize=bool(getattr(args, "i_authorize_realign", False)),
+                        warm_field=not bool(args.no_warm),
+                        warm_ticks=int(args.warm_ticks or 3),
+                        reason=str(args.reason or "continuity_realign_v74"),
+                    ),
+                    args.json,
+                )
+            elif act == "warm":
+                emit(
+                    warm_field_baseline(
+                        store, args.repo, ticks=int(args.warm_ticks or 3)
+                    ),
+                    args.json,
+                )
+            elif act == "status":
+                emit(realign_status(store, args.repo), args.json)
+            else:
+                diag = diagnose_realign(store, args.repo)
+                if not args.json:
+                    print(
+                        f"∿◆ realign diagnose  repo={args.repo}  "
+                        f"severity={diag.get('severity')}  "
+                        f"needs_realign={diag.get('needs_realign')}"
+                    )
+                    print(f"   {diag.get('recommended_action')}")
+                    ep = diag.get("epoch") or {}
+                    print(
+                        f"   sealed={ep.get('sealed_cortex_version')} → "
+                        f"live={ep.get('live_cortex_version')}  "
+                        f"mismatches={ep.get('mismatches')}"
+                    )
+                    warm = diag.get("field_warmup") or {}
+                    print(
+                        f"   field baseline_frames_seen: "
+                        f"{warm.get('baseline_frames_display', '?/?')}"
+                    )
+                    print()
+                emit(diag, True)
 
         elif command == "field":
             from .field_receipt import verify_frame_receipt

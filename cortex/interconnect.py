@@ -195,6 +195,27 @@ def mesh_status(
         and not continuity.get("error")
     )
 
+    # v7.4 Continuity Realignment — advisory next step when seal lags live tree
+    realign_advice: dict[str, Any] | None = None
+    if "epoch_stale_or_mismatched" in bottlenecks or "body_epoch_missing" in bottlenecks:
+        realign_advice = {
+            "needed": True,
+            "command": f"python -m cortex realign apply --repo {repo} --i-authorize-realign",
+            "diagnose": f"python -m cortex realign diagnose --repo {repo} --json",
+            "note": (
+                "Seal lags living tree or version/config drift. "
+                "Realign is operator-authorized only — never silent."
+            ),
+            "phase": "v7.4.0",
+        }
+    else:
+        realign_advice = {
+            "needed": False,
+            "command": None,
+            "note": "epoch continuity current for mesh path",
+            "phase": "v7.4.0",
+        }
+
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
@@ -203,6 +224,7 @@ def mesh_status(
         "ts": round(time.time(), 3),
         "mesh_green": mesh_green,
         "bottlenecks": bottlenecks,
+        "realign": realign_advice,
         "continuity": continuity,
         "planes": {
             "E": "evidence",

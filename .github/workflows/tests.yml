@@ -58,6 +58,7 @@ jobs:
           tests/test_field_receipt.py
           tests/test_resonant_frame_integration.py
           tests/test_resonant_frame_nonmutation.py
+          tests/test_realign.py
           -q --tb=line
       - name: Constitutional seal release receipt
         env:
@@ -71,6 +72,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v730.py
+      - name: Continuity Realignment receipt (v7.4.0 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v740.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -80,6 +85,7 @@ jobs:
             work/release_receipt_v6251.json
             work/release_receipt_v711.json
             work/release_receipt_v730.json
+            work/release_receipt_v740.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

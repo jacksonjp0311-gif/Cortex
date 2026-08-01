@@ -1,3 +1,14 @@
+## 7.4.0 - Continuity Realignment
+
+- **Tagline:** When the seal lags the living tree, realign explicitly — never silently.
+- **`cortex realign diagnose|plan|apply|warm|status`:** observe-only diagnose/plan; apply seals epoch only with `--i-authorize-realign`.
+- **Interconnect:** surfaces `realign` advice when `epoch_stale_or_mismatched`.
+- **Optional field warm seeds** on apply (does not fake 16/16 ready).
+- **Realign receipt** hashed with before/after drift panels.
+- **Docs:** `docs/intelligence/PHASE_V7.4_CONTINUITY_REALIGNMENT.md`
+- **CI:** `scripts/ci/release_receipt_v740.py`
+- Preserves Hermetic Attach, Resonant Frames, constitutional gates, recommend-only.
+
 ## 7.3.0 - Resonant Frames
 
 - **Public demo + holdout:** `scripts/demo_resonant_frames_public.py` (STALE_ECHO vs COHERENT, TEMP-only, `docs/demo/*`); `scripts/experiment_field_advisory_holdout.py` (N=20 advisory width); CLI warmup `baseline_frames_seen: 3/16`.

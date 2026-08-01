@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-7.3.0-0ea5e9?style=for-the-badge" alt="v7.3.0" />
+  <img src="https://img.shields.io/badge/version-7.4.0-0ea5e9?style=for-the-badge" alt="v7.4.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -35,8 +35,9 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 | Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
 | Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-**v7.3.0 — Resonant Frames** · built on **v7.2 Hermetic Attach**  
+**v7.4.0 — Continuity Realignment** · on **v7.3 Resonant Frames** · **v7.2 Hermetic Attach**  
 Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *bounded temporal coordination*.  
+When the seal lags the living tree, **realign explicitly** — never silently.  
 **No temporal metric can move a constitutional bit.**
 
 ---
@@ -90,6 +91,8 @@ python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
 |---------|------|
 | `activate` | Bounded context for the current task |
 | `field report` | Resonant Frame status (`baseline_frames_seen: 3/16` while warming) |
+| `realign diagnose` | Continuity drift (observe-only) after version upgrades |
+| `realign apply --i-authorize-realign` | Operator-authorized epoch rebind + optional field warm |
 | `claim` | Falsifiable promote receipt (when applicable) |
 
 **Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  

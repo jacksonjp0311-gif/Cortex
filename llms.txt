@@ -33,12 +33,14 @@ External-home default (`~/.cortex`). Host tree unmodified. Ritual is interface d
 4. Multi-host: shared constitution, private body_epoch_id forever.
 5. Recommend-only: no host source mutation from Cortex packets.
 6. No temporal metric can move a constitutional bit. Frames are advisory only.
+7. Epoch realign after version drift requires `--i-authorize-realign` — never silent seal.
 
 ## Key code
 
 - Epochs: cortex/epoch.py
 - Geometry: cortex/constitutional_geometry.py, constitutional_path.py, diagonal.py
 - Resonant Frames: cortex/resonant_frame.py, field_channels.py, field_comparator.py, field_policy.py, field_receipt.py
+- Continuity Realignment (v7.4): cortex/realign.py · docs/intelligence/PHASE_V7.4_CONTINUITY_REALIGNMENT.md
 - Continuity: cortex/continuity.py
 - Mesh: cortex/interconnect.py, host_mesh.py
 - Spectral/ratio: cortex/math_net/
