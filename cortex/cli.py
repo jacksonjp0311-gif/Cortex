@@ -88,6 +88,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     bootstrap.add_argument("--json", action="store_true")
 
+    attach = sub.add_parser(
+        "attach",
+        help="◈ Hermetic attach — zero-friction external-home interlock (any repo).",
+    )
+    attach.add_argument("path", nargs="?", default=".")
+    attach.add_argument("--name")
+    attach.add_argument("--force", action="store_true")
+    attach.add_argument("--no-ritual", action="store_true")
+    attach.add_argument("--no-seal", action="store_true")
+    attach.add_argument("--no-activate", action="store_true")
+    attach.add_argument("--quiet", action="store_true")
+    attach.add_argument("--json", action="store_true")
+
     activate = sub.add_parser("activate", help="Refresh memory as needed and emit task context.")
     activate.add_argument("--repo", required=True)
     activate.add_argument("--task", required=True)
@@ -1184,6 +1197,30 @@ def main(argv: list[str] | None = None) -> None:
                 external=args.external,
             )
             emit(result, args.json)
+
+        elif command == "attach":
+            from .attach import attach_repository
+
+            # attach manages its own store lifecycle + ritual I/O
+            try:
+                store.close()
+            except Exception:
+                pass
+            result = attach_repository(
+                args.path,
+                name=getattr(args, "name", None),
+                home=home,
+                force=bool(getattr(args, "force", False)),
+                ritual=not bool(getattr(args, "no_ritual", False)),
+                seal_epoch=not bool(getattr(args, "no_seal", False)),
+                activate=not bool(getattr(args, "no_activate", False)),
+                quiet=bool(getattr(args, "quiet", False)),
+                json_mode=bool(getattr(args, "json", False)),
+            )
+            if getattr(args, "json", False):
+                emit(result, True)
+            # ritual already printed Returned to ROOT when not json
+            return
 
         elif command == "activate":
             refresh = {"packet-fast": "never", "packet-refresh": "auto", "bootstrap-full": "always"}.get(args.refresh, args.refresh)

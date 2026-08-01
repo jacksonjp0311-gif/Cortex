@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "7.1.2"
-description = "Governed continuation memory, repository assimilation, and sparse neural interlinking for AI agents"
+version = "7.2.0"
+description = "Governed continuation memory, repository assimilation, sparse neural interlinking, and Hermetic attach for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -28,6 +28,7 @@ dev = ["pytest>=8.0", "ruff>=0.5"]
 [project.scripts]
 cortex = "cortex.cli:main"
 cortex-mcp = "cortex.mcp:main"
+cortex-attach = "cortex.attach:attach_main"
 
 [tool.setuptools.packages.find]
 include = ["cortex*", "thalamus*"]

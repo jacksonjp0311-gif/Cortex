@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-7.1.2-0ea5e9?style=for-the-badge" alt="v7.1.2" />
+  <img src="https://img.shields.io/badge/version-7.2.0-0ea5e9?style=for-the-badge" alt="v7.2.0" />
   <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
   <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
@@ -42,15 +42,19 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v7.1.2** — **Claim Receipts**: hashed promote claims (epoch + gate_bits + truth + utility digests); `cortex claim --repo`. Builds on Geometry Seal v7.1.1.
+**Current release: v7.2.0** — **Hermetic Attach**: one-command external-home interlock for any repo (`cortex-attach` / uvx / pipx); solar-lunar ritual CLI; host stays sovereign. Quick start: [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
 
 **Research (agents: read first):** [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · agent guide [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md) · [`llms.txt`](llms.txt) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
 
 ```bash
+# Zero-friction attach (any directory — external home, no host pollution)
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+# or: pipx run --spec "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+
 pip install -e .
-# Attach a host (one SQLite body can hold many)
+# Classic bootstrap (optional internal .cortex sidecar)
 python -m cortex bootstrap . --name MyProject --json
-python -m cortex bootstrap /path/to/other --name OtherApp --json
+python -m cortex bootstrap /path/to/other --name OtherApp --external --json
 
 # Daily agent loop (durable body example: CortexTeach)
 python -m cortex activate --repo MyProject --task "Map auth" --json

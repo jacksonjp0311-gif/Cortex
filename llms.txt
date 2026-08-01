@@ -6,12 +6,21 @@
 ## Start here
 
 - README: https://github.com/jacksonjp0311-gif/Cortex/blob/main/README.md
+- **Attach any repo (external home):** https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/ATTACH_QUICKSTART.md
 - Research index: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/README.md
 - **Primary math map:** https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md
 - Constitutional geometry: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md
 - Topology law: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/intelligence/TOPOLOGY_LAW.md
 - AI integration: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/AI_INTEGRATION.md
 - AGENTS.md (repo root): https://github.com/jacksonjp0311-gif/Cortex/blob/main/AGENTS.md
+
+## One-command attach
+
+```bash
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+```
+
+External-home default (`~/.cortex`). Host tree unmodified. Ritual is interface design, not authority.
 
 ## Hard rules
 

@@ -1,3 +1,12 @@
+## 7.2.0 - Hermetic Attach
+
+- **`cortex attach` / `cortex-attach`:** zero-friction external-home interlock for any repository.
+- **Hermetic ritual CLI:** solar-lunar cadence, living 1.2s symbol pulse (TTY), pyramidion seal, `Returned to ROOT.`
+- **Isolation:** default external mode — no host `.cortex/` pollution; body under `CORTEX_HOME`/`~/.cortex`.
+- **Easy paths:** uvx / pipx primary; `scripts/attach_one.sh|.ps1`; thin `js/cortex-attach` npx wrapper.
+- **Docs:** `docs/ATTACH_QUICKSTART.md`; Docker isolation test `scripts/ci/docker_attach_ritual_test.sh`.
+- Host remains sovereign. Ritual is interface design, not consciousness or mutation authority.
+
 ## 7.1.2 - Claim Receipts
 
 - **Promote claim receipt:** when `evaluate_promotion` runs with store+repo, stamp a hashed claim (`claim_id`, `body_epoch_id`, `gate_bits`, axis truth panel, holdout/foreign/witness digests).

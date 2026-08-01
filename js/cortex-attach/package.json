@@ -1,0 +1,17 @@
+{
+  "name": "cortex-attach",
+  "version": "7.2.0",
+  "description": "Thin npx wrapper for Cortex Hermetic attach (delegates to Python uvx/pipx).",
+  "bin": {
+    "cortex-attach": "bin/cortex-attach.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jacksonjp0311-gif/Cortex.git"
+  },
+  "keywords": ["cortex", "memory", "agents", "attach"],
+  "engines": {
+    "node": ">=18"
+  }
+}
