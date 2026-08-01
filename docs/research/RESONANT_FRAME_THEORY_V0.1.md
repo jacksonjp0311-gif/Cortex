@@ -53,7 +53,7 @@ Paths and nodes are **contributors inside metadata**, not separate channels.
 
 Defaults: \(W_{\min}=8\), \(W_{\mathrm{target}}=16\), \(W_{\max}=32\), \(L_{\max}=3\).
 
-Close on task boundary, fusion close, \(W_{\max}\), epoch drift, constitutional transition, transition pressure after \(W_{\min}\), or explicit close.
+Close on initial/epoch-transition boundary, activation-observation readiness at \(W_{\min}\), fusion close, \(W_{\max}\), epoch drift, transition pressure after \(W_{\min}\), or explicit close. Stable activation observations carry durable event provenance and enter the window exactly once.
 
 Observation uses `observe_current_epoch()` only — never seals epochs.
 

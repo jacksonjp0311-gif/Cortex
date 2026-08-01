@@ -44,6 +44,7 @@ MAX_EVENT_KEYS = 64
 MIN_BASELINE_CHANNELS = 3
 DEFAULT_Q95_DELTA_N = 0.12
 FRAME_INDEX_CAP = 128
+OBSERVATION_CURSOR_CAP = 256
 
 CLAIM_BOUNDARY = (
     "Resonant Frames are bounded temporal telemetry for repository intelligence. "
@@ -1060,6 +1061,11 @@ def append_field_samples(
         if (metrics.transition_pressure or 0) >= thr.transition_high:
             close = True
             reason = reason or "transition_pressure"
+        elif reason == "activation_observation":
+            # Activation observations close at the first mathematically usable
+            # window. Fusion keeps its existing transition/W_max cadence.
+            close = True
+            reason = "temporal_window_ready"
 
     state["buffer"] = [s.to_dict() for s in buffer]
     state["body_epoch_id"] = body_epoch
@@ -1299,22 +1305,113 @@ def seed_from_activation(
     from .field_channels import collect_activation_channels
 
     state = load_field_state(store, repo)
-    tick = int(state.get("tick") or 0) + 1
-    samples = collect_activation_channels(
-        store,
-        repo,
-        tick=tick,
-        task=task,
-        activation=activation,
-        governor_mode=governor_mode,
+    act = activation or {}
+    ctx = act.get("context") if isinstance(act.get("context"), dict) else {}
+    stream = ctx.get("stream") if isinstance(ctx.get("stream"), dict) else {}
+    observations: list[tuple[str, str, float | None]] = []
+
+    def add_observation(
+        value: Any, kind: str, observed_at: Any = None
+    ) -> None:
+        observation_id = str(value or "")
+        if not observation_id or any(item[0] == observation_id for item in observations):
+            return
+        try:
+            at = float(observed_at) if observed_at is not None else None
+        except (TypeError, ValueError):
+            at = None
+        observations.append((observation_id, kind[:128], at))
+
+    neural = ctx.get("neural_interlink") if isinstance(ctx.get("neural_interlink"), dict) else {}
+    organism = ctx.get("organism") if isinstance(ctx.get("organism"), dict) else {}
+    prediction = ctx.get("prediction") if isinstance(ctx.get("prediction"), dict) else {}
+    connect = ctx.get("connect_pass") if isinstance(ctx.get("connect_pass"), dict) else {}
+    controller = (
+        ctx.get("controller_execution")
+        if isinstance(ctx.get("controller_execution"), dict)
+        else {}
     )
-    return append_field_samples(
+    add_observation(neural.get("activation_id"), "neural_activation")
+    organism_body = organism.get("body") if isinstance(organism.get("body"), dict) else {}
+    organism_identity = (
+        organism_body.get("identity")
+        if isinstance(organism_body.get("identity"), dict)
+        else {}
+    )
+    add_observation(organism_identity.get("session_id"), "session_begin")
+    add_observation(organism.get("pulse"), "organism_pulse", organism.get("issued_at"))
+    add_observation(
+        organism.get("pulse_chain"), "organism_pulse_chain", organism.get("issued_at")
+    )
+    add_observation(ctx.get("packet_hash"), "context_packet")
+    for frame in list(stream.get("recent_frames") or []):
+        if isinstance(frame, dict):
+            add_observation(
+                frame.get("frame_id"),
+                f"stream_{str(frame.get('kind') or 'event')}",
+                frame.get("at"),
+            )
+    add_observation(prediction.get("trace_id"), "prediction_trace")
+    add_observation(connect.get("pass_id"), "connect_pass")
+    add_observation(controller.get("receipt_hash"), "controller_receipt")
+    if not observations:
+        add_observation(
+            act.get("packet_hash") or stream.get("chain_tip"),
+            "activation_boundary",
+        )
+    seen = list(state.get("activation_observation_ids") or [])
+    pending = [item for item in observations if item[0] not in seen]
+    if observations and not pending:
+        return {
+            "ok": True,
+            "skipped": True,
+            "reason": "duplicate_observation",
+            "observation_id": observations[-1][0],
+            "observation_ids": [item[0] for item in observations],
+            "observation_count": 0,
+            "buffer_ticks": len(
+                {int(s.get("tick") or 0) for s in (state.get("buffer") or [])}
+            ),
+        }
+    tick = int(state.get("tick") or 0)
+    samples: list[FieldSample] = []
+    for offset, (observation_id, observation_kind, observed_at) in enumerate(
+        pending, start=1
+    ):
+        samples.extend(
+            collect_activation_channels(
+                store,
+                repo,
+                tick=tick + offset,
+                task=task,
+                activation=activation,
+                governor_mode=governor_mode,
+                observation_id=observation_id,
+                observation_kind=observation_kind,
+                observed_at=observed_at,
+            )
+        )
+    result = append_field_samples(
         store,
         repo,
         samples,
         force_close=force_close,
         reason=reason,
     )
+    if pending:
+        state = load_field_state(store, repo)
+        seen = list(state.get("activation_observation_ids") or [])
+        for observation_id, _, _ in pending:
+            if observation_id not in seen:
+                seen.append(observation_id)
+        state["activation_observation_ids"] = seen[-OBSERVATION_CURSOR_CAP:]
+        state["last_activation_observation_id"] = pending[-1][0]
+        save_field_state(store, repo, state)
+    result["observation_id"] = pending[-1][0] if pending else None
+    result["observation_ids"] = [item[0] for item in pending]
+    result["observation_count"] = len(pending)
+    result["exactly_once"] = bool(pending)
+    return result
 
 
 def fuse_tick_field(

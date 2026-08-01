@@ -129,6 +129,9 @@ class ActivationFailClosedTests(unittest.TestCase):
             (r.get("body_epoch") or {}).get("epoch_id"),
             r,
         )
+        accrual = r.get("temporal_accrual") or {}
+        self.assertGreaterEqual(accrual.get("observation_count") or 0, 8, r)
+        self.assertTrue(accrual.get("exactly_once"), r)
         finalization = r.get("activation_finalization") or {}
         self.assertTrue(finalization.get("ok"), r)
         self.assertEqual(
@@ -137,7 +140,7 @@ class ActivationFailClosedTests(unittest.TestCase):
                 "close_parent_buffer",
                 "seal_final_epoch",
                 "bind_final_phase",
-                "seed_final_epoch_frame",
+                "accrue_final_epoch_observation",
                 "observe_self",
             ],
             r,
@@ -150,6 +153,16 @@ class ActivationFailClosedTests(unittest.TestCase):
             r,
         )
         self.assertTrue(((latest or {}).get("metrics") or {}).get("epoch_current"), r)
+        self.assertGreaterEqual(
+            ((latest or {}).get("metrics") or {}).get("tick_count") or 0,
+            8,
+            r,
+        )
+        self.assertGreaterEqual(
+            ((latest or {}).get("metrics") or {}).get("eligible_channel_count") or 0,
+            3,
+            r,
+        )
         sense = r.get("self_sensing") or {}
         self.assertTrue((sense.get("gates") or {}).get("epoch_current"), r)
         self.assertTrue((sense.get("gates") or {}).get("phase_bound"), r)

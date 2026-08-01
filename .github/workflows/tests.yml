@@ -95,6 +95,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v772.py
+      - name: Event-Sourced Temporal Accrual receipt (v7.8.0 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v780.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,6 +113,7 @@ jobs:
             work/release_receipt_v760.json
             work/release_receipt_v770.json
             work/release_receipt_v772.json
+            work/release_receipt_v780.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

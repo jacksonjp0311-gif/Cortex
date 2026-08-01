@@ -903,13 +903,21 @@ def activate_repository(
     out["refresh"] = refresh_result
     if evidence_refresh_audit is not None:
         out["evidence_refresh_edge"] = evidence_refresh_audit
-    # Close a parent-epoch temporal buffer before a possible successor seal so
-    # samples from two epochs can never be combined into one frame.
+    # Predict the final epoch without mutation. A stable epoch keeps its open
+    # temporal window; an actual successor closes the parent window first.
     pre_transition_close: dict[str, Any] | None = None
     try:
+        from .epoch import compute_body_epoch
         from .resonant_frame import field_close, load_field_state
 
-        if (load_field_state(store, repo).get("buffer") or []):
+        candidate = compute_body_epoch(
+            store,
+            repo,
+            parent_epoch_id=epoch.epoch_id,
+            transition_reason="post_advanced_activation",
+        )
+        predicted_epoch_change = candidate.epoch_id != epoch.epoch_id
+        if predicted_epoch_change and (load_field_state(store, repo).get("buffer") or []):
             pre_transition_close = field_close(store, repo)
     except Exception as exc:
         pre_transition_close = {"ok": False, "error": f"{type(exc).__name__}:{exc}"}
@@ -943,7 +951,7 @@ def activate_repository(
                 "close_parent_buffer",
                 "seal_final_epoch",
                 "bind_final_phase",
-                "seed_final_epoch_frame",
+                "accrue_final_epoch_observation",
                 "observe_self",
             ],
             "body_epoch_id": sealed.epoch_id,
@@ -957,8 +965,9 @@ def activate_repository(
             "advisory_only": True,
         }
 
-    # Activation closes one honest boundary tick after the final bind. W <
-    # W_min remains INDETERMINATE; activation never fabricates warmth.
+    # Each durable activation event contributes at most one final-epoch tick.
+    # The ordered receipt sequence can reach W_min within one activation; sparse
+    # sequences remain honestly indeterminate. Successor identity stays atomic.
     if final_epoch_ready:
         try:
             from .field_policy import apply_field_policy_advisory
@@ -968,20 +977,44 @@ def activate_repository(
                 ((out.get("context") or {}).get("governor") or {}).get("mode")
                 or "unknown"
             )
+            has_frame_boundary = latest_frame(store, repo) is not None
             field_seed = seed_from_activation(
                 store,
                 repo,
                 activation=out,
                 task=task,
                 governor_mode=gov_mode,
-                force_close=True,
-                reason=("constitutional_transition" if epoch_changed else "task_step"),
+                force_close=epoch_changed or not has_frame_boundary,
+                reason=(
+                    "constitutional_transition"
+                    if epoch_changed
+                    else (
+                        "activation_observation"
+                        if has_frame_boundary
+                        else "initial_boundary"
+                    )
+                ),
             )
             out["resonant_frame_seed"] = {
                 "closed": field_seed.get("closed"),
                 "reason": field_seed.get("reason"),
                 "buffer_ticks": field_seed.get("buffer_ticks"),
+                "observation_id": field_seed.get("observation_id"),
+                "observation_count": field_seed.get("observation_count"),
+                "exactly_once": field_seed.get("exactly_once"),
                 "body_epoch_id": (out.get("body_epoch") or {}).get("epoch_id"),
+                "advisory_only": True,
+            }
+            out["temporal_accrual"] = {
+                "observation_id": field_seed.get("observation_id"),
+                "observation_count": int(field_seed.get("observation_count") or 0),
+                "accepted": not bool(field_seed.get("skipped")),
+                "exactly_once": bool(field_seed.get("exactly_once")),
+                "buffer_ticks": int(field_seed.get("buffer_ticks") or 0),
+                "window_min": 8,
+                "window_closed": bool(field_seed.get("closed")),
+                "close_reason": field_seed.get("reason"),
+                "epoch_changed": epoch_changed,
                 "advisory_only": True,
             }
             latest = latest_frame(store, repo)

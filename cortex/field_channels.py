@@ -7,7 +7,7 @@ Reliability never elevates unverified truth into evidence gates.
 from __future__ import annotations
 
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from enum import Enum
 from typing import Any
 
@@ -224,6 +224,9 @@ def collect_activation_channels(
     task: str = "",
     activation: dict[str, Any] | None = None,
     governor_mode: str = "unknown",
+    observation_id: str = "",
+    observation_kind: str = "activation_boundary",
+    observed_at: float | None = None,
 ) -> list[FieldSample]:
     """Cheap bounded sample from live Cortex surfaces (observation-only epoch)."""
     body_epoch_id = ""
@@ -303,6 +306,49 @@ def collect_activation_channels(
         "W_WITNESS": w_wit,
         "O_OPERATIONS": o_ops,
     }
+    if observation_id:
+        # Encode which measured subsystem produced the receipt. This is a
+        # bounded event-participation mask over the live channel snapshot, not
+        # a synthetic event or a claim that inactive channels disappeared.
+        salience_by_kind = {
+            "neural_activation": {"M_LEARNED", "S_STRUCTURE"},
+            "session_begin": {"T_TASK", "O_OPERATIONS"},
+            "organism_pulse": {
+                "M_CONSOLIDATED",
+                "G_GOVERNOR",
+                "O_OPERATIONS",
+            },
+            "organism_pulse_chain": {
+                "M_CONSOLIDATED",
+                "G_GOVERNOR",
+                "O_OPERATIONS",
+            },
+            "context_packet": {"E_HOST", "E_RUNTIME", "T_TASK"},
+            "prediction_trace": {"M_LEARNED", "M_FEDERATED", "T_TASK"},
+            "connect_pass": {
+                "E_RUNTIME",
+                "S_STRUCTURE",
+                "M_FEDERATED",
+                "O_OPERATIONS",
+            },
+            "controller_receipt": {
+                "G_GOVERNOR",
+                "C_CONSTITUTIONAL",
+                "W_WITNESS",
+            },
+            "activation_boundary": {"E_RUNTIME", "T_TASK", "O_OPERATIONS"},
+        }
+        salience = (
+            {"M_CONSOLIDATED", "T_TASK", "O_OPERATIONS"}
+            if observation_kind.startswith("stream_")
+            else salience_by_kind.get(
+                observation_kind, salience_by_kind["activation_boundary"]
+            )
+        )
+        activities = {
+            family: clip01(0.75 * value + (0.25 if family in salience else 0.0))
+            for family, value in activities.items()
+        }
     truths = {
         "E_HOST": ChannelTruthSource.MEASURED.value if e_paths else ChannelTruthSource.INFERRED.value,
         "E_RUNTIME": (
@@ -327,7 +373,7 @@ def collect_activation_channels(
         "M_CONSOLIDATED": e_paths[:6],
         "T_TASK": e_paths[:4],
     }
-    return sample_tick_channels(
+    samples = sample_tick_channels(
         repo=repo,
         body_epoch_id=body_epoch_id,
         tick=tick,
@@ -336,7 +382,25 @@ def collect_activation_channels(
         paths_by_channel=paths,
         constitutional_bits=bits,
         governor_mode=governor_mode,
+        timestamp=observed_at,
     )
+    if not observation_id:
+        return samples
+    # The event category stays bounded while source_ids preserves exact event
+    # identity. Unique IDs must not become unbounded categorical dimensions.
+    return [
+        replace(
+            sample,
+            event_key=observation_kind,
+            source_ids=(observation_id,),
+            metadata={
+                **sample.metadata,
+                "observation_id": observation_id,
+                "observation_kind": observation_kind,
+            },
+        )
+        for sample in samples
+    ]
 
 
 def channel_truth_panel(samples: list[FieldSample]) -> dict[str, dict[str, Any]]:

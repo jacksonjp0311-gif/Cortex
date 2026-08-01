@@ -1,3 +1,12 @@
+## 7.8.0 - Event-Sourced Temporal Accrual
+
+- Stable body epochs now retain their open Resonant Frame buffer across advanced activations instead of closing every activation into an isolated one-tick frame.
+- Every activation observation is tied to a durable runtime event ID and admitted exactly once through a bounded cursor.
+- Activation windows close when they first reach the honest `W_min=8` support threshold; fusion retains its existing transition/`W_max` cadence.
+- A first observation and every real epoch transition close an atomic current-epoch boundary from the distinct activation receipt sequence; sparse sequences remain honestly `INDETERMINATE`.
+- Activation output exposes `temporal_accrual` with the event ID, acceptance decision, buffer depth, close reason, and epoch-change state.
+- Event identity is stored as provenance, not as an unbounded categorical feature; no temporal metric gains authority.
+
 ## 7.7.2 - Epoch-Atomic Temporal Boundary
 
 - Advanced activation now finalizes in one explicit order: close the parent buffer, seal the final epoch, bind `QUIESCENT`, write a final-epoch boundary frame, then sample self-sensing.
