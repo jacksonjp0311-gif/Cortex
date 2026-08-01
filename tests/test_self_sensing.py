@@ -124,6 +124,17 @@ class SelfSensingIntegrationTests(unittest.TestCase):
         self.assertIn("z_vector", r)
         self.assertEqual(len(r["z_vector"]), 13)
 
+    def test_sqlite_row_bootstrap_status_warms_observer(self) -> None:
+        from cortex.epoch import ensure_current_epoch
+        from cortex.phases import transition_phase
+
+        ensure_current_epoch(self.store, self.repo, reason="sense_row_test")
+        transition_phase(self.store, self.repo, "QUIESCENT", reason="sense_row_test")
+        r = observe_self_sensing(self.store, self.repo, home=self.home, update=True)
+        self.assertTrue((r.get("gates") or {}).get("evidence_valid"), r)
+        self.assertTrue(r.get("baseline_updated"), r)
+        self.assertEqual(r.get("baseline_n_updates"), 1, r)
+
     def test_no_host_writes(self) -> None:
         before = list(self.host.rglob("*"))
         observe_self_sensing(self.store, self.repo, home=self.home)

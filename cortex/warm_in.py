@@ -168,6 +168,34 @@ def run_warm_in(
     else:
         log.append({"step": "realign_apply", "ok": True, "skipped": True})
 
+    # A current epoch can still have an ephemeral phase record after a fresh
+    # activation.  Warm-In must not call that constitutionally bound.  Persist
+    # QUIESCENT only when the operator explicitly authorizes the warm-in path;
+    # this does not reseal an already-current body epoch.
+    try:
+        from .phases import BOUND, phase_binding_status, transition_phase
+
+        binding = phase_binding_status(store, repo)
+        if binding.get("binding") != BOUND:
+            if authorize_realign:
+                transition_phase(store, repo, "QUIESCENT", reason="warm_in_phase_bind")
+                log.append({
+                    "step": "bind_phase",
+                    "ok": True,
+                    "phase": "QUIESCENT",
+                    "epoch_sealed": False,
+                })
+            else:
+                log.append({
+                    "step": "bind_phase",
+                    "ok": False,
+                    "reason": "operator_authorization_required",
+                    "binding": binding.get("binding"),
+                })
+    except Exception as exc:
+        log.append({"step": "bind_phase", "ok": False, "error": f"{type(exc).__name__}:{exc}"})
+        errors.append(f"bind_phase:{exc}")
+
     # 2) Field warm rounds
     total_field_ticks = 0
     for rnd in range(max(1, min(MAX_ROUNDS, int(rounds)))):
@@ -184,7 +212,7 @@ def run_warm_in(
                 "closed": w.get("closed"),
                 "display": w.get("baseline_frames_display"),
             }})
-        except Exception as exc:
+        except Exception:
             # fallback: seed_from_activation loop
             try:
                 for i in range(max(1, field_ticks)):

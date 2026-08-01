@@ -91,6 +91,26 @@ class WarmInTests(unittest.TestCase):
         ver = verify_warm_in_receipt(self.store, self.repo)
         self.assertTrue(ver.get("hash_ok"), ver)
 
+    def test_authorized_warm_in_binds_current_ephemeral_phase(self) -> None:
+        from cortex.phases import BOUND, phase_binding_status
+
+        before = phase_binding_status(self.store, self.repo)
+        # A fresh external bootstrap may expose an ephemeral phase record even
+        # when the body epoch itself is current.
+        if before.get("binding") != BOUND:
+            result = run_warm_in(
+                self.store,
+                self.repo,
+                home=self.home,
+                authorize_realign=True,
+                rounds=1,
+                field_ticks=1,
+                sense_updates=1,
+            )
+            self.assertFalse(result["receipt"].get("host_mutation"))
+            after = phase_binding_status(self.store, self.repo)
+            self.assertEqual(after.get("binding"), BOUND, result)
+
     def test_no_host_mutation(self) -> None:
         before = {p.name for p in self.host.rglob("*")}
         run_warm_in(

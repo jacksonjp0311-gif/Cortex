@@ -108,6 +108,27 @@ class ActivationFailClosedTests(unittest.TestCase):
         self.assertIn("body_epoch", r)
         self.assertTrue((r.get("body_epoch") or {}).get("epoch_id"))
 
+    def test_activation_leaves_phase_bound_to_final_epoch(self) -> None:
+        from cortex.phases import BOUND, phase_binding_status
+
+        r = activate_repository(
+            self.home,
+            self.store,
+            self.gov,
+            "AFCHost",
+            "exercise advanced activation phase continuity",
+            budget=400,
+            refresh="never",
+            memory_controller="advanced",
+        )
+        binding = phase_binding_status(self.store, "AFCHost")
+        self.assertEqual(binding.get("binding"), BOUND, r)
+        self.assertEqual(
+            binding.get("phase_epoch_id"),
+            (r.get("body_epoch") or {}).get("epoch_id"),
+            r,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

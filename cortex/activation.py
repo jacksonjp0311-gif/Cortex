@@ -958,8 +958,19 @@ def activate_repository(
         out["body_epoch"] = sealed.to_dict()
         if sealed.epoch_id != epoch.epoch_id:
             from .capabilities import revoke_epoch_capabilities
+            from .phases import transition_phase
 
             revoke_epoch_capabilities(store, repo, epoch.epoch_id)
+            # Advanced activation may change the adaptive root and therefore
+            # seal a successor epoch. Rebind the runtime phase in the same
+            # explicit activation mutation path so interconnect does not see a
+            # verified body with a phase record stranded on its parent epoch.
+            transition_phase(
+                store,
+                repo,
+                "QUIESCENT",
+                reason="post_advanced_activation",
+            )
     except Exception:
         pass
     return out

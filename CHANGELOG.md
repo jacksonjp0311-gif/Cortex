@@ -1,3 +1,11 @@
+## 7.7.1 - Phase-Coherent Binding Field
+
+- Activation continuity: when an advanced activation changes the adaptive root and seals a successor body epoch, the runtime now binds `QUIESCENT` to that final epoch instead of leaving the phase on its parent.
+- Warm-In closure: an explicitly authorized Warm-In can bind an ephemeral phase to the current verified body epoch without forcing another epoch seal.
+- Self-sensing evidence: production `sqlite3.Row` bootstrap evidence now warms the observer correctly instead of being discarded by a mapping-access mismatch.
+- Regression gates cover final-epoch phase continuity, authorized phase binding, and SQLite-backed observer warm-up.
+- Governance remains unchanged: sensing and Binding Field outputs are advisory evidence, never autonomous authority or permission to mutate the host.
+
 ## 7.7.0 - Binding Field
 
 - **Tagline:** Name the gap between local coupling and constitutional readiness.

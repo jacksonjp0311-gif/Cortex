@@ -15,7 +15,7 @@ import hashlib
 import json
 import math
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any
 
@@ -165,10 +165,6 @@ def sample_observer_state(
         pass
     if u_t is None:
         try:
-            from .governor import Governor
-            from .config import ensure_home
-            from pathlib import Path
-
             # lightweight uncertainty without full governor if available
             from .math_net.uncertainty import compute_uncertainty
 
@@ -242,9 +238,18 @@ def sample_observer_state(
     evidence_valid = False
     try:
         row = store.repo(repo)
+        # Store.repo returns sqlite3.Row in production.  It is subscriptable
+        # but has no dict.get(), so support both row shapes explicitly.
+        if row is not None:
+            try:
+                bootstrap_status = row["bootstrap_status"]
+            except (KeyError, IndexError, TypeError):
+                bootstrap_status = row.get("bootstrap_status")
+        else:
+            bootstrap_status = None
         evidence_valid = bool(
             row
-            and str(row.get("bootstrap_status") or "").lower()
+            and str(bootstrap_status or "").lower()
             in {"verified", "ready", "ok"}
         )
     except Exception:
@@ -261,7 +266,6 @@ def sample_observer_state(
         pass
 
     frames_seen = int((warmup or {}).get("baseline_frames_seen") or 0)
-    channels_warm = int((warmup or {}).get("baseline_channels_warm") or 0)
     field_ready = bool((warmup or {}).get("baseline_ready"))
 
     z = {
