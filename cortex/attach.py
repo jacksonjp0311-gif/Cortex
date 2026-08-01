@@ -308,6 +308,7 @@ def attach_repository(
                 version=f"v{__version__}",
                 claim_line=claim_line,
                 force_quiet=force_quiet,
+                repo_name=repo_name,
             )
     finally:
         try:
@@ -316,13 +317,28 @@ def attach_repository(
             pass
 
     # Re-open briefly for final report if store closed — rebuild report from captured
+    demo_public = os.environ.get("CORTEX_ATTACH_DEMO", "").strip().casefold() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if demo_public:
+        from .hermetic_ritual import public_display_paths
+
+        host_out, body_out = public_display_paths(repo_name=repo_name, demo=True)
+    else:
+        # Still avoid expanding personal abs paths in default human surfaces;
+        # machine report keeps real paths unless demo mode.
+        host_out, body_out = str(root), str(home_path)
+
     report = {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "version": __version__,
-        "host_path": str(root),
+        "host_path": host_out,
         "repo": repo_name,
-        "home": str(home_path),
+        "home": body_out,
         "external": True,
         "host_files_modified": False,
         "bootstrap": {

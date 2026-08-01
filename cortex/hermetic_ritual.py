@@ -279,8 +279,42 @@ def render_pyramidion(
     _sleep(SEAL_HOLD_S, enabled=enabled)
 
 
-def render_return_to_root(*, enabled: bool, out: TextIO | None = None) -> None:
-    """Perfect re-integration — single clean line, restore terminal state."""
+def public_display_paths(
+    *,
+    repo_name: str | None = None,
+    demo: bool | None = None,
+) -> tuple[str, str]:
+    """Symbolic paths for ritual UI — never real absolute machine routes.
+
+    Demo mode (CORTEX_ATTACH_DEMO=1) always shows generic public placeholders
+    so recordings/screenshots never leak private Desktop/OneDrive paths.
+    """
+    if demo is None:
+        demo = os.environ.get("CORTEX_ATTACH_DEMO", "").strip().casefold() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+    if demo:
+        host = os.environ.get("CORTEX_ATTACH_DEMO_HOST", "./your-project").strip() or "./your-project"
+        body = os.environ.get("CORTEX_ATTACH_DEMO_BODY", "~/.cortex").strip() or "~/.cortex"
+        return host, body
+    name = (repo_name or "repository").strip() or "repository"
+    # Public-safe relative form only — not C:\\Users\\... or /home/...
+    host = f"./{name}"
+    body = "~/.cortex"
+    return host, body
+
+
+def render_return_to_root(
+    *,
+    enabled: bool,
+    out: TextIO | None = None,
+    host_display: str | None = None,
+    body_display: str | None = None,
+) -> None:
+    """Perfect re-integration — symbolic paths only, restore terminal state."""
     stream = out or sys.stdout
     _write("", out=stream)
     if enabled:
@@ -291,6 +325,15 @@ def render_return_to_root(*, enabled: bool, out: TextIO | None = None) -> None:
         stream.write(RESET)
     else:
         stream.write("Returned to ROOT.\n")
+    # Always show symbolic paths (never absolute personal routes)
+    host = host_display or public_display_paths()[0]
+    body = body_display or public_display_paths()[1]
+    if enabled:
+        stream.write(f"{MUTED}   host  {RESET}{SOFT}{host}{RESET}\n")
+        stream.write(f"{MUTED}   body  {RESET}{SOFT}{body}{RESET}\n")
+    else:
+        stream.write(f"   host  {host}\n")
+        stream.write(f"   body  {body}\n")
     stream.flush()
     _sleep(RETURN_HOLD_S, enabled=enabled)
     # Ensure no residual styles
@@ -306,14 +349,26 @@ def run_display_sequence(
     claim_line: str = "Geometry Seal — Claim Receipt hashed.",
     force_quiet: bool = False,
     out: TextIO | None = None,
+    host_display: str | None = None,
+    body_display: str | None = None,
+    repo_name: str | None = None,
 ) -> list[Any]:
     """Full ritual display wrapping work steps. Returns work results."""
     enabled = ritual_enabled(force_quiet=force_quiet)
+    if host_display is None or body_display is None:
+        h, b = public_display_paths(repo_name=repo_name)
+        host_display = host_display or h
+        body_display = body_display or b
     render_opening(enabled=enabled, out=out)
     results = render_work_steps(work_steps, enabled=enabled, out=out)
     render_peak(enabled=enabled, out=out)
     render_pyramidion(
         version=version, claim_line=claim_line, enabled=enabled, out=out
     )
-    render_return_to_root(enabled=enabled, out=out)
+    render_return_to_root(
+        enabled=enabled,
+        out=out,
+        host_display=host_display,
+        body_display=body_display,
+    )
     return results

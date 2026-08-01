@@ -124,7 +124,8 @@ def _progress(msg: str) -> None:
 def scan_repository(root: Path, config: RepoConfig) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     excluded_roots = sorted(set(config.exclude))
-    _progress(f"scanning {root.name} (first attach can take a minute)…")
+    # Never print absolute machine paths in progress (demo / public safe)
+    _progress("scanning host (first attach can take a minute)…")
     n = 0
     last_beat = time.time()
     for path, relative in walk_repository(root, config):

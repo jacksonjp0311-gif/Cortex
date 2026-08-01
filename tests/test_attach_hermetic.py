@@ -64,6 +64,35 @@ class AttachHermeticTests(unittest.TestCase):
             Path(__file__).resolve().parents[1],
         )
 
+    def test_demo_mode_redacts_paths(self) -> None:
+        os.environ["CORTEX_ATTACH_DEMO"] = "1"
+        try:
+            report = attach_repository(
+                self.host,
+                home=self.home,
+                ritual=False,
+                quiet=True,
+                json_mode=True,
+                activate=False,
+                seal_epoch=False,
+            )
+            self.assertEqual(report["host_path"], "./your-project")
+            self.assertEqual(report["home"], "~/.cortex")
+            self.assertNotIn("Users", report["host_path"])
+            self.assertNotIn(str(self.host), report["host_path"])
+        finally:
+            os.environ.pop("CORTEX_ATTACH_DEMO", None)
+
+    def test_public_display_paths_symbolic(self) -> None:
+        from cortex.hermetic_ritual import public_display_paths
+
+        host, body = public_display_paths(repo_name="flask", demo=False)
+        self.assertEqual(host, "./flask")
+        self.assertEqual(body, "~/.cortex")
+        host_d, body_d = public_display_paths(demo=True)
+        self.assertEqual(host_d, "./your-project")
+        self.assertEqual(body_d, "~/.cortex")
+
 
 if __name__ == "__main__":
     unittest.main()

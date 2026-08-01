@@ -102,6 +102,9 @@ python -m cortex attach . --name MyApp
 |----------|---------|
 | `CORTEX_HOME` | Body directory (default `~/.cortex`) — **never** inside host |
 | `CORTEX_ATTACH_RITUAL=0` | Disable Hermetic glow (CI/scripts) |
+| `CORTEX_ATTACH_DEMO=1` | Public demo: ritual + report show `./your-project` and `~/.cortex` only — never real machine paths |
+| `CORTEX_ATTACH_DEMO_HOST` | Override demo host display (default `./your-project`) |
+| `CORTEX_ATTACH_DEMO_BODY` | Override demo body display (default `~/.cortex`) |
 | `CORTEX_ATTACH_RITUAL=1` | Force ritual even in CI |
 | `NO_COLOR=1` | No ANSI |
 
