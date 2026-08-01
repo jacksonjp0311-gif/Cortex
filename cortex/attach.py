@@ -89,6 +89,10 @@ def attach_repository(
         except Exception:
             already = False
 
+    # Re-attach must feel instant — not like a hang/loop
+    if already and not os.environ.get("CORTEX_ATTACH_FAST"):
+        os.environ["CORTEX_ATTACH_FAST"] = "1"
+
     def step_inventory() -> dict[str, Any]:
         nonlocal bootstrap_result
         if already:

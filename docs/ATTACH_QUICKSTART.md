@@ -70,10 +70,12 @@ curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scrip
 **PowerShell**
 
 ```powershell
-# Reliable: download then run (passing "." as host)
+# Reliable: download then run in THIS shell (dot = current project)
 irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.ps1 -OutFile $env:TEMP\cortex-attach.ps1
-powershell -File $env:TEMP\cortex-attach.ps1 .
+& $env:TEMP\cortex-attach.ps1 .
 
+# Avoid nested:  powershell -File $env:TEMP\cortex-attach.ps1 .
+#   (can truncate the ritual mid-way and look like a hang)
 # Avoid: irm ... | iex  (param binding is unreliable when piped)
 ```
 

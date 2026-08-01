@@ -5,6 +5,7 @@
 - **Isolation:** default external mode — no host `.cortex/` pollution; body under `CORTEX_HOME`/`~/.cortex`.
 - **Easy paths:** uvx / pipx primary; `scripts/attach_one.sh|.ps1`; thin `js/cortex-attach` npx wrapper.
 - **Docs:** `docs/ATTACH_QUICKSTART.md`; Docker isolation test `scripts/ci/docker_attach_ritual_test.sh`.
+- **Windows UX:** README is a single-command paste (no A+B+C chain); `attach_one.ps1` rejects placeholder paths, stays in-process (`& script.ps1`, not nested `powershell -File`), sets `PYTHONUNBUFFERED`; re-attach auto-sets `CORTEX_ATTACH_FAST`.
 - Host remains sovereign. Ritual is interface design, not consciousness or mutation authority.
 
 ## 7.1.2 - Claim Receipts

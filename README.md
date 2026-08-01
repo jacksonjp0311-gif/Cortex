@@ -51,47 +51,34 @@ Cortex is a portable memory organ you attach to a repository. It assimilates the
 **Needs:** Python 3.10+ (and ideally [uv](https://github.com/astral-sh/uv)).  
 **Body:** `~/.cortex` (or `$env:CORTEX_HOME`). Host stays clean (external mode).
 
-> **Run only ONE block.** Do not paste every alternative.  
-> Replace the `cd` path with your real project (example below uses `PulseMesh`).  
-> Do **not** run `cd C:\path\to\your\project` — that is a placeholder and will error.
+> **Copy only the two lines for your shell.** Do not paste every method.  
+> Do **not** run `cd C:\path\to\your\project` — that is a fake placeholder and errors.  
+> Success ends with `Returned to ROOT.` Stop there. Re-running is safe but unnecessary.
 
-**PowerShell (Windows) — pick A *or* B *or* C**
+**PowerShell (Windows)** — from your real project folder:
 
 ```powershell
-# Go to YOUR project (example)
-cd "C:\Users\jacks\OneDrive\Desktop\PulseMesh"
-
-# --- A) Best if you have uv (single command) ---
+cd "C:\Users\jacks\OneDrive\Desktop\PulseMesh"   # ← change to YOUR project
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
-
-# --- B) Plain Python only (if A fails / no uv) ---
-# python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
-# python -m cortex.attach_main .
-
-# --- C) Script fallback (if A and B fail) ---
-# irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.ps1 -OutFile $env:TEMP\cortex-attach.ps1
-# & $env:TEMP\cortex-attach.ps1 .
 ```
 
-**Bash / macOS / Linux — pick A *or* B *or* C**
+No `uv`? Use this instead (still only once):
+
+```powershell
+python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+python -m cortex.attach_main .
+```
+
+**Bash / macOS / Linux:**
 
 ```bash
-cd ~/Projects/YourApp   # your real path
-
-# A) uv
+cd ~/Projects/YourApp   # ← your real path
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
-
-# B) plain Python
-# python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
-# python3 -m cortex.attach_main .
-
-# C) script
-# curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.sh | bash -s -- .
 ```
 
-Already attached? One run is enough. Re-running is safe (idempotent) but **don’t** chain A+B+C.
+No `uv`? `python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main" && python3 -m cortex.attach_main .`
 
-Full guide: [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
+Fallbacks (script / npx / pipx): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
 
 ```bash
 # After attach — daily agent loop (body under ~/.cortex)
