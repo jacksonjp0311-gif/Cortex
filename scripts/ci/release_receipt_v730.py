@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from cortex import __version__  # noqa: E402
+from version_gate import release_at_least  # noqa: E402
 from cortex.field_channels import CHANNEL_FAMILIES, CLAIM_BOUNDARY as CH_CLAIM  # noqa: E402
 from cortex.resonant_frame import (  # noqa: E402
     CANONICAL_STATEMENT,
@@ -139,7 +140,7 @@ def main() -> int:
     print(json.dumps({"path": str(path), "receipt_hash": receipt["receipt_hash"], "passed": r.returncode == 0}, indent=2))
     if r.returncode != 0:
         print(out[-4000:], file=sys.stderr)
-    return 0 if r.returncode == 0 and __version__.startswith("7.3") else 1
+    return 0 if r.returncode == 0 and release_at_least(__version__, (7, 3, 0)) else 1
 
 
 if __name__ == "__main__":

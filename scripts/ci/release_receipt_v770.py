@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from cortex import __version__  # noqa: E402
+from version_gate import release_at_least  # noqa: E402
 from cortex.binding_field import CANONICAL, CLAIM, SCHEMA  # noqa: E402
 
 
@@ -78,7 +79,7 @@ def main() -> int:
     print(json.dumps({"path": str(path), "receipt_hash": receipt["receipt_hash"], "passed": r.returncode == 0, "version": __version__}, indent=2))
     if r.returncode != 0:
         print(out[-3000:], file=sys.stderr)
-    return 0 if r.returncode == 0 and __version__.startswith("7.7") else 1
+    return 0 if r.returncode == 0 and release_at_least(__version__, (7, 7, 0)) else 1
 
 
 if __name__ == "__main__":

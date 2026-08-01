@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from cortex import __version__  # noqa: E402
+from version_gate import release_at_least  # noqa: E402
 from cortex.realign import CANONICAL, CLAIM, SCHEMA  # noqa: E402
 
 
@@ -103,7 +104,7 @@ def main() -> int:
     )
     if r.returncode != 0:
         print(out[-4000:], file=sys.stderr)
-    return 0 if r.returncode == 0 and __version__.startswith("7.4") else 1
+    return 0 if r.returncode == 0 and release_at_least(__version__, (7, 4, 0)) else 1
 
 
 if __name__ == "__main__":

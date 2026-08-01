@@ -4,6 +4,7 @@
 - Warm-In closure: an explicitly authorized Warm-In can bind an ephemeral phase to the current verified body epoch without forcing another epoch seal.
 - Self-sensing evidence: production `sqlite3.Row` bootstrap evidence now warms the observer correctly instead of being discarded by a mapping-access mismatch.
 - Regression gates cover final-epoch phase continuity, authorized phase binding, and SQLite-backed observer warm-up.
+- Historical release receipts now use minimum-version floors, so later releases continue proving earlier invariants instead of failing CI on an exact minor-version prefix.
 - Governance remains unchanged: sensing and Binding Field outputs are advisory evidence, never autonomous authority or permission to mutate the host.
 
 ## 7.7.0 - Binding Field
