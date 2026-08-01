@@ -59,6 +59,15 @@ class FieldChannelTests(unittest.TestCase):
         # deterministic order
         self.assertEqual([s.channel_family for s in samples], sorted(CHANNEL_FAMILIES))
 
+    def test_baseline_warmup_display(self) -> None:
+        from cortex.resonant_frame import baseline_warmup_status
+
+        w = baseline_warmup_status({"frames_seen": 3, "distributions": {"E_HOST": {"a": 1.0}}})
+        self.assertEqual(w["baseline_frames_display"], "3/16")
+        self.assertTrue(w["baseline_warming"])
+        self.assertFalse(w["baseline_ready"])
+        self.assertIn("3/16", w["baseline_message"])
+
 
 if __name__ == "__main__":
     unittest.main()

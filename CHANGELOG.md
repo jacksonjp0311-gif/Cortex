@@ -1,5 +1,6 @@
 ## 7.3.0 - Resonant Frames
 
+- **Public demo + holdout:** `scripts/demo_resonant_frames_public.py` (STALE_ECHO vs COHERENT, TEMP-only, `docs/demo/*`); `scripts/experiment_field_advisory_holdout.py` (N=20 advisory width); CLI warmup `baseline_frames_seen: 3/16`.
 - **Temporal field layer** over fusion ticks: typed channels (K∈[6,12]), bounded frames (W≤32), lagged coordination, effective-rank differentiation, evidence–memory comparator, deterministic classification.
 - **Classifications:** QUIESCENT · TRANSITION · FRAGMENTED · OVERBOUND · STALE_ECHO · COHERENT_DIFFERENTIATED · INDETERMINATE.
 - **Advisory policy only** (shadow default); never authority/witness/epoch/host mutation.

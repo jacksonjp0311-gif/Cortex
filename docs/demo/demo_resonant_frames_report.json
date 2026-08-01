@@ -1,0 +1,126 @@
+{
+  "schema_version": "cortex-resonant-frame/1.0",
+  "glyph": "\u25c8\u27f3",
+  "repo": "flask",
+  "enabled": true,
+  "live_buffer_samples": 0,
+  "last_frame_id": null,
+  "last_classification": null,
+  "baseline_frames_seen": 3,
+  "baseline_frames_target": 16,
+  "baseline_frames_display": "3/16",
+  "baseline_warmup": {
+    "baseline_frames_seen": 3,
+    "baseline_frames_target": 16,
+    "baseline_frames_display": "3/16",
+    "baseline_channels_warm": 11,
+    "baseline_channels_min": 3,
+    "baseline_ready": false,
+    "baseline_warming": true,
+    "baseline_message": "baseline warming (3/16 frames; need 16 epoch-current frames and \u22653 channel baselines)",
+    "n_f_note": "N_F available when \u22653 channels have baselines"
+  },
+  "baseline_ready": false,
+  "baseline_digest": "2bd871862353c154ca91e90bc43d77d84ebb486585cea8d8334013d71b0be217",
+  "canonical_statement": "Cortex has two geometries and one temporal field layer: spectral geometry measures coupling quality; constitutional geometry governs participation rights; Resonant Frames measure bounded temporal coordination. No temporal metric can move a constitutional bit.",
+  "claim_boundary": "Resonant Frames are bounded temporal telemetry for repository intelligence. They measure coordination, differentiation, evidence participation, comparator agreement, and transition across Cortex channels. They do not establish consciousness, biological equivalence, electromagnetic fields, quantum behavior, correctness, authority, witness, or host mutation permission.",
+  "advisory_only": true,
+  "demo": {
+    "public": true,
+    "host_display": "./your-project",
+    "body_display": "~/.cortex",
+    "flask_cloned": false,
+    "scenarios": {
+      "A_STALE_ECHO": {
+        "expected": "STALE_ECHO",
+        "classification": "STALE_ECHO",
+        "frame_id": "frame_ec751d5423dabbabf141",
+        "match": true,
+        "metrics": {
+          "channel_count": 11,
+          "eligible_channel_count": 3,
+          "tick_count": 12,
+          "mean_activity": 0.2389239794821914,
+          "nonrandomness": 0.9999999999981639,
+          "nonrandomness_rate": 1.0,
+          "integration": 1.0,
+          "same_frame_coordination": 1.0,
+          "lag_index": 0.0,
+          "differentiation": 0.0,
+          "common_mode": 1.0,
+          "participation_entropy": 0.7381928247834829,
+          "giant_component_fraction": 1.0,
+          "comparator_available": false,
+          "comparator_agreement": null,
+          "contradiction_mass": null,
+          "comparator_quality": null,
+          "evidence_participation": 0.0,
+          "memory_participation": 0.8021432282553692,
+          "transition_pressure": 0.22032274320047368,
+          "epoch_current": false
+        },
+        "policy": {
+          "mode": "stale_echo",
+          "reasons": [
+            "prefer_evidence_baseline",
+            "disable_learned_rerank_once"
+          ],
+          "retrieval_width_delta": 1,
+          "prefer_evidence": true,
+          "request_counterevidence": true,
+          "disable_learned_rerank_once": true,
+          "recommended_gcmt_regime": "evidence",
+          "advisory_only": true
+        },
+        "receipt_hash": "425010dadfd4e6e3120b0d5a8c1c0ecfc7d6a6dd59f5ba92a0bc475b5ce3da63"
+      },
+      "B_COHERENT_DIFFERENTIATED": {
+        "expected": "COHERENT_DIFFERENTIATED",
+        "classification": "COHERENT_DIFFERENTIATED",
+        "frame_id": "frame_842245b3f4c44384976c",
+        "match": true,
+        "metrics": {
+          "channel_count": 11,
+          "eligible_channel_count": 11,
+          "tick_count": 16,
+          "mean_activity": 0.5409432444967691,
+          "nonrandomness": 0.8026634964694135,
+          "nonrandomness_rate": 1.0,
+          "integration": 0.5607081750729798,
+          "same_frame_coordination": 0.37926872577980747,
+          "lag_index": 0.3939393939393939,
+          "differentiation": 0.5251140213744215,
+          "common_mode": 0.4419680162595445,
+          "participation_entropy": 0.9989445202115904,
+          "giant_component_fraction": 1.0,
+          "comparator_available": true,
+          "comparator_agreement": 0.904262,
+          "contradiction_mass": 0.0,
+          "comparator_quality": 0.904262,
+          "evidence_participation": 0.20608010201373184,
+          "memory_participation": 0.27538829804737985,
+          "transition_pressure": 0.24775198506102197,
+          "epoch_current": true
+        },
+        "policy": {
+          "mode": "coherent_differentiated",
+          "reasons": [
+            "narrower_context_ok",
+            "still_constitutional_gates"
+          ],
+          "retrieval_width_delta": -1,
+          "prefer_evidence": false,
+          "request_counterevidence": false,
+          "disable_learned_rerank_once": false,
+          "recommended_gcmt_regime": "local",
+          "advisory_only": true
+        },
+        "receipt_hash": "0284c04adc22edf59afcbc7102cb5593354ff4efc86a47f70e425e143ca2e8a0"
+      }
+    },
+    "field_report_command": "python -m cortex --home <TEMP/cortex-demo-body> field report --repo flask --json",
+    "claim_boundary": "Resonant Frames are bounded temporal telemetry for repository intelligence. They measure coordination, differentiation, evidence participation, comparator agreement, and transition across Cortex channels. They do not establish consciousness, biological equivalence, electromagnetic fields, quantum behavior, correctness, authority, witness, or host mutation permission."
+  },
+  "host_display": "./your-project",
+  "body_display": "~/.cortex"
+}

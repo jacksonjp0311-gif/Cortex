@@ -1189,10 +1189,47 @@ def frame_trace(store: Any, repo: str, *, limit: int = 16) -> list[dict[str, Any
     return out
 
 
+def baseline_warmup_status(bas: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Human + machine warmup: '3/16' style, never silent null baselines."""
+    bas = bas or {}
+    seen = int(bas.get("frames_seen") or 0)
+    need = 16  # calibration / solid baseline target
+    min_ch = MIN_BASELINE_CHANNELS
+    dist = bas.get("distributions") or {}
+    channels_warm = sum(1 for _k, v in dist.items() if v)
+    ready = seen >= need and channels_warm >= min_ch
+    warming = not ready
+    # display like "3/16"
+    seen_display = f"{min(seen, need)}/{need}"
+    return {
+        "baseline_frames_seen": seen,
+        "baseline_frames_target": need,
+        "baseline_frames_display": seen_display,
+        "baseline_channels_warm": channels_warm,
+        "baseline_channels_min": min_ch,
+        "baseline_ready": ready,
+        "baseline_warming": warming,
+        "baseline_message": (
+            f"baseline ready ({seen_display} frames, {channels_warm} channels)"
+            if ready
+            else (
+                f"baseline warming ({seen_display} frames; "
+                f"need {need} epoch-current frames and ≥{min_ch} channel baselines)"
+            )
+        ),
+        "n_f_note": (
+            "N_F available when ≥3 channels have baselines"
+            if channels_warm >= min_ch
+            else "N_F is null until ≥3 channel baselines warm (not a middle value)"
+        ),
+    }
+
+
 def field_report(store: Any, repo: str) -> dict[str, Any]:
     state = load_field_state(store, repo)
     latest = latest_frame(store, repo)
     bas = load_baseline(store, repo)
+    warmup = baseline_warmup_status(bas)
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
@@ -1202,7 +1239,12 @@ def field_report(store: Any, repo: str) -> dict[str, Any]:
         "last_frame_id": state.get("last_frame_id"),
         "last_classification": state.get("last_classification"),
         "latest": latest,
-        "baseline_frames_seen": bas.get("frames_seen", 0),
+        # numeric + "3/16" display (never hide warmup)
+        "baseline_frames_seen": warmup["baseline_frames_seen"],
+        "baseline_frames_target": warmup["baseline_frames_target"],
+        "baseline_frames_display": warmup["baseline_frames_display"],
+        "baseline_warmup": warmup,
+        "baseline_ready": warmup["baseline_ready"],
         "baseline_digest": bas.get("digest"),
         "canonical_statement": CANONICAL_STATEMENT,
         "claim_boundary": CLAIM_BOUNDARY,

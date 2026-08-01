@@ -1,0 +1,25 @@
++------------------------------------------------------------+
+|  *  CORTEX v7.3 - RESONANT FRAMES  (public demo)           |
+|  host  ./your-project     body  ~/.cortex                  |
+|  (paths symbolic - no personal machine routes)             |
++------------------------------------------------------------+
+|  baseline_frames_seen: 3/16                                   |
+|  baseline warming (3/16 frames; need 16 epoch-current    |
++------------------------------------------------------------+
+|  SCENARIO A - memory-dominant, weak verified evidence      |
+|    classification:  STALE_ECHO                            |
+|    frame_id:        frame_ec751d5423dabbabf141            |
+|    expected:        STALE_ECHO                             |
++------------------------------------------------------------+
+|  SCENARIO B - differentiated + evidence-aligned            |
+|    classification:  COHERENT_DIFFERENTIATED               |
+|    frame_id:        frame_842245b3f4c44384976c            |
+|    expected:        COHERENT_DIFFERENTIATED                |
++------------------------------------------------------------+
+|  claim: frames are advisory telemetry only                 |
+|  No temporal metric can move a constitutional bit.         |
++------------------------------------------------------------+
+
+Returned to ROOT.
+   host  ./your-project
+   body  ~/.cortex

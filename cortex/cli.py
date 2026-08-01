@@ -2114,7 +2114,22 @@ def main(argv: list[str] | None = None) -> None:
                     args.json,
                 )
             else:
-                emit(field_report(store, args.repo), args.json)
+                rep = field_report(store, args.repo)
+                # Always surface warmup as "3/16" style in machine output
+                if not args.json:
+                    warm = rep.get("baseline_warmup") or {}
+                    print(
+                        f"◈ field report  repo={args.repo}  "
+                        f"baseline_frames_seen: {warm.get('baseline_frames_display', '?/?')}"
+                    )
+                    print(f"   {warm.get('baseline_message', '')}")
+                    if rep.get("last_classification"):
+                        print(
+                            f"   last_classification: {rep.get('last_classification')}  "
+                            f"advisory_only=true"
+                        )
+                    print()
+                emit(rep, True)
 
         elif command == "geometry":
             from .constitutional_geometry import (

@@ -24,6 +24,37 @@ fusion ticks → channel samples → bounded frame → temporal metrics
 | Coherence | Separate `temporal_field` panel; score unchanged |
 | Claim receipts | May reference frame_id/hash as **supporting context only** |
 
+## Public demo + holdout
+
+```bash
+# STALE_ECHO vs COHERENT_DIFFERENTIATED (TEMP paths only; symbolic host/body display)
+python scripts/demo_resonant_frames_public.py
+# optional real public tree:
+python scripts/demo_resonant_frames_public.py --with-flask
+
+# Advisory width holdout (N=20 synthetic tasks)
+python scripts/experiment_field_advisory_holdout.py --n 20 --base-k 5
+```
+
+Artifacts: `work/demo_resonant_frames_report.json`, `work/demo_resonant_frames_screenshot.txt`,
+`work/field_advisory_holdout.json`.
+
+## Warmup messaging
+
+`cortex field report --json` includes:
+
+```json
+"baseline_frames_display": "3/16",
+"baseline_warmup": {
+  "baseline_frames_seen": 3,
+  "baseline_frames_target": 16,
+  "baseline_ready": false,
+  "baseline_message": "baseline warming (3/16 frames; need 16 ...)"
+}
+```
+
+`N_F` stays **null** until ≥3 channel baselines exist — never a fake midpoint.
+
 ## Disable / rollback
 
 - `CORTEX_FIELD=0` disables collection (v7.2 behavior).
