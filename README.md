@@ -69,14 +69,21 @@ python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
 python -m cortex.attach_main .
 ```
 
-**Bash / macOS / Linux:**
+**Bash / macOS / Linux** — from your real project folder:
 
 ```bash
-cd ~/Projects/YourApp   # ← your real path
+cd ~/Projects/YourApp   # ← change to YOUR project (not /path/to/...)
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 ```
 
-No `uv`? `python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main" && python3 -m cortex.attach_main .`
+No `uv`? Use this instead (still only once):
+
+```bash
+python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+python3 -m cortex.attach_main .
+```
+
+Do **not** chain uvx + python + the curl script. Success ends with `Returned to ROOT.`
 
 Fallbacks (script / npx / pipx): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
 

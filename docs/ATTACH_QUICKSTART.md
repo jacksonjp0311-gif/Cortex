@@ -64,7 +64,9 @@ Requires Python 3.10+ available as `python` / `python3`.
 **Bash**
 
 ```bash
+# From inside YOUR project (real path — not /path/to/your/app)
 curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.sh | bash -s -- .
+# Stop at "Returned to ROOT." — do not also run uvx/python attach
 ```
 
 **PowerShell**
