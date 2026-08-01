@@ -769,6 +769,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
     claim_p.add_argument("--json", action="store_true")
 
+    warm_in_p = sub.add_parser(
+        "warm-in",
+        help="v7.6 Verified Operating Regime ◈∿ — warm field+sense to milestone (advisory).",
+    )
+    warm_in_p.add_argument("--repo", required=True)
+    warm_in_p.add_argument(
+        "action",
+        choices=["status", "run", "verify"],
+        nargs="?",
+        default="status",
+    )
+    warm_in_p.add_argument(
+        "--i-authorize-realign",
+        action="store_true",
+        help="Allow epoch realign during warm-in when continuity is stale.",
+    )
+    warm_in_p.add_argument("--rounds", type=int, default=3)
+    warm_in_p.add_argument("--field-ticks", type=int, default=4)
+    warm_in_p.add_argument("--sense-updates", type=int, default=4)
+    warm_in_p.add_argument("--json", action="store_true")
+
     sense_p = sub.add_parser(
         "sense",
         help="v7.5 Self-Sensing Field ◈ — observe residual vs baseline (advisory only).",
@@ -2094,6 +2115,47 @@ def main(argv: list[str] | None = None) -> None:
                 emit(verify_claim_receipt(store, args.repo), args.json)
             else:
                 emit(claim_report(store, args.repo), args.json)
+
+        elif command == "warm-in":
+            from .warm_in import (
+                CLAIM as WARM_CLAIM,
+                run_warm_in,
+                verify_warm_in_receipt,
+                warm_in_status,
+            )
+
+            act = str(getattr(args, "action", "status") or "status")
+            if act == "run":
+                emit(
+                    run_warm_in(
+                        store,
+                        args.repo,
+                        home=home,
+                        authorize_realign=bool(
+                            getattr(args, "i_authorize_realign", False)
+                        ),
+                        field_ticks=int(args.field_ticks or 4),
+                        sense_updates=int(args.sense_updates or 4),
+                        rounds=int(args.rounds or 3),
+                    ),
+                    args.json,
+                )
+            elif act == "verify":
+                emit(verify_warm_in_receipt(store, args.repo), args.json)
+            else:
+                st = warm_in_status(store, args.repo)
+                if not args.json:
+                    print(
+                        f"◈∿ warm-in status  repo={args.repo}  ready={st.get('ready')}"
+                    )
+                    print(
+                        f"   field={st.get('field_frames_display')}  "
+                        f"observer={st.get('observer_baseline_display')}  "
+                        f"needs_realign={st.get('needs_realign')}"
+                    )
+                    print(f"   → {st.get('recommended_action')}")
+                    print()
+                emit(st, True)
 
         elif command == "sense":
             from .self_sensing import (

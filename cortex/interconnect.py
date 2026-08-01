@@ -253,6 +253,12 @@ def mesh_status(
         "bottlenecks": bottlenecks,
         "realign": realign_advice,
         "self_sensing": self_sense_panel,
+        "warm_in": {
+            "command": f"python -m cortex warm-in status --repo {repo}",
+            "run": f"python -m cortex warm-in run --repo {repo}",
+            "note": "v7.6 Verified Operating Regime — warm field+sense to milestone",
+            "phase": "v7.6.0",
+        },
         "continuity": continuity,
         "planes": {
             "E": "evidence",

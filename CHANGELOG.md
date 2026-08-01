@@ -1,3 +1,13 @@
+## 7.6.0 - Verified Operating Regime (Warm-In Closure)
+
+- **Tagline:** Close the self-sensing milestone — warm baselines, replay-stable class, hashed readiness.
+- **`cortex/warm_in.py`:** status · run · verify; optional authorized realign; field warm + sense updates; milestone receipt.
+- **CLI:** `cortex warm-in status|run|verify` (`--i-authorize-realign`, `--rounds`, `--field-ticks`, `--sense-updates`).
+- **Interconnect:** points at warm-in for regime readiness.
+- **Docs:** `docs/intelligence/PHASE_V7.6_VERIFIED_OPERATING_REGIME.md`
+- **CI:** `scripts/ci/release_receipt_v760.py`
+- Still advisory: no host mutation, no silent seal, no authority from residual.
+
 ## 7.5.0 - Self-Sensing Field
 
 - **Tagline:** Measure Cortex’s own regime vs verified baseline — residual is not self-authorization.

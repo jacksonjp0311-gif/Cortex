@@ -60,6 +60,7 @@ jobs:
           tests/test_resonant_frame_nonmutation.py
           tests/test_realign.py
           tests/test_self_sensing.py
+          tests/test_warm_in.py
           -q --tb=line
       - name: Constitutional seal release receipt
         env:
@@ -81,6 +82,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v750.py
+      - name: Warm-In / VOR receipt (v7.6.0 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v760.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,6 +97,7 @@ jobs:
             work/release_receipt_v730.json
             work/release_receipt_v740.json
             work/release_receipt_v750.json
+            work/release_receipt_v760.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
