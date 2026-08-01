@@ -524,6 +524,7 @@ def measure_coherence(
         },
         "seams": seams,
         "temporal_field": temporal_field,
+        "self_sensing": None,  # filled below when available (v7.5 advisory panel)
         "notes": notes,
         "advice": advice,
         "auto_fuse_env": os.environ.get("CORTEX_FUSE_AUTO", ""),
@@ -535,6 +536,39 @@ def measure_coherence(
         ),
         "at": time.time(),
     }
+
+    # v7.5 Self-Sensing Field panel (observe; may update EMA when epoch current)
+    try:
+        from .self_sensing import observe_self_sensing
+
+        sense = observe_self_sensing(
+            store,
+            repo,
+            home=home,
+            coherence_report=report,
+            update=persist,
+            persist=persist,
+        )
+        report["self_sensing"] = {
+            "classification": sense.get("classification"),
+            "residual_r": sense.get("residual_r"),
+            "F_t": sense.get("F_t"),
+            "gates": sense.get("gates"),
+            "observation_id": sense.get("observation_id"),
+            "advisory_only": True,
+            "note": "Self-sensing is advisory telemetry; residual ≠ authority.",
+        }
+        if sense.get("classification") == "UNBOUND":
+            advice.append("self_sense_unbound_run_realign_diagnose")
+        elif sense.get("classification") == "COLD":
+            advice.append("self_sense_cold_warm_resonant_frames")
+        report["advice"] = advice
+    except Exception as exc:
+        report["self_sensing"] = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+        }
 
     if persist:
         # Log transitions against prior snapshot BEFORE overwriting coherence_latest

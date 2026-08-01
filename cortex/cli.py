@@ -769,6 +769,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     claim_p.add_argument("--json", action="store_true")
 
+    sense_p = sub.add_parser(
+        "sense",
+        help="v7.5 Self-Sensing Field ◈ — observe residual vs baseline (advisory only).",
+    )
+    sense_p.add_argument("--repo", required=True)
+    sense_p.add_argument(
+        "action",
+        choices=["observe", "report", "trace", "replay", "milestone"],
+        nargs="?",
+        default="observe",
+    )
+    sense_p.add_argument(
+        "--no-update",
+        action="store_true",
+        help="Do not update EMA baseline (pure observe).",
+    )
+    sense_p.add_argument("--limit", type=int, default=16)
+    sense_p.add_argument("--json", action="store_true")
+
     realign_p = sub.add_parser(
         "realign",
         help="v7.4 Continuity Realignment ∿◆ — diagnose/plan/apply epoch rebind (explicit auth).",
@@ -2075,6 +2094,60 @@ def main(argv: list[str] | None = None) -> None:
                 emit(verify_claim_receipt(store, args.repo), args.json)
             else:
                 emit(claim_report(store, args.repo), args.json)
+
+        elif command == "sense":
+            from .self_sensing import (
+                CLAIM as SENSE_CLAIM,
+                milestone_holdout_check,
+                observe_self_sensing,
+                self_sensing_report,
+                self_sensing_trace,
+                verify_observation_replay,
+            )
+
+            act = str(getattr(args, "action", "observe") or "observe")
+            if act == "report":
+                emit(self_sensing_report(store, args.repo), args.json)
+            elif act == "trace":
+                emit(
+                    {
+                        "repo": args.repo,
+                        "history": self_sensing_trace(
+                            store, args.repo, limit=int(args.limit or 16)
+                        ),
+                        "claim_boundary": SENSE_CLAIM,
+                    },
+                    args.json,
+                )
+            elif act == "replay":
+                emit(verify_observation_replay(store, args.repo, home=home), args.json)
+            elif act == "milestone":
+                m = milestone_holdout_check(store, args.repo)
+                rp = verify_observation_replay(store, args.repo, home=home)
+                m["checks"]["replay_stable"] = bool(rp.get("stable_across_replay"))
+                m["pass"] = all(v is not False for v in m["checks"].values())
+                m["replay"] = rp
+                emit(m, args.json)
+            else:
+                rep = observe_self_sensing(
+                    store,
+                    args.repo,
+                    home=home,
+                    update=not bool(getattr(args, "no_update", False)),
+                )
+                if not args.json:
+                    print(
+                        f"◈ sense  repo={args.repo}  class={rep.get('classification')}  "
+                        f"r={rep.get('residual_r')}  F={rep.get('F_t')}"
+                    )
+                    print(
+                        f"   baseline={rep.get('baseline_n_updates')}/{16}  "
+                        f"gates_hard_pass={rep.get('gates_hard_pass')}  advisory_only=true"
+                    )
+                    for rec in (rep.get("advisory") or {}).get("recommendations") or []:
+                        print(f"   → {rec}")
+                    print()
+                emit(rep, True)
 
         elif command == "realign":
             from .realign import (

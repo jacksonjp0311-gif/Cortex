@@ -216,6 +216,33 @@ def mesh_status(
             "phase": "v7.4.0",
         }
 
+    # v7.5 self-sensing compact (observe, no baseline force)
+    self_sense_panel: dict[str, Any] | None = None
+    try:
+        from .self_sensing import observe_self_sensing, self_sensing_report
+
+        # read-only snapshot preferred if exists; else light observe without update
+        existing = self_sensing_report(store, repo)
+        if existing.get("latest"):
+            self_sense_panel = {
+                "classification": (existing.get("latest") or {}).get("classification"),
+                "residual_r": (existing.get("latest") or {}).get("residual_r"),
+                "F_t": (existing.get("latest") or {}).get("F_t"),
+                "baseline_display": existing.get("baseline_display"),
+                "advisory_only": True,
+            }
+        else:
+            snap = observe_self_sensing(store, repo, update=False, persist=False)
+            self_sense_panel = {
+                "classification": snap.get("classification"),
+                "residual_r": snap.get("residual_r"),
+                "F_t": snap.get("F_t"),
+                "baseline_display": f"{snap.get('baseline_n_updates', 0)}/16",
+                "advisory_only": True,
+            }
+    except Exception as exc:
+        self_sense_panel = {"error": f"{type(exc).__name__}:{exc}", "advisory_only": True}
+
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
@@ -225,6 +252,7 @@ def mesh_status(
         "mesh_green": mesh_green,
         "bottlenecks": bottlenecks,
         "realign": realign_advice,
+        "self_sensing": self_sense_panel,
         "continuity": continuity,
         "planes": {
             "E": "evidence",

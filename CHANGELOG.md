@@ -1,3 +1,14 @@
+## 7.5.0 - Self-Sensing Field
+
+- **Tagline:** Measure Cortex’s own regime vs verified baseline — residual is not self-authorization.
+- **`cortex/self_sensing.py`:** observer state \(z_t\) (13-D), EMA \(\mu\), diagonal Mahalanobis \(r_t\), geometric-mean \(F_t\), classifications COLD|UNBOUND|NOMINAL|DRIFT|STRESSED|INDETERMINATE.
+- **Hard gates:** no **NOMINAL** when epoch/phase unbound; baseline warm required.
+- **CLI:** `cortex sense observe|report|trace|replay|milestone`.
+- **Surfaces:** coherence `self_sensing` panel; interconnect compact panel.
+- **Docs:** `docs/intelligence/PHASE_V7.5_SELF_SENSING_FIELD.md`
+- **CI:** `scripts/ci/release_receipt_v750.py`
+- Never host mutation, silent seal, capability grant, promote, or consciousness claims.
+
 ## 7.4.0 - Continuity Realignment
 
 - **Tagline:** When the seal lags the living tree, realign explicitly — never silently.
