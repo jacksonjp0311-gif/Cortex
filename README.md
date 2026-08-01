@@ -46,36 +46,62 @@ Cortex is a portable memory organ you attach to a repository. It assimilates the
 
 **Research (agents: read first):** [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · agent guide [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md) · [`llms.txt`](llms.txt) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
 
+### Hermetic attach (easiest — any project folder)
+
+**Needs:** Python 3.10+ (and ideally [uv](https://github.com/astral-sh/uv)). Body goes to `~/.cortex` (or `$env:CORTEX_HOME`). Host tree stays clean.
+
+**Bash / macOS / Linux**
+
 ```bash
-# Zero-friction attach (any directory — external home, no host pollution)
+cd /path/to/your/project
+
+# Best (if you have uv)
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
-# or: pipx run --spec "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 
+# Or pipx
+pipx run --spec "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+
+# Or plain Python (no uv/pipx)
+python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+python3 -m cortex.attach_main .
+
+# One-liner script fallback
+curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.sh | bash -s -- .
+```
+
+**PowerShell (Windows)**
+
+```powershell
+cd C:\path\to\your\project
+
+# Best (if you have uv)
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+
+# Or plain Python
+py -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+py -m cortex.attach_main .
+
+# One-liner script fallback (download then run — reliable)
+irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.ps1 -OutFile $env:TEMP\cortex-attach.ps1
+powershell -File $env:TEMP\cortex-attach.ps1 .
+```
+
+Full attach guide (fallbacks, Docker, env vars): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
+
+```bash
+# After attach — daily agent loop (body under ~/.cortex)
+python -m cortex --home "$HOME/.cortex" activate --repo YourProject --task "Map auth" --json
+python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
+
+# Dev clone of this engine (optional)
 pip install -e .
-# Classic bootstrap (optional internal .cortex sidecar)
-python -m cortex bootstrap . --name MyProject --json
-python -m cortex bootstrap /path/to/other --name OtherApp --external --json
+python -m cortex bootstrap . --name MyProject --external --json
 
-# Daily agent loop (durable body example: CortexTeach)
-python -m cortex activate --repo MyProject --task "Map auth" --json
-python -m cortex remember --repo MyProject --kind discovery --text "fact" --json
-python -m cortex ritual --repo MyProject --task "Close the loop" \
-  --remember-text "Auth lives in middleware" --json
-
-# Honest utility + multi-host + self-org
+# Measure / mesh (durable body example: CortexTeach)
 python -m cortex eval-coupling --repo CortexTeach --suite holdout --json
-python -m cortex eval-coupling --repo CortexTeach --suite train --json
 python -m cortex host-mesh --primary CortexTeach --query "governor policy" --json
 python -m cortex self-org --repo CortexTeach --json
-python -m cortex distill --repo CortexTeach --json
-python -m cortex emergence-log --repo CortexTeach --json
 python -m cortex coherence --repo CortexTeach --json
-
-# Optional / heavy (large graphs: continuum auto-throttles)
-python -m cortex continuum --repo MyProject --cycles 24 --json
-python -m cortex cadence --repo MyProject --cycles 40 --progress --json
-python -m cortex teach --seed --repo CortexTeach --json
-python -m cortex transcend-check --json
 ```
 
 **Trust order (unchanged):** host source & tests > runtime evidence > verified model > consolidated memory > learned associations > inference. Learned relevance never becomes host authority.
