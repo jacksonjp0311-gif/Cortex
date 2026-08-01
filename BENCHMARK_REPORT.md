@@ -113,10 +113,9 @@ and UI hand-off alongside language, intent, continuity, consent, governance,
 coordination, symbolic, and combined ARIA tasks. It is a declared regression
 corpus, not proof of general language understanding.
 
-The workload used a clean clone sourced from
-`C:\Users\jacks\OneDrive\Desktop\aria-language`. Cortex was attached with
-`--external`, so the benchmark wrote no files into the host and Aria's strict
-manifest gate remained authoritative.
+The workload used a clean clone of the public Aria language repository.
+Cortex was attached with `--external`, so the benchmark wrote no files into
+the host and Aria's strict manifest gate remained authoritative.
 
 | Measure | Result |
 |---|---:|

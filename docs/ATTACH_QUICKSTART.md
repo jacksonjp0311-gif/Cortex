@@ -7,7 +7,7 @@ Attach Cortex to *any* repository without writing into the host tree and without
 Repository: https://github.com/jacksonjp0311-gif/Cortex
 
 > **Pick one method only.** Do not run uvx *and* python *and* the script.  
-> Do not `cd` to a fake path like `C:\path\to\your\project` — use your real folder (e.g. `PulseMesh`).  
+> `cd` into the repository you want to attach, then pass `.` — no absolute personal paths needed.  
 > Re-running attach is safe (idempotent) but unnecessary if the first run finished with `Returned to ROOT.`
 
 ---
@@ -64,7 +64,7 @@ Requires Python 3.10+ available as `python` / `python3`.
 **Bash**
 
 ```bash
-# From inside YOUR project (real path — not /path/to/your/app)
+# From inside the project directory (use . for current dir)
 curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.sh | bash -s -- .
 # Stop at "Returned to ROOT." — do not also run uvx/python attach
 ```
@@ -88,7 +88,7 @@ irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/atta
 ```bash
 git clone https://github.com/jacksonjp0311-gif/Cortex.git
 cd Cortex && pip install -e .
-cd /path/to/your/app
+cd ../your-app   # any host repo you want to interlock
 cortex-attach . --name MyApp
 # or
 python -m cortex attach . --name MyApp

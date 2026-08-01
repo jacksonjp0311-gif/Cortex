@@ -51,39 +51,35 @@ Cortex is a portable memory organ you attach to a repository. It assimilates the
 **Needs:** Python 3.10+ (and ideally [uv](https://github.com/astral-sh/uv)).  
 **Body:** `~/.cortex` (or `$env:CORTEX_HOME`). Host stays clean (external mode).
 
-> **Copy only the two lines for your shell.** Do not paste every method.  
-> Do **not** run `cd C:\path\to\your\project` — that is a fake placeholder and errors.  
-> Success ends with `Returned to ROOT.` Stop there. Re-running is safe but unnecessary.
+> Open any repository on your machine, then run **one** command below.  
+> Use `.` (current directory) — do not paste someone else’s absolute path.  
+> Success ends with `Returned to ROOT.` Stop there; do not chain methods.
 
-**PowerShell (Windows)** — from your real project folder:
+**PowerShell (Windows)** — already `cd`’d into the project:
 
 ```powershell
-cd "C:\Users\jacks\OneDrive\Desktop\PulseMesh"   # ← change to YOUR project
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 ```
 
-No `uv`? Use this instead (still only once):
+No `uv`?
 
 ```powershell
 python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
 python -m cortex.attach_main .
 ```
 
-**Bash / macOS / Linux** — from your real project folder:
+**Bash / macOS / Linux** — already `cd`’d into the project:
 
 ```bash
-cd ~/Projects/YourApp   # ← change to YOUR project (not /path/to/...)
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 ```
 
-No `uv`? Use this instead (still only once):
+No `uv`?
 
 ```bash
 python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
 python3 -m cortex.attach_main .
 ```
-
-Do **not** chain uvx + python + the curl script. Success ends with `Returned to ROOT.`
 
 Fallbacks (script / npx / pipx): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
 
