@@ -9,6 +9,9 @@
 - **Attach any repo (external home):** https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/ATTACH_QUICKSTART.md
 - Research index: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/README.md
 - **Primary math map:** https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md
+- **Resonant Frames (v7.3):** https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/RESONANT_FRAME_THEORY_V0.1.md
+- Frame mathematics: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md
+- Phase v7.3: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md
 - Constitutional geometry: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md
 - Topology law: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/intelligence/TOPOLOGY_LAW.md
 - AI integration: https://github.com/jacksonjp0311-gif/Cortex/blob/main/docs/AI_INTEGRATION.md
@@ -24,16 +27,18 @@ External-home default (`~/.cortex`). Host tree unmodified. Ritual is interface d
 
 ## Hard rules
 
-1. Coherence / emergence ≠ authority (use capabilities + epoch + geometry bits).
+1. Coherence / emergence / Resonant Frame metrics ≠ authority (use capabilities + epoch + geometry bits).
 2. `observe_current_epoch` for diagnostics; never silent seal.
 3. Promote needs q=(e,a,t,w)=(1,1,1,1); free multi-axis diagonals denied.
 4. Multi-host: shared constitution, private body_epoch_id forever.
 5. Recommend-only: no host source mutation from Cortex packets.
+6. No temporal metric can move a constitutional bit. Frames are advisory only.
 
 ## Key code
 
 - Epochs: cortex/epoch.py
 - Geometry: cortex/constitutional_geometry.py, constitutional_path.py, diagonal.py
+- Resonant Frames: cortex/resonant_frame.py, field_channels.py, field_comparator.py, field_policy.py, field_receipt.py
 - Continuity: cortex/continuity.py
 - Mesh: cortex/interconnect.py, host_mesh.py
 - Spectral/ratio: cortex/math_net/

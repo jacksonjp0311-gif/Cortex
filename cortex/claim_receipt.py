@@ -93,11 +93,29 @@ def issue_promote_claim_receipt(
     gate_bits = geo.get("gate_bits") or coord_detail.get("gate_bits") or []
     raw_bits = geo.get("coordinate") or coord_detail.get("bits") or []
 
+    # v7.3 supporting context only — never satisfies e/a/t/w axes
+    frame_ctx: dict[str, Any] = {}
+    try:
+        from .resonant_frame import latest_frame
+
+        lf = latest_frame(store, repo)
+        if lf:
+            frame_ctx = {
+                "frame_id": lf.get("frame_id"),
+                "frame_receipt_hash": lf.get("receipt_hash"),
+                "frame_classification": lf.get("classification"),
+                "frame_body_epoch_id": lf.get("body_epoch_id"),
+                "satisfies_axes": False,
+            }
+    except Exception:
+        frame_ctx = {}
+
     identity = {
         "kind": "promote",
         "repo": repo,
         "body_epoch_id": body_epoch_id,
         "gate_bits": list(gate_bits),
+        "resonant_frame_context": frame_ctx,
         "allow_promote": allow,
         "holdout_freeze_id": promotion.get("holdout_freeze_id"),
         "holdout_digest": _report_digest(

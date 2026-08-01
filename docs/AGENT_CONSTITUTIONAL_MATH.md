@@ -19,4 +19,10 @@ Also: root [`llms.txt`](../llms.txt), [`.github/copilot-instructions.md`](../.gi
 
 Spectral/ratio signals measure **coupling quality**.  
 Four-bit \(q=(e,a,t,w)\) and body epochs govern **whether composition is legal**.  
-Never conflate them.
+Resonant Frames measure **bounded temporal coordination** (advisory only).  
+Never conflate them — **no temporal metric can move a constitutional bit**.
+
+| Order | Path |
+|-------|------|
+| 6 | [`research/RESONANT_FRAME_THEORY_V0.1.md`](research/RESONANT_FRAME_THEORY_V0.1.md) |
+| 7 | [`intelligence/PHASE_V7.3_RESONANT_FRAMES.md`](intelligence/PHASE_V7.3_RESONANT_FRAMES.md) |

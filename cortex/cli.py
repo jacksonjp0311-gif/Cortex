@@ -769,6 +769,40 @@ def build_parser() -> argparse.ArgumentParser:
     )
     claim_p.add_argument("--json", action="store_true")
 
+    field_p = sub.add_parser(
+        "field",
+        help="v7.3 Resonant Frames ◈⟳ — temporal field report/trace/close/verify (advisory).",
+    )
+    field_p.add_argument("--repo", required=True)
+    field_p.add_argument(
+        "action",
+        choices=[
+            "report",
+            "trace",
+            "latest",
+            "verify",
+            "close",
+            "baseline",
+            "calibrate",
+            "policy",
+            "cleanup",
+        ],
+        nargs="?",
+        default="report",
+    )
+    field_p.add_argument("--limit", type=int, default=16)
+    field_p.add_argument(
+        "--shadow",
+        action="store_true",
+        help="Calibration remains shadow-only (default for calibrate).",
+    )
+    field_p.add_argument(
+        "--apply",
+        action="store_true",
+        help="For cleanup: actually delete field_* keys (default dry-run).",
+    )
+    field_p.add_argument("--json", action="store_true")
+
     geom_p = sub.add_parser(
         "geometry",
         help="v7.1 Constitutional Geometry ◆ — four-axis (e,a,t,w) assess/path/enumerate.",
@@ -2016,6 +2050,71 @@ def main(argv: list[str] | None = None) -> None:
                 emit(verify_claim_receipt(store, args.repo), args.json)
             else:
                 emit(claim_report(store, args.repo), args.json)
+
+        elif command == "field":
+            from .field_receipt import verify_frame_receipt
+            from .resonant_frame import (
+                CLAIM_BOUNDARY as FIELD_CLAIM,
+                calibrate_shadow,
+                cleanup_field_data,
+                field_close,
+                field_report,
+                frame_trace,
+                latest_frame,
+                load_baseline,
+                load_field_state,
+            )
+
+            act = str(getattr(args, "action", "report") or "report")
+            if act == "trace":
+                emit(
+                    {
+                        "repo": args.repo,
+                        "frames": frame_trace(
+                            store, args.repo, limit=int(args.limit or 16)
+                        ),
+                        "claim_boundary": FIELD_CLAIM,
+                    },
+                    args.json,
+                )
+            elif act == "latest":
+                emit(latest_frame(store, args.repo) or {"error": "none"}, args.json)
+            elif act == "verify":
+                emit(verify_frame_receipt(store, args.repo), args.json)
+            elif act == "close":
+                emit(field_close(store, args.repo), args.json)
+            elif act == "baseline":
+                emit(
+                    {
+                        "repo": args.repo,
+                        "baseline": load_baseline(store, args.repo),
+                        "observation_only": True,
+                    },
+                    args.json,
+                )
+            elif act == "calibrate":
+                emit(calibrate_shadow(store, args.repo), args.json)
+            elif act == "policy":
+                latest = latest_frame(store, args.repo) or {}
+                emit(
+                    {
+                        "repo": args.repo,
+                        "classification": latest.get("classification"),
+                        "policy": latest.get("policy"),
+                        "advisory_only": True,
+                        "claim_boundary": FIELD_CLAIM,
+                    },
+                    args.json,
+                )
+            elif act == "cleanup":
+                emit(
+                    cleanup_field_data(
+                        store, args.repo, dry_run=not bool(getattr(args, "apply", False))
+                    ),
+                    args.json,
+                )
+            else:
+                emit(field_report(store, args.repo), args.json)
 
         elif command == "geometry":
             from .constitutional_geometry import (

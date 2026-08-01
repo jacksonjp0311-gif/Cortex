@@ -385,6 +385,41 @@ def measure_coherence(
         components, coupling, indicators, above, score=score
     )
 
+    # v7.3 temporal field panel — separate from operational_coupling_index
+    temporal_field: dict[str, Any] = {
+        "available": False,
+        "note": (
+            "Frame metrics may become an independently evaluated seam after "
+            "holdout evidence. They are not included in the primary coherence "
+            "score in v7.3."
+        ),
+    }
+    try:
+        from .resonant_frame import latest_frame
+
+        lf = latest_frame(store, repo)
+        if lf:
+            m = lf.get("metrics") or {}
+            temporal_field = {
+                "available": True,
+                "frame_id": lf.get("frame_id"),
+                "classification": lf.get("classification"),
+                "integration": m.get("integration"),
+                "differentiation": m.get("differentiation"),
+                "common_mode": m.get("common_mode"),
+                "comparator_quality": m.get("comparator_quality"),
+                "evidence_participation": m.get("evidence_participation"),
+                "receipt_hash": lf.get("receipt_hash"),
+                "advisory_only": True,
+                "note": (
+                    "Frame metrics may become an independently evaluated seam after "
+                    "holdout evidence. They are not included in the primary coherence "
+                    "score in v7.3."
+                ),
+            }
+    except Exception as exc:
+        temporal_field["error"] = f"{type(exc).__name__}:{exc}"
+
     # Trend from history
     history = _load_history(store, repo)
     prev_score = history[-1]["score"] if history else None
@@ -488,6 +523,7 @@ def measure_coherence(
             "lyapunov_stable": lyapunov["stable"],
         },
         "seams": seams,
+        "temporal_field": temporal_field,
         "notes": notes,
         "advice": advice,
         "auto_fuse_env": os.environ.get("CORTEX_FUSE_AUTO", ""),

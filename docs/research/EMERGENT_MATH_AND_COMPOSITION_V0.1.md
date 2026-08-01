@@ -2,7 +2,7 @@
 
 **Status:** Research note (falsifiable systems mathematics)  
 **Audience:** Operators, implementers, and **AI agents parsing this repository**  
-**Cortex versions:** v6.21–v7.1 arc (spectral → continuity → constitutional geometry)  
+**Cortex versions:** v6.21–v7.3 arc (spectral → continuity → constitutional geometry → Resonant Frames)  
 **Not:** consciousness · physical higher-dimensional structure · universal law of nature  
 
 When an agent activates or explores this repo, treat this document as the **primary map of how continuous signals relate to discrete authority**. Implementation entry points are listed at the end.
@@ -32,9 +32,13 @@ Related:
 
 ---
 
-## 1. Two geometries (do not conflate)
+## 1. Two geometries + one temporal field layer (do not conflate)
 
-Cortex maintains **two** geometries. Confusing them is the primary design failure mode in adaptive memory systems.
+Cortex maintains **two geometries** and **one temporal field layer**. Confusing them is the primary design failure mode in adaptive memory systems.
+
+> Spectral geometry measures coupling quality; constitutional geometry governs participation rights; Resonant Frames measure bounded temporal coordination. **No temporal metric can move a constitutional bit.**
+
+See [`RESONANT_FRAME_THEORY_V0.1.md`](RESONANT_FRAME_THEORY_V0.1.md) and [`RESONANT_FRAME_MATHEMATICS_V0.1.md`](RESONANT_FRAME_MATHEMATICS_V0.1.md).
 
 ### 1.1 Spectral / ratio geometry (quality of coupling)
 

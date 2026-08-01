@@ -42,9 +42,11 @@
 
 Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
 
-**Current release: v7.2.0** — **Hermetic Attach**: one-command external-home interlock for any repo (`cortex-attach` / uvx / pipx); solar-lunar ritual CLI; host stays sovereign. Quick start: [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
+**Current release: v7.3.0** — **Resonant Frames**: bounded temporal field layer over fusion ticks (coordination, differentiation, stale-echo, advisory policy only). Built on **v7.2 Hermetic Attach**. Quick start: [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md) · Frames: [`docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md`](docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md).
 
-**Research (agents: read first):** [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · agent guide [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md) · [`llms.txt`](llms.txt) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
+**Research (agents: read first):** Resonant Frames [`docs/research/RESONANT_FRAME_THEORY_V0.1.md`](docs/research/RESONANT_FRAME_THEORY_V0.1.md) · math [`docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md`](docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md) · [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · agent guide [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md) · [`llms.txt`](llms.txt) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
+
+**Two geometries + one temporal field layer:** spectral geometry measures coupling quality; constitutional geometry governs participation rights; Resonant Frames measure bounded temporal coordination. **No temporal metric can move a constitutional bit.**
 
 ### Hermetic attach (easiest — any project folder)
 

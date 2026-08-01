@@ -1,3 +1,14 @@
+## 7.3.0 - Resonant Frames
+
+- **Temporal field layer** over fusion ticks: typed channels (K∈[6,12]), bounded frames (W≤32), lagged coordination, effective-rank differentiation, evidence–memory comparator, deterministic classification.
+- **Classifications:** QUIESCENT · TRANSITION · FRAGMENTED · OVERBOUND · STALE_ECHO · COHERENT_DIFFERENTIATED · INDETERMINATE.
+- **Advisory policy only** (shadow default); never authority/witness/epoch/host mutation.
+- **Modules:** `field_channels`, `resonant_frame`, `field_comparator`, `field_policy`, `field_receipt`.
+- **CLI:** `cortex field report|trace|latest|verify|close|baseline|calibrate|policy|cleanup`.
+- **Docs:** `RESONANT_FRAME_THEORY_V0.1`, mathematics, discovery ledger, `PHASE_V7.3_RESONANT_FRAMES`.
+- **Source note:** E. R. John (2001) Field Theory of Consciousness — cited/paraphrased; not vendored; non-equivalence explicit.
+- Hermetic Attach, Evidence Kernel, constitutional geometry, claim receipts preserved.
+
 ## 7.2.0 - Hermetic Attach
 
 - **`cortex attach` / `cortex-attach`:** zero-friction external-home interlock for any repository.

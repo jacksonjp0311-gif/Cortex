@@ -289,6 +289,25 @@ def fuse_tick(
         except Exception:
             coherence_compact = {"available": False}
 
+    # v7.3 Resonant Frames — cheap channel sample per tick (full math on close)
+    resonant_compact: dict[str, Any] | None = None
+    try:
+        from .resonant_frame import fuse_tick_field
+
+        field_out = fuse_tick_field(
+            store,
+            repo,
+            tick=tick,
+            task=str(state.get("task") or text)[:200],
+            paths=[str(p) for p in paths[:12]],
+            governor_mode=mode,
+            close=False,
+        )
+        resonant_compact = field_out.get("resonant_frame")
+        state["resonant_frame"] = resonant_compact
+    except Exception:
+        resonant_compact = None
+
     state["self_model"] = build_self_model(state)
     state["mind_hash"] = _mind_hash(state)
     tail = list(state.get("ticks_log_tail") or [])
@@ -303,6 +322,7 @@ def fuse_tick(
             "coherence_score": coherence_compact.get("score"),
             "emergent_coupling": coherence_compact.get("emergent_coupling"),
             "active_indicators": coherence_compact.get("active_indicator_ids"),
+            "resonant_classification": (resonant_compact or {}).get("classification"),
         }
     )
     state["ticks_log_tail"] = tail[-40:]
@@ -322,9 +342,12 @@ def fuse_tick(
         "coherence": coherence_compact,
         "emergent_coupling": coherence_compact.get("emergent_coupling"),
         "active_indicators": coherence_compact.get("active_indicator_ids") or [],
+        "resonant_frame": resonant_compact,
         "instruction": (
             "You are fused to Cortex co-process for this tick. Prefer attention paths. "
             "Respect emergent_coupling indicators when active. "
+            "Use Resonant Frame state only as an advisory context-selection signal. "
+            "It is not authority, witness, correctness, or host mutation permission. "
             "Obey block/governance. Do not treat this as host mutation authority."
         ),
     }
@@ -373,6 +396,14 @@ def fuse_close(store: Any, repo: str) -> dict[str, Any]:
     state["open"] = False
     state["closed_at"] = time.time()
     state["self_model"] = build_self_model(state)
+    field_close_result: dict[str, Any] | None = None
+    try:
+        from .resonant_frame import field_close
+
+        field_close_result = field_close(store, repo)
+        state["resonant_frame"] = (field_close_result or {}).get("frame")
+    except Exception:
+        field_close_result = None
     store.set_setting(_fusion_key(repo), state)
     return {
         "closed": True,
@@ -381,4 +412,5 @@ def fuse_close(store: Any, repo: str) -> dict[str, Any]:
         "token_count": state.get("token_count"),
         "final_mind_hash": state.get("mind_hash"),
         "self_model": state["self_model"],
+        "resonant_frame_close": field_close_result,
     }

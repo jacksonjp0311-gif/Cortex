@@ -767,6 +767,21 @@ def activate_repository(
         )
         if cert_status == "verified" or out["bootstrap_status"] == "verified":
             out["activation"] = "ready"
+        # Sterile baseline: read-only latest frame receipt only — no adaptive field append
+        try:
+            from .resonant_frame import latest_frame
+
+            latest = latest_frame(store, repo)
+            if latest:
+                out["resonant_frame_readonly"] = {
+                    "frame_id": latest.get("frame_id"),
+                    "classification": latest.get("classification"),
+                    "receipt_hash": latest.get("receipt_hash"),
+                    "advisory_only": True,
+                    "note": "evidence_baseline does not update field state",
+                }
+        except Exception:
+            pass
         return out
 
     # Phase 2b: advanced — may still refresh if not already done above
@@ -888,6 +903,51 @@ def activate_repository(
     out["refresh"] = refresh_result
     if evidence_refresh_audit is not None:
         out["evidence_refresh_edge"] = evidence_refresh_audit
+    # v7.3 Resonant Frames — seed advisory field sample (observe epoch only inside seed)
+    try:
+        from .field_policy import apply_field_policy_advisory
+        from .resonant_frame import latest_frame, seed_from_activation
+
+        gov_mode = str(
+            ((out.get("context") or {}).get("governor") or {}).get("mode") or "unknown"
+        )
+        field_seed = seed_from_activation(
+            store,
+            repo,
+            activation=out,
+            task=task,
+            governor_mode=gov_mode,
+        )
+        out["resonant_frame_seed"] = {
+            "closed": field_seed.get("closed"),
+            "buffer_ticks": field_seed.get("buffer_ticks"),
+            "advisory_only": True,
+        }
+        latest = latest_frame(store, repo)
+        if latest:
+            out["resonant_frame"] = {
+                "frame_id": latest.get("frame_id"),
+                "classification": latest.get("classification"),
+                "policy": latest.get("policy"),
+                "metrics_vector": latest.get("frame_vector") or latest.get("metrics"),
+                "advisory_only": True,
+            }
+            # Policy only when configured advisory mode is active (default shadow)
+            import os
+
+            advisory = os.environ.get("CORTEX_FIELD_ADVISORY", "").strip() in {
+                "1",
+                "true",
+                "yes",
+            }
+            if isinstance(out.get("context"), dict):
+                out["context"] = apply_field_policy_advisory(
+                    out["context"],
+                    latest.get("policy"),
+                    advisory_mode=advisory,
+                )
+    except Exception as exc:
+        out["resonant_frame_seed"] = {"error": f"{type(exc).__name__}:{exc}"}
     # seal epoch if adaptive roots changed during advanced activation
     try:
         from .epoch import seal_epoch_transition

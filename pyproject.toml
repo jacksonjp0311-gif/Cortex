@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "7.2.0"
-description = "Governed continuation memory, repository assimilation, sparse neural interlinking, and Hermetic attach for AI agents"
+version = "7.3.0"
+description = "Governed continuation memory, Resonant Frames temporal field, Hermetic attach, and sparse neural interlinking for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
