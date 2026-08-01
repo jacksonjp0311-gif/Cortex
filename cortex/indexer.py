@@ -108,10 +108,31 @@ def _authoritative(relative: str, config: RepoConfig) -> bool:
     )
 
 
+def _progress(msg: str) -> None:
+    """Heartbeat so long first-index does not look hung (stderr, line-buffered)."""
+    if os.environ.get("CORTEX_INDEX_QUIET", "").strip() in {"1", "true", "yes"}:
+        return
+    try:
+        import sys
+
+        sys.stderr.write(f"   … {msg}\n")
+        sys.stderr.flush()
+    except Exception:
+        pass
+
+
 def scan_repository(root: Path, config: RepoConfig) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     excluded_roots = sorted(set(config.exclude))
+    _progress(f"scanning {root.name} (first attach can take a minute)…")
+    n = 0
+    last_beat = time.time()
     for path, relative in walk_repository(root, config):
+        n += 1
+        now = time.time()
+        if n == 1 or n % 200 == 0 or (now - last_beat) >= 3.0:
+            _progress(f"scanned {n} paths…")
+            last_beat = now
         try:
             stat = path.stat()
         except OSError as exc:
@@ -137,6 +158,7 @@ def scan_repository(root: Path, config: RepoConfig) -> dict[str, Any]:
             except OSError as exc:
                 record.update({"status": "unreadable", "reason": str(exc)})
         files.append(record)
+    _progress(f"scan complete — {len(files)} files catalogued")
     manifest_material = [
         f"{item['path']}|{item['status']}|{item.get('content_hash', '')}|{item.get('size_bytes', 0)}"
         for item in sorted(files, key=lambda item: item["path"])
@@ -261,9 +283,17 @@ def index_repository(
     if materialize_aria:
         indexing_mode = "eager"
 
-    for item in manifest["files"]:
+    total = len(manifest["files"])
+    eligible = sum(1 for f in manifest["files"] if f.get("status") == "eligible")
+    _progress(f"indexing {eligible} eligible / {total} total…")
+    last_beat = time.time()
+    for i, item in enumerate(manifest["files"], start=1):
         relative = item["path"]
         live_paths.add(relative)
+        now = time.time()
+        if i == 1 or i % 50 == 0 or (now - last_beat) >= 3.0:
+            _progress(f"indexed {indexed_files} files ({i}/{total})…")
+            last_beat = now
         path = root / relative
         status = item["status"]
         existing = store.file(repo_name, relative)

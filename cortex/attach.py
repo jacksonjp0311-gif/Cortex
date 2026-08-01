@@ -103,6 +103,16 @@ def attach_repository(
                 "reason": "already_attached",
             }
             return {"ok": True, "status": "already_attached", "skipped": True}
+        if not force_quiet:
+            try:
+                import sys
+
+                sys.stderr.write(
+                    "   … first attach indexes the host (can take 1–5 min on large/OneDrive trees)\n"
+                )
+                sys.stderr.flush()
+            except Exception:
+                pass
         bootstrap_result = bootstrap_repository(
             home_path,
             store,
