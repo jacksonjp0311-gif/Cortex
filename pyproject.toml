@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "7.6.0"
-description = "Governed continuation memory, Verified Operating Regime warm-in, Self-Sensing Field for AI agents"
+version = "7.7.0"
+description = "Governed continuation memory, Binding Field, warm-in, self-sensing for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

@@ -61,6 +61,7 @@ jobs:
           tests/test_realign.py
           tests/test_self_sensing.py
           tests/test_warm_in.py
+          tests/test_binding_field.py
           -q --tb=line
       - name: Constitutional seal release receipt
         env:
@@ -86,6 +87,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v760.py
+      - name: Binding Field receipt (v7.7.0 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v770.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,6 +103,7 @@ jobs:
             work/release_receipt_v740.json
             work/release_receipt_v750.json
             work/release_receipt_v760.json
+            work/release_receipt_v770.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

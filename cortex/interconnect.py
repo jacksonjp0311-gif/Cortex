@@ -21,6 +21,26 @@ SCHEMA = "cortex-interconnect/1.1"
 GLYPH = "⧉"
 
 
+def _binding_field_panel(store: Any, repo: str) -> dict[str, Any]:
+    """v7.7 compact binding field (observe; persist latest)."""
+    try:
+        from .binding_field import observe_binding_field
+
+        b = observe_binding_field(store, repo, persist=True)
+        return {
+            "classification": b.get("classification"),
+            "reasons": b.get("reasons"),
+            "buffer_ticks": (b.get("signals") or {}).get("live_buffer_ticks"),
+            "field_frames_display": (b.get("signals") or {}).get("field_frames_display"),
+            "sense_classification": (b.get("signals") or {}).get("sense_classification"),
+            "advisory": (b.get("advisory") or {}).get("recommendations"),
+            "advisory_only": True,
+            "phase": "v7.7.0",
+        }
+    except Exception as exc:
+        return {"error": f"{type(exc).__name__}:{exc}", "advisory_only": True, "phase": "v7.7.0"}
+
+
 def _continuity_slice(store: Any, repo: str) -> dict[str, Any]:
     """v7.1: body epoch + phase via observe-only (never seals).
 
@@ -259,6 +279,7 @@ def mesh_status(
             "note": "v7.6 Verified Operating Regime — warm field+sense to milestone",
             "phase": "v7.6.0",
         },
+        "binding_field": _binding_field_panel(store, repo),
         "continuity": continuity,
         "planes": {
             "E": "evidence",

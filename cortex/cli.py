@@ -769,6 +769,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     claim_p.add_argument("--json", action="store_true")
 
+    bind_p = sub.add_parser(
+        "binding-field",
+        help="v7.7 Binding Field ◈⧉ — binding gap vs buffer pending (advisory).",
+    )
+    bind_p.add_argument("--repo", required=True)
+    bind_p.add_argument(
+        "action",
+        choices=["observe", "report", "commit"],
+        nargs="?",
+        default="observe",
+    )
+    bind_p.add_argument("--json", action="store_true")
+
     warm_in_p = sub.add_parser(
         "warm-in",
         help="v7.6 Verified Operating Regime ◈∿ — warm field+sense to milestone (advisory).",
@@ -2115,6 +2128,42 @@ def main(argv: list[str] | None = None) -> None:
                 emit(verify_claim_receipt(store, args.repo), args.json)
             else:
                 emit(claim_report(store, args.repo), args.json)
+
+        elif command == "binding-field":
+            from .binding_field import (
+                CLAIM as BIND_CLAIM,
+                commit_live_buffer,
+                latest_binding_field,
+                observe_binding_field,
+            )
+
+            act = str(getattr(args, "action", "observe") or "observe")
+            if act == "commit":
+                emit(commit_live_buffer(store, args.repo), args.json)
+            elif act == "report":
+                emit(
+                    latest_binding_field(store, args.repo)
+                    or {"error": "none", "hint": "binding-field observe"},
+                    args.json,
+                )
+            else:
+                rep = observe_binding_field(store, args.repo, home=home)
+                if not args.json:
+                    print(
+                        f"◈⧉ binding-field  repo={args.repo}  "
+                        f"class={rep.get('classification')}"
+                    )
+                    sig = rep.get("signals") or {}
+                    print(
+                        f"   buffer_ticks={sig.get('live_buffer_ticks')}  "
+                        f"frames={sig.get('field_frames_display')}  "
+                        f"sense={sig.get('sense_classification')}  "
+                        f"needs_realign={sig.get('needs_realign')}"
+                    )
+                    for rec in (rep.get("advisory") or {}).get("recommendations") or []:
+                        print(f"   → {rec}")
+                    print()
+                emit(rep, True)
 
         elif command == "warm-in":
             from .warm_in import (

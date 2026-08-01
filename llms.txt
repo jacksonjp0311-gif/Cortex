@@ -36,6 +36,7 @@ External-home default (`~/.cortex`). Host tree unmodified. Ritual is interface d
 7. Epoch realign after version drift requires `--i-authorize-realign` — never silent seal.
 8. Self-sensing residual ≠ authority; never NOMINAL when epoch/phase unbound.
 9. Warm-in closes readiness milestone; epoch seal still needs --i-authorize-realign.
+10. Binding Field names BINDING_GAP vs BUFFER_PENDING; commit closes frames only.
 
 ## Key code
 
@@ -45,6 +46,7 @@ External-home default (`~/.cortex`). Host tree unmodified. Ritual is interface d
 - Continuity Realignment (v7.4): cortex/realign.py · docs/intelligence/PHASE_V7.4_CONTINUITY_REALIGNMENT.md
 - Self-Sensing Field (v7.5): cortex/self_sensing.py · docs/intelligence/PHASE_V7.5_SELF_SENSING_FIELD.md
 - Verified Operating Regime (v7.6): cortex/warm_in.py · docs/intelligence/PHASE_V7.6_VERIFIED_OPERATING_REGIME.md
+- Binding Field (v7.7): cortex/binding_field.py · docs/intelligence/PHASE_V7.7_BINDING_FIELD.md
 - Continuity: cortex/continuity.py
 - Mesh: cortex/interconnect.py, host_mesh.py
 - Spectral/ratio: cortex/math_net/

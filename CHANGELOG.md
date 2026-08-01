@@ -1,3 +1,12 @@
+## 7.7.0 - Binding Field
+
+- **Tagline:** Name the gap between local coupling and constitutional readiness.
+- **Live structure:** UNBOUND + cold frames + open buffer (~11 samples) → composite field.
+- **`cortex/binding_field.py`:** BINDING_GAP · BUFFER_PENDING · COLD_FIELD · VERIFIED_REGIME.
+- **CLI:** `binding-field observe|report|commit` (`commit` = frame close only, no epoch seal).
+- **Interconnect:** surfaces `binding_field` panel.
+- **Docs:** `PHASE_V7.7_BINDING_FIELD.md` · **CI:** `release_receipt_v770.py`.
+
 ## 7.6.0 - Verified Operating Regime (Warm-In Closure)
 
 - **Tagline:** Close the self-sensing milestone — warm baselines, replay-stable class, hashed readiness.

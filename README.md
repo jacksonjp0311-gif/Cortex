@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-7.6.0-0ea5e9?style=for-the-badge" alt="v7.6.0" />
+  <img src="https://img.shields.io/badge/version-7.7.0-0ea5e9?style=for-the-badge" alt="v7.7.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -35,9 +35,9 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 | Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
 | Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-**v7.6.0 — Verified Operating Regime** · on **v7.5 Self-Sensing** · **v7.4 Realign** · **v7.3 Frames** · **v7.2 Attach**  
-Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Warm-in **closes the readiness milestone**.  
-When the seal lags the living tree, **realign explicitly**. Residual **never** self-authorizes.  
+**v7.7.0 — Binding Field** · on **v7.6 Warm-In** · **v7.5 Sense** · **v7.4 Realign** · **v7.3 Frames** · **v7.2 Attach**  
+Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Binding Field names *local coupling vs global readiness*.  
+When the seal lags the living tree, **realign explicitly**. Open buffers **commit** to frames — they do not seize authority.  
 **No temporal metric can move a constitutional bit.**
 
 ---
@@ -95,6 +95,8 @@ python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
 | `realign apply --i-authorize-realign` | Operator-authorized epoch rebind + optional field warm |
 | `sense observe` | Self-sensing residual vs baseline (advisory only) |
 | `warm-in run` | Warm field + sense to verified operating regime |
+| `binding-field observe` | Local coupling vs binding gap (advisory) |
+| `binding-field commit` | Close live buffer → Resonant Frame (no epoch seal) |
 | `claim` | Falsifiable promote receipt (when applicable) |
 
 **Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  
