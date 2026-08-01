@@ -1,109 +1,117 @@
-<!-- TOP CTA: first thing on the README -->
+<!-- Human entry — public product surface -->
 <p align="center">
-  <a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html">
-    <img
-      src="https://img.shields.io/badge/EMBED_ON_DESKTOP-open_live_HUD-a855f7?style=for-the-badge&logo=github&logoColor=white&labelColor=0f172a"
-      alt="Embed on Desktop — open live HUD"
-      height="40"
-    />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://jacksonjp0311-gif.github.io/Cortex/">
-    <img
-      src="https://img.shields.io/badge/STAR_LATTICE-live_chart-0ea5e9?style=for-the-badge&logo=github&logoColor=white&labelColor=0f172a"
-      alt="Star lattice — live chart"
-      height="40"
-    />
-  </a>
+  <img src="assets/cortex-neural-brain.png" alt="Cortex — local memory organ for AI coding agents" width="100%" />
 </p>
 
 <p align="center">
-  <b><a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html">→ Embed Cortex on Desktop (live HUD)</a></b>
-  ·
-  <a href="https://jacksonjp0311-gif.github.io/Cortex/">Star lattice</a>
-</p>
-
-<p align="center">
-  <img src="assets/cortex-neural-brain.png" alt="Cortex neural interlink brain" width="100%" />
-</p>
-
-<p align="center">
-  <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/verification-tested-22c55e?style=for-the-badge" alt="Tests verified" /></a>
-  <img src="https://img.shields.io/badge/version-7.2.0-0ea5e9?style=for-the-badge" alt="v7.2.0" />
-  <img src="https://img.shields.io/badge/organism-living-a855f7?style=for-the-badge" alt="Living organism" />
-  <img src="https://img.shields.io/badge/routing-Thalamus-8b5cf6?style=for-the-badge" alt="Thalamus routing" />
+  <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
+  <img src="https://img.shields.io/badge/version-7.3.0-0ea5e9?style=for-the-badge" alt="v7.3.0" />
+  <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
-  <img src="https://img.shields.io/badge/authority-recommend--only-f8fafc?style=for-the-badge&labelColor=111827" alt="Recommend only" />
+  <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
+  <img src="https://img.shields.io/badge/authority-recommend--only-64748b?style=for-the-badge&labelColor=111827" alt="Recommend only" />
 </p>
 
-# Cortex Neural Interlink
+<p align="center">
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/embed.html"><img src="https://img.shields.io/badge/live_HUD-embed-a855f7?style=flat-square&labelColor=0f172a" alt="Live HUD" /></a>
+  <a href="https://jacksonjp0311-gif.github.io/Cortex/"><img src="https://img.shields.io/badge/star_lattice-chart-0ea5e9?style=flat-square&labelColor=0f172a" alt="Star lattice" /></a>
+  <a href="docs/ATTACH_QUICKSTART.md"><img src="https://img.shields.io/badge/docs-attach-22c55e?style=flat-square&labelColor=0f172a" alt="Attach docs" /></a>
+  <a href="docs/demo/"><img src="https://img.shields.io/badge/demo-Resonant_Frames-f59e0b?style=flat-square&labelColor=0f172a" alt="Public demo" /></a>
+</p>
 
-**Local-first repository memory, governed continuation, and session co-process for AI coding agents.**
+# Cortex
 
-Cortex is a portable memory organ you attach to a repository. It assimilates the tree once, then gives agents **bounded, provenance-backed context** instead of dumping the whole codebase into the prompt — without replacing host source, tests, or authorization.
+### Local memory for AI coding agents — attach once, keep the host sovereign
 
-**Current release: v7.3.0** — **Resonant Frames**: bounded temporal field layer over fusion ticks (coordination, differentiation, stale-echo, advisory policy only). Built on **v7.2 Hermetic Attach**. Quick start: [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md) · Frames: [`docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md`](docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md).
+Cortex is a **portable memory organ** for any repository.  
+You do not fork your app into Cortex. You do not dump the whole tree into the prompt.
 
-**Research (agents: read first):** Resonant Frames [`docs/research/RESONANT_FRAME_THEORY_V0.1.md`](docs/research/RESONANT_FRAME_THEORY_V0.1.md) · math [`docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md`](docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md) · [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) · index [`docs/research/README.md`](docs/research/README.md) · agent guide [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md) · [`llms.txt`](llms.txt) · CSG [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md).
+**One command** attaches Cortex as a tool. Memory lives under `~/.cortex`.  
+Your source stays yours. Agents get **bounded, provenance-backed context** — and a signal when memory is *coherent* vs when it is only *echoing itself*.
 
-**Two geometries + one temporal field layer:** spectral geometry measures coupling quality; constitutional geometry governs participation rights; Resonant Frames measure bounded temporal coordination. **No temporal metric can move a constitutional bit.**
+| You get | You keep |
+|---------|----------|
+| External attach (no host pollution) | Host source & tests as ground truth |
+| Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
+| Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-### Hermetic attach (easiest — any project folder)
+**v7.3.0 — Resonant Frames** · built on **v7.2 Hermetic Attach**  
+Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *bounded temporal coordination*.  
+**No temporal metric can move a constitutional bit.**
 
-**Needs:** Python 3.10+ (and ideally [uv](https://github.com/astral-sh/uv)).  
-**Body:** `~/.cortex` (or `$env:CORTEX_HOME`). Host stays clean (external mode).
+---
 
-> Open any repository on your machine, then run **one** command below.  
-> Use `.` (current directory) — do not paste someone else’s absolute path.  
-> Success ends with `Returned to ROOT.` Stop there; do not chain methods.
+## Start here — Hermetic attach
 
-**PowerShell (Windows)** — already `cd`’d into the project:
+**Need:** Python 3.10+ · ideally [uv](https://github.com/astral-sh/uv)  
+**Body:** `~/.cortex` · **Host:** unchanged (external mode)
+
+1. Open a terminal **in your project folder**
+2. Run **one** of the blocks below
+3. Stop at **`Returned to ROOT.`** — do not chain methods
+
+**PowerShell**
 
 ```powershell
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 ```
 
-No `uv`?
-
 ```powershell
+# no uv?
 python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
 python -m cortex.attach_main .
 ```
 
-**Bash / macOS / Linux** — already `cd`’d into the project:
+**Bash / macOS / Linux**
 
 ```bash
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 ```
 
-No `uv`?
-
 ```bash
+# no uv?
 python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
 python3 -m cortex.attach_main .
 ```
 
-Fallbacks (script / npx / pipx): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
+Fallbacks (pipx / npx / scripts): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md)  
+Public classification demo (no personal paths): [`docs/demo/`](docs/demo/)
+
+### After attach
 
 ```bash
-# After attach — daily agent loop (body under ~/.cortex)
+# daily loop — body under ~/.cortex, repo name = folder name
 python -m cortex --home "$HOME/.cortex" activate --repo YourProject --task "Map auth" --json
+python -m cortex --home "$HOME/.cortex" field report --repo YourProject --json
 python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
-
-# Dev clone of this engine (optional)
-pip install -e .
-python -m cortex bootstrap . --name MyProject --external --json
-
-# Measure / mesh (durable body example: CortexTeach)
-python -m cortex eval-coupling --repo CortexTeach --suite holdout --json
-python -m cortex host-mesh --primary CortexTeach --query "governor policy" --json
-python -m cortex self-org --repo CortexTeach --json
-python -m cortex coherence --repo CortexTeach --json
 ```
 
-**Trust order (unchanged):** host source & tests > runtime evidence > verified model > consolidated memory > learned associations > inference. Learned relevance never becomes host authority.
+| Surface | Role |
+|---------|------|
+| `activate` | Bounded context for the current task |
+| `field report` | Resonant Frame status (`baseline_frames_seen: 3/16` while warming) |
+| `claim` | Falsifiable promote receipt (when applicable) |
 
-**Topology law:** `G_host` immutable · `G_evidence` via re-index · `G_learned` under Governor · `G_federated` query-only — see [`docs/intelligence/TOPOLOGY_LAW.md`](docs/intelligence/TOPOLOGY_LAW.md).
+**Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  
+Learned relevance never becomes host authority. Topology: [`docs/intelligence/TOPOLOGY_LAW.md`](docs/intelligence/TOPOLOGY_LAW.md).
+
+<details>
+<summary><b>For agents & researchers</b> (math, geometry, theory)</summary>
+
+- [`llms.txt`](llms.txt) · [`docs/AGENT_CONSTITUTIONAL_MATH.md`](docs/AGENT_CONSTITUTIONAL_MATH.md)
+- Resonant Frames: [`docs/research/RESONANT_FRAME_THEORY_V0.1.md`](docs/research/RESONANT_FRAME_THEORY_V0.1.md) · [mathematics](docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md) · [phase note](docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md)
+- Emergent math map: [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md)
+- Constitutional geometry: [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md)
+- Research index: [`docs/research/README.md`](docs/research/README.md)
+
+Dev clone of this engine (optional — not required to attach):
+
+```bash
+git clone https://github.com/jacksonjp0311-gif/Cortex.git
+cd Cortex && pip install -e .
+```
+
+</details>
 
 ---
 
