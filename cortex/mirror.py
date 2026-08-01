@@ -88,6 +88,17 @@ def _aria_proof_evidence_count(paths: list[Any]) -> dict[str, int]:
     }
 
 
+def _aria_substrate_view(context: dict[str, Any]) -> dict[str, Any]:
+    """Read the canonical Aria surface with compatibility for older packets."""
+
+    materialization = context.get("aria_materialization") or {}
+    efficiency = (context.get("efficiency") or {}).get("aria_substrate") or {}
+    legacy = (context.get("neural_interlink") or {}).get("metrics", {}).get(
+        "aria_substrate", {}
+    )
+    return {**materialization, **efficiency, **legacy}
+
+
 def run_mirror(
     home: Path,
     store: Any,
@@ -194,9 +205,7 @@ def run_mirror(
         timings["generic_activate_s"] = round(time.perf_counter() - t0, 4)
         deferred_after_generic = _deferred_count(store, repo_name)
         gctx = generic["context"]
-        g_sub = (gctx.get("neural_interlink") or {}).get("metrics", {}).get(
-            "aria_substrate", {}
-        )
+        g_sub = _aria_substrate_view(gctx)
         notes.append(
             {
                 "phase": "generic",
@@ -239,9 +248,7 @@ def run_mirror(
         timings["aria_activate_s"] = round(time.perf_counter() - t0, 4)
         deferred_after_aria = _deferred_count(store, repo_name)
         actx = aria_act["context"]
-        a_sub = (actx.get("neural_interlink") or {}).get("metrics", {}).get(
-            "aria_substrate", {}
-        )
+        a_sub = _aria_substrate_view(actx)
         mat = actx.get("aria_materialization") or {}
         evidence_paths = [item.get("path", "") for item in (actx.get("evidence") or [])]
         proof = _aria_proof_evidence_count(evidence_paths)

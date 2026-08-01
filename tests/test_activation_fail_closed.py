@@ -110,6 +110,7 @@ class ActivationFailClosedTests(unittest.TestCase):
 
     def test_activation_leaves_phase_bound_to_final_epoch(self) -> None:
         from cortex.phases import BOUND, phase_binding_status
+        from cortex.resonant_frame import latest_frame
 
         r = activate_repository(
             self.home,
@@ -128,6 +129,30 @@ class ActivationFailClosedTests(unittest.TestCase):
             (r.get("body_epoch") or {}).get("epoch_id"),
             r,
         )
+        finalization = r.get("activation_finalization") or {}
+        self.assertTrue(finalization.get("ok"), r)
+        self.assertEqual(
+            finalization.get("order"),
+            [
+                "close_parent_buffer",
+                "seal_final_epoch",
+                "bind_final_phase",
+                "seed_final_epoch_frame",
+                "observe_self",
+            ],
+            r,
+        )
+        latest = latest_frame(self.store, "AFCHost")
+        self.assertIsNotNone(latest, r)
+        self.assertEqual(
+            (latest or {}).get("body_epoch_id"),
+            (r.get("body_epoch") or {}).get("epoch_id"),
+            r,
+        )
+        self.assertTrue(((latest or {}).get("metrics") or {}).get("epoch_current"), r)
+        sense = r.get("self_sensing") or {}
+        self.assertTrue((sense.get("gates") or {}).get("epoch_current"), r)
+        self.assertTrue((sense.get("gates") or {}).get("phase_bound"), r)
 
 
 if __name__ == "__main__":

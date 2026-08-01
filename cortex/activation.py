@@ -903,74 +903,136 @@ def activate_repository(
     out["refresh"] = refresh_result
     if evidence_refresh_audit is not None:
         out["evidence_refresh_edge"] = evidence_refresh_audit
-    # v7.3 Resonant Frames — seed advisory field sample (observe epoch only inside seed)
+    # Close a parent-epoch temporal buffer before a possible successor seal so
+    # samples from two epochs can never be combined into one frame.
+    pre_transition_close: dict[str, Any] | None = None
     try:
-        from .field_policy import apply_field_policy_advisory
-        from .resonant_frame import latest_frame, seed_from_activation
+        from .resonant_frame import field_close, load_field_state
 
-        gov_mode = str(
-            ((out.get("context") or {}).get("governor") or {}).get("mode") or "unknown"
-        )
-        field_seed = seed_from_activation(
-            store,
-            repo,
-            activation=out,
-            task=task,
-            governor_mode=gov_mode,
-        )
-        out["resonant_frame_seed"] = {
-            "closed": field_seed.get("closed"),
-            "buffer_ticks": field_seed.get("buffer_ticks"),
-            "advisory_only": True,
-        }
-        latest = latest_frame(store, repo)
-        if latest:
-            out["resonant_frame"] = {
-                "frame_id": latest.get("frame_id"),
-                "classification": latest.get("classification"),
-                "policy": latest.get("policy"),
-                "metrics_vector": latest.get("frame_vector") or latest.get("metrics"),
-                "advisory_only": True,
-            }
-            # Policy only when configured advisory mode is active (default shadow)
-            import os
-
-            advisory = os.environ.get("CORTEX_FIELD_ADVISORY", "").strip() in {
-                "1",
-                "true",
-                "yes",
-            }
-            if isinstance(out.get("context"), dict):
-                out["context"] = apply_field_policy_advisory(
-                    out["context"],
-                    latest.get("policy"),
-                    advisory_mode=advisory,
-                )
+        if (load_field_state(store, repo).get("buffer") or []):
+            pre_transition_close = field_close(store, repo)
     except Exception as exc:
-        out["resonant_frame_seed"] = {"error": f"{type(exc).__name__}:{exc}"}
-    # seal epoch if adaptive roots changed during advanced activation
+        pre_transition_close = {"ok": False, "error": f"{type(exc).__name__}:{exc}"}
+
+    # Seal the final adaptive epoch and bind the runtime phase to that exact
+    # epoch before successor-frame or self-sensing observations are written.
+    epoch_changed = False
+    final_epoch_ready = False
     try:
         from .epoch import seal_epoch_transition
+        from .phases import transition_phase
 
         sealed = seal_epoch_transition(
             store, repo, reason="post_advanced_activation", parent=epoch
         )
         out["body_epoch"] = sealed.to_dict()
-        if sealed.epoch_id != epoch.epoch_id:
+        epoch_changed = sealed.epoch_id != epoch.epoch_id
+        if epoch_changed:
             from .capabilities import revoke_epoch_capabilities
-            from .phases import transition_phase
 
             revoke_epoch_capabilities(store, repo, epoch.epoch_id)
-            # Advanced activation may change the adaptive root and therefore
-            # seal a successor epoch. Rebind the runtime phase in the same
-            # explicit activation mutation path so interconnect does not see a
-            # verified body with a phase record stranded on its parent epoch.
-            transition_phase(
+        transition_phase(store, repo, "QUIESCENT", reason="post_advanced_activation")
+        final_epoch_ready = True
+        out["activation_finalization"] = {
+            "ok": True,
+            "epoch_changed": epoch_changed,
+            "pre_transition_frame_closed": bool(
+                (pre_transition_close or {}).get("closed")
+            ),
+            "order": [
+                "close_parent_buffer",
+                "seal_final_epoch",
+                "bind_final_phase",
+                "seed_final_epoch_frame",
+                "observe_self",
+            ],
+            "body_epoch_id": sealed.epoch_id,
+            "phase": "QUIESCENT",
+            "advisory_only": True,
+        }
+    except Exception as exc:
+        out["activation_finalization"] = {
+            "ok": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+        }
+
+    # Activation closes one honest boundary tick after the final bind. W <
+    # W_min remains INDETERMINATE; activation never fabricates warmth.
+    if final_epoch_ready:
+        try:
+            from .field_policy import apply_field_policy_advisory
+            from .resonant_frame import latest_frame, seed_from_activation
+
+            gov_mode = str(
+                ((out.get("context") or {}).get("governor") or {}).get("mode")
+                or "unknown"
+            )
+            field_seed = seed_from_activation(
                 store,
                 repo,
-                "QUIESCENT",
-                reason="post_advanced_activation",
+                activation=out,
+                task=task,
+                governor_mode=gov_mode,
+                force_close=True,
+                reason=("constitutional_transition" if epoch_changed else "task_step"),
             )
-    except Exception:
-        pass
+            out["resonant_frame_seed"] = {
+                "closed": field_seed.get("closed"),
+                "reason": field_seed.get("reason"),
+                "buffer_ticks": field_seed.get("buffer_ticks"),
+                "body_epoch_id": (out.get("body_epoch") or {}).get("epoch_id"),
+                "advisory_only": True,
+            }
+            latest = latest_frame(store, repo)
+            if latest:
+                out["resonant_frame"] = {
+                    "frame_id": latest.get("frame_id"),
+                    "body_epoch_id": latest.get("body_epoch_id"),
+                    "classification": latest.get("classification"),
+                    "policy": latest.get("policy"),
+                    "metrics_vector": latest.get("frame_vector")
+                    or latest.get("metrics"),
+                    "epoch_current": (latest.get("metrics") or {}).get(
+                        "epoch_current"
+                    ),
+                    "advisory_only": True,
+                }
+                import os
+
+                advisory = os.environ.get("CORTEX_FIELD_ADVISORY", "").strip() in {
+                    "1",
+                    "true",
+                    "yes",
+                }
+                if isinstance(out.get("context"), dict):
+                    out["context"] = apply_field_policy_advisory(
+                        out["context"],
+                        latest.get("policy"),
+                        advisory_mode=advisory,
+                    )
+        except Exception as exc:
+            out["resonant_frame_seed"] = {
+                "error": f"{type(exc).__name__}:{exc}",
+                "advisory_only": True,
+            }
+
+        try:
+            from .self_sensing import observe_self_sensing
+
+            sense = observe_self_sensing(store, repo, home=home, update=True)
+            out["self_sensing"] = {
+                "classification": sense.get("classification"),
+                "residual_r": sense.get("residual_r"),
+                "F_t": sense.get("F_t"),
+                "gates": sense.get("gates"),
+                "baseline_updated": sense.get("baseline_updated"),
+                "baseline_n_updates": sense.get("baseline_n_updates"),
+                "advisory_only": True,
+            }
+        except Exception as exc:
+            out["self_sensing"] = {
+                "error": f"{type(exc).__name__}:{exc}",
+                "advisory_only": True,
+            }
     return out

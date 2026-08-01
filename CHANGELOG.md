@@ -1,3 +1,12 @@
+## 7.7.2 - Epoch-Atomic Temporal Boundary
+
+- Advanced activation now finalizes in one explicit order: close the parent buffer, seal the final epoch, bind `QUIESCENT`, write a final-epoch boundary frame, then sample self-sensing.
+- Every activation boundary receipt names the final current body epoch, including activations that legitimately reuse an unchanged epoch.
+- Parent and successor samples are never combined into one temporal frame during activation finalization.
+- Boundary frames remain honestly `INDETERMINATE` below `W_min`; activation does not manufacture multi-tick warmth.
+- Activation output exposes the finalization order, frame epoch/currentness, and post-frame self-sensing gates for audit.
+- Covenant mirror now reads the canonical ARIA materialization/efficiency surfaces while retaining compatibility with older nested packets.
+
 ## 7.7.1 - Phase-Coherent Binding Field
 
 - Activation continuity: when an advanced activation changes the adaptive root and seals a successor body epoch, the runtime now binds `QUIESCENT` to that final epoch instead of leaving the phase on its parent.

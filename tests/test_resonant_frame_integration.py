@@ -14,6 +14,7 @@ from cortex.resonant_frame import (
     field_report,
     frame_trace,
     latest_frame,
+    seed_from_activation,
 )
 from cortex.store import Store
 
@@ -71,6 +72,24 @@ class ResonantIntegrationTests(unittest.TestCase):
             )
             last = append_field_samples(self.store, self.repo, samples)
         self.assertTrue(last.get("closed") or latest_frame(self.store, self.repo))
+
+    def test_activation_boundary_close_preserves_current_epoch(self) -> None:
+        from cortex.epoch import ensure_current_epoch
+
+        epoch = ensure_current_epoch(self.store, self.repo, reason="frame_boundary")
+        result = seed_from_activation(
+            self.store,
+            self.repo,
+            activation={"bootstrap_status": "verified"},
+            task="epoch-atomic boundary",
+            governor_mode="normal",
+            force_close=True,
+            reason="constitutional_transition",
+        )
+        self.assertTrue(result.get("closed"), result)
+        latest = latest_frame(self.store, self.repo)
+        self.assertEqual((latest or {}).get("body_epoch_id"), epoch.epoch_id, latest)
+        self.assertTrue(((latest or {}).get("metrics") or {}).get("epoch_current"), latest)
 
 
 if __name__ == "__main__":

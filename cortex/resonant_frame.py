@@ -29,7 +29,7 @@ from .field_channels import (
     is_verified_evidence_truth,
 )
 from .field_comparator import compare_evidence_memory
-from .field_policy import FramePolicy, policy_for_classification
+from .field_policy import policy_for_classification
 
 EPS = 1e-12
 SCHEMA = "cortex-resonant-frame/1.0"
@@ -1293,6 +1293,8 @@ def seed_from_activation(
     *,
     task: str = "",
     governor_mode: str = "unknown",
+    force_close: bool = False,
+    reason: str = "activation",
 ) -> dict[str, Any]:
     from .field_channels import collect_activation_channels
 
@@ -1306,7 +1308,13 @@ def seed_from_activation(
         activation=activation,
         governor_mode=governor_mode,
     )
-    return append_field_samples(store, repo, samples, reason="activation")
+    return append_field_samples(
+        store,
+        repo,
+        samples,
+        force_close=force_close,
+        reason=reason,
+    )
 
 
 def fuse_tick_field(

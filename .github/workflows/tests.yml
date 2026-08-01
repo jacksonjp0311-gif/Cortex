@@ -91,6 +91,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v770.py
+      - name: Epoch-Atomic Temporal Boundary receipt (v7.7.2 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v772.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -104,6 +108,7 @@ jobs:
             work/release_receipt_v750.json
             work/release_receipt_v760.json
             work/release_receipt_v770.json
+            work/release_receipt_v772.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
