@@ -80,8 +80,25 @@ def attach_repository(
     activate_result: dict[str, Any] = {}
     claim_result: dict[str, Any] = {}
 
+    # Idempotent: already attached same path → light reaffirm (unless --force)
+    existing = store.repo(repo_name)
+    already = False
+    if existing is not None:
+        try:
+            already = Path(str(existing["path"] or "")).resolve() == root and not force
+        except Exception:
+            already = False
+
     def step_inventory() -> dict[str, Any]:
         nonlocal bootstrap_result
+        if already:
+            bootstrap_result = {
+                "status": existing["bootstrap_status"] if existing else "verified",
+                "repository_id": existing["repository_id"] if existing else "",
+                "skipped": True,
+                "reason": "already_attached",
+            }
+            return {"ok": True, "status": "already_attached", "skipped": True}
         bootstrap_result = bootstrap_repository(
             home_path,
             store,
@@ -91,16 +108,23 @@ def attach_repository(
             preserve_agents=True,
             external=True,
         )
-        return {"ok": True, "status": bootstrap_result.get("status") or bootstrap_result.get("bootstrap_status")}
+        return {
+            "ok": True,
+            "status": bootstrap_result.get("status")
+            or bootstrap_result.get("bootstrap_status"),
+        }
 
     def step_interlink() -> dict[str, Any]:
         # Neural compile already in bootstrap; light reaffirm
         try:
             from .neuron import compile_interlink
+            from .neuron import neural_graph_state
 
-            if bootstrap_result.get("repository") or True:
-                st = compile_interlink(store, repo_name)
-                return {"ok": True, "nodes": st.get("nodes") if isinstance(st, dict) else None}
+            if already:
+                st = neural_graph_state(store, repo_name)
+                return {"ok": True, "nodes": st.get("nodes") if isinstance(st, dict) else None, "skipped": True}
+            st = compile_interlink(store, repo_name)
+            return {"ok": True, "nodes": st.get("nodes") if isinstance(st, dict) else None}
         except Exception as exc:
             return {"ok": False, "error": f"{type(exc).__name__}:{exc}"}
         return {"ok": True}
@@ -151,6 +175,26 @@ def attach_repository(
         nonlocal activate_result, claim_result, claim_line
         if not activate:
             return {"ok": True, "skipped": True}
+        if already and not force:
+            # Re-attach: skip heavy activate/claim unless forced
+            try:
+                from .claim_receipt import latest_claim_receipt
+
+                prev = latest_claim_receipt(store, repo_name) or {}
+                if prev.get("receipt_hash"):
+                    claim_result = {
+                        "claim_id": prev.get("claim_id"),
+                        "status": prev.get("status"),
+                        "receipt_hash": prev.get("receipt_hash"),
+                    }
+                    claim_line = (
+                        f"Geometry Seal v{__version__} — prior claim "
+                        f"{prev.get('status', 'stamped')} "
+                        f"{str(prev.get('receipt_hash'))[:12]}…"
+                    )
+            except Exception:
+                pass
+            return {"ok": True, "skipped": True, "reason": "already_attached"}
         try:
             from .governor import Governor
             from .activation import activate_repository

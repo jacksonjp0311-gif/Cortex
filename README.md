@@ -48,45 +48,50 @@ Cortex is a portable memory organ you attach to a repository. It assimilates the
 
 ### Hermetic attach (easiest — any project folder)
 
-**Needs:** Python 3.10+ (and ideally [uv](https://github.com/astral-sh/uv)). Body goes to `~/.cortex` (or `$env:CORTEX_HOME`). Host tree stays clean.
+**Needs:** Python 3.10+ (and ideally [uv](https://github.com/astral-sh/uv)).  
+**Body:** `~/.cortex` (or `$env:CORTEX_HOME`). Host stays clean (external mode).
 
-**Bash / macOS / Linux**
+> **Run only ONE block.** Do not paste every alternative.  
+> Replace the `cd` path with your real project (example below uses `PulseMesh`).  
+> Do **not** run `cd C:\path\to\your\project` — that is a placeholder and will error.
 
-```bash
-cd /path/to/your/project
-
-# Best (if you have uv)
-uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
-
-# Or pipx
-pipx run --spec "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
-
-# Or plain Python (no uv/pipx)
-python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
-python3 -m cortex.attach_main .
-
-# One-liner script fallback
-curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.sh | bash -s -- .
-```
-
-**PowerShell (Windows)**
+**PowerShell (Windows) — pick A *or* B *or* C**
 
 ```powershell
-cd C:\path\to\your\project
+# Go to YOUR project (example)
+cd "C:\Users\jacks\OneDrive\Desktop\PulseMesh"
 
-# Best (if you have uv)
+# --- A) Best if you have uv (single command) ---
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 
-# Or plain Python (python or py launcher)
-python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
-python -m cortex.attach_main .
+# --- B) Plain Python only (if A fails / no uv) ---
+# python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+# python -m cortex.attach_main .
 
-# One-liner script fallback (download then run — reliable)
-irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.ps1 -OutFile $env:TEMP\cortex-attach.ps1
-powershell -File $env:TEMP\cortex-attach.ps1 .
+# --- C) Script fallback (if A and B fail) ---
+# irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.ps1 -OutFile $env:TEMP\cortex-attach.ps1
+# & $env:TEMP\cortex-attach.ps1 .
 ```
 
-Full attach guide (fallbacks, Docker, env vars): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
+**Bash / macOS / Linux — pick A *or* B *or* C**
+
+```bash
+cd ~/Projects/YourApp   # your real path
+
+# A) uv
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+
+# B) plain Python
+# python3 -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+# python3 -m cortex.attach_main .
+
+# C) script
+# curl -fsSL https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.sh | bash -s -- .
+```
+
+Already attached? One run is enough. Re-running is safe (idempotent) but **don’t** chain A+B+C.
+
+Full guide: [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
 
 ```bash
 # After attach — daily agent loop (body under ~/.cortex)

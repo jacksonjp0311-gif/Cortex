@@ -6,6 +6,10 @@ Attach Cortex to *any* repository without writing into the host tree and without
 
 Repository: https://github.com/jacksonjp0311-gif/Cortex
 
+> **Pick one method only.** Do not run uvx *and* python *and* the script.  
+> Do not `cd` to a fake path like `C:\path\to\your\project` — use your real folder (e.g. `PulseMesh`).  
+> Re-running attach is safe (idempotent) but unnecessary if the first run finished with `Returned to ROOT.`
+
 ---
 
 ## Ranked install mechanisms

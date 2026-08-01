@@ -16,7 +16,13 @@ import sys
 import time
 from typing import Any, Callable, TextIO
 
-# Cadence
+# Cadence (env CORTEX_ATTACH_FAST=1 shortens for re-runs / scripts)
+def _cadence_scale() -> float:
+    if os.environ.get("CORTEX_ATTACH_FAST", "").strip() in {"1", "true", "yes"}:
+        return 0.35
+    return 1.0
+
+
 PULSE_S = 1.2
 STEP_PAUSE_S = 0.42  # breath between solar-lunar beats
 LINE_PAUSE_S = 0.18
@@ -52,11 +58,15 @@ CLAIM = (
 def ritual_enabled(*, force_quiet: bool = False) -> bool:
     if force_quiet:
         return False
-    if os.environ.get("CORTEX_ATTACH_RITUAL", "").strip() in {"0", "off", "false", "no"}:
+    flag = os.environ.get("CORTEX_ATTACH_RITUAL", "").strip().casefold()
+    if flag in {"0", "off", "false", "no"}:
         return False
-    if os.environ.get("NO_COLOR", "").strip():
+    if os.environ.get("NO_COLOR", "").strip() and flag not in {"force", "always", "1"}:
         return False
-    if os.environ.get("CI", "").strip() and os.environ.get("CORTEX_ATTACH_RITUAL", "") != "1":
+    # force/always: show full ritual even when stdout is not a TTY (demos / capture)
+    if flag in {"force", "always"}:
+        return True
+    if os.environ.get("CI", "").strip() and flag not in {"1", "force", "always"}:
         return False
     return sys.stdout.isatty()
 
@@ -97,9 +107,10 @@ def pulse_symbol(
         f"{color}{symbol}{RESET}",
         f"{DIM}{color}{symbol}{RESET}",
     ]
-    step = max(0.04, duration / len(frames))
+    scale = _cadence_scale()
+    step = max(0.03, (duration * scale) / len(frames))
     for fr in frames:
-        stream.write(f"\r{fr}")
+        stream.write(f"\r{fr}  ")
         stream.flush()
         time.sleep(step)
     stream.write(f"\r{BRIGHT}{color}{symbol}{RESET}")
@@ -108,7 +119,7 @@ def pulse_symbol(
 
 def _sleep(seconds: float, *, enabled: bool) -> None:
     if enabled and seconds > 0:
-        time.sleep(seconds)
+        time.sleep(seconds * _cadence_scale())
 
 
 def _write(line: str = "", *, out: TextIO | None = None) -> None:
