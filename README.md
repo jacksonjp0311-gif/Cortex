@@ -77,9 +77,9 @@ cd C:\path\to\your\project
 # Best (if you have uv)
 uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
 
-# Or plain Python
-py -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
-py -m cortex.attach_main .
+# Or plain Python (python or py launcher)
+python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+python -m cortex.attach_main .
 
 # One-liner script fallback (download then run — reliable)
 irm https://raw.githubusercontent.com/jacksonjp0311-gif/Cortex/main/scripts/attach_one.ps1 -OutFile $env:TEMP\cortex-attach.ps1
