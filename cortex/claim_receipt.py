@@ -169,6 +169,8 @@ def issue_promote_claim_receipt(
             "truth_ineligible_axes": geo.get("truth_ineligible_axes"),
             "reasons": geo.get("reasons"),
         },
+        # Supporting context only — must match identity hash material in verify
+        "resonant_frame_context": frame_ctx,
         "reasons_if_denied": list(promotion.get("reasons_if_denied") or []),
         "cortex_version": __version__,
         "receipt_hash": receipt_hash,
@@ -221,11 +223,16 @@ def verify_claim_receipt(
     if not rec:
         return {"ok": False, "error": "no_claim_receipt", "claim_boundary": CLAIM}
 
+    # Must mirror issue_promote_claim_receipt identity keys exactly
+    frame_ctx = rec.get("resonant_frame_context")
+    if frame_ctx is None:
+        frame_ctx = {}
     identity = {
         "kind": rec.get("kind"),
         "repo": rec.get("repo"),
         "body_epoch_id": rec.get("body_epoch_id"),
         "gate_bits": rec.get("gate_bits"),
+        "resonant_frame_context": frame_ctx,
         "allow_promote": rec.get("status") == "allowed",
         "holdout_freeze_id": (rec.get("utility") or {}).get("holdout_freeze_id"),
         "holdout_digest": (rec.get("utility") or {}).get("holdout_digest"),
