@@ -31,7 +31,7 @@ def main() -> int:
     home = ensure_home(Path(tempfile.mkdtemp(prefix="ci-ma-")) / "home")
     store = Store(home / "cortex.db")
     try:
-        boot = bootstrap_repository(home, store, ROOT, "CortexMACI", force=True)
+        boot = bootstrap_repository(home, store, ROOT, "CortexMACI", force=True, external=True)
         if (boot.get("certificate") or {}).get("status") not in {"verified", "degraded"}:
             failures.append("bootstrap")
         if multi_agent_enabled(store, "CortexMACI"):

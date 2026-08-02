@@ -31,7 +31,7 @@ def main() -> int:
     home = ensure_home(Path(tempfile.mkdtemp(prefix="ci-v5-")) / "home")
     store = Store(home / "cortex.db")
     try:
-        boot = bootstrap_repository(home, store, ROOT, "CortexV5CI", force=True)
+        boot = bootstrap_repository(home, store, ROOT, "CortexV5CI", force=True, external=True)
         cert = (boot.get("certificate") or {}).get("status")
         if cert not in {"verified", "degraded"}:
             failures.append(f"bootstrap:{cert}")

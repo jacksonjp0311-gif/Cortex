@@ -60,7 +60,7 @@ def main() -> int:
     home = ensure_home(Path(tempfile.mkdtemp(prefix="ci-immune-")) / "home")
     store = Store(home / "cortex.db")
     try:
-        boot = bootstrap_repository(home, store, ROOT, "CortexImmuneCI", force=True)
+        boot = bootstrap_repository(home, store, ROOT, "CortexImmuneCI", force=True, external=True)
         cert = (boot.get("certificate") or {}).get("status")
         if cert not in {"verified", "degraded"}:
             failures.append(f"bootstrap:{cert}")

@@ -132,9 +132,19 @@ def seed_intelligence(
         }
 
     attached = store.repo(name)
+    # Disposable / CI homes: always external attach so host-side .cortex/config
+    # bound to the operator home cannot refuse rebind (v8.1 home identity).
+    use_external = True
     if not attached or force_bootstrap or not repo_config_path(root).exists():
         boot = bootstrap_repository(
-            home, store, root, name, force=force_bootstrap
+            home,
+            store,
+            root,
+            name,
+            force=force_bootstrap,
+            external=use_external,
+            # Explicit only when host already has a different home binding.
+            allow_home_rebind=False,
         )
         boot_status = (boot.get("certificate") or {}).get("status")
     else:

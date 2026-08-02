@@ -21,7 +21,7 @@ def main() -> int:
     home = ensure_home(Path(tempfile.mkdtemp(prefix="ci-retrieval-")) / "home")
     store = Store(home / "cortex.db")
     try:
-        boot = bootstrap_repository(home, store, ROOT, "CortexCI", force=True)
+        boot = bootstrap_repository(home, store, ROOT, "CortexCI", force=True, external=True)
         if (boot.get("certificate") or {}).get("status") not in {"verified", "degraded"}:
             print(json.dumps({"error": "bootstrap_failed", "boot": boot}, default=str))
             return 1

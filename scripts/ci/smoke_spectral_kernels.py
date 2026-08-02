@@ -27,7 +27,7 @@ def main() -> int:
     home = ensure_home(Path(tempfile.mkdtemp(prefix="ci-spectral-")) / "home")
     store = Store(home / "cortex.db")
     try:
-        boot = bootstrap_repository(home, store, ROOT, "CortexSpectralCI", force=True)
+        boot = bootstrap_repository(home, store, ROOT, "CortexSpectralCI", force=True, external=True)
         if (boot.get("certificate") or {}).get("status") not in {"verified", "degraded"}:
             failures.append("bootstrap")
         annotate_synapses(store, "CortexSpectralCI")

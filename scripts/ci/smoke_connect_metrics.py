@@ -24,7 +24,7 @@ def main() -> int:
     store = Store(home / "cortex.db")
     failures: list[str] = []
     try:
-        boot = bootstrap_repository(home, store, ROOT, "CortexConnectCI", force=True)
+        boot = bootstrap_repository(home, store, ROOT, "CortexConnectCI", force=True, external=True)
         cert = (boot.get("certificate") or {}).get("status")
         if cert not in {"verified", "degraded"}:
             failures.append(f"bootstrap:{cert}")
