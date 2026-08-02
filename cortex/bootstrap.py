@@ -37,14 +37,33 @@ def bootstrap_repository(
     force: bool = False,
     preserve_agents: bool = False,
     external: bool = False,
+    allow_home_rebind: bool = False,
 ) -> dict[str, Any]:
     root = root.expanduser().resolve()
     if not root.exists() or not root.is_dir():
         raise FileNotFoundError(f"Repository directory not found: {root}")
     repository_name = name or root.name
     repository_id = stable_repository_id(root)
-    if repo_config_path(root).exists() or external_repo_config_path(root, home).exists():
-        config = load_repo_config(root, home)
+    rebind_from: str | None = None
+    selected_config_exists = (
+        external_repo_config_path(root, home).exists()
+        if external
+        else repo_config_path(root).exists()
+    )
+    if selected_config_exists:
+        config = load_repo_config(root, home, prefer_external=external)
+        configured_home = str(config.cortex_home or "").strip()
+        requested_home = str(home.resolve())
+        if configured_home:
+            previous_home = str(Path(configured_home).expanduser().resolve())
+            if previous_home.casefold() != requested_home.casefold() and not allow_home_rebind:
+                raise RuntimeError(
+                    "Cortex home rebind refused: this repository is already bound to "
+                    f"{previous_home}; requested {requested_home}. Re-run with the explicit "
+                    "--allow-home-rebind migration flag after verifying identity and lineage."
+                )
+            if previous_home.casefold() != requested_home.casefold():
+                rebind_from = previous_home
         config.repository_name = repository_name
         config.repository_id = repository_id
     else:
@@ -61,6 +80,27 @@ def bootstrap_repository(
     engine_root = Path(__file__).resolve().parent.parent
     config.engine_module_root = str(engine_root)
     config.cortex_home = str(home.resolve())
+    home_identity = store.get_setting("cortex_home_identity", None)
+    if not isinstance(home_identity, dict) or not home_identity.get("home_uuid"):
+        home_identity = {
+            "schema_version": "cortex-home-identity/1.0",
+            "home_uuid": uuid.uuid4().hex,
+            "db_generation": 1,
+            "created_at": time.time(),
+        }
+        store.set_setting("cortex_home_identity", home_identity)
+    if rebind_from:
+        store.set_setting(
+            f"home_rebind:{repository_id}",
+            {
+                "schema_version": "cortex-home-rebind/1.0",
+                "repository_id": repository_id,
+                "from_home": rebind_from,
+                "to_home": str(home.resolve()),
+                "explicit": True,
+                "at": time.time(),
+            },
+        )
     try:
         embedded_relative = engine_root.relative_to(root).as_posix()
     except ValueError:
@@ -142,6 +182,16 @@ def bootstrap_repository(
             "hnsw": hnsw_build,
             "certificate": certificate,
             "identity": {
+                "body": {
+                    "repository_id": repository_id,
+                    "home_uuid": home_identity.get("home_uuid"),
+                    "db_generation": home_identity.get("db_generation"),
+                },
+                "home_rebind": {
+                    "performed": bool(rebind_from),
+                    "from_home": rebind_from,
+                    "to_home": str(home.resolve()),
+                },
                 "warnings": identity_warnings,
                 "continuity": (continuity or {}).get("continuity") if continuity else None,
                 "path_aliases": (continuity or {}).get("path_aliases") if continuity else None,

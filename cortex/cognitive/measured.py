@@ -17,7 +17,7 @@ from ..field_channels import (
     sample_tick_channels,
 )
 
-SCHEMA = "cortex-measured-event-field/1.0"
+SCHEMA = "cortex-measured-event-field/1.1"
 
 METRICS: dict[str, tuple[str, str, float]] = {
     "indexed_files": ("SELECT COUNT(*) AS v FROM files WHERE repo=? AND status='indexed'", "E_HOST", 10.0),
@@ -79,6 +79,18 @@ def measured_delta(
         name: max(-1.0, min(1.0, value / METRICS[name][2]))
         for name, value in delta.items()
     }
+    signed_channel_mass: dict[str, dict[str, float]] = {}
+    for channel in CHANNEL_FAMILIES:
+        values = [
+            normalized[name]
+            for name in METRICS
+            if METRICS[name][1] == channel
+        ]
+        signed_channel_mass[channel] = {
+            "positive": sum(max(0.0, value) for value in values),
+            "negative": sum(max(0.0, -value) for value in values),
+            "net": sum(values),
+        }
     material = {
         "event_id": event_id,
         "event_kind": event_kind,
@@ -90,6 +102,7 @@ def measured_delta(
         "schema_version": SCHEMA,
         **material,
         "normalized_delta": normalized,
+        "signed_channel_mass": signed_channel_mass,
         "changed_metrics": [name for name, value in delta.items() if abs(value) > 1e-12],
         "measurement_basis": MEASUREMENT_MEASURED_DELTA,
         "policy_eligible": True,
@@ -141,6 +154,7 @@ def delta_field_samples(
         timestamp=delta_report.get("measured_at"),
     )
     event_id = str(delta_report.get("event_id") or delta_report.get("receipt_hash") or "")
+    signed_mass = dict(delta_report.get("signed_channel_mass") or {})
     return [
         replace(
             sample,
@@ -153,6 +167,10 @@ def delta_field_samples(
                 "before_hash": delta_report.get("before_hash"),
                 "after_hash": delta_report.get("after_hash"),
                 "metric_deltas": {name: value for name, value in grouped[sample.channel_family]},
+                "directional_activity": signed_mass.get(
+                    sample.channel_family,
+                    {"positive": 0.0, "negative": 0.0, "net": 0.0},
+                ),
             },
         )
         for sample in samples

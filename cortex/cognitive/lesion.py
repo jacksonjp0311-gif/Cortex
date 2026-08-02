@@ -1,14 +1,16 @@
-"""Ablation benchmarks for v8.0 functional components."""
+"""Confidence-bounded ablation benchmarks for v8.1 functional components."""
 
 from __future__ import annotations
 
+import math
+import statistics
 from typing import Any
 
 from .autobiography import verify_autobiography
 from .model import load_model
 from .workspace import workspace_status
 
-SCHEMA = "cortex-cognitive-lesion-benchmark/1.0"
+SCHEMA = "cortex-cognitive-lesion-benchmark/1.1"
 PREDICTOR_EVALUATION_WINDOW = 8
 
 
@@ -20,6 +22,7 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
     zero_error = None
     lifetime_intact_error = None
     lifetime_zero_error = None
+    paired_effects: list[float] = []
     if evaluation_history:
         intact_error = sum(
             float(item.get("normalized_mae") or 0.0)
@@ -30,6 +33,14 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
             / max(1, len(item.get("actual") or {}))
             for item in evaluation_history
         ) / len(evaluation_history)
+        paired_effects = [
+            (
+                sum(abs(float(value)) for value in (item.get("actual") or {}).values())
+                / max(1, len(item.get("actual") or {}))
+            )
+            - float(item.get("normalized_mae") or 0.0)
+            for item in evaluation_history
+        ]
     if history:
         lifetime_intact_error = sum(
             float(item.get("normalized_mae") or 0.0) for item in history
@@ -44,6 +55,14 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
     selected = list(latest_workspace.get("selected") or [])
     candidate_count = int(latest_workspace.get("candidate_count") or 0)
     autobiography = verify_autobiography(store, repo)
+    effect_ci95 = None
+    if len(paired_effects) >= 2:
+        effect_mean = statistics.fmean(paired_effects)
+        standard_error = statistics.stdev(paired_effects) / math.sqrt(len(paired_effects))
+        # The evaluation window is fixed at eight. This conservative t critical
+        # also avoids overstating support in smaller diagnostic windows.
+        margin = 2.365 * standard_error
+        effect_ci95 = [round(effect_mean - margin, 6), round(effect_mean + margin, 6)]
     tests = {
         "predictive_self_model": {
             "samples": len(history),
@@ -63,6 +82,8 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
                 round(zero_error - intact_error, 6)
                 if intact_error is not None and zero_error is not None else None
             ),
+            "paired_effect_ci95": effect_ci95,
+            "ci_method": "paired_t_interval_conservative_df7",
             "data_ready": len(evaluation_history) >= PREDICTOR_EVALUATION_WINDOW,
             "functional_dependence_observed": bool(
                 intact_error is not None
@@ -73,7 +94,8 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
                 len(evaluation_history) >= PREDICTOR_EVALUATION_WINDOW
                 and intact_error is not None
                 and zero_error is not None
-                and zero_error > intact_error
+                and effect_ci95 is not None
+                and effect_ci95[0] > 0.0
             ),
         },
         "global_workspace": {

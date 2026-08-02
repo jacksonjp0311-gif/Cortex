@@ -1,3 +1,14 @@
+## 8.1.0 - Canonical Predictive Observer
+
+- Repository wrappers now bind to a durable `home_uuid`; bootstrap refuses silent Cortex-home changes and records explicit `--allow-home-rebind` migrations.
+- Full-engine diagnostic tests use external attachments, and teach-seed loads engine packets into temporary hosts without bootstrapping the live repository.
+- The predictive model learns separate refresh/recompile, adaptive-learning, evidence-only, scheduled-decay, and steady regimes plus observed transition counts.
+- Forecast confidence is a Beta-posterior probability of meeting the declared MAE threshold; incompatible v8.0 confidence history is excluded from v8.1 calibration readiness.
+- Workspace reliability now reflects observer gates, sample readiness, prediction calibration, measurement provenance, and temporal-window depth.
+- Emergent coupling requires aligned governance, independent learning and operations seams, and a connected functional component—not bond count alone.
+- Measured field receipts preserve positive, negative, and net channel mass; predictor lesions include paired 95% effect intervals.
+- Operational autobiography writes hash-linked segment checkpoints before bounded-history truncation.
+
 ## 8.0.0 - Measured Predictive Self-Model
 
 - Activation time now advances through one measured pre/post transaction delta instead of treating internal receipt labels as separate measured moments.

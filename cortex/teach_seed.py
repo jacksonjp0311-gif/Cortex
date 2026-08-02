@@ -117,6 +117,13 @@ def seed_intelligence(
     root = (root or _engine_root()).resolve()
     name = repo_name or root.name or "Cortex"
     packets = load_memory_packets(root)
+    packet_root = root
+    if not packets and root != _engine_root():
+        # Teaching packets belong to the Cortex engine. External hosts should not
+        # need to vendor them, and a test host must never bootstrap the live engine
+        # repository just to find teaching material.
+        packet_root = _engine_root()
+        packets = load_memory_packets(packet_root)
     if not packets:
         return {
             "seeded": False,
@@ -140,7 +147,7 @@ def seed_intelligence(
 
     # Install + index taught binary-intel pack (enter/connect memory branch).
     pack_note: dict[str, Any] = {"installed": False}
-    pack_src = root / CORE_PACK_REL
+    pack_src = packet_root / CORE_PACK_REL
     if pack_src.is_dir():
         try:
             from .packs import index_packs_into_repo, install_pack

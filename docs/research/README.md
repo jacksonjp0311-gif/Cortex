@@ -16,6 +16,8 @@
 
 | Doc | Topic |
 |-----|--------|
+| [`../intelligence/PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md`](../intelligence/PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md) | Canonical body identity, switched prediction, calibrated workspace, connected emergence |
+| [`../intelligence/PHASE_V8.0_MEASURED_PREDICTIVE_SELF_MODEL.md`](../intelligence/PHASE_V8.0_MEASURED_PREDICTIVE_SELF_MODEL.md) | Measured self-model foundation |
 | [`../intelligence/PHASE_V7.3_RESONANT_FRAMES.md`](../intelligence/PHASE_V7.3_RESONANT_FRAMES.md) | Temporal field phase |
 | [`../intelligence/PHASE_V7.0_RESONANT_CONTINUITY.md`](../intelligence/PHASE_V7.0_RESONANT_CONTINUITY.md) | Body epochs + phases |
 | [`../intelligence/OPERATOR_ALIGN_V71.md`](../intelligence/OPERATOR_ALIGN_V71.md) | Live align loop after 7.1 |

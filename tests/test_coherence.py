@@ -7,7 +7,13 @@ import unittest
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
-from cortex.coherence import COHERENCE_THRESHOLD, measure_coherence, soft_bind_fusion
+from cortex.coherence import (
+    COHERENCE_THRESHOLD,
+    COUPLE_DEFS,
+    _couple_percolation,
+    measure_coherence,
+    soft_bind_fusion,
+)
 from cortex.config import ensure_home
 from cortex.governor import Governor
 from cortex.neuron import compile_interlink
@@ -40,7 +46,7 @@ class CoherenceTests(unittest.TestCase):
         c = measure_coherence(
             self.store, "CohHost", governor=self.gov, home=self.home
         )
-        self.assertEqual(c["schema_version"], "cortex-coherence/1.2")
+        self.assertEqual(c["schema_version"], "cortex-coherence/1.3")
         self.assertIn("score", c)
         self.assertEqual(c["threshold"], COHERENCE_THRESHOLD)
         self.assertIn("components", c)
@@ -60,6 +66,34 @@ class CoherenceTests(unittest.TestCase):
         latest = self.store.get_setting("coherence_latest:CohHost", None)
         self.assertIsInstance(latest, dict)
         self.assertIn("score", latest or {})
+
+    def test_percolation_requires_learning_operations_and_governance(self) -> None:
+        def indicators(active: set[str]) -> list[dict]:
+            return [
+                {
+                    "id": cid,
+                    "left": left,
+                    "right": right,
+                    "active": cid in active,
+                }
+                for cid, left, right, _spoken in COUPLE_DEFS
+            ]
+
+        one_scalar_jump = {
+            "blood_geometry", "ops_geometry", "spectral_ops", "gates_aligned"
+        }
+        cold_learning = _couple_percolation(
+            {}, {}, indicators(one_scalar_jump), True, score=0.8
+        )
+        self.assertFalse(cold_learning["phase_emergent"])
+        self.assertFalse(cold_learning["phase_requirements"]["learning_ready"])
+
+        connected_two_key = one_scalar_jump | {"blood_learning"}
+        warm = _couple_percolation(
+            {}, {}, indicators(connected_two_key), True, score=0.8
+        )
+        self.assertTrue(warm["phase_emergent"])
+        self.assertGreaterEqual(warm["giant_component_nodes"], 4)
 
     def test_soft_bind_respects_env(self) -> None:
         off = soft_bind_fusion(

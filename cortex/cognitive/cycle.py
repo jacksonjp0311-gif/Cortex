@@ -1,4 +1,4 @@
-"""Integrated v8.0 cognitive instrumentation cycle."""
+"""Integrated v8.1 canonical predictive-observer cycle."""
 
 from __future__ import annotations
 

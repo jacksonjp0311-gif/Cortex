@@ -100,6 +100,9 @@ def continuity_check(
         except Exception:
             home_path = None
     temporary_home = home_looks_temporary(home_path)
+    home_identity = store.get_setting("cortex_home_identity", None)
+    if not isinstance(home_identity, dict):
+        home_identity = None
 
     warnings: list[str] = []
     if multi_name_same_path:
@@ -131,6 +134,11 @@ def continuity_check(
         "path_aliases": path_aliases,
         "id_aliases": id_aliases,
         "cortex_home": home_path,
+        "body": {
+            "repository_id": primary["repository_id"] if primary is not None else None,
+            "home_uuid": (home_identity or {}).get("home_uuid"),
+            "db_generation": (home_identity or {}).get("db_generation"),
+        },
         "continuity": {
             "multi_name_same_path": multi_name_same_path,
             "split_identity": split_identity,

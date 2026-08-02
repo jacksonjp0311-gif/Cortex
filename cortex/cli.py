@@ -77,6 +77,14 @@ def build_parser() -> argparse.ArgumentParser:
     bootstrap.add_argument("--name")
     bootstrap.add_argument("--force", action="store_true")
     bootstrap.add_argument(
+        "--allow-home-rebind",
+        action="store_true",
+        help=(
+            "Explicitly migrate the repository wrapper to a different Cortex home. "
+            "This is an identity operation, separate from --force indexing."
+        ),
+    )
+    bootstrap.add_argument(
         "--preserve-agents",
         action="store_true",
         help="Install the internal sidecar without modifying the host AGENTS.md.",
@@ -824,7 +832,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     self_model_p = sub.add_parser(
         "self-model",
-        help="v8.0 measured predictive self-model and functional lesion reports.",
+        help="v8.1 canonical predictive observer and confidence-bounded lesion reports.",
     )
     self_model_p.add_argument(
         "action",
@@ -1320,6 +1328,7 @@ def main(argv: list[str] | None = None) -> None:
                 force=args.force,
                 preserve_agents=args.preserve_agents,
                 external=args.external,
+                allow_home_rebind=args.allow_home_rebind,
             )
             emit(result, args.json)
 

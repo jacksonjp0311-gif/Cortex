@@ -239,15 +239,22 @@ def external_repo_config_path(root: Path, home: Path) -> Path:
     return home / "attachments" / repository_key / "config.json"
 
 
-def load_repo_config(root: Path, home: Path | None = None) -> RepoConfig:
+def load_repo_config(
+    root: Path,
+    home: Path | None = None,
+    *,
+    prefer_external: bool = False,
+) -> RepoConfig:
     path = repo_config_path(root)
     active_home = home or (
         Path(os.environ["CORTEX_ACTIVE_HOME"]).expanduser().resolve()
         if os.environ.get("CORTEX_ACTIVE_HOME")
         else None
     )
-    if not path.exists() and active_home is not None:
-        path = external_repo_config_path(root, active_home)
+    if active_home is not None:
+        external_path = external_repo_config_path(root, active_home)
+        if prefer_external or not path.exists():
+            path = external_path
     if not path.exists():
         raise FileNotFoundError(f"Cortex repository config not found: {path}")
     return RepoConfig.from_dict(json.loads(path.read_text(encoding="utf-8")))

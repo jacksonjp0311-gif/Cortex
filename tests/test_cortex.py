@@ -249,6 +249,27 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertEqual(persisted["context_budget"], 777)
         self.assertEqual(result["certificate"]["status"], "verified")
 
+    def test_rebootstrap_refuses_silent_home_rebind(self) -> None:
+        self.bootstrap()
+        other_home = ensure_home(self.base / "other-cortex-home")
+        other_store = Store(other_home / "cortex.db")
+        try:
+            with self.assertRaisesRegex(RuntimeError, "home rebind refused"):
+                bootstrap_repository(
+                    other_home, other_store, self.repo, "DemoProject", force=True
+                )
+            result = bootstrap_repository(
+                other_home,
+                other_store,
+                self.repo,
+                "DemoProject",
+                force=True,
+                allow_home_rebind=True,
+            )
+            self.assertEqual(result["certificate"]["status"], "verified")
+        finally:
+            other_store.close()
+
     def test_reusing_name_for_different_repository_clears_old_memory(self) -> None:
         self.bootstrap()
         other = self.base / "other-repo"

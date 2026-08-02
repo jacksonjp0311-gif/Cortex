@@ -42,7 +42,7 @@ def _binding_field_panel(store: Any, repo: str) -> dict[str, Any]:
 
 
 def _cognitive_field_panel(store: Any, repo: str) -> dict[str, Any]:
-    """v8.0 compact measured self-model surface."""
+    """v8.1 compact canonical predictive-observer surface."""
     try:
         from .cognitive import cognitive_status
 
@@ -57,22 +57,24 @@ def _cognitive_field_panel(store: Any, repo: str) -> dict[str, Any]:
             "changed_metrics": measured.get("changed_metrics"),
             "model_n": model.get("n_updates"),
             "prediction_error": model.get("ema_error"),
+            "active_regime": model.get("last_regime"),
             "calibration": model.get("calibration"),
             "workspace_broadcasts": workspace.get("broadcast_count"),
             "workspace_latest": (workspace.get("latest") or {}).get("selected"),
             "autobiography_episodes": autobiography.get("episode_count"),
             "autobiography_chain_valid": autobiography.get("chain_valid"),
+            "autobiography_lineage_anchored": autobiography.get("lineage_anchored"),
             "lesions_supported": lesions.get("supported_lesions"),
             "functional_self_model_only": True,
             "advisory_only": True,
-            "phase": "v8.0.0",
+            "phase": "v8.1.0",
         }
     except Exception as exc:
         return {
             "error": f"{type(exc).__name__}:{exc}",
             "functional_self_model_only": True,
             "advisory_only": True,
-            "phase": "v8.0.0",
+            "phase": "v8.1.0",
         }
 
 

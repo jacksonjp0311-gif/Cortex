@@ -23,7 +23,7 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-coherence/1.2"
+SCHEMA = "cortex-coherence/1.3"
 GLYPH = "⧉≈"
 COHERENCE_THRESHOLD = 0.62
 COUPLE_ACTIVE = 0.45  # component/couple lit when ≥ this
@@ -106,28 +106,48 @@ def _couple_percolation(
     giant = max((len(c) for c in comps), default=0)
     occupied = len(active_bonds)
 
+    def _phase_state(bonds: list[dict[str, Any]]) -> dict[str, Any]:
+        trial_adj: dict[str, set[str]] = {}
+        ids: set[str] = set()
+        for bond in bonds:
+            cid = str(bond["id"])
+            left, right = str(bond["left"]), str(bond["right"])
+            ids.add(cid)
+            trial_adj.setdefault(left, set()).add(right)
+            trial_adj.setdefault(right, set()).add(left)
+        trial_components = _components_of(trial_adj)
+        trial_giant = max((len(comp) for comp in trial_components), default=0)
+        governance_ready = "gates_aligned" in ids
+        learning_ready = bool(ids & {"geometry_learning", "blood_learning"})
+        operations_ready = bool(ids & {"ops_geometry", "spectral_ops"})
+        connected_ready = trial_giant >= 4
+        count_ready = len(bonds) >= MIN_COUPLES_FOR_EMERGENT
+        return {
+            "governance_ready": governance_ready,
+            "learning_ready": learning_ready,
+            "operations_ready": operations_ready,
+            "connected_ready": connected_ready,
+            "count_ready": count_ready,
+            "phase_emergent": bool(
+                above_threshold
+                and governance_ready
+                and learning_ready
+                and operations_ready
+                and connected_ready
+                and count_ready
+            ),
+        }
+
+    phase = _phase_state(active_bonds)
+
     # Cut bonds: removing this bond drops occupied count below threshold
     cut_bonds: list[str] = []
     for i in indicators:
         if not i.get("active"):
             continue
         cid = str(i["id"])
-        # If this is one of few bonds, it is critical
-        if occupied <= MIN_COUPLES_FOR_EMERGENT:
-            cut_bonds.append(cid)
-            continue
-        # Rebuild without this bond
-        left, right = str(i["left"]), str(i["right"])
-        trial_adj: dict[str, set[str]] = {
-            k: set(v) for k, v in adj.items()
-        }
-        if left in trial_adj:
-            trial_adj[left].discard(right)
-        if right in trial_adj:
-            trial_adj[right].discard(left)
-        # Also count remaining active bonds
-        remain = occupied - 1
-        if remain < MIN_COUPLES_FOR_EMERGENT:
+        trial = [bond for bond in active_bonds if str(bond["id"]) != cid]
+        if phase["phase_emergent"] and not _phase_state(trial)["phase_emergent"]:
             cut_bonds.append(cid)
 
     margin_on = float(score) - COHERENCE_THRESHOLD
@@ -143,15 +163,23 @@ def _couple_percolation(
         "occupied_bonds": occupied,
         "min_bonds_for_emergent": MIN_COUPLES_FOR_EMERGENT,
         "giant_component_nodes": giant,
+        "phase_requirements": {
+            key: phase[key]
+            for key in (
+                "governance_ready",
+                "learning_ready",
+                "operations_ready",
+                "connected_ready",
+                "count_ready",
+            )
+        },
         "active_bond_ids": bond_ids,
         "cut_bonds": cut_bonds,
-        "phase_emergent": bool(
-            above_threshold and occupied >= MIN_COUPLES_FOR_EMERGENT
-        ),
+        "phase_emergent": phase["phase_emergent"],
         "bottleneck_couples": cut_bonds[:4],
         "hysteresis": hysteresis,
         "claim_boundary": (
-            "Couple percolation is discrete phase telemetry on a fixed 6-bond dual "
+            "Couple percolation is connectivity-gated phase telemetry on a fixed 6-bond dual "
             "graph — not thermodynamic criticality or consciousness."
         ),
     }
@@ -376,14 +404,13 @@ def measure_coherence(
         )
     coupled_count = sum(1 for v in coupling.values() if v)
     active_ids = [i["id"] for i in indicators if i["active"]]
-    emergent_coupling = above and coupled_count >= MIN_COUPLES_FOR_EMERGENT
-
     # --- Couple-graph percolation (v6.19) ---
     # Components = seam nodes; couples = bonds. Occupied bond when both ends active.
-    # Emergent = S above threshold AND occupied bonds >= 3 (discrete phase).
+    # Emergent = threshold + governance + learning + operations + connectivity.
     percolation = _couple_percolation(
         components, coupling, indicators, above, score=score
     )
+    emergent_coupling = bool(percolation.get("phase_emergent"))
 
     # v7.3 temporal field panel — separate from operational_coupling_index
     temporal_field: dict[str, Any] = {

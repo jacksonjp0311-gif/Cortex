@@ -103,7 +103,12 @@ class EvalCouplingTests(unittest.TestCase):
         self.engine = Path(__file__).resolve().parents[1]
         self.store = Store(self.home / "cortex.db")
         bootstrap_repository(
-            self.home, self.store, self.engine, "EvalHost", force=True
+            self.home,
+            self.store,
+            self.engine,
+            "EvalHost",
+            force=True,
+            external=True,
         )
         self.gov = Governor(self.home, self.store)
 

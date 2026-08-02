@@ -16,7 +16,12 @@ from cortex.cognitive.measured import (
     delta_field_samples,
     measured_delta,
 )
-from cortex.cognitive.model import calibration_report, predict_next_delta, score_and_update
+from cortex.cognitive.model import (
+    calibration_report,
+    classify_regime,
+    predict_next_delta,
+    score_and_update,
+)
 from cortex.cognitive.workspace import CAPACITY, compete_and_broadcast
 from cortex.connect_pass import DECAY_EVERY, persist_connect_pass
 from cortex.config import ensure_home
@@ -63,6 +68,9 @@ class CognitiveV8Tests(unittest.TestCase):
         self.assertEqual(len(samples), 11)
         self.assertTrue(all(s.metadata["measurement_basis"] == "measured_delta" for s in samples))
         self.assertTrue(all(s.metadata["baseline_eligible"] for s in samples))
+        self.assertGreater(report["signed_channel_mass"]["T_TASK"]["positive"], 0.0)
+        self.assertEqual(report["signed_channel_mass"]["T_TASK"]["negative"], 0.0)
+        self.assertIn("directional_activity", samples[0].metadata)
 
     def test_prediction_is_scored_before_learning(self) -> None:
         forecast = predict_next_delta(self.store, self.repo, action="activation")
@@ -72,6 +80,36 @@ class CognitiveV8Tests(unittest.TestCase):
         next_forecast = predict_next_delta(self.store, self.repo, action="activation")
         self.assertAlmostEqual(
             next_forecast["predicted_normalized_delta"]["sessions"], 0.1
+        )
+        self.assertEqual(next_forecast["predicted_regime"], "refresh_recompile")
+
+    def test_predictor_separates_operational_regimes(self) -> None:
+        refresh = self._delta(value=0.0, event="refresh")
+        refresh["normalized_delta"]["neural_nodes"] = 0.8
+        refresh["changed_metrics"] = ["neural_nodes"]
+        score_and_update(
+            self.store,
+            self.repo,
+            predict_next_delta(self.store, self.repo, action="activation"),
+            refresh,
+        )
+        decay = self._delta(value=0.0, event="decay")
+        decay["normalized_delta"]["synapse_mass"] = -0.5
+        decay["changed_metrics"] = ["synapse_mass"]
+        score_and_update(
+            self.store,
+            self.repo,
+            predict_next_delta(self.store, self.repo, action="activation"),
+            decay,
+        )
+        status = self.store.get_setting(f"predictive_self_model:{self.repo}", {})
+        self.assertEqual(classify_regime(refresh), "refresh_recompile")
+        self.assertEqual(classify_regime(decay), "scheduled_decay")
+        self.assertEqual(
+            set(status["regimes"]), {"refresh_recompile", "scheduled_decay"}
+        )
+        self.assertEqual(
+            status["transition_counts"]["refresh_recompile"]["scheduled_decay"], 1
         )
 
     def test_calibration_requires_samples_and_empirical_fit(self) -> None:
@@ -87,6 +125,24 @@ class CognitiveV8Tests(unittest.TestCase):
         bad = calibration_report(badly_fit)
         self.assertTrue(bad["data_ready"])
         self.assertFalse(bad["calibrated"])
+
+    def test_probability_calibration_excludes_legacy_confidence(self) -> None:
+        self.store.set_setting(
+            f"predictive_self_model:{self.repo}",
+            {
+                "n_updates": 1,
+                "history": [
+                    {"confidence": 0.99, "accurate": True, "normalized_mae": 0.01}
+                ],
+            },
+        )
+        forecast = predict_next_delta(self.store, self.repo, action="activation")
+        score = score_and_update(self.store, self.repo, forecast, self._delta())
+        report = score["calibration_after"]
+        self.assertEqual(report["n"], 1)
+        self.assertEqual(report["history_n"], 2)
+        self.assertEqual(report["excluded_incompatible"], 1)
+        self.assertFalse(report["data_ready"])
 
     def test_counterfactuals_do_not_mutate(self) -> None:
         forecast = predict_next_delta(self.store, self.repo, action="activation")
@@ -110,6 +166,41 @@ class CognitiveV8Tests(unittest.TestCase):
         self.assertEqual(len(workspace["selected"]), CAPACITY)
         self.assertEqual(len(workspace["suppressed"]), 1)
 
+    def test_workspace_downweights_cold_uncalibrated_signals(self) -> None:
+        workspace = compete_and_broadcast(
+            self.store,
+            self.repo,
+            measured=self._delta(),
+            prediction_score={
+                "normalized_mae": 0.4,
+                "calibration_after": {"n": 1, "brier": 0.9, "calibrated": False},
+            },
+            self_sensing={
+                "classification": "COLD",
+                "residual_r": 5.0,
+                "baseline_reference_n": 1,
+                "gates": {
+                    "baseline_warm": False,
+                    "epoch_current": True,
+                    "phase_bound": True,
+                    "evidence_valid": True,
+                },
+            },
+            frame={
+                "classification": "INDETERMINATE",
+                "measurement_basis": "measured_delta",
+                "metrics": {"tick_count": 1},
+            },
+            epoch_delta=None,
+        )
+        candidates = {
+            item["signal_id"]: item
+            for item in [*workspace["selected"], *workspace["suppressed"]]
+        }
+        self.assertLess(candidates["self_sensing_residual"]["reliability"], 0.2)
+        self.assertEqual(candidates["prediction_error"]["reliability"], 0.1)
+        self.assertLessEqual(candidates["temporal_frame"]["reliability"], 0.25)
+
     def test_autobiography_hash_chain_detects_tamper(self) -> None:
         workspace = {"broadcast_hash": "b", "selected": [{"signal_id": "x"}]}
         for index in range(2):
@@ -129,6 +220,27 @@ class CognitiveV8Tests(unittest.TestCase):
         self.store.set_setting(f"operational_autobiography:{self.repo}", episodes)
         self.assertFalse(verify_autobiography(self.store, self.repo)["chain_valid"])
 
+    def test_autobiography_checkpoints_truncated_prefix(self) -> None:
+        import cortex.cognitive.autobiography as autobiography
+
+        workspace = {"broadcast_hash": "b", "selected": [{"signal_id": "x"}]}
+        with patch.object(autobiography, "HISTORY_CAP", 2):
+            for index in range(3):
+                append_episode(
+                    self.store,
+                    self.repo,
+                    task=f"checkpoint-{index}",
+                    body_epoch_id="ep",
+                    measured=self._delta(event=f"cp{index}"),
+                    prediction_score={"forecast_id": f"f{index}", "normalized_mae": 0.1},
+                    workspace=workspace,
+                    self_sensing={"classification": "NOMINAL"},
+                )
+            report = verify_autobiography(self.store, self.repo)
+        self.assertTrue(report["chain_valid"])
+        self.assertTrue(report["lineage_anchored"])
+        self.assertEqual(report["checkpoint"]["segment_tip_sequence"], 1)
+
     def test_lesion_benchmark_detects_predictive_dependence(self) -> None:
         for index in range(9):
             forecast = predict_next_delta(self.store, self.repo, action="activation")
@@ -145,6 +257,7 @@ class CognitiveV8Tests(unittest.TestCase):
         report = run_lesion_benchmarks(self.store, self.repo)
         self.assertTrue(report["tests"]["predictive_self_model"]["data_ready"])
         self.assertTrue(report["tests"]["predictive_self_model"]["functional_dependence_observed"])
+        self.assertIn("paired_effect_ci95", report["tests"]["predictive_self_model"])
 
     def test_maintenance_cadence_leaves_a_reachable_field_window(self) -> None:
         metrics = {
