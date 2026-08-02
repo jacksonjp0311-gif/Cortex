@@ -484,32 +484,13 @@ def persist_connect_pass(
     causal_result: dict[str, Any] | None = None
     pass_n = int(graph.get("pass_count") or 0)
     if causal_every > 0 and pass_n > 0 and pass_n % causal_every == 0:
-        try:
-            from .causal.ledger import evaluate_causal_episode, open_episode
-
-            open_episode(
-                store,
-                repo,
-                f"connect_cadence_{pass_n}",
-                treatment={
-                    "kind": "connect_pass_cadence",
-                    "pass_count": pass_n,
-                    "block": (metrics.get("immune") or {}).get("block"),
-                },
-            )
-            # Proxy: block rate change as soft effect (inconclusive without recall)
-            av = graph.get("averages") or {}
-            causal_result = evaluate_causal_episode(
-                store,
-                repo,
-                metrics_after={"metric_graph": av, "pass_count": pass_n},
-            )
-            if causal_result.get("verdict") == "regressed":
-                from .ranker.model import freeze_ranker
-
-                freeze_ranker(store, repo, reason="causal_regressed")
-        except Exception as exc:
-            causal_result = {"error": f"{type(exc).__name__}: {exc}"}
+        # A cadence observation has no matched counterfactual and previously
+        # polluted the causal ledger with automatic inconclusive episodes.
+        causal_result = {
+            "verdict": "deferred",
+            "reason": "paired_utility_required",
+            "pass_count": pass_n,
+        }
 
     decay_result: dict[str, Any] | None = None
     if auto_decay and pass_n > 0 and pass_n % DECAY_EVERY == 0:

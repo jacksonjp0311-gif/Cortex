@@ -39,6 +39,10 @@ class InterconnectContinuityTests(unittest.TestCase):
             "REPAIR", "VERIFY_REPAIR", "ROLLBACK",
         })
         self.assertIn("planes", m)
+        snap = m.get("observation_snapshot") or {}
+        self.assertTrue(snap.get("atomic_control_read"), snap)
+        self.assertEqual(snap.get("manifest_stored"), snap.get("manifest_observed"))
+        self.assertIn("freshness", m.get("intelligence") or {})
         dash = mesh_dashboard(self.store, "ICHost", governor=self.gov, home=self.home)
         self.assertEqual(dash.get("body_epoch_id"), cont.get("body_epoch_id"))
         self.assertEqual(dash.get("runtime_phase"), cont.get("runtime_phase"))

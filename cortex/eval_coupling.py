@@ -729,6 +729,38 @@ def run_eval_coupling(
 
     if persist:
         try:
+            if report.get("suite") == "holdout" and report.get("holdout_freeze_id"):
+                from .causal import record_matched_evaluation
+
+                def utility_metrics(mode: str) -> dict[str, Any]:
+                    data = by_mode.get(mode) or {}
+                    return {
+                        key: data.get(key)
+                        for key in ("cases", "hits_at_k", "recall_at_k", "mrr")
+                    }
+
+                report["causal_utility"] = {
+                    "ranker_primary": record_matched_evaluation(
+                        store,
+                        repo,
+                        suite="holdout",
+                        freeze_id=str(report["holdout_freeze_id"]),
+                        treatment_name="ranker_primary",
+                        control_name="no_ranker",
+                        treatment_metrics=utility_metrics("baseline"),
+                        control_metrics=utility_metrics("no_ranker"),
+                    ),
+                    "spectral_enrichment": record_matched_evaluation(
+                        store,
+                        repo,
+                        suite="holdout",
+                        freeze_id=str(report["holdout_freeze_id"]),
+                        treatment_name="spectral_enrichment",
+                        control_name="no_spectral",
+                        treatment_metrics=utility_metrics("baseline"),
+                        control_metrics=utility_metrics("no_spectral"),
+                    ),
+                }
             store.set_setting(f"eval_coupling_latest:{repo}", report)
             log_dir = Path(home) / "logs"
             log_dir.mkdir(parents=True, exist_ok=True)

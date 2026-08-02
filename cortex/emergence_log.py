@@ -300,6 +300,11 @@ def read_emergence_log(
     tail = events[-max(1, limit) :]
     latest = store.get_setting(f"emergence_latest:{repo}", None) if hasattr(store, "get_setting") else None
     coh = store.get_setting(f"coherence_latest:{repo}", None) if hasattr(store, "get_setting") else None
+    eval_latest = (
+        store.get_setting(f"eval_coupling_latest:{repo}", None)
+        if hasattr(store, "get_setting")
+        else None
+    )
 
     # Build mandatory instruction lines
     lines: list[str] = [
@@ -326,10 +331,29 @@ def read_emergence_log(
     directives: list[str] = []
     if isinstance(coh, dict):
         if coh.get("emergent_coupling"):
-            directives.append(
-                "KEEP spectral + ranker primary — do not rip them out; measure gate "
-                "proved both help on hard paraphrases."
-            )
+            gate = (eval_latest or {}).get("gate") if isinstance(eval_latest, dict) else {}
+            suite = (eval_latest or {}).get("suite") if isinstance(eval_latest, dict) else None
+            if gate:
+                if gate.get("ranker_helps"):
+                    directives.append(
+                        f"KEEP ranker primary — latest {suite or 'measured'} ablation shows utility."
+                    )
+                else:
+                    directives.append(
+                        f"REVIEW ranker primary — latest {suite or 'measured'} ablation shows no lift."
+                    )
+                if gate.get("spectral_helps"):
+                    directives.append(
+                        f"KEEP spectral enrichment on measured routes — latest {suite or 'measured'} gate shows lift."
+                    )
+                else:
+                    directives.append(
+                        f"USE spectral enrichment conditionally — latest {suite or 'measured'} gate shows no lift."
+                    )
+            else:
+                directives.append(
+                    "Keep learned routing in shadow until a sealed ablation identifies ranker and spectral utility separately."
+                )
             directives.append(
                 "Fuse continuity: if a fusion session is open, prefer tick/state over "
                 "thrash open/close."

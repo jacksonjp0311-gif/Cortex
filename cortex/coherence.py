@@ -250,10 +250,11 @@ def measure_coherence(
             components["geometry_mass"] = 0.15
 
         if struct_e is not None and int(struct_e) > 0 and neural_e > 0:
-            # Neural denser than structural is expected (activation-over-structure).
-            # Peak dual_align near ratio ≈ 6; soft falloff — do not zero at ~13×.
+            # Neural and structural layers compile from the same substrate.  Their
+            # total counts need not match exactly (reverse/containment relations),
+            # but order-of-magnitude parity is the truthful alignment center.
             ratio = neural_e / max(1, int(struct_e))
-            ideal = 6.0
+            ideal = 1.0
             dist = abs(math.log(max(ratio, 1e-9)) - math.log(ideal))
             dual_score = _clip01(1.0 - dist / 2.8)
             if neural_e >= 100 and int(struct_e) >= 50:
@@ -262,7 +263,7 @@ def measure_coherence(
             seams["dual_ratio_band"] = {
                 "ratio": round(ratio, 4),
                 "ideal": ideal,
-                "law": "neural denser than structural is normal; peak dual_align near ratio~6",
+                "law": "compiled neural and structural mass should remain in an order-one ratio band",
             }
         else:
             components["dual_align"] = 0.55
@@ -505,7 +506,14 @@ def measure_coherence(
         if components.get("lambda_state", 0) < COUPLE_ACTIVE:
             advice.append("connect_or_activate_to_pulse_Lambda")
     else:
-        advice.append("hold_course_spectral_primary")
+        latest_eval = store.get_setting(f"eval_coupling_latest:{repo}", {}) or {}
+        latest_gate = latest_eval.get("gate") or {}
+        if latest_gate.get("spectral_helps") is True:
+            advice.append("hold_course_spectral_on_measured_routes")
+        elif latest_eval.get("suite") == "holdout":
+            advice.append("spectral_conditional_latest_holdout_no_lift")
+        else:
+            advice.append("measure_spectral_utility_before_primary_use")
         if emergent_coupling:
             advice.append("emergent_coupling_indicators_active")
         if not fusion_open:

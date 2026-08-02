@@ -1,3 +1,13 @@
+## 8.1.1 - Measurement-First Routing
+
+- Dual-graph alignment now counts the complete structural substrate instead of the 500-row browsing window and centers alignment on an order-one compiled-layer ratio.
+- Fibonacci context mass grows from symbol to file to module; exhausted lanes spill into unused pools without exceeding the packet budget.
+- Interconnect performs one live verification pass, binds control telemetry to an explicit snapshot, and labels stored intelligence-pulse age and mesh agreement.
+- Emergence directives are generated from the latest measured gate instead of claiming spectral utility from coherence alone.
+- Live retrieval makes spectral enrichment conditional after a sealed no-lift holdout, collapses duplicate paths in top-k, and reserves bounded novelty mass against hub condensation.
+- Prefetch uses specificity-normalized coactivation rather than raw pair frequency.
+- Automatic cadence no longer writes unmatched inconclusive causal episodes; sealed holdout ablations write stable, receipt-bearing local utility comparisons.
+
 ## 8.1.0 - Canonical Predictive Observer
 
 - Repository wrappers now bind to a durable `home_uuid`; bootstrap refuses silent Cortex-home changes and records explicit `--allow-home-rebind` migrations.

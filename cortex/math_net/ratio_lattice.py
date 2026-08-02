@@ -103,7 +103,11 @@ def partition_budgets(
         fib = [1, 2]
         while len(fib) < n:
             fib.append(fib[-1] + fib[-2])
-        weights = list(reversed(fib[:n]))
+        # Levels are ordered fine -> coarse.  Keep the Fibonacci mass in that
+        # same direction so the containing envelope receives the largest pool.
+        # The previous reverse() produced 3:2:1 for symbol:file:module while the
+        # documented law (and the other schemes) requires 1:2:3.
+        weights = fib[:n]
         wsum = sum(weights) or 1
         ints = [int(B * w / wsum) for w in weights]
         ints[-1] += B - sum(ints)

@@ -71,6 +71,24 @@ class EmergenceLogTests(unittest.TestCase):
         self.assertTrue(any(s.get("id") == "read_emergence_log" for s in steps))
         self.assertIn("emergence_log", ctx.get("must_read") or [])
 
+    def test_directives_follow_latest_measure_gate(self) -> None:
+        self.store.set_setting(
+            "coherence_latest:EmHost",
+            {"score": 0.9, "above_threshold": True, "emergent_coupling": True},
+        )
+        self.store.set_setting(
+            "eval_coupling_latest:EmHost",
+            {
+                "suite": "holdout",
+                "gate": {"ranker_helps": True, "spectral_helps": False},
+            },
+        )
+        surface = read_emergence_log(self.home, self.store, "EmHost")
+        directives = "\n".join(surface["directives"])
+        self.assertIn("KEEP ranker primary", directives)
+        self.assertIn("USE spectral enrichment conditionally", directives)
+        self.assertNotIn("proved both help", directives)
+
 
 if __name__ == "__main__":
     unittest.main()

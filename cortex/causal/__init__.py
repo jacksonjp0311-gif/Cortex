@@ -5,6 +5,7 @@ from .ledger import (
     evaluate_causal_episode,
     open_episode,
     probe_recall,
+    record_matched_evaluation,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "evaluate_causal_episode",
     "open_episode",
     "probe_recall",
+    "record_matched_evaluation",
 ]

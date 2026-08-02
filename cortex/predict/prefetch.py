@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import time
 from hashlib import sha256
 from typing import Any
@@ -48,18 +49,33 @@ def predict_context(
             continue
         scores[path] = scores.get(path, 0.0) + 1.0 / (1.0 + i)
 
-    # Boost co-activated paths from connect metric graph
+    # Boost co-activated paths using specificity-normalized association.  Raw
+    # counts reward popular hubs repeatedly; n/sqrt(m_a*m_b) rewards pairs that
+    # are strong relative to each path's total traffic.
     graph = load_metric_graph(store, repo)
     coact = graph.get("path_coactivation") or {}
+    marginal: dict[str, float] = {}
+    for pair, n in coact.items():
+        if "|" not in pair:
+            continue
+        a, b = pair.split("|", 1)
+        mass = max(0.0, float(n or 0.0))
+        marginal[a] = marginal.get(a, 0.0) + mass
+        marginal[b] = marginal.get(b, 0.0) + mass
     seed_paths = set(scores.keys())
     for pair, n in coact.items():
         if "|" not in pair:
             continue
         a, b = pair.split("|", 1)
+        mass = max(0.0, float(n or 0.0))
+        denom = max(1.0, (marginal.get(a, 0.0) * marginal.get(b, 0.0)) ** 0.5)
+        association = min(1.0, mass / denom)
+        support = min(1.0, math.log1p(mass) / math.log(4.0))
+        boost = 0.45 * association * support
         if a in seed_paths:
-            scores[b] = scores.get(b, 0.0) + 0.15 * min(3, int(n))
+            scores[b] = scores.get(b, 0.0) + boost
         if b in seed_paths:
-            scores[a] = scores.get(a, 0.0) + 0.15 * min(3, int(n))
+            scores[a] = scores.get(a, 0.0) + boost
 
     # Neural neighborhood of top seeds
     try:

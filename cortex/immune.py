@@ -31,11 +31,17 @@ def inspect_immune(
         raise ValueError(f"Unknown repository: {repo}. Run cortex bootstrap first.")
     root = Path(repository["path"])
     config = load_repo_config(root, home)
-    manifest_current = current_manifest_hash(root, config) == (
+    observed_manifest = current_manifest_hash(root, config)
+    manifest_current = observed_manifest == (
         repository["manifest_hash"] or ""
     )
     certificate = verify_repository(
-        home, store, repo, config, write_certificate=write_certificate
+        home,
+        store,
+        repo,
+        config,
+        write_certificate=write_certificate,
+        observed_manifest=observed_manifest,
     )
     governance = governor.evaluate(
         repo, manifest_current=manifest_current, certificate=certificate

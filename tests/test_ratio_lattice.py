@@ -8,6 +8,7 @@ from pathlib import Path
 from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
 from cortex.math_net.multiscale import multiscale_conservation
+from cortex.math_net.operator import dual_graph_report
 from cortex.math_net.ratio_lattice import (
     local_closure,
     partition_budgets,
@@ -53,6 +54,10 @@ class RatioLatticeUnitTests(unittest.TestCase):
             self.assertEqual(p["sum_check"], 300, scheme)
             self.assertEqual(sum(p["pools"].values()), 300, scheme)
             self.assertIn("claim_boundary", p)
+
+    def test_fibonacci_mass_grows_from_fine_to_coarse(self) -> None:
+        p = partition_budgets(600, ("symbol", "file", "module"), scheme="fib")
+        self.assertEqual(p["pools"], {"symbol": 100, "file": 200, "module": 300})
 
     def test_double_square_fine_is_third(self) -> None:
         p = partition_budgets(300, ("symbol", "file"), scheme="double_square")
@@ -125,6 +130,31 @@ class RatioLatticeIntegrationTests(unittest.TestCase):
         self.assertTrue(m.get("ok"))
         self.assertIn("global_closure_T", m)
         self.assertIn("claim_boundary", m)
+
+    def test_dual_graph_counts_complete_structural_substrate(self) -> None:
+        # Add enough low-confidence rows to exceed the Store.edges browsing cap.
+        for i in range(520):
+            self.store.add_edge(
+                "RLHost",
+                {
+                    "source": f"extra:{i}",
+                    "target": f"extra:{i + 1}",
+                    "relation": "synthetic_alignment",
+                    "confidence": 0.1,
+                    "evidence": "test",
+                },
+            )
+        self.store.db.commit()
+        expected = self.store.db.execute(
+            "SELECT COUNT(*) AS c FROM edges WHERE repo=?", ("RLHost",)
+        ).fetchone()["c"]
+        report = dual_graph_report(self.store, "RLHost")
+        self.assertGreater(expected, 500)
+        self.assertEqual(report["structural_edges"], expected)
+        self.assertEqual(
+            report["structural_by_relation"]["synthetic_alignment"], 520
+        )
+        self.assertEqual(report["count_basis"], "complete_relation_aggregate")
 
     def test_prune_preview_triad(self) -> None:
         prev = policy_preview(self.store, "RLHost")

@@ -8,7 +8,7 @@
 |-------|----------|
 | Foreign IR routes | Concept routes + score damp for `src/*.rs` over cards on PulseFlow-style queries |
 | Bounded prune | `max_prune` + `protect_triads` (default on); CLI `--max-prune` / `--no-protect-triads` |
-| Dual-align band | Neural denser than structural is **expected**; peak near ratio ~6 (no longer zeros at ~13×) |
+| Dual-align band | Historical v6.22 heuristic peaked near ratio ~6. v8.1.1 supersedes it with complete structural counts and an order-one compiled-layer band. |
 | Advice | `bounded_integrate_soft_prune_cap_protect_triads`, `dual_align_check_neural_structural_ratio_band` |
 
 ## CLI

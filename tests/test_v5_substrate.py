@@ -195,6 +195,25 @@ class V5SubstrateTests(unittest.TestCase):
         report = causal_report(self.store, "V5Host")
         self.assertGreaterEqual(report["counts"]["total"], 1)
 
+    def test_sealed_ablation_records_paired_causal_receipt(self) -> None:
+        from cortex.causal import record_matched_evaluation
+
+        result = record_matched_evaluation(
+            self.store,
+            "V5Host",
+            suite="holdout",
+            freeze_id="holdout-test-v1",
+            treatment_name="ranker_primary",
+            control_name="no_ranker",
+            treatment_metrics={"recall_at_k": 1.0, "mrr": 0.8},
+            control_metrics={"recall_at_k": 0.75, "mrr": 0.6},
+        )
+        self.assertTrue(result["recorded"])
+        self.assertEqual(result["verdict"], "improved")
+        self.assertTrue(result["receipt_hash"])
+        report = causal_report(self.store, "V5Host")
+        self.assertGreaterEqual(report["counts"]["paired_verified"], 1)
+
     def test_mesh_and_prune_and_ritual_gates(self) -> None:
         from cortex.interconnect import mesh_status
         from cortex.prune import prune_graph

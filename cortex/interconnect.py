@@ -173,10 +173,13 @@ def mesh_status(
     continuity = _continuity_slice(store, repo)
 
     control: dict[str, Any] = {}
+    control_snapshot: dict[str, Any] = {
+        "captured_at": round(time.time(), 3),
+        "verification": "not_requested",
+    }
     if governor is not None and home is not None:
         try:
             from .config import load_repo_config
-            from .indexer import current_manifest_hash
             from .verify import verify_repository
             from pathlib import Path
 
@@ -184,12 +187,10 @@ def mesh_status(
             if repository:
                 root = Path(repository["path"])
                 config = load_repo_config(root, home)
-                current = current_manifest_hash(root, config) == (
-                    repository["manifest_hash"] or ""
-                )
                 cert = verify_repository(
                     home, store, repo, config, write_certificate=False
                 )
+                current = bool((cert.get("manifest") or {}).get("current"))
                 gov = governor.evaluate(
                     repo, manifest_current=current, certificate=cert
                 )
@@ -200,8 +201,22 @@ def mesh_status(
                     retrieval_confidence=0.0,
                     aria_materialization={},
                 )
+                control_snapshot = {
+                    "captured_at": round(time.time(), 3),
+                    "verification": "live_single_pass",
+                    "certificate_hash": cert.get("certificate_hash"),
+                    "manifest_stored": (cert.get("manifest") or {}).get("stored_hash"),
+                    "manifest_observed": (cert.get("manifest") or {}).get("observed_hash"),
+                    "manifest_current": current,
+                    "certificate_status": cert.get("status"),
+                }
         except Exception as exc:
             control = {"error": f"{type(exc).__name__}: {exc}"}
+            control_snapshot = {
+                "captured_at": round(time.time(), 3),
+                "verification": "error",
+                "error": f"{type(exc).__name__}: {exc}",
+            }
 
     block = bool(control.get("block"))
     # Bottleneck signals: high scan, low sparse fire, blocked immune
@@ -250,6 +265,17 @@ def mesh_status(
         and continuity.get("epoch_verified") is not False
         and continuity.get("phase_bound") is not False
         and not continuity.get("error")
+    )
+    pulse_at = intel_pulse.get("at")
+    pulse_age_s = (
+        max(0.0, time.time() - float(pulse_at))
+        if isinstance(pulse_at, (int, float))
+        else None
+    )
+    pulse_observation = intel_pulse.get("observation") or {}
+    pulse_mesh = pulse_observation.get("mesh_green")
+    pulse_matches_current = (
+        bool(pulse_mesh) == bool(mesh_green) if pulse_mesh is not None else None
     )
 
     # v7.4 Continuity Realignment — advisory next step when seal lags live tree
@@ -306,6 +332,14 @@ def mesh_status(
         "spoken": "interconnect mesh",
         "repo": repo,
         "ts": round(time.time(), 3),
+        "observation_snapshot": {
+            **control_snapshot,
+            "body_epoch_id": continuity.get("body_epoch_id"),
+            "runtime_phase": continuity.get("runtime_phase"),
+            "mesh_green": mesh_green,
+            "atomic_control_read": control_snapshot.get("verification")
+            == "live_single_pass",
+        },
         "mesh_green": mesh_green,
         "bottlenecks": bottlenecks,
         "realign": realign_advice,
@@ -342,7 +376,11 @@ def mesh_status(
                 "block_count": (graph.get("totals") or {}).get("block_count"),
             },
             "top_coactivations": dict(
-                list((graph.get("path_coactivation") or {}).items())[:5]
+                sorted(
+                    (graph.get("path_coactivation") or {}).items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )[:5]
             ),
         },
         "ranker": {
@@ -374,6 +412,13 @@ def mesh_status(
             "glyph": "☰",
             "last_pulse": intel_pulse.get("at"),
             "resonance": intel_pulse.get("resonance"),
+            "observation": pulse_observation,
+            "freshness": {
+                "age_s": round(pulse_age_s, 3) if pulse_age_s is not None else None,
+                "stale": pulse_age_s is None or pulse_age_s > 120.0,
+                "mesh_matches_current": pulse_matches_current,
+                "current_snapshot_required_for_control": True,
+            },
             "pass_count": intel_pulse.get("pass_count"),
             "version": intel_pulse.get("version"),
             "pulse_every": 2,
@@ -441,6 +486,7 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "body_epoch_id": cont.get("body_epoch_id"),
         "runtime_phase": cont.get("runtime_phase"),
         "resonance": (mesh.get("intelligence") or {}).get("resonance"),
+        "observation_snapshot": mesh.get("observation_snapshot"),
         "law": "common_pulse_through_kernel_spectrum_and_body_epoch",
         "claim_boundary": mesh.get("claim_boundary"),
     }

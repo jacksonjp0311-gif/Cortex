@@ -242,6 +242,7 @@ def observe_lattice(
         "hnsw": (mesh.get("hnsw") or {}).get("available"),
         "causal": mesh.get("causal"),
         "immune_block": (mesh.get("immune") or {}).get("block"),
+        "snapshot": mesh.get("observation_snapshot"),
         "claim_boundary": "Observation is telemetry; not authorization.",
     }
 
@@ -452,6 +453,11 @@ def pulse_intelligence(
             {
                 "at": time.time(),
                 "resonance": resonance,
+                "observation": {
+                    "mesh_green": obs.get("mesh_green"),
+                    "bottlenecks": obs.get("bottlenecks") or [],
+                    "snapshot": obs.get("snapshot"),
+                },
                 "pass_count": pass_count,
                 "version": __version__,
             },

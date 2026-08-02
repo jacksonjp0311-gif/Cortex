@@ -322,6 +322,22 @@ def rerank_hits(
         u_conf = retrieval_confidence
 
     model = ensure_ranker(store, repo)
+    # Coactivation is useful support, but raw frequency creates a rich-get-richer
+    # attractor.  Convert path marginals into a bounded hubness signal and retain
+    # a small novelty reserve in the final score.
+    path_mass: dict[str, float] = {}
+    try:
+        graph = store.get_setting(f"metric_graph:{repo}", {}) or {}
+        for pair, count in (graph.get("path_coactivation") or {}).items():
+            if "|" not in pair:
+                continue
+            left, right = pair.split("|", 1)
+            mass = max(0.0, float(count or 0.0))
+            path_mass[left] = path_mass.get(left, 0.0) + mass
+            path_mass[right] = path_mass.get(right, 0.0) + mass
+    except Exception:
+        path_mass = {}
+    max_path_mass = max(path_mass.values(), default=0.0)
     prepared: list[tuple[float, float, Any]] = []
     for i, hit in enumerate(hits):
         if isinstance(hit, dict):
@@ -335,6 +351,32 @@ def rerank_hits(
                 hit.metadata = md
             except Exception:
                 pass
+        path = str(
+            hit.get("path") if isinstance(hit, dict) else getattr(hit, "path", "")
+        ).replace("\\", "/")
+        hubness = (
+            min(1.0, path_mass.get(path, 0.0) / max_path_mass)
+            if max_path_mass > 0.0
+            else 0.0
+        )
+        try:
+            if isinstance(hit, dict):
+                hit = {
+                    **hit,
+                    "metadata": {
+                        **(hit.get("metadata") or {}),
+                        "route_hubness": round(hubness, 6),
+                        "route_novelty": round(1.0 - hubness, 6),
+                    },
+                }
+            else:
+                hit.metadata = {
+                    **(hit.metadata or {}),
+                    "route_hubness": round(hubness, 6),
+                    "route_novelty": round(1.0 - hubness, 6),
+                }
+        except Exception:
+            pass
         feats = features_from_hit(
             hit,
             rank=i,
@@ -387,6 +429,11 @@ def rerank_hits(
             final = 0.68 * s_rel + 0.32 * prior_c
         else:
             final = 0.50 * s_rel + 0.50 * prior_c
+        meta = hit.get("metadata", {}) if isinstance(hit, dict) else (hit.metadata or {})
+        hubness = float(meta.get("route_hubness") or 0.0)
+        # Exact/authoritative prior mass is protected; ambient hubs yield a small
+        # fraction of score to less-traveled evidence paths.
+        final -= 0.06 * hubness * (1.0 - prior_c)
         scored.append((final, hit))
     scored.sort(key=lambda x: x[0], reverse=True)
 

@@ -132,14 +132,15 @@ def verify_repository(
     config: RepoConfig,
     *,
     write_certificate: bool = True,
+    observed_manifest: str | None = None,
 ) -> dict[str, Any]:
     repository = store.repo(repo)
     if not repository:
         raise ValueError(f"Unknown repository: {repo}")
     root = Path(repository["path"])
     stored_manifest = repository["manifest_hash"] or ""
-    observed_manifest = current_manifest_hash(root, config)
-    manifest_current = bool(stored_manifest) and stored_manifest == observed_manifest
+    observed_manifest_n = observed_manifest or current_manifest_hash(root, config)
+    manifest_current = bool(stored_manifest) and stored_manifest == observed_manifest_n
     coverage = _coverage(store, repo)
     probes = _retrieval_probes(store, repo, root)
     integration = integration_status(root, config)
@@ -190,7 +191,7 @@ def verify_repository(
         },
         "manifest": {
             "stored_hash": stored_manifest,
-            "observed_hash": observed_manifest,
+            "observed_hash": observed_manifest_n,
             "current": manifest_current,
         },
         "coverage": coverage,

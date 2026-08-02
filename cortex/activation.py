@@ -741,6 +741,7 @@ def activate_repository(
             repo,
             config,
             write_certificate=bool(refresh_result),
+            observed_manifest=observed_manifest,
         )
         if isinstance(certificate, dict) and certificate.get("status") == "verified":
             try:
@@ -832,7 +833,14 @@ def activate_repository(
             if config.neural_interlink_enabled
             else {"available": False, "disabled": True}
         )
-        certificate = verify_repository(home, store, repo, config, write_certificate=True)
+        certificate = verify_repository(
+            home,
+            store,
+            repo,
+            config,
+            write_certificate=True,
+            observed_manifest=observed_manifest,
+        )
         manifest_current = certificate["manifest"]["current"]
     elif refresh == "always" or (refresh == "auto" and not manifest_current):
         # Fallback if early refresh was skipped
@@ -883,7 +891,14 @@ def activate_repository(
             neural = neural_graph_state(store, repo)
         else:
             neural = {"available": False, "disabled": True}
-        certificate = verify_repository(home, store, repo, config, write_certificate=False)
+        certificate = verify_repository(
+            home,
+            store,
+            repo,
+            config,
+            write_certificate=False,
+            observed_manifest=observed_manifest,
+        )
 
     out = activate_advanced(
         home,

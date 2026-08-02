@@ -312,6 +312,122 @@ def evaluate_causal_episode(
     }
 
 
+def record_matched_evaluation(
+    store: Any,
+    repo: str,
+    *,
+    suite: str,
+    freeze_id: str,
+    treatment_name: str,
+    control_name: str,
+    treatment_metrics: dict[str, Any],
+    control_metrics: dict[str, Any],
+) -> dict[str, Any]:
+    """Record a sealed within-suite retrieval ablation as local causal evidence.
+
+    This is stronger than an unmatched cadence proxy and weaker than a live task
+    outcome.  The boundary is persisted with the episode so reports cannot erase
+    that distinction.
+    """
+
+    if not freeze_id or suite != "holdout":
+        return {"recorded": False, "reason": "sealed_holdout_required"}
+    delta: dict[str, float] = {}
+    for metric in ("recall_at_k", "mrr"):
+        before = control_metrics.get(metric)
+        after = treatment_metrics.get(metric)
+        if before is not None and after is not None:
+            delta[metric] = round(float(after) - float(before), 6)
+    recall_delta = float(delta.get("recall_at_k") or 0.0)
+    mrr_delta = float(delta.get("mrr") or 0.0)
+    if recall_delta > 0.02 or (abs(recall_delta) <= 0.02 and mrr_delta > 0.005):
+        verdict = "improved"
+    elif recall_delta < -0.02 or (abs(recall_delta) <= 0.02 and mrr_delta < -0.005):
+        verdict = "regressed"
+    else:
+        verdict = "inconclusive"
+    confounds = ["sealed_ablation_not_live_task_outcome"]
+    if verdict == "inconclusive":
+        confounds.append("effect_below_threshold")
+    identity = {
+        "repo": repo,
+        "suite": suite,
+        "freeze_id": freeze_id,
+        "treatment": treatment_name,
+        "control": control_name,
+    }
+    episode_id = "ep_eval_" + sha256(
+        json.dumps(identity, sort_keys=True).encode()
+    ).hexdigest()[:20]
+    treatment = {
+        "kind": "sealed_retrieval_ablation",
+        "suite": suite,
+        "freeze_id": freeze_id,
+        "treatment": treatment_name,
+        "control": control_name,
+        "verification_type": "sealed_holdout_ablation",
+    }
+    now = time.time()
+    store.db.execute(
+        """
+        INSERT OR REPLACE INTO causal_episodes(
+          episode_id, repo, task_family, baseline_fingerprint, treatment_json,
+          metrics_before_json, metrics_after_json, delta_json, verdict,
+          confounds_json, created_at
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            episode_id,
+            repo,
+            f"eval_coupling:{treatment_name}",
+            freeze_id,
+            json.dumps(treatment, sort_keys=True),
+            json.dumps(control_metrics, sort_keys=True),
+            json.dumps(treatment_metrics, sort_keys=True),
+            json.dumps(delta, sort_keys=True),
+            verdict,
+            json.dumps(confounds),
+            now,
+        ),
+    )
+    for metric, effect in delta.items():
+        store.db.execute(
+            """
+            INSERT OR REPLACE INTO causal_links(
+              episode_id, cause_kind, cause_id, effect_metric, effect_delta
+            ) VALUES(?, ?, ?, ?, ?)
+            """,
+            (
+                episode_id,
+                "sealed_retrieval_ablation",
+                treatment_name,
+                metric,
+                float(effect),
+            ),
+        )
+    store.db.commit()
+    receipt_hash = sha256(
+        json.dumps(
+            {**identity, "delta": delta, "verdict": verdict},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    return {
+        "recorded": True,
+        "episode_id": episode_id,
+        "verdict": verdict,
+        "delta": delta,
+        "confounds": confounds,
+        "receipt_hash": receipt_hash,
+        "evidence_class": "sealed_holdout_ablation",
+        "claim_boundary": (
+            "Matched ablation supports local retrieval-component utility only; "
+            "it is not a live task outcome or universal causal proof."
+        ),
+    }
+
+
 def causal_report(store: Any, repo: str, *, limit: int = 20) -> dict[str, Any]:
     rows = store.db.execute(
         """
@@ -321,7 +437,7 @@ def causal_report(store: Any, repo: str, *, limit: int = 20) -> dict[str, Any]:
         (repo, limit),
     ).fetchall()
     episodes = []
-    improved = regressed = inconclusive = 0
+    improved = regressed = inconclusive = paired_verified = unmatched = 0
     for row in rows:
         v = row["verdict"]
         if v == "improved":
@@ -330,12 +446,20 @@ def causal_report(store: Any, repo: str, *, limit: int = 20) -> dict[str, Any]:
             regressed += 1
         else:
             inconclusive += 1
+        treatment = json.loads(row["treatment_json"] or "{}")
+        confounds = json.loads(row["confounds_json"] or "[]")
+        if treatment.get("verification_type") == "sealed_holdout_ablation":
+            paired_verified += 1
+        if "missing_recall_pair" in confounds:
+            unmatched += 1
         episodes.append(
             {
                 "episode_id": row["episode_id"],
                 "task_family": row["task_family"],
                 "verdict": v,
                 "delta": json.loads(row["delta_json"] or "{}"),
+                "verification_type": treatment.get("verification_type"),
+                "confounds": confounds,
                 "created_at": row["created_at"],
             }
         )
@@ -346,6 +470,8 @@ def causal_report(store: Any, repo: str, *, limit: int = 20) -> dict[str, Any]:
             "improved": improved,
             "regressed": regressed,
             "inconclusive": inconclusive,
+            "paired_verified": paired_verified,
+            "unmatched": unmatched,
             "total": len(episodes),
         },
         "episodes": episodes,

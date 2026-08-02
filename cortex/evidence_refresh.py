@@ -209,7 +209,12 @@ def run_evidence_refresh_edge(
     audit["manifest_current"] = manifest_current
     try:
         cert = verify_repository(
-            home, store, repo, config, write_certificate=True
+            home,
+            store,
+            repo,
+            config,
+            write_certificate=True,
+            observed_manifest=observed,
         )
         audit["certificate_status"] = cert.get("status") if isinstance(cert, dict) else None
     except Exception as exc:

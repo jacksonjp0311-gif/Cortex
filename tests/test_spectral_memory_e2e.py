@@ -90,6 +90,27 @@ class SpectralMemoryE2ETests(unittest.TestCase):
                 self.assertTrue(meta.get("ranker_primary", True))
                 break
 
+    def test_spectral_policy_becomes_conditional_after_no_lift_holdout(self) -> None:
+        from cortex.retrieval import resolve_spectral_policy
+
+        self.store.set_setting(
+            "eval_coupling_latest:SpecHost",
+            {
+                "suite": "holdout",
+                "holdout_freeze_id": "sealed-test",
+                "gate": {"spectral_helps": False},
+            },
+        )
+        general = resolve_spectral_policy(
+            self.store, "SpecHost", "find the architecture notes"
+        )
+        geometric = resolve_spectral_policy(
+            self.store, "SpecHost", "inspect spectral graph topology"
+        )
+        self.assertFalse(general["enabled"])
+        self.assertTrue(geometric["enabled"])
+        self.assertEqual(general["mode"], "conditional_holdout")
+
     def test_promote_calibration_force(self) -> None:
         # seed shadow outcomes via pulse observations
         for _ in range(3):

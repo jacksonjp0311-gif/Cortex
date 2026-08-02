@@ -8,10 +8,7 @@ Undirected weighted adjacency from neural synapses (operator A) via build_operat
 
 from __future__ import annotations
 
-import json
 from typing import Any
-
-from .linalg import matvec
 
 SCHEMA = "cortex-graph-operator/1.0"
 
@@ -99,11 +96,10 @@ def dual_graph_report(store: Any, repo: str) -> dict[str, Any]:
     structural_e = 0
     structural_kinds: dict[str, int] = {}
     try:
-        # store.edges or graph tables
-        if hasattr(store, "edges"):
-            rows = store.edges(repo) if callable(store.edges) else []
-            structural_e = len(list(rows or []))
-        else:
+        # Count the complete structural substrate.  store.edges() is a browsing
+        # API whose default limit is 500; using it here silently truncated the
+        # alignment denominator on larger repositories.
+        if hasattr(store, "db"):
             cur = store.db.execute(
                 "SELECT relation, COUNT(*) AS c FROM edges WHERE repo=? GROUP BY relation",
                 (repo,),
@@ -111,6 +107,15 @@ def dual_graph_report(store: Any, repo: str) -> dict[str, Any]:
             for row in cur.fetchall():
                 structural_kinds[str(row["relation"] or "?")] = int(row["c"])
                 structural_e += int(row["c"])
+        elif hasattr(store, "edges") and callable(store.edges):
+            try:
+                rows = list(store.edges(repo, limit=100_000) or [])
+            except TypeError:
+                rows = list(store.edges(repo) or [])
+            structural_e = len(rows)
+            for row in rows:
+                relation = str(row.get("relation") or "?")
+                structural_kinds[relation] = structural_kinds.get(relation, 0) + 1
     except Exception:
         # table may not exist or differ
         try:
@@ -139,6 +144,7 @@ def dual_graph_report(store: Any, repo: str) -> dict[str, Any]:
         "structural_edges": structural_e,
         "structural_by_relation": structural_kinds,
         "ratio_neural_to_structural": round(ratio, 4) if ratio is not None else None,
+        "count_basis": "complete_relation_aggregate",
         "theory": (
             "Neural layer is activation-over-compiled-edges, not a second ontology "
             "when A is built from neural weights mapped from structure."

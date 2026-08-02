@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "8.1.0"
+version = "8.1.1"
 description = "Governed continuation memory, Binding Field, warm-in, self-sensing for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"

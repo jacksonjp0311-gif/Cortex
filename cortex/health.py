@@ -14,8 +14,16 @@ def health_report(home: Path, store: Any, governor: Any, repo: str) -> dict[str,
         raise ValueError(f"Unknown repository: {repo}. Run cortex bootstrap first.")
     root = Path(repository["path"])
     config = load_repo_config(root, home)
-    current = current_manifest_hash(root, config) == (repository["manifest_hash"] or "")
-    certificate = verify_repository(home, store, repo, config, write_certificate=False)
+    observed_manifest = current_manifest_hash(root, config)
+    current = observed_manifest == (repository["manifest_hash"] or "")
+    certificate = verify_repository(
+        home,
+        store,
+        repo,
+        config,
+        write_certificate=False,
+        observed_manifest=observed_manifest,
+    )
     drift = "current" if current else "source_or_configuration_drift"
     vectors = store.vector_format_status(repo)
     command = "cortex activate --repo {0} --task \"<task>\" --refresh packet-fast --json".format(repo)

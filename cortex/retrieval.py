@@ -143,6 +143,86 @@ def query_has_impl_markers(text: str) -> bool:
     return bool(stems & {m.replace("_", "") for m in _IMPL_QUERY_MARKERS})
 
 
+_SPECTRAL_QUERY_MARKERS = {
+    "spectral",
+    "eigenvalue",
+    "laplacian",
+    "diffusion",
+    "topology",
+    "adjacency",
+    "graph geometry",
+    "triadic",
+    "coactivation",
+}
+
+
+def resolve_spectral_policy(
+    store: Any,
+    repo: str,
+    text: str,
+    *,
+    requested: bool = True,
+) -> dict[str, Any]:
+    """Resolve spectral enrichment from the latest sealed utility gate.
+
+    A no-lift holdout result moves spectral enrichment to a narrow graph-intent
+    lane instead of deleting the features or applying them universally.
+    """
+
+    query_class = (
+        "graph_geometry"
+        if any(marker in text.casefold() for marker in _SPECTRAL_QUERY_MARKERS)
+        else "general"
+    )
+    if not requested:
+        return {
+            "enabled": False,
+            "mode": "disabled_by_controller",
+            "query_class": query_class,
+            "reason": "enrichment_not_requested",
+        }
+    latest = store.get_setting(f"eval_coupling_latest:{repo}", {}) or {}
+    gate = latest.get("gate") or {}
+    sealed_holdout = latest.get("suite") == "holdout" and bool(
+        latest.get("holdout_freeze_id")
+    )
+    if not sealed_holdout or gate.get("spectral_helps") is True:
+        return {
+            "enabled": True,
+            "mode": "measured_default",
+            "query_class": query_class,
+            "reason": "no_sealed_regression" if not sealed_holdout else "sealed_lift",
+        }
+    enabled = query_class == "graph_geometry"
+    return {
+        "enabled": enabled,
+        "mode": "conditional_holdout",
+        "query_class": query_class,
+        "reason": (
+            "graph_intent_shadow_lane"
+            if enabled
+            else "sealed_holdout_no_spectral_lift"
+        ),
+        "holdout_freeze_id": latest.get("holdout_freeze_id"),
+    }
+
+
+def _deduplicate_hits_by_path(hits: list[Hit], *, limit: int) -> list[Hit]:
+    """Keep the highest-ranked chunk per path in the externally visible top-k."""
+
+    selected: list[Hit] = []
+    seen: set[str] = set()
+    for hit in hits:
+        path = str(hit.path or "").replace("\\", "/")
+        if path in seen:
+            continue
+        seen.add(path)
+        selected.append(hit)
+        if len(selected) >= max(0, int(limit)):
+            break
+    return selected
+
+
 def materialize_aria_for_task(store: Any, repo: str, text: str) -> dict[str, Any]:
     """Explicitly materialize deferred ARIA bulk when a task wakes the region.
 
@@ -450,14 +530,25 @@ def query(
             # Confidence proxy from top fused score mass
             top_scores = [float(h.score) for h in output[:8]] or [0.0]
             conf_proxy = max(0.0, min(1.0, sum(top_scores) / max(1, len(top_scores))))
+            spectral_policy = resolve_spectral_policy(
+                store, repo, text, requested=bool(enrich_spectral)
+            )
             output = rerank_hits(
                 store,
                 repo,
                 output,
                 retrieval_confidence=conf_proxy,
                 primary=True,
-                enrich_spectral=bool(enrich_spectral),
+                enrich_spectral=bool(spectral_policy.get("enabled")),
             )
+            for hit in output:
+                try:
+                    hit.metadata = {
+                        **(hit.metadata or {}),
+                        "spectral_policy": spectral_policy,
+                    }
+                except Exception:
+                    pass
             # Keep rerank_hits order (includes soft pin for hybrid-prior winners).
             # Do not re-sort solely by ranker_score — that undoes prior pins.
         except Exception:
@@ -482,7 +573,7 @@ def query(
                     pass
     except Exception:
         pass
-    return floor
+    return _deduplicate_hits_by_path(floor, limit=limit)
 
 
 _EVIDENCE_PATH_RE = re.compile(
