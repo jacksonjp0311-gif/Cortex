@@ -245,15 +245,32 @@ def load_repo_config(
     *,
     prefer_external: bool = False,
 ) -> RepoConfig:
-    path = repo_config_path(root)
+    """Load host or external attachment config.
+
+    Interlock (v8.1+): external attach writes under CORTEX_HOME/attachments.
+    Callers that pass ``home`` resolve that attachment when host ``.cortex`` is
+    absent — activation/ritual after external bootstrap must not FileNotFound.
+    """
+    root = Path(root).expanduser().resolve()
+    internal_path = repo_config_path(root)
     active_home = home or (
         Path(os.environ["CORTEX_ACTIVE_HOME"]).expanduser().resolve()
         if os.environ.get("CORTEX_ACTIVE_HOME")
         else None
     )
+    path = internal_path
     if active_home is not None:
-        external_path = external_repo_config_path(root, active_home)
-        if prefer_external or not path.exists():
+        external_path = external_repo_config_path(root, Path(active_home))
+        if prefer_external and external_path.exists():
+            path = external_path
+        elif not internal_path.exists() and external_path.exists():
+            # External-only attachment (CI / hermetic attach): follow home binding
+            path = external_path
+        elif prefer_external:
+            path = external_path
+        elif internal_path.exists():
+            path = internal_path
+        else:
             path = external_path
     if not path.exists():
         raise FileNotFoundError(f"Cortex repository config not found: {path}")

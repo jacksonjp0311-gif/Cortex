@@ -28,6 +28,31 @@ def stable_repository_id(root: Path) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:24]
 
 
+def _is_ci_scratch_home(path: Path | str) -> bool:
+    """True only for known CI smoke scratch homes (not all OS temp).
+
+    Operator bodies under ~/.cortex and normal temp test fixtures must still
+    require --allow-home-rebind. Sequential CI smokes use explicit prefixes
+    (ci-teach-, ci-retrieval-, …) so they can rebind without poisoning durable
+    operator identity.
+    """
+    s = str(Path(path).expanduser().resolve()).replace("\\", "/").lower()
+    markers = (
+        "ci-teach-",
+        "ci-retrieval-",
+        "ci-connect-",
+        "ci-immune-",
+        "ci-mesh-",
+        "ci-spectral-",
+        "ci-v5-",
+        "ci-ma-",
+        "ci-multi-",
+        "/ci-cortex-",
+        "\\ci-cortex-",
+    )
+    return any(m in s for m in markers)
+
+
 def bootstrap_repository(
     home: Path,
     store: Any,
@@ -45,6 +70,7 @@ def bootstrap_repository(
     repository_name = name or root.name
     repository_id = stable_repository_id(root)
     rebind_from: str | None = None
+    rebind_auto_disposable = False
     selected_config_exists = (
         external_repo_config_path(root, home).exists()
         if external
@@ -56,14 +82,21 @@ def bootstrap_repository(
         requested_home = str(home.resolve())
         if configured_home:
             previous_home = str(Path(configured_home).expanduser().resolve())
-            if previous_home.casefold() != requested_home.casefold() and not allow_home_rebind:
-                raise RuntimeError(
-                    "Cortex home rebind refused: this repository is already bound to "
-                    f"{previous_home}; requested {requested_home}. Re-run with the explicit "
-                    "--allow-home-rebind migration flag after verifying identity and lineage."
-                )
             if previous_home.casefold() != requested_home.casefold():
+                # Durable operator bodies still require explicit --allow-home-rebind.
+                # CI scratch→scratch (teach→retrieval sequential smokes) auto-allows
+                # with a receipt so one job does not poison the next.
+                disposable_pair = _is_ci_scratch_home(previous_home) and _is_ci_scratch_home(
+                    requested_home
+                )
+                if not allow_home_rebind and not disposable_pair:
+                    raise RuntimeError(
+                        "Cortex home rebind refused: this repository is already bound to "
+                        f"{previous_home}; requested {requested_home}. Re-run with the explicit "
+                        "--allow-home-rebind migration flag after verifying identity and lineage."
+                    )
                 rebind_from = previous_home
+                rebind_auto_disposable = disposable_pair and not allow_home_rebind
         config.repository_name = repository_name
         config.repository_id = repository_id
     else:
@@ -97,7 +130,8 @@ def bootstrap_repository(
                 "repository_id": repository_id,
                 "from_home": rebind_from,
                 "to_home": str(home.resolve()),
-                "explicit": True,
+                "explicit": bool(allow_home_rebind),
+                "auto_disposable": bool(rebind_auto_disposable),
                 "at": time.time(),
             },
         )

@@ -220,7 +220,7 @@ def seed_intelligence(
     try:
         from .indexer import index_repository
 
-        config = load_repo_config(root)
+        config = load_repo_config(root, home)
         index_repository(store, name, config, force=False)
     except Exception as exc:
         index_note = f"{type(exc).__name__}: {exc}"

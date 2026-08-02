@@ -319,7 +319,8 @@ def build_context(
     if not repository:
         raise ValueError(f"Unknown repository: {repo}")
     root = Path(repository["path"])
-    config = load_repo_config(root)
+    # External attachments live under home/attachments — pass home for resolve
+    config = load_repo_config(root, home)
     # Certificate-deferred ARIA bulk materializes only on intentional activation,
     # never as a side effect of verify/probe queries.
     aria_materialization = materialize_aria_for_task(store, repo, task)

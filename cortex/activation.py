@@ -621,7 +621,8 @@ def activate_repository(
     except Exception:
         cognitive_cycle_open = None
     root = Path(repository["path"])
-    config = load_repo_config(root)
+    # Resolve external attachment config when host has no .cortex/ (hermetic / CI)
+    config = load_repo_config(root, home)
     observed_manifest = current_manifest_hash(root, config)
     manifest_current = observed_manifest == (repository["manifest_hash"] or "")
 
