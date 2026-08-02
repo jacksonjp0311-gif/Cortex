@@ -62,9 +62,9 @@ comparison reports attribution unavailable instead of inventing detail.
 
 ## Next falsifiable phase
 
-v7.9 should replace modeled event masks with measured event fields derived
-from actual pre/post state deltas. Until then, modeled salience cannot train a
-baseline or affect retrieval.
+Completed in v8.0: activation frames now use measured pre/post state deltas.
+Legacy modeled salience remains available only as a shadow fallback and cannot
+train a baseline or affect retrieval.
 
 ## Claim boundary
 

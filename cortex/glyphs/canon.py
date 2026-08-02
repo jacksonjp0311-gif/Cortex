@@ -210,6 +210,55 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "gate",
         "kernel": "integrate",
     },
+    # ── v8.0 functional self-model ───────────────────────────────
+    "measured_event_field": {
+        "symbol": "⧖",
+        "spoken": "measured event field",
+        "aria_id": "MeasuredEventField",
+        "maps_to": "cortex self-model status / measured_event_field",
+        "role": "organ",
+        "kernel": "integrate",
+    },
+    "predictive_self_model": {
+        "symbol": "◎",
+        "spoken": "predictive self model",
+        "aria_id": "PredictiveSelfModel",
+        "maps_to": "cortex self-model predict",
+        "role": "organ",
+        "kernel": "reset",
+    },
+    "counterfactual_simulation": {
+        "symbol": "⋔",
+        "spoken": "counterfactual simulation",
+        "aria_id": "CounterfactualSimulation",
+        "maps_to": "cortex self-model counterfactual",
+        "role": "loop",
+        "kernel": "reset",
+    },
+    "global_workspace": {
+        "symbol": "⊙",
+        "spoken": "global workspace",
+        "aria_id": "GlobalWorkspace",
+        "maps_to": "cortex self-model workspace",
+        "role": "organ",
+        "kernel": "integrate",
+    },
+    "operational_autobiography": {
+        "symbol": "⟲",
+        "spoken": "operational autobiography",
+        "aria_id": "OperationalAutobiography",
+        "maps_to": "cortex self-model autobiography",
+        "role": "pulse",
+        "kernel": "retain",
+    },
+    "lesion_benchmark": {
+        "symbol": "⊘",
+        "spoken": "lesion benchmark",
+        "aria_id": "LesionBenchmark",
+        "maps_to": "cortex self-model lesion",
+        "role": "gate",
+        "kernel": "reset",
+    },
     # ── Closed loop / signal intelligence ──────────────────────────────────
     "causal": {
         "symbol": "↻",
@@ -418,6 +467,18 @@ PHRASEBOOK: dict[str, dict[str, Any]] = {
         "keys": ["retrieval_gate", "control_error", "taught_intelligence"],
         "spoken": "retrieval, control, taught intelligence",
         "use": "Evidence and falsification posture.",
+    },
+    "self_model_cycle": {
+        "keys": [
+            "measured_event_field",
+            "predictive_self_model",
+            "counterfactual_simulation",
+            "global_workspace",
+            "operational_autobiography",
+            "lesion_benchmark",
+        ],
+        "spoken": "measure, predict, simulate, broadcast, remember, lesion",
+        "use": "v8.0 functional self-model cycle; never a consciousness claim.",
     },
 }
 

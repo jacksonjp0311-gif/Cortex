@@ -613,6 +613,13 @@ def activate_repository(
     repository = store.repo(repo)
     if not repository:
         raise ValueError(f"Unknown repository: {repo}. Run cortex bootstrap first.")
+    cognitive_cycle_open: dict[str, Any] | None = None
+    try:
+        from .cognitive import begin_cognitive_cycle
+
+        cognitive_cycle_open = begin_cognitive_cycle(store, repo)
+    except Exception:
+        cognitive_cycle_open = None
     root = Path(repository["path"])
     config = load_repo_config(root)
     observed_manifest = current_manifest_hash(root, config)
@@ -966,10 +973,35 @@ def activate_repository(
             "advisory_only": True,
         }
 
-    # Each durable activation event contributes at most one final-epoch tick.
-    # The ordered receipt sequence can reach W_min within one activation; sparse
-    # sequences remain honestly indeterminate. Successor identity stays atomic.
+    # Each durable activation transaction contributes at most one final-epoch
+    # tick. W_min therefore requires eight distinct measured activations;
+    # successor identity stays atomic and epochs are never mixed.
     if final_epoch_ready:
+        if cognitive_cycle_open is not None:
+            try:
+                from .cognitive import close_cognitive_cycle
+
+                out["cognitive_cycle"] = close_cognitive_cycle(
+                    store,
+                    repo,
+                    cognitive_cycle_open,
+                    out,
+                    realized_action=(
+                        "evidence_only"
+                        if controller == "evidence_baseline"
+                        else "bounded_adapt"
+                    ),
+                )
+                out["measured_event_field"] = out["cognitive_cycle"].get(
+                    "measured_event_field"
+                )
+            except Exception as exc:
+                out["cognitive_cycle"] = {
+                    "error": f"{type(exc).__name__}:{exc}",
+                    "advisory_only": True,
+                }
+
+        latest_cognitive_frame: dict[str, Any] | None = None
         try:
             from .field_policy import apply_field_policy_advisory
             from .resonant_frame import latest_frame, seed_from_activation
@@ -1020,6 +1052,7 @@ def activate_repository(
             }
             latest = latest_frame(store, repo)
             if latest:
+                latest_cognitive_frame = latest
                 out["resonant_frame"] = {
                     "frame_id": latest.get("frame_id"),
                     "body_epoch_id": latest.get("body_epoch_id"),
@@ -1051,10 +1084,12 @@ def activate_repository(
                 "advisory_only": True,
             }
 
+        sense_report: dict[str, Any] = {}
         try:
             from .self_sensing import observe_self_sensing
 
             sense = observe_self_sensing(store, repo, home=home, update=True)
+            sense_report = sense
             out["self_sensing"] = {
                 "classification": sense.get("classification"),
                 "residual_r": sense.get("residual_r"),
@@ -1069,4 +1104,31 @@ def activate_repository(
                 "error": f"{type(exc).__name__}:{exc}",
                 "advisory_only": True,
             }
+        if isinstance(out.get("cognitive_cycle"), dict) and not out["cognitive_cycle"].get("error"):
+            try:
+                from .cognitive.cycle import finalize_cognitive_cycle
+
+                final_cognitive = finalize_cognitive_cycle(
+                    store,
+                    repo,
+                    out["cognitive_cycle"],
+                    task=task,
+                    body_epoch_id=str((out.get("body_epoch") or {}).get("epoch_id") or ""),
+                    self_sensing=sense_report or out.get("self_sensing") or {},
+                    frame=latest_cognitive_frame,
+                    epoch_delta=(out.get("activation_finalization") or {}).get("epoch_delta"),
+                )
+                out["cognitive_cycle"] = final_cognitive
+                workspace = final_cognitive.get("global_workspace") or {}
+                if isinstance(out.get("context"), dict):
+                    out["context"]["global_workspace"] = {
+                        "broadcast_hash": workspace.get("broadcast_hash"),
+                        "selected": workspace.get("selected"),
+                        "capacity": workspace.get("capacity"),
+                        "advisory_only": True,
+                    }
+            except Exception as exc:
+                out["cognitive_cycle_finalization_error"] = (
+                    f"{type(exc).__name__}:{exc}"
+                )
     return out

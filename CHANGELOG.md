@@ -1,3 +1,13 @@
+## 8.0.0 - Measured Predictive Self-Model
+
+- Activation time now advances through one measured pre/post transaction delta instead of treating internal receipt labels as separate measured moments.
+- A predictive self-model issues a forecast before activation effects, scores it afterward, and reports Brier score plus expected calibration error.
+- Counterfactual simulation compares abstain, evidence-only, and bounded-adaptation projections without executing any branch.
+- A capacity-four global workspace broadcasts the highest-scoring measured operational signals to activation, interconnect, autobiography, and operators.
+- A hash-chained operational autobiography records measured episodes without claiming personal identity or subjective memory.
+- Functional lesion benchmarks compare the intact predictor with a zero-model ablation, workspace availability with removal, and autobiographical continuity with chain removal.
+- ARIA gains capability-free glyphs for measure (`⧖`), predict (`◎`), simulate (`⋔`), workspace (`⊙`), autobiography (`⟲`), and lesion (`⊘`).
+
 ## 7.8.1 - Truth Recovery
 
 - Event participation masks are explicitly labeled `modeled_salience` and are ineligible for baseline learning or retrieval policy.

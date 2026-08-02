@@ -1,5 +1,9 @@
 # Phase v7.8 — Event-Sourced Temporal Accrual
 
+> Superseded for activation measurement by v8.0. Internal receipt salience is
+> retained only as a shadow fallback; one activation transaction now contributes
+> one measured pre/post delta tick.
+
 **Tagline:** Time advances only when a distinct runtime event is observed.
 
 ## The missing dimension

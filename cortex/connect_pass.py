@@ -20,6 +20,10 @@ GLYPH = "⧉"  # connect / gather / co-activation — capability free
 ROLLING_MAX = 32
 PATH_PAIRS_MAX = 64
 DISTILL_SEEN_MAX = 48
+# Resonant Frames require eight observations from one unchanged body epoch.
+# Structural maintenance therefore runs on a longer cadence so every epoch has
+# a reachable measurement window before the next scheduled weight transition.
+DECAY_EVERY = 10
 
 
 def _h(material: Any) -> str:
@@ -508,7 +512,7 @@ def persist_connect_pass(
             causal_result = {"error": f"{type(exc).__name__}: {exc}"}
 
     decay_result: dict[str, Any] | None = None
-    if auto_decay and pass_n > 0 and pass_n % 5 == 0:
+    if auto_decay and pass_n > 0 and pass_n % DECAY_EVERY == 0:
         try:
             from .prune import decay_unused_weights
 

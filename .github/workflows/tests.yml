@@ -103,6 +103,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v781.py
+      - name: Measured Predictive Self-Model receipt (v8.0.0 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v800.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,6 +123,7 @@ jobs:
             work/release_receipt_v772.json
             work/release_receipt_v780.json
             work/release_receipt_v781.json
+            work/release_receipt_v800.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

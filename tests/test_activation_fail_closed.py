@@ -130,7 +130,12 @@ class ActivationFailClosedTests(unittest.TestCase):
             r,
         )
         accrual = r.get("temporal_accrual") or {}
-        self.assertGreaterEqual(accrual.get("observation_count") or 0, 8, r)
+        self.assertEqual(accrual.get("observation_count"), 1, r)
+        self.assertEqual(
+            (r.get("measured_event_field") or {}).get("measurement_basis"),
+            "measured_delta",
+            r,
+        )
         self.assertTrue(accrual.get("exactly_once"), r)
         finalization = r.get("activation_finalization") or {}
         self.assertTrue(finalization.get("ok"), r)
@@ -153,16 +158,12 @@ class ActivationFailClosedTests(unittest.TestCase):
             r,
         )
         self.assertTrue(((latest or {}).get("metrics") or {}).get("epoch_current"), r)
-        self.assertGreaterEqual(
+        self.assertEqual(
             ((latest or {}).get("metrics") or {}).get("tick_count") or 0,
-            8,
+            1,
             r,
         )
-        self.assertGreaterEqual(
-            ((latest or {}).get("metrics") or {}).get("eligible_channel_count") or 0,
-            3,
-            r,
-        )
+        self.assertEqual((latest or {}).get("classification"), "INDETERMINATE", r)
         sense = r.get("self_sensing") or {}
         self.assertTrue((sense.get("gates") or {}).get("epoch_current"), r)
         self.assertTrue((sense.get("gates") or {}).get("phase_bound"), r)

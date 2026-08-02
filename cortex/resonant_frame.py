@@ -1346,12 +1346,22 @@ def seed_from_activation(
     reason: str = "activation",
 ) -> dict[str, Any]:
     from .field_channels import collect_activation_channels
+    from .cognitive.measured import delta_field_samples
 
     state = load_field_state(store, repo)
     act = activation or {}
     ctx = act.get("context") if isinstance(act.get("context"), dict) else {}
     stream = ctx.get("stream") if isinstance(ctx.get("stream"), dict) else {}
     observations: list[tuple[str, str, float | None]] = []
+    cognitive = act.get("cognitive_cycle") if isinstance(act.get("cognitive_cycle"), dict) else {}
+    measured = (
+        cognitive.get("measured_event_field")
+        if isinstance(cognitive.get("measured_event_field"), dict)
+        else act.get("measured_event_field")
+    )
+    if not isinstance(measured, dict):
+        measured = {}
+    is_measured = measured.get("measurement_basis") == "measured_delta"
 
     def add_observation(
         value: Any, kind: str, observed_at: Any = None
@@ -1374,29 +1384,37 @@ def seed_from_activation(
         if isinstance(ctx.get("controller_execution"), dict)
         else {}
     )
-    add_observation(neural.get("activation_id"), "neural_activation")
+    if is_measured:
+        add_observation(
+            measured.get("event_id") or measured.get("receipt_hash"),
+            "activation_transaction",
+            measured.get("measured_at"),
+        )
+    else:
+        add_observation(neural.get("activation_id"), "neural_activation")
     organism_body = organism.get("body") if isinstance(organism.get("body"), dict) else {}
     organism_identity = (
         organism_body.get("identity")
         if isinstance(organism_body.get("identity"), dict)
         else {}
     )
-    add_observation(organism_identity.get("session_id"), "session_begin")
-    add_observation(organism.get("pulse"), "organism_pulse", organism.get("issued_at"))
-    add_observation(
-        organism.get("pulse_chain"), "organism_pulse_chain", organism.get("issued_at")
-    )
-    add_observation(ctx.get("packet_hash"), "context_packet")
-    for frame in list(stream.get("recent_frames") or []):
-        if isinstance(frame, dict):
-            add_observation(
-                frame.get("frame_id"),
-                f"stream_{str(frame.get('kind') or 'event')}",
-                frame.get("at"),
-            )
-    add_observation(prediction.get("trace_id"), "prediction_trace")
-    add_observation(connect.get("pass_id"), "connect_pass")
-    add_observation(controller.get("receipt_hash"), "controller_receipt")
+    if not is_measured:
+        add_observation(organism_identity.get("session_id"), "session_begin")
+        add_observation(organism.get("pulse"), "organism_pulse", organism.get("issued_at"))
+        add_observation(
+            organism.get("pulse_chain"), "organism_pulse_chain", organism.get("issued_at")
+        )
+        add_observation(ctx.get("packet_hash"), "context_packet")
+        for frame in list(stream.get("recent_frames") or []):
+            if isinstance(frame, dict):
+                add_observation(
+                    frame.get("frame_id"),
+                    f"stream_{str(frame.get('kind') or 'event')}",
+                    frame.get("at"),
+                )
+        add_observation(prediction.get("trace_id"), "prediction_trace")
+        add_observation(connect.get("pass_id"), "connect_pass")
+        add_observation(controller.get("receipt_hash"), "controller_receipt")
     if not observations:
         add_observation(
             act.get("packet_hash") or stream.get("chain_tip"),
@@ -1418,22 +1436,31 @@ def seed_from_activation(
         }
     tick = int(state.get("tick") or 0)
     samples: list[FieldSample] = []
-    for offset, (observation_id, observation_kind, observed_at) in enumerate(
-        pending, start=1
-    ):
-        samples.extend(
-            collect_activation_channels(
-                store,
-                repo,
-                tick=tick + offset,
-                task=task,
-                activation=activation,
-                governor_mode=governor_mode,
-                observation_id=observation_id,
-                observation_kind=observation_kind,
-                observed_at=observed_at,
+    for offset, (observation_id, observation_kind, observed_at) in enumerate(pending, start=1):
+        if is_measured:
+            samples.extend(
+                delta_field_samples(
+                    measured,
+                    repo=repo,
+                    body_epoch_id=str((act.get("body_epoch") or {}).get("epoch_id") or ""),
+                    tick=tick + offset,
+                    governor_mode=governor_mode,
+                )
             )
-        )
+        else:
+            samples.extend(
+                collect_activation_channels(
+                    store,
+                    repo,
+                    tick=tick + offset,
+                    task=task,
+                    activation=activation,
+                    governor_mode=governor_mode,
+                    observation_id=observation_id,
+                    observation_kind=observation_kind,
+                    observed_at=observed_at,
+                )
+            )
     result = append_field_samples(
         store,
         repo,

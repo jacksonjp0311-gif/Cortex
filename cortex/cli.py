@@ -822,6 +822,19 @@ def build_parser() -> argparse.ArgumentParser:
     sense_p.add_argument("--limit", type=int, default=16)
     sense_p.add_argument("--json", action="store_true")
 
+    self_model_p = sub.add_parser(
+        "self-model",
+        help="v8.0 measured predictive self-model and functional lesion reports.",
+    )
+    self_model_p.add_argument(
+        "action",
+        choices=["status", "predict", "counterfactual", "workspace", "autobiography", "lesion"],
+        default="status",
+        nargs="?",
+    )
+    self_model_p.add_argument("--repo", required=True)
+    self_model_p.add_argument("--json", action="store_true")
+
     realign_p = sub.add_parser(
         "realign",
         help="v7.4 Continuity Realignment ∿◆ — diagnose/plan/apply epoch rebind (explicit auth).",
@@ -1509,9 +1522,9 @@ def main(argv: list[str] | None = None) -> None:
             for raw_cue in args.aria_cue:
                 if "=" not in raw_cue:
                     raise ValueError("--aria-cue must use PURPOSE=PHRASE")
-                purpose, phrase = raw_cue.split("=", 1)
+                purpose, cue_phrase = raw_cue.split("=", 1)
                 cue_proposals.append(
-                    {"purpose": purpose.strip(), "phrase": phrase.strip()}
+                    {"purpose": purpose.strip(), "phrase": cue_phrase.strip()}
                 )
             emit(record_outcome(
                 store, args.repo, args.activation_id, status=args.status,
@@ -2131,7 +2144,6 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "binding-field":
             from .binding_field import (
-                CLAIM as BIND_CLAIM,
                 commit_live_buffer,
                 latest_binding_field,
                 observe_binding_field,
@@ -2165,9 +2177,32 @@ def main(argv: list[str] | None = None) -> None:
                     print()
                 emit(rep, True)
 
+        elif command == "self-model":
+            from .cognitive import cognitive_status
+            from .cognitive.autobiography import verify_autobiography
+            from .cognitive.counterfactual import simulate_counterfactuals
+            from .cognitive.lesion import run_lesion_benchmarks
+            from .cognitive.model import predict_next_delta
+            from .cognitive.workspace import workspace_status
+
+            if args.action == "status":
+                result = cognitive_status(store, args.repo)
+            elif args.action == "predict":
+                result = predict_next_delta(store, args.repo, action="activation")
+            elif args.action == "counterfactual":
+                result = simulate_counterfactuals(
+                    predict_next_delta(store, args.repo, action="activation")
+                )
+            elif args.action == "workspace":
+                result = workspace_status(store, args.repo)
+            elif args.action == "autobiography":
+                result = verify_autobiography(store, args.repo)
+            else:
+                result = run_lesion_benchmarks(store, args.repo)
+            emit(result, args.json)
+
         elif command == "warm-in":
             from .warm_in import (
-                CLAIM as WARM_CLAIM,
                 run_warm_in,
                 verify_warm_in_receipt,
                 warm_in_status,
@@ -2262,7 +2297,6 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "realign":
             from .realign import (
-                CLAIM as REALIGN_CLAIM,
                 apply_realign,
                 diagnose_realign,
                 plan_realign,
@@ -2333,7 +2367,6 @@ def main(argv: list[str] | None = None) -> None:
                 frame_trace,
                 latest_frame,
                 load_baseline,
-                load_field_state,
             )
 
             act = str(getattr(args, "action", "report") or "report")

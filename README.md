@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-7.8.1-0ea5e9?style=for-the-badge" alt="v7.8.1" />
+  <img src="https://img.shields.io/badge/version-8.0.0-0ea5e9?style=for-the-badge" alt="v8.0.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -35,10 +35,12 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 | Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
 | Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-**v7.8.1 — Truth Recovery** · **v7.8 Event-Sourced Temporal Accrual** · **v7.7 Binding Field** · **v7.6 Warm-In** · **v7.5 Sense** · **v7.4 Realign** · **v7.3 Frames**
+**v8.0 — Measured Predictive Self-Model** · **v7.8.1 Truth Recovery** · **v7.8 Temporal Accrual** · **v7.7 Binding Field** · **v7.6 Warm-In**
 Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Binding Field names *local coupling vs global readiness*.  
 Stable body epochs now accrue one exactly-once observation per durable activation event until a real temporal window can close. When the seal lags the living tree, **realign explicitly**. Open buffers **commit** to frames — they do not seize authority.
-Modeled event salience remains shadow telemetry: it cannot train baselines or steer retrieval. Self-sensing classifies against the prior baseline before any eligible nominal observation is learned.
+Each activation now records one measured pre/post state delta, predicts that delta before it occurs, scores the forecast afterward, simulates bounded alternatives, broadcasts four competing signals, and appends a hash-chained operational episode. Modeled event salience remains shadow-only.
+
+Inspect the functional self-model with `cortex self-model status --repo <name> --json`; run its falsification surface with `cortex self-model lesion --repo <name> --json`.
 **No temporal metric can move a constitutional bit.**
 
 ---
