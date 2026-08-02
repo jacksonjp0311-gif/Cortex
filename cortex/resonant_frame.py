@@ -171,6 +171,9 @@ class ResonantFrame:
     metrics: FrameMetrics
     classification: str
     policy: dict[str, Any]
+    measurement_basis: str = "direct_snapshot"
+    policy_eligible: bool = True
+    baseline_eligible: bool = True
     reasons: list[str] = field(default_factory=list)
     active_edges: list[dict[str, Any]] = field(default_factory=list)
     schema_version: str = SCHEMA
@@ -195,6 +198,9 @@ class ResonantFrame:
             "classification": self.classification,
             "reasons": list(self.reasons),
             "policy": dict(self.policy),
+            "measurement_basis": self.measurement_basis,
+            "policy_eligible": self.policy_eligible,
+            "baseline_eligible": self.baseline_eligible,
             "active_edges": list(self.active_edges),
             "cortex_version": self.cortex_version,
             "issued_at": self.issued_at,
@@ -214,8 +220,30 @@ class ResonantFrame:
             "evidence_participation": m.evidence_participation,
             "transition_pressure": m.transition_pressure,
             "recommended_regime": (self.policy or {}).get("recommended_gcmt_regime"),
+            "measurement_basis": self.measurement_basis,
+            "policy_eligible": self.policy_eligible,
             "advisory_only": True,
         }
+
+
+def measurement_contract(samples: list[FieldSample]) -> dict[str, Any]:
+    """Aggregate sample measurement provenance without elevating truth."""
+    bases = sorted(
+        {
+            str(s.metadata.get("measurement_basis") or "direct_snapshot")
+            for s in samples
+        }
+    )
+    return {
+        "measurement_basis": bases[0] if len(bases) == 1 else "mixed",
+        "measurement_bases": bases,
+        "policy_eligible": all(
+            bool(s.metadata.get("policy_eligible", True)) for s in samples
+        ),
+        "baseline_eligible": all(
+            bool(s.metadata.get("baseline_eligible", True)) for s in samples
+        ),
+    }
 
 
 # ── math primitives ──────────────────────────────────────────────
@@ -912,7 +940,17 @@ def close_resonant_frame(
         baseline_warm=baseline_warm,
         epoch_drift=epoch_drift,
     )
-    pol = policy_for_classification(classification)
+    contract = measurement_contract(samples)
+    if contract["policy_eligible"]:
+        pol = policy_for_classification(classification).to_dict()
+    else:
+        pol = policy_for_classification(
+            FrameClassification.INDETERMINATE.value,
+            reasons=["modeled_measurement_shadow_only"],
+        ).to_dict()
+        pol["mode"] = "shadow_modeled"
+        pol["measurement_basis"] = contract["measurement_basis"]
+        pol["policy_eligible"] = False
     sdig = sample_digest(samples)
     tdig = thr.digest()
     bdig = baseline_digest or hashlib.sha256(
@@ -947,7 +985,10 @@ def close_resonant_frame(
         channel_truth_panel=channel_truth_panel(samples),
         metrics=metrics,
         classification=classification,
-        policy=pol.to_dict() if hasattr(pol, "to_dict") else dict(pol),
+        policy=dict(pol),
+        measurement_basis=str(contract["measurement_basis"]),
+        policy_eligible=bool(contract["policy_eligible"]),
+        baseline_eligible=bool(contract["baseline_eligible"]),
         reasons=reasons,
         active_edges=active,
         cortex_version=cortex_version,
@@ -1169,6 +1210,8 @@ def persist_closed_frame(
 
 
 def _may_update_baseline(frame: ResonantFrame) -> bool:
+    if not frame.baseline_eligible:
+        return False
     if frame.classification in {
         FrameClassification.STALE_ECHO.value,
         FrameClassification.TRANSITION.value,

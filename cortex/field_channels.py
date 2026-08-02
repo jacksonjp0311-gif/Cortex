@@ -12,6 +12,11 @@ from enum import Enum
 from typing import Any
 
 
+MEASUREMENT_DIRECT_SNAPSHOT = "direct_snapshot"
+MEASUREMENT_MODELED_SALIENCE = "modeled_salience"
+MEASUREMENT_MEASURED_DELTA = "measured_delta"
+
+
 class ChannelTruthSource(str, Enum):
     MEASURED = "MEASURED"
     RECEIPT_VERIFIED = "RECEIPT_VERIFIED"
@@ -397,6 +402,10 @@ def collect_activation_channels(
                 **sample.metadata,
                 "observation_id": observation_id,
                 "observation_kind": observation_kind,
+                "measurement_basis": MEASUREMENT_MODELED_SALIENCE,
+                "activity_transform": "bounded_event_participation_mask/v1",
+                "policy_eligible": False,
+                "baseline_eligible": False,
             },
         )
         for sample in samples

@@ -60,6 +60,9 @@ def issue_frame_receipt(frame: "ResonantFrame" | dict[str, Any]) -> dict[str, An
         "classification": base.get("classification"),
         "reasons": base.get("reasons") or [],
         "policy": base.get("policy") or {},
+        "measurement_basis": base.get("measurement_basis") or "direct_snapshot",
+        "policy_eligible": bool(base.get("policy_eligible", True)),
+        "baseline_eligible": bool(base.get("baseline_eligible", True)),
         "active_edges": base.get("active_edges") or [],
         "contributor_digest": _sha(
             {

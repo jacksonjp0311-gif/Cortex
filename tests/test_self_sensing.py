@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from cortex.config import ensure_home
@@ -157,6 +158,55 @@ class SelfSensingIntegrationTests(unittest.TestCase):
         )
         if not (r.get("gates") or {}).get("epoch_current"):
             self.assertNotEqual(r["classification"], SelfSenseClass.NOMINAL.value)
+
+    def test_anomaly_is_classified_before_and_excluded_from_baseline(self) -> None:
+        self.store.set_setting(
+            f"self_sense_state:{self.repo}",
+            {"mu": [0.0] * 13, "var": [0.01] * 13, "n_updates": 16},
+        )
+        sample = {
+            "z": {k: 1.0 for k in ("C", "N", "I", "L", "D", "H", "G", "Q", "eta_E", "eta_M", "T", "delta_E", "U")},
+            "z_vector": [1.0] * 13,
+            "missing_components": [],
+            "F_t": 0.8,
+            "F_spec_literal": 0.8,
+            "gates": {"baseline_warm": True, "epoch_current": True, "phase_bound": True, "evidence_valid": True},
+            "frame_classification": "QUIESCENT",
+            "frame_baseline_eligible": True,
+            "frame_policy_eligible": True,
+            "frame_measurement_basis": "direct_snapshot",
+            "sampled_at": 1.0,
+        }
+        with patch("cortex.self_sensing.sample_observer_state", return_value=sample):
+            report = observe_self_sensing(
+                self.store, self.repo, update=True, persist=False
+            )
+        self.assertEqual(report["classification"], SelfSenseClass.STRESSED.value)
+        self.assertFalse(report["baseline_updated"])
+        self.assertEqual(report["baseline_reference_n"], 16)
+        self.assertTrue(report["classified_before_update"])
+
+    def test_modeled_frame_never_updates_baseline(self) -> None:
+        sample = {
+            "z": {k: 0.5 for k in ("C", "N", "I", "L", "D", "H", "G", "Q", "eta_E", "eta_M", "T", "delta_E", "U")},
+            "z_vector": [0.5] * 13,
+            "missing_components": [], "F_t": 0.8, "F_spec_literal": 0.8,
+            "gates": {"baseline_warm": False, "epoch_current": True, "phase_bound": True, "evidence_valid": True},
+            "frame_classification": "INDETERMINATE",
+            "frame_baseline_eligible": False,
+            "frame_policy_eligible": False,
+            "frame_measurement_basis": "modeled_salience",
+            "sampled_at": 1.0,
+        }
+        with patch("cortex.self_sensing.sample_observer_state", return_value=sample):
+            report = observe_self_sensing(
+                self.store, self.repo, update=True, persist=False
+            )
+        self.assertFalse(report["baseline_updated"])
+        self.assertIn(
+            "measurement_not_baseline_eligible",
+            report["baseline_update_decision"]["reasons"],
+        )
 
 
 if __name__ == "__main__":

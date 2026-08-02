@@ -1,3 +1,11 @@
+## 7.8.1 - Truth Recovery
+
+- Event participation masks are explicitly labeled `modeled_salience` and are ineligible for baseline learning or retrieval policy.
+- Self-sensing computes residual and classification against the prior observer baseline before deciding whether the current observation may update it.
+- Drift, stress, transition, unstable frames, and modeled measurements cannot contaminate the observer baseline.
+- Binding Field reports `TRANSITION_REGIME` and `DRIFT_REGIME`; only a nominal observer plus a stable frame can report `VERIFIED_REGIME`.
+- Activation finalization reports changed epoch roots, while new seals retain per-table adaptive digests for attributable future transitions.
+
 ## 7.8.0 - Event-Sourced Temporal Accrual
 
 - Stable body epochs now retain their open Resonant Frame buffer across advanced activations instead of closing every activation into an isolated one-tick frame.

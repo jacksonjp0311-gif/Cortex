@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import unittest
+from dataclasses import replace
 
 from cortex.field_channels import CHANNEL_FAMILIES, sample_tick_channels
 from cortex.resonant_frame import (
@@ -111,7 +112,6 @@ class ResonantMathTests(unittest.TestCase):
         self.assertFalse(warm)
 
     def test_nonrandomness_with_baseline(self) -> None:
-        samples = _synth(10)
         # baseline different distribution
         base = {
             fam: {"default|0": 1.0}
@@ -140,6 +140,25 @@ class ResonantMathTests(unittest.TestCase):
         f2 = close_resonant_frame(samples, repo="R", body_epoch_id="e1")
         self.assertEqual(f1.frame_id, f2.frame_id)
         self.assertTrue(f1.frame_id.startswith("frame_"))
+
+    def test_modeled_salience_frame_is_shadow_only(self) -> None:
+        samples = [
+            replace(
+                sample,
+                metadata={
+                    **sample.metadata,
+                    "measurement_basis": "modeled_salience",
+                    "policy_eligible": False,
+                    "baseline_eligible": False,
+                },
+            )
+            for sample in _synth(10)
+        ]
+        frame = close_resonant_frame(samples, repo="R", body_epoch_id="e1")
+        self.assertEqual(frame.measurement_basis, "modeled_salience")
+        self.assertFalse(frame.policy_eligible)
+        self.assertFalse(frame.baseline_eligible)
+        self.assertEqual(frame.policy["mode"], "shadow_modeled")
 
     def test_classify_indeterminate_short(self) -> None:
         samples = _synth(4)

@@ -50,6 +50,9 @@ class FieldReceiptTests(unittest.TestCase):
         self.assertIn("channel_truth_panel", rec)
         self.assertIn("metrics", rec)
         self.assertIn("policy", rec)
+        self.assertEqual(rec["measurement_basis"], "direct_snapshot")
+        self.assertTrue(rec["policy_eligible"])
+        self.assertTrue(rec["baseline_eligible"])
         self.assertFalse(rec["authority_satisfying"])
         self.assertFalse(rec["witness_satisfying"])
         # tamper

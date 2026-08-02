@@ -372,12 +372,30 @@ def sample_observer_state(
         "frame_classification": (latest_frame or {}).get("classification")
         if latest_frame
         else None,
+        "frame_measurement_basis": (latest_frame or {}).get(
+            "measurement_basis", "direct_snapshot"
+        ),
+        "frame_policy_eligible": bool(
+            (latest_frame or {}).get("policy_eligible", True)
+        ),
+        "frame_baseline_eligible": bool(
+            (latest_frame or {}).get("baseline_eligible", True)
+        ),
         "field_warmup": warmup,
         "spectral_mass": spectral_mass,
         "temporal_field_panel": {
             "baseline_frames_display": (fr or {}).get("baseline_frames_display"),
             "live_buffer_samples": (fr or {}).get("live_buffer_samples"),
             "latest": bool(latest_frame),
+            "measurement_basis": (latest_frame or {}).get(
+                "measurement_basis", "direct_snapshot"
+            ),
+            "policy_eligible": bool(
+                (latest_frame or {}).get("policy_eligible", True)
+            ),
+            "baseline_eligible": bool(
+                (latest_frame or {}).get("baseline_eligible", True)
+            ),
             "advisory_only": True,
         },
         "sampled_at": time.time(),
@@ -499,26 +517,19 @@ def observe_self_sensing(
     alpha: float = ALPHA_DEFAULT,
     persist: bool = True,
 ) -> dict[str, Any]:
-    """Main entry: sample z_t, update baseline, residual, classify, optional receipt."""
+    """Sample and classify against the prior baseline, then learn if trustworthy."""
     sample = sample_observer_state(
         store, repo, coherence_report=coherence_report, home=home
     )
     z_vec = list(sample["z_vector"])
     gates = sample["gates"]
-    state = _load_state(store, repo)
+    prior_state = _load_state(store, repo)
+    prior_mu = prior_state.get("mu") or list(z_vec)
+    prior_var = prior_state.get("var") or [0.05] * len(z_vec)
+    prior_n = int(prior_state.get("n_updates") or 0)
 
-    # Only update baseline when epoch is current (verified regime) and update requested
-    may_update = bool(update and gates.get("epoch_current") and gates.get("evidence_valid"))
-    if may_update:
-        state = update_baseline(state, z_vec, alpha=alpha)
-        if persist:
-            _save_state(store, repo, state)
-
-    mu = state.get("mu") or list(z_vec)
-    var = state.get("var") or [0.05] * len(z_vec)
-    n_updates = int(state.get("n_updates") or 0)
-
-    residual = residual_mahalanobis(z_vec, mu, var)
+    # Truth-recovery invariant: the current sample cannot move its own reference.
+    residual = residual_mahalanobis(z_vec, prior_mu, prior_var)
     # normalize residual display to softer scale (not authority)
     residual_norm = _clip01(residual / 6.0)  # ~6 ≈ high multi-dim distance
 
@@ -527,7 +538,7 @@ def observe_self_sensing(
         residual=residual,
         f_t=sample.get("F_t"),
         missing=sample.get("missing_components") or [],
-        baseline_n=n_updates,
+        baseline_n=prior_n,
     )
 
     # Force: no false healthy when unbound
@@ -537,6 +548,32 @@ def observe_self_sensing(
         classification = SelfSenseClass.UNBOUND.value
         reasons = ["forced_unbound_no_false_healthy"]
 
+    stable_frame_classes = {"QUIESCENT", "COHERENT_DIFFERENTIATED"}
+    frame_class = str(sample.get("frame_classification") or "")
+    update_reasons: list[str] = []
+    if not update:
+        update_reasons.append("update_not_requested")
+    if not gates.get("epoch_current"):
+        update_reasons.append("epoch_not_current")
+    if not gates.get("phase_bound"):
+        update_reasons.append("phase_not_bound")
+    if not gates.get("evidence_valid"):
+        update_reasons.append("evidence_invalid")
+    if not sample.get("frame_baseline_eligible", True):
+        update_reasons.append("measurement_not_baseline_eligible")
+    if frame_class and frame_class not in stable_frame_classes:
+        update_reasons.append(f"frame_{frame_class.lower()}_not_stable")
+    if prior_n >= BASELINE_MIN and classification != SelfSenseClass.NOMINAL.value:
+        update_reasons.append(f"sense_{classification.lower()}_not_nominal")
+
+    may_update = not update_reasons
+    state = prior_state
+    if may_update:
+        state = update_baseline(prior_state, z_vec, alpha=alpha)
+        if persist:
+            _save_state(store, repo, state)
+
+    n_updates = int(state.get("n_updates") or 0)
     advisory = _advisory_for(classification, gates, residual, sample.get("F_t"))
 
     report = {
@@ -550,7 +587,7 @@ def observe_self_sensing(
         "z_vector": z_vec,
         "z_keys": list(Z_KEYS),
         "missing_components": sample.get("missing_components"),
-        "mu": mu,
+        "mu": prior_mu,
         "residual_r": round(residual, 6),
         "residual_norm": residual_norm,
         "F_t": sample.get("F_t"),
@@ -563,16 +600,25 @@ def observe_self_sensing(
             and gates.get("evidence_valid")
         ),
         "baseline_n_updates": n_updates,
+        "baseline_reference_n": prior_n,
+        "classified_before_update": True,
         "baseline_ready_observer": n_updates >= BASELINE_MIN,
         "field_warmup": sample.get("field_warmup"),
         "temporal_field_panel": sample.get("temporal_field_panel"),
         "frame_id": sample.get("frame_id"),
         "frame_classification": sample.get("frame_classification"),
+        "frame_measurement_basis": sample.get("frame_measurement_basis"),
+        "frame_policy_eligible": sample.get("frame_policy_eligible"),
+        "frame_baseline_eligible": sample.get("frame_baseline_eligible"),
         "coherence_score": sample.get("coherence_score"),
         "spectral_mass": sample.get("spectral_mass"),
         "advisory": advisory,
         "advisory_only": True,
         "baseline_updated": may_update,
+        "baseline_update_decision": {
+            "eligible": may_update,
+            "reasons": update_reasons or ["prior_regime_eligible"],
+        },
         "canonical_statement": CANONICAL,
         "claim_boundary": CLAIM,
         "sampled_at": sample.get("sampled_at"),

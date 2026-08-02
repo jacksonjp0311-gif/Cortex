@@ -927,7 +927,7 @@ def activate_repository(
     epoch_changed = False
     final_epoch_ready = False
     try:
-        from .epoch import seal_epoch_transition
+        from .epoch import explain_epoch_delta, seal_epoch_transition
         from .phases import transition_phase
 
         sealed = seal_epoch_transition(
@@ -955,6 +955,7 @@ def activate_repository(
                 "observe_self",
             ],
             "body_epoch_id": sealed.epoch_id,
+            "epoch_delta": explain_epoch_delta(store, repo, epoch, sealed),
             "phase": "QUIESCENT",
             "advisory_only": True,
         }

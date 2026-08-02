@@ -45,6 +45,8 @@ class BindingClass(str, Enum):
     BINDING_GAP = "BINDING_GAP"  # epoch/phase unbound — primary live pattern
     BUFFER_PENDING = "BUFFER_PENDING"  # samples in buffer, no closed frames
     COLD_FIELD = "COLD_FIELD"  # closed frames / baselines short
+    TRANSITION_REGIME = "TRANSITION_REGIME"  # warm+bound, temporal transition
+    DRIFT_REGIME = "DRIFT_REGIME"  # warm+bound, observer drift/stress
     IMMUNE_HOLD = "IMMUNE_HOLD"  # immune block on mutation plane (expected)
     VERIFIED_REGIME = "VERIFIED_REGIME"  # warm + bound + replay-ok path
     INDETERMINATE = "INDETERMINATE"
@@ -155,8 +157,8 @@ def sample_binding_field(store: Any, repo: str, *, home: Any | None = None) -> d
     buffer_fill = clip(buffer_ticks / max(1, W_MIN)) if buffer_ticks else 0.0
     frame_warm = clip(frames_seen / 16.0)
     binding_ok = 1.0 if (epoch_current and phase_bound) else 0.0
-    sense_ok = 1.0 if sense_class in {"NOMINAL", "DRIFT"} else (
-        0.5 if sense_class in {"COLD", "INDETERMINATE"} else 0.0
+    sense_ok = 1.0 if sense_class == "NOMINAL" else (
+        0.5 if sense_class in {"COLD", "INDETERMINATE", "DRIFT"} else 0.0
     )
 
     field_vec = {
@@ -182,6 +184,7 @@ def sample_binding_field(store: Any, repo: str, *, home: Any | None = None) -> d
         frames_seen=frames_seen,
         field_ready=field_ready,
         sense_class=str(sense_class or ""),
+        latest_frame_class=str(field.get("last_classification") or ""),
         immune_block=immune_block,
         w_min=W_MIN,
     )
@@ -259,6 +262,7 @@ def classify_binding_field(
     frames_seen: int,
     field_ready: bool,
     sense_class: str,
+    latest_frame_class: str = "",
     immune_block: bool,
     w_min: int = 8,
 ) -> tuple[str, list[str]]:
@@ -292,12 +296,22 @@ def classify_binding_field(
             return BindingClass.BINDING_GAP.value, reasons
         return BindingClass.COLD_FIELD.value, reasons
 
-    # 4) Verified path
+    # 4) Warm and bound is necessary but not sufficient for verified.
+    if latest_frame_class == "TRANSITION":
+        reasons.append("latest_frame_transition")
+        return BindingClass.TRANSITION_REGIME.value, reasons
+
+    if sense_class in {"DRIFT", "STRESSED"}:
+        reasons.append(f"sense_{sense_class.lower()}")
+        return BindingClass.DRIFT_REGIME.value, reasons
+
+    # 5) Verified path requires both a nominal observer and a stable frame.
     if (
         epoch_current
         and phase_bound
         and (field_ready or frames_seen >= 16)
-        and sense_class in {"NOMINAL", "DRIFT", "STRESSED"}
+        and sense_class == "NOMINAL"
+        and latest_frame_class in {"QUIESCENT", "COHERENT_DIFFERENTIATED"}
     ):
         reasons.append("bound_and_warm")
         return BindingClass.VERIFIED_REGIME.value, reasons
@@ -333,6 +347,10 @@ def advisory_for_binding(
         recs.append(f"python -m cortex sense observe --repo {repo}")
     if classification == BindingClass.VERIFIED_REGIME.value:
         recs.append("continue advisory loop; constitutional gates still control")
+    if classification == BindingClass.TRANSITION_REGIME.value:
+        recs.append("hold baseline learning and observe the next measured frame")
+    if classification == BindingClass.DRIFT_REGIME.value:
+        recs.append("inspect residual contributors before accepting a new regime")
     if classification == BindingClass.IMMUNE_HOLD.value:
         recs.append("immune hold is expected (recommend-only); not a defect")
 
@@ -343,6 +361,8 @@ def advisory_for_binding(
         in {
             BindingClass.BINDING_GAP.value,
             BindingClass.BUFFER_PENDING.value,
+            BindingClass.TRANSITION_REGIME.value,
+            BindingClass.DRIFT_REGIME.value,
         },
         "frames_seen": frames_seen,
         "buffer_ticks": buffer_ticks,

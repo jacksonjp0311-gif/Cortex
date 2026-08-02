@@ -52,6 +52,13 @@ class FieldPolicyTests(unittest.TestCase):
         self.assertTrue(ctx.get("field_policy_applied"))
         self.assertEqual(ctx.get("retrieval_width_delta"), 2)
 
+    def test_modeled_measurement_cannot_influence_policy(self) -> None:
+        p = policy_for_classification("FRAGMENTED").to_dict()
+        p["policy_eligible"] = False
+        ctx = apply_field_policy_advisory({}, p, advisory_mode=True)
+        self.assertFalse(ctx.get("field_policy_applied"))
+        self.assertIn("modeled", ctx.get("field_policy_note", ""))
+
 
 if __name__ == "__main__":
     unittest.main()

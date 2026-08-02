@@ -5,7 +5,7 @@ Policy is ephemeral and advisory. Constitutional gates remain controlling.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Any
 
 
@@ -115,6 +115,12 @@ def apply_field_policy_advisory(
     p = policy.to_dict() if isinstance(policy, FramePolicy) else dict(policy)
     p["advisory_only"] = True
     ctx["resonant_frame_policy"] = p
+    if p.get("policy_eligible") is False:
+        ctx["field_policy_applied"] = False
+        ctx["field_policy_note"] = (
+            "shadow — modeled measurement is not eligible to influence retrieval"
+        )
+        return ctx
     if not advisory_mode:
         ctx["field_policy_applied"] = False
         ctx["field_policy_note"] = "shadow — not applied to retrieval (set advisory mode to apply)"

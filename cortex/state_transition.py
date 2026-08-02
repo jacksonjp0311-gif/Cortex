@@ -9,13 +9,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
-from .capabilities import (
-    CLAIM as CAP_CLAIM,
-    ExecutionCapability,
-    OPERATION_REGISTRY,
-    require_capability,
-    validate_capability,
-)
+from .capabilities import ExecutionCapability, OPERATION_REGISTRY, validate_capability
 
 SCHEMA = "cortex-state-transition/1.0"
 
@@ -63,23 +57,40 @@ def ensure_transition_tables(store: Any) -> None:
     store.db.commit()
 
 
-def logical_state_digest(store: Any, repo: str) -> str:
-    """Canonical digest of adaptive tables for a repo."""
+LOGICAL_STATE_QUERIES = (
+    ("ranker_models", "SELECT model_id, weights_json, bias, train_count FROM ranker_models WHERE repo=? ORDER BY model_id"),
+    ("neural_synapses", "SELECT synapse_id, weight, relation FROM neural_synapses WHERE repo=? ORDER BY synapse_id"),
+    ("lineage_artifacts", "SELECT artifact_id, invalidated FROM lineage_artifacts WHERE repo=? ORDER BY artifact_id"),
+    ("quarantine_envelopes", "SELECT envelope_id, active FROM quarantine_envelopes WHERE repo=? ORDER BY envelope_id"),
+    ("memory_wounds", "SELECT wound_id, resolved FROM memory_wounds WHERE repo=? ORDER BY wound_id"),
+    ("ranker_training_events", "SELECT event_id, excluded FROM ranker_training_events WHERE repo=? ORDER BY event_id"),
+)
+
+
+def _logical_state_material(store: Any, repo: str) -> tuple[list[str], dict[str, str]]:
     parts: list[str] = []
-    queries = [
-        ("ranker_models", "SELECT model_id, weights_json, bias, train_count FROM ranker_models WHERE repo=? ORDER BY model_id"),
-        ("neural_synapses", "SELECT synapse_id, weight, relation FROM neural_synapses WHERE repo=? ORDER BY synapse_id"),
-        ("lineage_artifacts", "SELECT artifact_id, invalidated FROM lineage_artifacts WHERE repo=? ORDER BY artifact_id"),
-        ("quarantine_envelopes", "SELECT envelope_id, active FROM quarantine_envelopes WHERE repo=? ORDER BY envelope_id"),
-        ("memory_wounds", "SELECT wound_id, resolved FROM memory_wounds WHERE repo=? ORDER BY wound_id"),
-        ("ranker_training_events", "SELECT event_id, excluded FROM ranker_training_events WHERE repo=? ORDER BY event_id"),
-    ]
-    for name, sql in queries:
+    components: dict[str, str] = {}
+    for name, sql in LOGICAL_STATE_QUERIES:
         try:
             rows = store.db.execute(sql, (repo,)).fetchall()
-            parts.append(name + ":" + json.dumps([dict(r) for r in rows], sort_keys=True, default=str))
+            material = name + ":" + json.dumps(
+                [dict(r) for r in rows], sort_keys=True, default=str
+            )
         except Exception:
-            parts.append(name + ":missing")
+            material = name + ":missing"
+        parts.append(material)
+        components[name] = hashlib.sha256(material.encode()).hexdigest()
+    return parts, components
+
+
+def logical_state_components(store: Any, repo: str) -> dict[str, str]:
+    """Per-table adaptive digests for explaining epoch transitions."""
+    return _logical_state_material(store, repo)[1]
+
+
+def logical_state_digest(store: Any, repo: str) -> str:
+    """Canonical digest of adaptive tables for a repo."""
+    parts, _ = _logical_state_material(store, repo)
     return hashlib.sha256("|".join(parts).encode()).hexdigest()
 
 

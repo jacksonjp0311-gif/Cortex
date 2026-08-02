@@ -68,9 +68,30 @@ class BindingClassifyTests(unittest.TestCase):
             frames_seen=16,
             field_ready=True,
             sense_class="NOMINAL",
+            latest_frame_class="QUIESCENT",
             immune_block=True,
         )
         self.assertEqual(c, BindingClass.VERIFIED_REGIME.value)
+
+    def test_transition_is_not_verified(self) -> None:
+        c, _ = classify_binding_field(
+            needs_realign=False, epoch_current=True, phase_bound=True,
+            buffer_ticks=0, frames_seen=16, field_ready=True,
+            sense_class="NOMINAL", latest_frame_class="TRANSITION",
+            immune_block=False,
+        )
+        self.assertEqual(c, BindingClass.TRANSITION_REGIME.value)
+
+    def test_drift_and_stress_are_not_verified(self) -> None:
+        for sense_class in ("DRIFT", "STRESSED"):
+            c, _ = classify_binding_field(
+                needs_realign=False, epoch_current=True, phase_bound=True,
+                buffer_ticks=0, frames_seen=16, field_ready=True,
+                sense_class=sense_class,
+                latest_frame_class="COHERENT_DIFFERENTIATED",
+                immune_block=False,
+            )
+            self.assertEqual(c, BindingClass.DRIFT_REGIME.value)
 
 
 class BindingIntegrationTests(unittest.TestCase):

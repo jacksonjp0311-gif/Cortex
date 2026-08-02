@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
@@ -12,6 +13,7 @@ from cortex.epoch import (
     compare_epochs,
     compute_body_epoch,
     ensure_current_epoch,
+    explain_epoch_delta,
     seal_epoch_transition,
     verify_body_epoch,
 )
@@ -49,6 +51,19 @@ class EpochTests(unittest.TestCase):
         a = compute_body_epoch(self.store, "EpHost")
         c = compare_epochs(a, a)
         self.assertTrue(c.compatible)
+
+    def test_epoch_seal_retains_adaptive_attribution(self) -> None:
+        ep = ensure_current_epoch(self.store, "EpHost", reason="attribution")
+        row = self.store.db.execute(
+            "SELECT metadata_json FROM body_epochs WHERE epoch_id=?", (ep.epoch_id,)
+        ).fetchone()
+        metadata = json.loads(row["metadata_json"])
+        self.assertIn("adaptive_components", metadata)
+        self.assertIn("neural_synapses", metadata["adaptive_components"])
+        delta = explain_epoch_delta(self.store, "EpHost", ep, ep)
+        self.assertFalse(delta["material_change"])
+        self.assertEqual(delta["changed_roots"], [])
+        self.assertTrue(delta["adaptive_attribution_available"])
 
 
 if __name__ == "__main__":

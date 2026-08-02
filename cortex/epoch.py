@@ -13,7 +13,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from . import __version__
-from .state_transition import logical_state_digest
+from .state_transition import logical_state_components, logical_state_digest
 
 SCHEMA = "cortex-body-epoch/1.0"
 GLYPH = "⏱"
@@ -336,7 +336,7 @@ def verify_body_epoch(store: Any, repo: str, epoch: BodyEpoch | dict[str, Any]) 
     ok = live.epoch_id == ep.epoch_id
     mismatches = []
     if not ok:
-        for field in (
+        for component_name in (
             "manifest_hash",
             "certificate_hash",
             "schema_hash",
@@ -346,8 +346,8 @@ def verify_body_epoch(store: Any, repo: str, epoch: BodyEpoch | dict[str, Any]) 
             "lineage_root_hash",
             "cortex_version",
         ):
-            if getattr(live, field) != getattr(ep, field):
-                mismatches.append(field)
+            if getattr(live, component_name) != getattr(ep, component_name):
+                mismatches.append(component_name)
     return {
         "ok": ok,
         "claimed_epoch_id": ep.epoch_id,
@@ -359,7 +359,7 @@ def verify_body_epoch(store: Any, repo: str, epoch: BodyEpoch | dict[str, Any]) 
 
 def compare_epochs(left: BodyEpoch, right: BodyEpoch) -> EpochCompatibility:
     mismatches = []
-    for field in (
+    for component_name in (
         "repo",
         "repository_id",
         "manifest_hash",
@@ -369,8 +369,8 @@ def compare_epochs(left: BodyEpoch, right: BodyEpoch) -> EpochCompatibility:
         "schema_hash",
         "cortex_version",
     ):
-        if getattr(left, field) != getattr(right, field):
-            mismatches.append(field)
+        if getattr(left, component_name) != getattr(right, component_name):
+            mismatches.append(component_name)
     if left.epoch_id == right.epoch_id:
         return EpochCompatibility(True, "identical", left.epoch_id, right.epoch_id, [])
     if not mismatches:
@@ -433,7 +433,13 @@ def seal_epoch_transition(
             epoch.parent_epoch_id,
             epoch.transition_reason,
             epoch.receipt_hash,
-            json.dumps({"reason": reason}),
+            json.dumps(
+                {
+                    "reason": reason,
+                    "adaptive_components": logical_state_components(store, repo),
+                },
+                sort_keys=True,
+            ),
         ),
     )
     store.db.commit()
@@ -445,6 +451,55 @@ def seal_epoch_transition(
     except Exception:
         pass
     return epoch
+
+
+def explain_epoch_delta(
+    store: Any,
+    repo: str,
+    parent: BodyEpoch | None,
+    current: BodyEpoch,
+) -> dict[str, Any]:
+    """Explain changed roots and, when available, changed adaptive tables."""
+    root_fields = (
+        "manifest_hash",
+        "certificate_hash",
+        "schema_hash",
+        "cortex_version",
+        "cortex_commit",
+        "constitutional_config_hash",
+        "evidence_root_hash",
+        "adaptive_root_hash",
+        "lineage_root_hash",
+    )
+    changed = [
+        name for name in root_fields
+        if parent is None or getattr(parent, name) != getattr(current, name)
+    ]
+    prior_components: dict[str, str] = {}
+    if parent is not None:
+        try:
+            row = store.db.execute(
+                "SELECT metadata_json FROM body_epochs WHERE epoch_id=?",
+                (parent.epoch_id,),
+            ).fetchone()
+            metadata = json.loads(str(row["metadata_json"] or "{}")) if row else {}
+            prior_components = dict(metadata.get("adaptive_components") or {})
+        except Exception:
+            prior_components = {}
+    current_components = logical_state_components(store, repo)
+    adaptive_changed = sorted(
+        name for name, digest in current_components.items()
+        if prior_components and prior_components.get(name) != digest
+    )
+    return {
+        "parent_epoch_id": parent.epoch_id if parent else None,
+        "final_epoch_id": current.epoch_id,
+        "material_change": bool(changed),
+        "changed_roots": changed,
+        "adaptive_only": changed == ["adaptive_root_hash"],
+        "changed_adaptive_components": adaptive_changed,
+        "adaptive_attribution_available": bool(prior_components),
+    }
 
 
 def observe_current_epoch(store: Any, repo: str) -> dict[str, Any]:
@@ -471,7 +526,7 @@ def observe_current_epoch(store: Any, repo: str) -> dict[str, Any]:
         }
     mismatches: list[str] = []
     if cur.epoch_id != live.epoch_id:
-        for field in (
+        for component_name in (
             "manifest_hash",
             "certificate_hash",
             "schema_hash",
@@ -481,8 +536,8 @@ def observe_current_epoch(store: Any, repo: str) -> dict[str, Any]:
             "lineage_root_hash",
             "cortex_version",
         ):
-            if getattr(live, field) != getattr(cur, field):
-                mismatches.append(field)
+            if getattr(live, component_name) != getattr(cur, component_name):
+                mismatches.append(component_name)
     verified = cur.epoch_id == live.epoch_id
     return {
         "present": True,
