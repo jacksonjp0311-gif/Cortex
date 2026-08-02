@@ -161,6 +161,28 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertTrue(hits)
         self.assertEqual(hits[0].path, "README.md")
 
+    def test_exact_symbol_reserves_lane_through_spectral_reranking(self) -> None:
+        (self.repo / "target.py").write_text(
+            "def rare_exact_probe_symbol():\n    return 1\n",
+            encoding="utf-8",
+        )
+        for index in range(12):
+            (self.repo / f"noise_{index}.py").write_text(
+                "def broad_probe():\n    return 'rare probe symbol context'\n",
+                encoding="utf-8",
+            )
+        self.bootstrap()
+        hits = query(
+            self.store,
+            "DemoProject",
+            "rare_exact_probe_symbol",
+            limit=5,
+            enrich_spectral=True,
+        )
+        self.assertTrue(hits)
+        self.assertEqual(hits[0].path, "target.py")
+        self.assertTrue(hits[0].metadata.get("exact_lexical_match"))
+
     def test_activation_refreshes_repository_drift(self) -> None:
         self.bootstrap()
         (self.repo / "app.py").write_text(

@@ -223,6 +223,39 @@ def _deduplicate_hits_by_path(hits: list[Hit], *, limit: int) -> list[Hit]:
     return selected
 
 
+def _reserve_exact_evidence_lane(hits: list[Hit]) -> list[Hit]:
+    """Keep the strongest literal match visible through learned reranking.
+
+    Semantic and spectral lanes may improve broad recall, but they must not bury
+    the lexical source that contains the complete query.  Reserve one lane for
+    the earliest FTS exact match; the remaining candidates retain learned order.
+    """
+
+    exact = [
+        hit
+        for hit in hits
+        if bool((hit.metadata or {}).get("exact_lexical_match"))
+    ]
+    if not exact:
+        return hits
+    def _lexical_rank(hit: Hit) -> int:
+        value = (hit.metadata or {}).get("lexical_rank")
+        return int(value) if value is not None else 1_000_000
+
+    winner = min(
+        exact,
+        key=lambda hit: (
+            _lexical_rank(hit),
+            -float(hit.score or 0.0),
+            str(hit.path or ""),
+            int(hit.start_line or 0),
+        ),
+    )
+    if hits and hits[0] is winner:
+        return hits
+    return [winner, *(hit for hit in hits if hit is not winner)]
+
+
 def materialize_aria_for_task(store: Any, repo: str, text: str) -> dict[str, Any]:
     """Explicitly materialize deferred ARIA bulk when a task wakes the region.
 
@@ -315,6 +348,7 @@ def query(
             or aria_path_supports(row["path"], aria_purposes)
         ]
     lexical_ids = [row["id"] for row in lexical_rows]
+    lexical_rank = {memory_id: rank for rank, memory_id in enumerate(lexical_ids)}
 
     query_vector = get_embedder().encode_one(text)
     store.ensure_vector_buckets(repo)
@@ -483,6 +517,8 @@ def query(
         normalized_chunk = " ".join(row["text"].casefold().split())
         if normalized_query and normalized_query in normalized_chunk:
             quality *= 1.35
+            metadata["exact_lexical_match"] = True
+            metadata["lexical_rank"] = lexical_rank.get(memory_id, 1_000_000)
         if row["kind"] in {"discovery_card", "telemetry", "runtime_evidence"}:
             quality *= 0.98 if prove else 1.04
         telemetry = store.file_telemetry(repo, row["path"])
@@ -553,8 +589,10 @@ def query(
             # Do not re-sort solely by ranker_score — that undoes prior pins.
         except Exception:
             pass
+    output = _reserve_exact_evidence_lane(output)
+    candidate_limit = max(limit * 3, 24)
     floor = _aria_evidence_floor(
-        store, repo, text, output, limit=limit, prove=prove
+        store, repo, text, output, limit=candidate_limit, prove=prove
     )
     # Binary-intel pack domain boost (zero-in) — operational only.
     try:
