@@ -253,11 +253,14 @@ def load_repo_config(
     """
     root = Path(root).expanduser().resolve()
     internal_path = repo_config_path(root)
-    active_home = home or (
-        Path(os.environ["CORTEX_ACTIVE_HOME"]).expanduser().resolve()
-        if os.environ.get("CORTEX_ACTIVE_HOME")
-        else None
-    )
+    active_home: Path | None = None
+    if home is not None:
+        active_home = Path(home).expanduser().resolve()
+    elif os.environ.get("CORTEX_ACTIVE_HOME"):
+        active_home = Path(os.environ["CORTEX_ACTIVE_HOME"]).expanduser().resolve()
+    elif os.environ.get("CORTEX_HOME"):
+        # Prefer explicit CORTEX_HOME over default ~/.cortex for CI/process isolation
+        active_home = Path(os.environ["CORTEX_HOME"]).expanduser().resolve()
     path = internal_path
     if active_home is not None:
         external_path = external_repo_config_path(root, Path(active_home))

@@ -113,6 +113,11 @@ def bootstrap_repository(
     engine_root = Path(__file__).resolve().parent.parent
     config.engine_module_root = str(engine_root)
     config.cortex_home = str(home.resolve())
+    # Process-local active home so later load_repo_config(root) without home
+    # still resolves external attachments (immune/interconnect/retrieval smokes).
+    import os
+
+    os.environ["CORTEX_ACTIVE_HOME"] = str(home.resolve())
     home_identity = store.get_setting("cortex_home_identity", None)
     if not isinstance(home_identity, dict) or not home_identity.get("home_uuid"):
         home_identity = {

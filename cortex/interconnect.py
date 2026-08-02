@@ -183,7 +183,7 @@ def mesh_status(
             repository = store.repo(repo)
             if repository:
                 root = Path(repository["path"])
-                config = load_repo_config(root)
+                config = load_repo_config(root, home)
                 current = current_manifest_hash(root, config) == (
                     repository["manifest_hash"] or ""
                 )

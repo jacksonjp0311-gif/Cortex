@@ -30,7 +30,7 @@ def inspect_immune(
     if not repository:
         raise ValueError(f"Unknown repository: {repo}. Run cortex bootstrap first.")
     root = Path(repository["path"])
-    config = load_repo_config(root)
+    config = load_repo_config(root, home)
     manifest_current = current_manifest_hash(root, config) == (
         repository["manifest_hash"] or ""
     )

@@ -315,7 +315,7 @@ def beat(
     if not repository:
         return {"error": "unknown_repo", "repo": repo}
     root = Path(repository["path"])
-    config = load_repo_config(root)
+    config = load_repo_config(root, home)
     runtime_path = runtime_directory(root, config) / "context_latest.json"
     context: dict[str, Any] = {}
     if runtime_path.is_file():

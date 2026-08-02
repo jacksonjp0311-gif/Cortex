@@ -160,6 +160,7 @@ def materialize_aria_for_task(store: Any, repo: str, text: str) -> dict[str, Any
         from .indexer import ensure_aria_substrate_materialized
         from .neuron import compile_interlink
 
+        # Prefer process CORTEX_ACTIVE_HOME set by external bootstrap
         config = load_repo_config(Path(repository["path"]))
         result = ensure_aria_substrate_materialized(store, repo, config, text)
         if result.get("materialized"):
