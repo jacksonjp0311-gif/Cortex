@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.2.5-0ea5e9?style=for-the-badge" alt="v8.2.5" />
+  <img src="https://img.shields.io/badge/version-8.2.6-0ea5e9?style=for-the-badge" alt="v8.2.6" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -35,7 +35,7 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 | Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
 | Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-**v8.2.5 — Resonance Frequency Sweep** · **v8.2.4 Selective Admission** · **v8.2 Informational Interlocks**
+**v8.2.6 — Four-Dimensional Geometric Echo** · **v8.2.5 Resonance Frequency Sweep** · **v8.2 Informational Interlocks**
 Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Binding Field names *local coupling vs global readiness*.  
 Stable body epochs now accrue one exactly-once observation per durable activation event until a real temporal window can close. When the seal lags the living tree, **realign explicitly**. Open buffers **commit** to frames — they do not seize authority.
 Each activation now records one measured pre/post state delta, predicts that delta before it occurs, scores the forecast afterward, simulates bounded alternatives, broadcasts four competing signals, and appends a hash-chained operational episode. Modeled event salience remains shadow-only.
@@ -55,6 +55,8 @@ v8.2.3 adds the `⟢` Source Admission Field and measures candidate-pool entry s
 v8.2.4 adds selective abstention and ranker attribution. Ambiguous source reserves now abstain using a dimensionless candidate margin, while hybrid-versus-ranked arms expose where recovered evidence is lost. The risk proxy is advisory only; calibration must use a corpus separate from the frozen exam. See [`PHASE_V8.2.4_SELECTIVE_ADMISSION.md`](docs/intelligence/PHASE_V8.2.4_SELECTIVE_ADMISSION.md).
 
 v8.2.5 adds the `∿` Resonance Frequency Sweep. Sealed temporal frames are scanned over a bounded frequency grid for cross-signal phase-lock; a stable peak is reported for observation only. Cadence and policy never change automatically. See [`PHASE_V8.2.5_RESONANCE_FREQUENCY_SWEEP.md`](docs/intelligence/PHASE_V8.2.5_RESONANCE_FREQUENCY_SWEEP.md).
+
+v8.2.6 adds the `⟊` Four-Dimensional Geometric Echo. Fixed orthogonal and tetrahedral pulses project the latest evidence, connector geometry, temporal, and informational-interlock telemetry into a bounded operational field. Axis echoes are reconstructable and silent dimensions stay silent when their evidence gates are unmet. This is an advisory diagnostic only: it cannot change routing, cadence, learning, policy, or authority. See [`PHASE_V8.2.6_GEOMETRIC_ECHO.md`](docs/intelligence/PHASE_V8.2.6_GEOMETRIC_ECHO.md).
 
 The first selective run admitted 37.5% of cases, produced three helpful and zero harmful replacements, and improved final recall from 46.88% to 51.56%. Promotion remains blocked pending calibrated risk and a third natural epoch/graph replication.
 
@@ -125,6 +127,8 @@ python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
 | `interlock bridges` | Refresh shadow cross-region bridge candidates (`policy_effect=false`) |
 | `interlock trial` | Run paired query-conditioned bridge/control arms without changing live retrieval |
 | `interlock source-trial` | Measure candidate admission and matched source/control arms (`policy_effect=false`) |
+| `interlock resonance` | Read-only bounded frequency/phase-lock sweep over sealed frames |
+| `interlock echo` | Four-dimensional fixed-pulse echo across evidence, geometry, temporal, and interlock axes |
 | `claim` | Falsifiable promote receipt (when applicable) |
 
 **Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  

@@ -1,3 +1,9 @@
+## 8.2.6 - Four-Dimensional Geometric Echo
+
+- Added a fixed-direction, read-only four-axis pulse/echo probe over evidence, geometry, temporal coordination, and informational interlock telemetry.
+- Added orthogonal and tetrahedral pulse responses with reconstruction-error checks; no cadence, routing, learning, or policy mutation is possible.
+- Added CLI, MCP, interconnect, tests, benchmark, release receipt, and phase documentation. Silent temporal/interlock axes remain explicit when their evidence gates are not met.
+
 ## 8.2.5 - Resonance Frequency Sweep
 
 - Added a bounded read-only frequency response over sealed Resonant Frame metrics with cross-signal phase-lock scoring.

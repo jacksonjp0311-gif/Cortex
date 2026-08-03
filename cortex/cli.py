@@ -601,7 +601,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     interlock_field_p.add_argument(
         "action",
-        choices=["status", "geometry", "bridges", "trial", "source-trial", "resonance"],
+        choices=["status", "geometry", "bridges", "trial", "source-trial", "resonance", "echo"],
         nargs="?",
         default="status",
     )
@@ -2010,6 +2010,18 @@ def main(argv: list[str] | None = None) -> None:
 
                 emit(
                     run_frequency_sweep(
+                        store,
+                        args.repo,
+                        home=home,
+                        persist=True,
+                    ),
+                    args.json,
+                )
+            elif args.action == "echo":
+                from .geometric_echo import run_geometric_echo
+
+                emit(
+                    run_geometric_echo(
                         store,
                         args.repo,
                         home=home,

@@ -381,6 +381,16 @@ def mesh_status(
             "error": f"{type(exc).__name__}:{exc}",
             "advisory_only": True,
         }
+    try:
+        from .geometric_echo import run_geometric_echo
+
+        geometric_echo_panel = run_geometric_echo(store, repo, persist=False)
+    except Exception as exc:
+        geometric_echo_panel = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+        }
 
     return {
         "schema_version": SCHEMA,
@@ -405,6 +415,7 @@ def mesh_status(
         "query_bridge_trials": bridge_trial_panel,
         "source_admission_trials": source_admission_panel,
         "resonance_sweep": resonance_sweep_panel,
+        "geometric_echo": geometric_echo_panel,
         "warm_in": {
             "command": f"python -m cortex warm-in status --repo {repo}",
             "run": f"python -m cortex warm-in run --repo {repo}",
@@ -553,6 +564,7 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "query_bridge_trials": mesh.get("query_bridge_trials"),
         "source_admission_trials": mesh.get("source_admission_trials"),
         "resonance_sweep": mesh.get("resonance_sweep"),
+        "geometric_echo": mesh.get("geometric_echo"),
         "law": "common_pulse_through_kernel_spectrum_and_body_epoch",
         "claim_boundary": mesh.get("claim_boundary"),
     }

@@ -292,6 +292,14 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "gate",
         "kernel": "reset",
     },
+    "geometric_echo": {
+        "symbol": "⟊",
+        "spoken": "four-dimensional geometric echo",
+        "aria_id": "GeometricEcho",
+        "maps_to": "cortex interlock echo / geometric_echo_latest",
+        "role": "pulse",
+        "kernel": "integrate",
+    },
     # ── Closed loop / signal intelligence ──────────────────────────────────
     "causal": {
         "symbol": "↻",

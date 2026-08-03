@@ -256,6 +256,7 @@ TOOLS = [
                     "enum": ["bridge64"],
                 },
                 "resonance": {"type": "boolean", "default": False},
+                "echo": {"type": "boolean", "default": False},
                 "top_k": {"type": "integer", "default": 5},
                 "limit": {"type": "integer", "default": 2048},
             },
@@ -665,6 +666,15 @@ class CortexMCP:
                 from .resonance_sweep import run_frequency_sweep
 
                 return run_frequency_sweep(
+                    self.store,
+                    repo,
+                    home=self.home,
+                    persist=True,
+                )
+            if bool(arguments.get("echo")):
+                from .geometric_echo import run_geometric_echo
+
+                return run_geometric_echo(
                     self.store,
                     repo,
                     home=self.home,
