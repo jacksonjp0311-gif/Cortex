@@ -30,9 +30,10 @@ reported as unmeasured, never silently learned. Use:
 python -m cortex ostt residual --repo CortexTeach --json
 ```
 
-The live repository currently reports `status=unmeasured` because the existing
-Cortex operators do not yet emit shared typed output pairs. That is a deliberate
-safe result, not a missing fallback.
+Before an activation observation, the live repository reports
+`status=unmeasured`. After activation v8.3.2 may report `status=observed_shadow`:
+the measured output exists and is typed, but the known operator output is still
+undeclared. Both states are deliberate safe results, not missing fallbacks.
 
 ## Gates before any update
 

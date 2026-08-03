@@ -1,3 +1,10 @@
+## 8.3.2 - Typed Activation Observations (shadow)
+
+- Added an activation adapter that captures the existing measured-event normalized vector as a typed, hash-linked `observed` receipt.
+- Bound observed receipts to body epoch and measurement cohort and retained a bounded receipt history for later calibration.
+- Wired the latest receipt into OSTT/interconnect reports; missing known operator output remains an explicit gate and cannot authorize residual learning.
+- Added v8.3.2 phase documentation and adapter coverage.
+
 ## 8.3.1 - Operator Residual Evidence (shadow)
 
 - Added typed `ResidualReceipt` objects with deterministic vector norms, bounded residual burden, uncertainty calibration, invariant projections, epoch/cohort identity, witnesses, and comparison modes.

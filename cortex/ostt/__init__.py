@@ -24,6 +24,7 @@ from .residuals import (
     ResidualReceipt,
     residual_evidence_report,
 )
+from .activation import activation_observation_receipt
 
 __all__ = [
     "CLAIM",
@@ -40,4 +41,5 @@ __all__ = [
     "RESIDUAL_SCHEMA",
     "ResidualReceipt",
     "residual_evidence_report",
+    "activation_observation_receipt",
 ]

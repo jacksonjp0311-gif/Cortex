@@ -19,7 +19,7 @@ RESIDUAL_SCHEMA = "cortex-ostt-residual/1.0"
 RESIDUAL_GLYPH = "▥"
 DEFAULT_EPSILON = 1e-9
 DEFAULT_MAX_BURDEN = 1.0
-VALID_STATUSES = frozenset({"measured", "unmeasured"})
+VALID_STATUSES = frozenset({"measured", "observed", "unmeasured"})
 VALID_APPROXIMATION_MODES = frozenset({"exact", "approximate"})
 VALID_COMPARISON_MODES = frozenset(
     {"black_box", "operator_only", "residual_only", "untyped", "ostt"}
@@ -162,6 +162,37 @@ class ResidualReceipt:
         )
 
     @classmethod
+    def observed(
+        cls,
+        *,
+        operator_id: str,
+        input_type: str,
+        output_type: str,
+        observed_output: Any,
+        validation: Mapping[str, Any] | None = None,
+        epoch_id: str | None = None,
+        cohort_id: str | None = None,
+        approximation_mode: str = "exact",
+        comparison_mode: str = "ostt",
+        reason: str = "known_operator_output_not_declared",
+    ) -> "ResidualReceipt":
+        """Capture a typed output before a declared known output exists."""
+        _flatten_numeric(observed_output)
+        return cls(
+            operator_id=operator_id,
+            input_type=input_type,
+            output_type=output_type,
+            status="observed",
+            observed_output=observed_output,
+            validation=dict(validation or {}),
+            epoch_id=epoch_id,
+            cohort_id=cohort_id,
+            approximation_mode=approximation_mode,
+            comparison_mode=comparison_mode,
+            reason=reason,
+        )
+
+    @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ResidualReceipt":
         """Rehydrate a receipt from a JSON-compatible mapping."""
         fields = {
@@ -205,6 +236,17 @@ class ResidualReceipt:
         if self.status == "unmeasured":
             if not self.reason:
                 errors.append("unmeasured_reason_missing")
+            return errors
+        if self.status == "observed":
+            if self.observed_output is None:
+                errors.append("observed_output_missing")
+            else:
+                try:
+                    _flatten_numeric(self.observed_output)
+                except (TypeError, ValueError):
+                    errors.append("observed_output_not_numeric")
+            if not self.reason:
+                errors.append("observed_reason_missing")
             return errors
         if self.known_output is None or self.observed_output is None:
             errors.append("output_pair_missing")
@@ -333,11 +375,15 @@ def residual_evidence_report(
             )
         expected.append(receipt)
 
+    observed = [receipt for receipt in expected if receipt.status == "observed"]
     measured = [receipt for receipt in expected if receipt.status == "measured"]
     ready = [receipt for receipt in expected if receipt.evidence_ready]
     burden_values = [float(receipt.burden) for receipt in measured if receipt.burden is not None]
     modes = {receipt.comparison_mode for receipt in supplied}
     gate_values = {
+        "known_output_declared": bool(measured)
+        and len(measured) == len(expected)
+        and all(receipt.known_output is not None for receipt in measured),
         "typed_compatibility": bool(measured)
         and len(measured) == len(expected)
         and not type_mismatches,
@@ -362,13 +408,17 @@ def residual_evidence_report(
         "comparison_matrix": REQUIRED_COMPARISON_MODES.issubset(modes),
     }
     eligible = bool(expected) and all(gate_values.values())
-    if not measured:
+    if not measured and observed:
+        status = "observed_shadow"
+    elif not measured:
         status = "unmeasured"
     elif eligible:
         status = "ready_for_review"
     else:
         status = "measured_shadow"
     next_actions = [name for name, passed in gate_values.items() if not passed]
+    if observed and "known_output_declared" not in next_actions:
+        next_actions.append("declare_known_operator_output")
     return {
         "schema_version": RESIDUAL_SCHEMA,
         "glyph": RESIDUAL_GLYPH,
@@ -376,7 +426,8 @@ def residual_evidence_report(
         "status": status,
         "operator_count": len(expected),
         "measured_count": len(measured),
-        "unmeasured_count": len(expected) - len(measured),
+        "observed_count": len(observed),
+        "unmeasured_count": len(expected) - len(measured) - len(observed),
         "ready_count": len(ready),
         "burden": {
             "mean": round(sum(burden_values) / len(burden_values), 8)

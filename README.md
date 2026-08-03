@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.3.1-0ea5e9?style=for-the-badge" alt="v8.3.1" />
+  <img src="https://img.shields.io/badge/version-8.3.2-0ea5e9?style=for-the-badge" alt="v8.3.2" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## OSTT compatibility and residual evidence (v8.3.1)
+## OSTT typed activation observations (v8.3.2)
 
 Cortex now exposes a read-only **Operator-Structured Transformation Theory
 (OSTT)** audit over its existing transitions. The `▤` layer makes domains,
@@ -37,8 +37,11 @@ The same audit is wired into `cortex interconnect` and the mesh dashboard. It
 is shadow/advisory telemetry only: it does not execute operators, alter
 routing, train models, mutate the host, or establish a consciousness claim.
 See [`docs/intelligence/PHASE_V8.3.0_OSTT_COMPATIBILITY_LAYER.md`](docs/intelligence/PHASE_V8.3.0_OSTT_COMPATIBILITY_LAYER.md)
-and the measured shadow gate in
+the measured residual gate in
 [`docs/intelligence/PHASE_V8.3.1_OPERATOR_RESIDUAL_EVIDENCE.md`](docs/intelligence/PHASE_V8.3.1_OPERATOR_RESIDUAL_EVIDENCE.md).
+Activation now captures the existing measured event vector as an epoch/cohort-bound
+`observed` receipt; the known operator output remains an explicit gate. See
+[`docs/intelligence/PHASE_V8.3.2_TYPED_ACTIVATION_OBSERVATIONS.md`](docs/intelligence/PHASE_V8.3.2_TYPED_ACTIVATION_OBSERVATIONS.md).
 
 ### Local memory for AI coding agents — attach once, keep the host sovereign
 

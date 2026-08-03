@@ -402,6 +402,7 @@ def mesh_status(
             "advisory_only": True,
         }
     binding_panel = _binding_field_panel(store, repo)
+    latest_ostt_receipt = store.get_setting(f"ostt_residual_latest:{repo}", None)
     try:
         from .ostt import audit_runtime
 
@@ -425,6 +426,9 @@ def mesh_status(
                 ).get("classification"),
                 "binding_classification": (binding_panel or {}).get("classification"),
                 "interlock": interlock_panel,
+                "operator_residuals": [latest_ostt_receipt]
+                if latest_ostt_receipt
+                else [],
             }
         )
     except Exception as exc:

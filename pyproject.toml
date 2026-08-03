@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "8.3.1"
+version = "8.3.2"
 description = "Governed continuation memory with query-conditioned geometric bridge trials"
 readme = "README.md"
 requires-python = ">=3.10"

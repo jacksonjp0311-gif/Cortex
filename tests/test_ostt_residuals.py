@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import unittest
 
-from cortex.ostt import OperatorContract
+from cortex.ostt import OperatorContract, activation_observation_receipt
 from cortex.ostt.residuals import ResidualReceipt, residual_evidence_report
 
 
@@ -80,6 +80,30 @@ class OsttResidualTests(unittest.TestCase):
         self.assertFalse(receipt.evidence_ready)
         self.assertEqual(receipt.to_dict()["status"], "unmeasured")
         self.assertIn("typed_operator_output_not_recorded", receipt.to_dict()["reason"])
+
+    def test_activation_adapter_captures_typed_observed_output(self) -> None:
+        payload = activation_observation_receipt(
+            {
+                "body_epoch": {"epoch_id": "epoch-activation"},
+                "information_interlock": {
+                    "measurement_cohort_id": "cohort-activation"
+                },
+                "measured_event_field": {
+                    "schema_version": "cortex-measured-event-field/1.1",
+                    "event_id": "event-1",
+                    "event_kind": "activation_transaction",
+                    "measurement_basis": "measured_delta",
+                    "receipt_hash": "delta-hash",
+                    "normalized_delta": {"events": 0.2, "epochs": 1.0},
+                },
+            }
+        )
+        self.assertEqual(payload["status"], "observed")
+        self.assertEqual(payload["operator_id"], "activation_observation")
+        self.assertEqual(payload["epoch_id"], "epoch-activation")
+        self.assertEqual(payload["cohort_id"], "cohort-activation")
+        self.assertFalse(payload["evidence_ready"])
+        self.assertFalse(payload["validation"]["known_output_declared"])
 
     def test_review_report_requires_all_declared_gates(self) -> None:
         report = residual_evidence_report(

@@ -1161,4 +1161,30 @@ def activate_repository(
                 "error": f"{type(exc).__name__}:{exc}",
                 "advisory_only": True,
             }
+        # v8.3.2: capture the existing measured activation output as a typed
+        # OSTT observation.  The known operator output remains an explicit
+        # review gate; no residual update or policy effect is possible here.
+        try:
+            from .ostt import activation_observation_receipt
+
+            ostt_receipt = activation_observation_receipt(out)
+            out["ostt_residual_receipt"] = ostt_receipt
+            store.set_setting(f"ostt_residual_latest:{repo}", ostt_receipt)
+            history_key = f"ostt_residual_history:{repo}"
+            history = list(store.get_setting(history_key, []) or [])
+            receipt_hash = ostt_receipt.get("receipt_hash")
+            if receipt_hash and not any(
+                item.get("receipt_hash") == receipt_hash
+                for item in history
+                if isinstance(item, dict)
+            ):
+                history.append(ostt_receipt)
+            store.set_setting(history_key, history[-128:])
+        except Exception as exc:
+            out["ostt_residual_receipt"] = {
+                "status": "unmeasured",
+                "error": f"{type(exc).__name__}:{exc}",
+                "advisory_only": True,
+                "policy_effect": False,
+            }
     return out
