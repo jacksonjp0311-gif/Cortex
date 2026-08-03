@@ -257,6 +257,7 @@ TOOLS = [
                 },
                 "resonance": {"type": "boolean", "default": False},
                 "echo": {"type": "boolean", "default": False},
+                "rotate": {"type": "boolean", "default": False},
                 "top_k": {"type": "integer", "default": 5},
                 "limit": {"type": "integer", "default": 2048},
             },
@@ -675,6 +676,15 @@ class CortexMCP:
                 from .geometric_echo import run_geometric_echo
 
                 return run_geometric_echo(
+                    self.store,
+                    repo,
+                    home=self.home,
+                    persist=True,
+                )
+            if bool(arguments.get("rotate")):
+                from .rotated_echo import run_rotated_echo
+
+                return run_rotated_echo(
                     self.store,
                     repo,
                     home=self.home,

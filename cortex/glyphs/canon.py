@@ -300,6 +300,14 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "pulse",
         "kernel": "integrate",
     },
+    "rotated_echo_alignment": {
+        "symbol": "⤨",
+        "spoken": "rotated echo alignment",
+        "aria_id": "RotatedEchoAlignment",
+        "maps_to": "cortex interlock rotate / rotated_echo_latest",
+        "role": "pulse",
+        "kernel": "integrate",
+    },
     # ── Closed loop / signal intelligence ──────────────────────────────────
     "causal": {
         "symbol": "↻",

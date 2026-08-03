@@ -1,3 +1,9 @@
+## 8.2.7 - Rotated Echo Alignment
+
+- Added a fixed 19-orientation quarter-turn sweep over the four-dimensional echo field.
+- Added evidence-backed subspace alignment, orthonormal reconstruction checks, and a reversible measurement-only surgery recommendation for silent temporal/interlock axes.
+- Added CLI, MCP, interconnect, tests, benchmark, release receipt, and phase documentation; rotation never changes routing, cadence, topology, or policy.
+
 ## 8.2.6 - Four-Dimensional Geometric Echo
 
 - Added a fixed-direction, read-only four-axis pulse/echo probe over evidence, geometry, temporal coordination, and informational interlock telemetry.

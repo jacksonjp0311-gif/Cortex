@@ -601,7 +601,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     interlock_field_p.add_argument(
         "action",
-        choices=["status", "geometry", "bridges", "trial", "source-trial", "resonance", "echo"],
+        choices=["status", "geometry", "bridges", "trial", "source-trial", "resonance", "echo", "rotate"],
         nargs="?",
         default="status",
     )
@@ -2022,6 +2022,18 @@ def main(argv: list[str] | None = None) -> None:
 
                 emit(
                     run_geometric_echo(
+                        store,
+                        args.repo,
+                        home=home,
+                        persist=True,
+                    ),
+                    args.json,
+                )
+            elif args.action == "rotate":
+                from .rotated_echo import run_rotated_echo
+
+                emit(
+                    run_rotated_echo(
                         store,
                         args.repo,
                         home=home,

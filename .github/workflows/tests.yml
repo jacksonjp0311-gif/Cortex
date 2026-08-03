@@ -135,6 +135,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v826.py
+      - name: Rotated Echo Alignment receipt (v8.2.7 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v827.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -159,6 +163,7 @@ jobs:
             work/release_receipt_v824.json
             work/release_receipt_v825.json
             work/release_receipt_v826.json
+            work/release_receipt_v827.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
