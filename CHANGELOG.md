@@ -1,3 +1,9 @@
+## 8.2.5 - Resonance Frequency Sweep
+
+- Added a bounded read-only frequency response over sealed Resonant Frame metrics with cross-signal phase-lock scoring.
+- Added minimum-history and peak-separation gates; a candidate peak recommends observation only and never changes cadence or policy.
+- Added CLI/MCP/interconnect surfaces, tests, benchmark, release receipt, and documentation.
+
 ## 8.2.4 - Selective Admission and Ranker Attribution
 
 - Added dimensionless candidate margins and abstention so ambiguous source reserves do not intervene by default.

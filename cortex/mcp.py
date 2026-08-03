@@ -255,6 +255,7 @@ TOOLS = [
                     "type": "string",
                     "enum": ["bridge64"],
                 },
+                "resonance": {"type": "boolean", "default": False},
                 "top_k": {"type": "integer", "default": 5},
                 "limit": {"type": "integer", "default": 2048},
             },
@@ -659,6 +660,15 @@ class CortexMCP:
                     pool_size=limit,
                     widened_size=max(48, min(96, limit * 2)),
                     top_k=max(1, int(arguments.get("top_k") or 5)),
+                )
+            if bool(arguments.get("resonance")):
+                from .resonance_sweep import run_frequency_sweep
+
+                return run_frequency_sweep(
+                    self.store,
+                    repo,
+                    home=self.home,
+                    persist=True,
                 )
             return interlock_report(
                 self.store, repo, limit=int(arguments.get("limit") or 2048)

@@ -601,7 +601,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     interlock_field_p.add_argument(
         "action",
-        choices=["status", "geometry", "bridges", "trial", "source-trial"],
+        choices=["status", "geometry", "bridges", "trial", "source-trial", "resonance"],
         nargs="?",
         default="status",
     )
@@ -2002,6 +2002,18 @@ def main(argv: list[str] | None = None) -> None:
                         pool_size=source_pool,
                         widened_size=max(48, min(96, source_pool * 2)),
                         top_k=max(1, int(args.top_k or 5)),
+                    ),
+                    args.json,
+                )
+            elif args.action == "resonance":
+                from .resonance_sweep import run_frequency_sweep
+
+                emit(
+                    run_frequency_sweep(
+                        store,
+                        args.repo,
+                        home=home,
+                        persist=True,
                     ),
                     args.json,
                 )

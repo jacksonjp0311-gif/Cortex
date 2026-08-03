@@ -371,6 +371,16 @@ def mesh_status(
         "policy_effect": False,
         "advisory_only": True,
     }
+    try:
+        from .resonance_sweep import run_frequency_sweep
+
+        resonance_sweep_panel = run_frequency_sweep(store, repo, persist=False)
+    except Exception as exc:
+        resonance_sweep_panel = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+        }
 
     return {
         "schema_version": SCHEMA,
@@ -394,6 +404,7 @@ def mesh_status(
         "geometric_bridges": bridge_panel,
         "query_bridge_trials": bridge_trial_panel,
         "source_admission_trials": source_admission_panel,
+        "resonance_sweep": resonance_sweep_panel,
         "warm_in": {
             "command": f"python -m cortex warm-in status --repo {repo}",
             "run": f"python -m cortex warm-in run --repo {repo}",
@@ -541,6 +552,7 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "geometric_bridges": mesh.get("geometric_bridges"),
         "query_bridge_trials": mesh.get("query_bridge_trials"),
         "source_admission_trials": mesh.get("source_admission_trials"),
+        "resonance_sweep": mesh.get("resonance_sweep"),
         "law": "common_pulse_through_kernel_spectrum_and_body_epoch",
         "claim_boundary": mesh.get("claim_boundary"),
     }

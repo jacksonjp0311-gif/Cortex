@@ -127,6 +127,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v824.py
+      - name: Resonance Frequency Sweep receipt (v8.2.5 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v825.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -149,6 +153,7 @@ jobs:
             work/release_receipt_v822.json
             work/release_receipt_v823.json
             work/release_receipt_v824.json
+            work/release_receipt_v825.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
