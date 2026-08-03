@@ -43,9 +43,14 @@ class InterconnectContinuityTests(unittest.TestCase):
         self.assertTrue(snap.get("atomic_control_read"), snap)
         self.assertEqual(snap.get("manifest_stored"), snap.get("manifest_observed"))
         self.assertIn("freshness", m.get("intelligence") or {})
+        ostt = m.get("ostt") or {}
+        self.assertEqual(ostt.get("schema_version"), "cortex-ostt/1.0")
+        self.assertTrue(ostt.get("advisory_only"))
+        self.assertFalse(ostt.get("policy_effect"))
         dash = mesh_dashboard(self.store, "ICHost", governor=self.gov, home=self.home)
         self.assertEqual(dash.get("body_epoch_id"), cont.get("body_epoch_id"))
         self.assertEqual(dash.get("runtime_phase"), cont.get("runtime_phase"))
+        self.assertEqual((dash.get("ostt") or {}).get("schema_version"), "cortex-ostt/1.0")
 
 
 if __name__ == "__main__":

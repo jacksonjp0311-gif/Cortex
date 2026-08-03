@@ -401,6 +401,39 @@ def mesh_status(
             "error": f"{type(exc).__name__}:{exc}",
             "advisory_only": True,
         }
+    binding_panel = _binding_field_panel(store, repo)
+    try:
+        from .ostt import audit_runtime
+
+        ostt_panel = audit_runtime(
+            {
+                "manifest_current": control_snapshot.get("manifest_current"),
+                "certificate_status": control_snapshot.get("certificate_status"),
+                "epoch_verified": continuity.get("epoch_verified"),
+                "phase_bound": continuity.get("phase_bound"),
+                "immune_block": block,
+                "evidence_valid": bool(interlock_panel.get("cohort_current"))
+                and bool(
+                    (interlock_panel.get("promotion_gates") or {}).get(
+                        "measurement_cohort_gate"
+                    )
+                ),
+                "same_epoch_frames": resonance_sweep_panel.get("frame_count"),
+                "resonance_status": resonance_sweep_panel.get("status"),
+                "self_sensing_classification": (
+                    self_sense_panel or {}
+                ).get("classification"),
+                "binding_classification": (binding_panel or {}).get("classification"),
+                "interlock": interlock_panel,
+            }
+        )
+    except Exception as exc:
+        ostt_panel = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+            "policy_effect": False,
+        }
 
     return {
         "schema_version": SCHEMA,
@@ -427,13 +460,14 @@ def mesh_status(
         "resonance_sweep": resonance_sweep_panel,
         "geometric_echo": geometric_echo_panel,
         "rotated_echo": rotated_echo_panel,
+        "ostt": ostt_panel,
         "warm_in": {
             "command": f"python -m cortex warm-in status --repo {repo}",
             "run": f"python -m cortex warm-in run --repo {repo}",
             "note": "v7.6 Verified Operating Regime — warm field+sense to milestone",
             "phase": "v7.6.0",
         },
-        "binding_field": _binding_field_panel(store, repo),
+        "binding_field": binding_panel,
         "cognitive_field": _cognitive_field_panel(store, repo),
         "continuity": continuity,
         "planes": {
@@ -577,6 +611,7 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "resonance_sweep": mesh.get("resonance_sweep"),
         "geometric_echo": mesh.get("geometric_echo"),
         "rotated_echo": mesh.get("rotated_echo"),
+        "ostt": mesh.get("ostt"),
         "law": "common_pulse_through_kernel_spectrum_and_body_epoch",
         "claim_boundary": mesh.get("claim_boundary"),
     }

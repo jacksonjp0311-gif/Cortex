@@ -1258,6 +1258,20 @@ def build_parser() -> argparse.ArgumentParser:
     interconnect_p.add_argument("--repo", required=True)
     interconnect_p.add_argument("--json", action="store_true")
 
+    ostt_p = sub.add_parser(
+        "ostt",
+        help="OSTT contract audit (▤): typed, read-only operator readiness.",
+    )
+    ostt_p.add_argument(
+        "action",
+        choices=["status"],
+        nargs="?",
+        default="status",
+        help="status (default)",
+    )
+    ostt_p.add_argument("--repo", required=True)
+    ostt_p.add_argument("--json", action="store_true")
+
     prune_p = sub.add_parser(
         "prune",
         help="Prune weak unused synapses (organism-like); never deletes evidence.",
@@ -3285,6 +3299,18 @@ def main(argv: list[str] | None = None) -> None:
                 r.strip() for r in str(args.resolutions).split(",") if r.strip()
             )
             emit(compile_interlink(store, args.repo, resolutions=res or ("file", "symbol")), args.json)
+
+        elif command == "ostt":
+            mesh = mesh_status(store, args.repo, governor=governor, home=home)
+            emit(
+                mesh.get("ostt")
+                or {
+                    "available": False,
+                    "advisory_only": True,
+                    "policy_effect": False,
+                },
+                args.json,
+            )
 
         elif command == "interconnect":
             emit(mesh_status(store, args.repo, governor=governor, home=home), args.json)

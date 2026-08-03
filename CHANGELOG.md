@@ -1,3 +1,11 @@
+## 8.3.0 - OSTT Compatibility Layer
+
+- Added a shadow-only Operator-Structured Transformation Theory (OSTT) contract registry for existing Cortex transitions.
+- Added typed state descriptors, operator traces, explicit preconditions/postconditions/invariants, uncertainty rules, costs, and validation labels.
+- Added `cortex ostt status` and wired the audit into `cortex interconnect` and mesh dashboard output.
+- Added explicit residual and readiness reporting while preserving host immutability, advisory-only policy, and existing routing.
+- Added the v8.3.1 operator-residual evidence plan; no residual-learning or policy mutation is enabled by this release.
+
 ## 8.2.8 - Evidence Runway
 
 - Added a read-only readiness plan to informational-interlock reports.
