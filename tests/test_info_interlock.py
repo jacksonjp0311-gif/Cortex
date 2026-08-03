@@ -101,6 +101,17 @@ class InformationLedgerTests(unittest.TestCase):
         self.store.close()
         self.temp.cleanup()
 
+    def test_readiness_report_names_measurement_deficits(self) -> None:
+        report = interlock_report(self.store, "R")
+        readiness = report["readiness"]
+        self.assertFalse(readiness["ready_for_shadow_analysis"])
+        self.assertEqual(readiness["current"]["valid_outcomes"], 0)
+        self.assertEqual(readiness["remaining"]["valid_samples_in_cohort"], 32)
+        self.assertEqual(readiness["remaining"]["same_epoch_frames"], 16)
+        self.assertIn("collect_same_epoch_frames", readiness["next_actions"])
+        self.assertIn("collect_verified_outcome_variation", readiness["next_actions"])
+        self.assertFalse(readiness["policy_effect"])
+
     def _activation(self, activation_id: str) -> None:
         self.store.record_neural_activation(
             "R",
@@ -279,6 +290,11 @@ class InformationLedgerTests(unittest.TestCase):
         self.assertGreater(report["top_interlocks"][0]["synergy_proxy_bits"], 0.85)
         self.assertGreater(report["top_interlocks"][0]["alignment"], 0.0)
         self.assertFalse(report["promotion_gates"]["eligible"])
+        readiness = report["readiness"]
+        self.assertTrue(readiness["ready_for_shadow_analysis"])
+        self.assertEqual(readiness["remaining"]["valid_samples_in_cohort"], 0)
+        self.assertEqual(readiness["current"]["outcome_classes"], ["non_positive", "positive"])
+        self.assertIn("measure_recall_latency_holdout", readiness["next_actions"])
         self.assertIn("not consciousness", report["claim_boundary"])
 
 

@@ -1,3 +1,3 @@
 """Cortex: verified repository assimilation with sparse neural interlinking."""
 
-__version__ = "8.2.7"
+__version__ = "8.2.8"

@@ -1,3 +1,12 @@
+## 8.2.8 - Evidence Runway
+
+- Added a read-only readiness plan to informational-interlock reports.
+- Reports now expose exact deficits for same-epoch frames, verified outcomes,
+  outcome variation, witness coverage, overall samples, and per-task-family
+  replication.
+- The plan is advisory-only and cannot collect evidence, resolve outcomes,
+  change routing, promote interlocks, or authorize learning.
+
 ## 8.2.7 - Rotated Echo Alignment
 
 - Added a fixed 19-orientation quarter-turn sweep over the four-dimensional echo field.

@@ -14,12 +14,16 @@ import math
 import random
 from typing import Any, Iterable, Sequence
 
+from ..epoch import current_body_epoch
 from .ratio_lattice import build_undirected_adj, local_closure, triadic_metrics
 
 
 SCHEMA = "cortex-information-interlock/1.0"
 GLYPH = "⟁"
 BRIDGE_GLYPH = "⟠"
+READINESS_SCHEMA = "cortex-interlock-readiness/1.0"
+TEMPORAL_FRAME_MIN = 16
+OVERALL_VALID_MIN = 128
 CLAIM = (
     "Informational interlocks are epoch-audited, cohort-scoped E-L-O outcome telemetry. "
     "Synergy is a conservative mutual-information proxy, not full PID; "
@@ -419,6 +423,148 @@ def _bootstrap_candidate_ci(
     return (float(lo), float(hi))
 
 
+def _interlock_readiness(
+    store: Any,
+    repo: str,
+    *,
+    cohort_rows: Sequence[dict[str, Any]],
+    resolved: Sequence[dict[str, Any]],
+    valid: Sequence[dict[str, Any]],
+    min_samples: int,
+    data_ready: bool,
+) -> dict[str, Any]:
+    """Describe the smallest evidence runway needed for the next gate.
+
+    This is deliberately a plan, not an executor. It converts the existing
+    promotion gates into explicit deficits so operators can collect the right
+    measurements instead of interpreting zero alignment as a signal to mutate
+    routing or learning state.
+    """
+    resonance = store.get_setting(f"resonance_sweep_latest:{repo}", {}) or {}
+    current_epoch = current_body_epoch(store, repo)
+    current_epoch_id = str(current_epoch.epoch_id) if current_epoch else ""
+    resonance_epoch_id = str(resonance.get("body_epoch_id") or "")
+    resonance_current = bool(
+        resonance_epoch_id
+        and current_epoch_id
+        and resonance_epoch_id == current_epoch_id
+    )
+    frame_count = (
+        max(0, int(resonance.get("frame_count") or 0))
+        if resonance_current
+        else 0
+    )
+    outcome_classes = sorted(
+        {
+            "positive" if float(row.get("reward") or 0.0) > 0.0 else "non_positive"
+            for row in valid
+        }
+    )
+    families: dict[str, dict[str, Any]] = {}
+    for family in sorted(
+        {str(row.get("task_family") or "unknown") for row in cohort_rows}
+    ):
+        family_rows = [
+            row
+            for row in cohort_rows
+            if str(row.get("task_family") or "unknown") == family
+        ]
+        family_resolved = [
+            row
+            for row in family_rows
+            if row.get("outcome_id") and row.get("reward") is not None
+        ]
+        family_valid = [
+            row
+            for row in family_resolved
+            if row.get("constitutional_valid") and row.get("witness_valid")
+        ]
+        family_classes = sorted(
+            {
+                "positive" if float(row.get("reward") or 0.0) > 0.0 else "non_positive"
+                for row in family_valid
+            }
+        )
+        families[family] = {
+            "observations": len(family_rows),
+            "resolved": len(family_resolved),
+            "valid": len(family_valid),
+            "valid_remaining": max(0, int(min_samples) - len(family_valid)),
+            "outcome_classes": family_classes,
+            "outcome_variation": len(family_classes) >= 2,
+            "data_ready": (
+                len(family_valid) >= int(min_samples)
+                and len(family_classes) >= 2
+            ),
+        }
+
+    actions: list[str] = []
+
+    def add(action: str) -> None:
+        if action not in actions:
+            actions.append(action)
+
+    if frame_count < TEMPORAL_FRAME_MIN:
+        add("collect_same_epoch_frames")
+    if not cohort_rows:
+        add("collect_same_epoch_interlock_observations")
+    if len(cohort_rows) > len(resolved):
+        add("resolve_interlock_outcomes")
+    if len(outcome_classes) < 2:
+        add("collect_verified_outcome_variation")
+    if len(valid) < int(min_samples):
+        add("collect_valid_cohort_samples")
+    if families and any(not family["data_ready"] for family in families.values()):
+        add("collect_task_family_replicates")
+    if data_ready:
+        add("measure_recall_latency_holdout")
+
+    return {
+        "schema_version": READINESS_SCHEMA,
+        "mode": "measurement_only",
+        "current": {
+            "cohort_observations": len(cohort_rows),
+            "resolved_outcomes": len(resolved),
+            "valid_outcomes": len(valid),
+            "outcome_classes": outcome_classes,
+            "same_epoch_frames": frame_count,
+            "same_epoch_frame_status": (
+                resonance.get("status") or "not_measured"
+                if resonance_current
+                else "stale_epoch"
+                if resonance_epoch_id
+                else "not_measured"
+            ),
+            "body_epoch_id": current_epoch_id or None,
+            "frame_epoch_id": resonance_epoch_id or None,
+        },
+        "required": {
+            "valid_samples_per_task_family": int(min_samples),
+            "valid_samples_overall": OVERALL_VALID_MIN,
+            "same_epoch_frames": TEMPORAL_FRAME_MIN,
+            "outcome_classes": 2,
+        },
+        "remaining": {
+            "valid_samples_in_cohort": max(0, int(min_samples) - len(valid)),
+            "valid_samples_overall": max(0, OVERALL_VALID_MIN - len(valid)),
+            "same_epoch_frames": max(0, TEMPORAL_FRAME_MIN - frame_count),
+            "outcome_classes": max(0, 2 - len(outcome_classes)),
+            "witness_repairs": max(0, len(resolved) - len(valid)),
+        },
+        "task_families": families,
+        "next_actions": actions,
+        "ready_for_shadow_analysis": bool(data_ready),
+        "promotion_ready": False,
+        "policy_effect": False,
+        "advisory_only": True,
+        "claim_boundary": (
+            "Readiness is a deficit report over recorded measurements. It does not "
+            "execute collection, resolve outcomes, grant authority, or establish "
+            "consciousness or subjective sensing."
+        ),
+    }
+
+
 def interlock_report(
     store: Any,
     repo: str,
@@ -436,6 +582,8 @@ def interlock_report(
     """
     rows = list(store.interlock_observations(repo, limit=limit) or [])
     latest_epoch = next((str(r.get("body_epoch_id") or "") for r in rows if r.get("body_epoch_id")), "")
+    live_epoch = current_body_epoch(store, repo)
+    live_epoch_id = str(live_epoch.epoch_id) if live_epoch else ""
 
     def _cohort(row: dict[str, Any]) -> str:
         return str(
@@ -444,7 +592,26 @@ def interlock_report(
         )
 
     latest_cohort = _cohort(rows[0]) if rows else ""
+    cohort_current = True
+    if live_epoch:
+        cohort_material = {
+            "repo": repo,
+            "repository_id": live_epoch.repository_id,
+            "evidence_root_hash": live_epoch.evidence_root_hash,
+            "schema_hash": live_epoch.schema_hash,
+            "constitutional_config_hash": live_epoch.constitutional_config_hash,
+        }
+        expected_cohort = (
+            "ico_"
+            + sha256(str(sorted(cohort_material.items())).encode("utf-8")).hexdigest()[:24]
+        )
+        cohort_current = bool(latest_cohort and latest_cohort == expected_cohort)
+        if not cohort_current:
+            latest_cohort = ""
     cohort_rows = [r for r in rows if _cohort(r) == latest_cohort]
+    if not cohort_current:
+        cohort_rows = []
+        latest_epoch = ""
     cohort_epochs = sorted({str(r.get("body_epoch_id") or "") for r in cohort_rows})
     resolved = [r for r in cohort_rows if r.get("outcome_id") and r.get("reward") is not None]
     valid = [r for r in resolved if r.get("constitutional_valid") and r.get("witness_valid")]
@@ -503,6 +670,15 @@ def interlock_report(
     alignments = [float(c["alignment"]) for c in candidates]
     mean_alignment = sum(alignments) / max(1, len(alignments))
     data_ready = len(valid) >= int(min_samples) and len(set(int(float(r.get("reward") or 0) > 0) for r in valid)) >= 2
+    readiness = _interlock_readiness(
+        store,
+        repo,
+        cohort_rows=cohort_rows,
+        resolved=resolved,
+        valid=valid,
+        min_samples=int(min_samples),
+        data_ready=data_ready,
+    )
     if candidates and include_lesion:
         lesion_target = candidates[0]
         lesion_effect = float(lesion_target["alignment"])
@@ -545,6 +721,8 @@ def interlock_report(
         "mode": "shadow",
         "advisory_only": True,
         "body_epoch_id": latest_epoch or None,
+        "current_body_epoch_id": live_epoch_id or None,
+        "cohort_current": cohort_current,
         "measurement_cohort_id": latest_cohort or None,
         "body_epochs_in_cohort": cohort_epochs,
         "counts": {
@@ -565,6 +743,7 @@ def interlock_report(
             "candidates": len(candidates),
         },
         "data_ready": data_ready,
+        "readiness": readiness,
         "mean_alignment": round(mean_alignment, 8),
         "top_interlocks": candidates[:12],
         "lesion": lesion,
@@ -678,6 +857,7 @@ def stamp_hits_with_interlock_shadow(store: Any, repo: str, hits: list[Any]) -> 
 __all__ = [
     "BRIDGE_GLYPH",
     "GLYPH",
+    "READINESS_SCHEMA",
     "SCHEMA",
     "graph_sampling_audit",
     "bridge_deconcentration_report",

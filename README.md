@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.2.7-0ea5e9?style=for-the-badge" alt="v8.2.7" />
+  <img src="https://img.shields.io/badge/version-8.2.8-0ea5e9?style=for-the-badge" alt="v8.2.8" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -35,7 +35,7 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 | Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
 | Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-**v8.2.7 — Rotated Echo Alignment** · **v8.2.6 Four-Dimensional Geometric Echo** · **v8.2 Informational Interlocks**
+**v8.2.8 — Evidence Runway** · **v8.2.7 Rotated Echo Alignment** · **v8.2.6 Four-Dimensional Geometric Echo** · **v8.2 Informational Interlocks**
 Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Binding Field names *local coupling vs global readiness*.  
 Stable body epochs now accrue one exactly-once observation per durable activation event until a real temporal window can close. When the seal lags the living tree, **realign explicitly**. Open buffers **commit** to frames — they do not seize authority.
 Each activation now records one measured pre/post state delta, predicts that delta before it occurs, scores the forecast afterward, simulates bounded alternatives, broadcasts four competing signals, and appends a hash-chained operational episode. Modeled event salience remains shadow-only.
@@ -59,6 +59,8 @@ v8.2.5 adds the `∿` Resonance Frequency Sweep. Sealed temporal frames are scan
 v8.2.6 adds the `⟊` Four-Dimensional Geometric Echo. Fixed orthogonal and tetrahedral pulses project the latest evidence, connector geometry, temporal, and informational-interlock telemetry into a bounded operational field. Axis echoes are reconstructable and silent dimensions stay silent when their evidence gates are unmet. This is an advisory diagnostic only: it cannot change routing, cadence, learning, policy, or authority. See [`PHASE_V8.2.6_GEOMETRIC_ECHO.md`](docs/intelligence/PHASE_V8.2.6_GEOMETRIC_ECHO.md).
 
 v8.2.7 adds the `⤨` Rotated Echo Alignment sweep. Nineteen fixed quarter-turns test whether energy remains in the independently evidence-backed active subspace. Orthonormal reconstruction must remain exact; the resulting surgery plan is measurement-only and reversible. See [`PHASE_V8.2.7_ROTATED_ECHO_ALIGNMENT.md`](docs/intelligence/PHASE_V8.2.7_ROTATED_ECHO_ALIGNMENT.md).
+
+v8.2.8 adds the Evidence Runway to the `⟁` `interlock status` field. It turns the existing promotion gates into explicit, read-only deficits: valid samples, outcome variation, witness repairs, same-epoch temporal frames, and per-task-family replication. It schedules measurements only; it never resolves outcomes, changes routing, or opens learning. See [`PHASE_V8.2.8_EVIDENCE_RUNWAY.md`](docs/intelligence/PHASE_V8.2.8_EVIDENCE_RUNWAY.md).
 
 The first selective run admitted 37.5% of cases, produced three helpful and zero harmful replacements, and improved final recall from 46.88% to 51.56%. Promotion remains blocked pending calibrated risk and a third natural epoch/graph replication.
 
