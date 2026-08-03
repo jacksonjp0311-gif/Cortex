@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cortex.source_admission import (
+    _selective_choice,
     evaluate_source_admission_promotion,
     source_admission_score,
     source_trial_context_hash,
@@ -133,3 +134,42 @@ def test_promotion_rejects_harm_and_random_control_ties() -> None:
     assert result["gates"]["pool_recall_lift"] is False
     assert result["gates"]["beats_random_source"] is False
     assert result["gates"]["no_harmful_replacements"] is False
+
+
+def test_selective_admission_abstains_on_ambiguous_margin() -> None:
+    candidates = [
+        ({"path": "cortex/a.py"}, {"path": "cortex/a.py", "triadic_alignment": 0.72, "eligible": True}),
+        ({"path": "cortex/b.py"}, {"path": "cortex/b.py", "triadic_alignment": 0.70, "eligible": True}),
+    ]
+    assert _selective_choice(candidates) is None
+
+    decisive = [
+        ({"path": "cortex/a.py"}, {"path": "cortex/a.py", "triadic_alignment": 0.78, "eligible": True}),
+        ({"path": "cortex/b.py"}, {"path": "cortex/b.py", "triadic_alignment": 0.68, "eligible": True}),
+    ]
+    selected = _selective_choice(decisive)
+    assert selected is not None
+    assert selected[1]["abstained"] is False
+    assert 0.0 <= selected[1]["predicted_harm_risk"] <= 1.0
+
+
+def test_promotion_exposes_ranker_attribution_gate() -> None:
+    rows = [
+        {
+            "final_ranks": {"baseline": 2, "source_reserve": 2},
+            "selected": None,
+            "fixed_cardinality": True,
+            "policy_effect": False,
+        }
+        for _ in range(64)
+    ]
+    arms = {"baseline": _metrics(0.5, 0.25), "source_reserve": _metrics(0.5, 0.25), "random_source": _metrics(0.4, 0.2)}
+    result = evaluate_source_admission_promotion(
+        rows,
+        arms,
+        arms,
+        hybrid_arms={"baseline": _metrics(0.6, 0.3), "source_reserve": _metrics(0.7, 0.35)},
+    )
+    assert result["gates"]["attribution_available"] is True
+    assert result["ranker_stage_delta"] == -0.2
+    assert result["gates"]["calibration_ready"] is False

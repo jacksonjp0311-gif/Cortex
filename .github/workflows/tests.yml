@@ -123,6 +123,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v823.py
+      - name: Selective Admission / Ranker Attribution receipt (v8.2.4 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v824.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -144,6 +148,7 @@ jobs:
             work/release_receipt_v821.json
             work/release_receipt_v822.json
             work/release_receipt_v823.json
+            work/release_receipt_v824.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

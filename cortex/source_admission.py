@@ -1,4 +1,4 @@
-"""v8.2.3 source-admission field.
+"""v8.2.4 selective source-admission and ranker-attribution field.
 
 This module measures the boundary before ranking: whether query-relevant host
 source enters a fixed candidate pool.  Every arm is counterfactual and operates
@@ -19,13 +19,13 @@ from typing import Any, Sequence
 from .retrieval import path_token_overlap, query, support_hits
 
 
-SCHEMA = "cortex-source-admission-field/1.0"
+SCHEMA = "cortex-selective-admission-field/1.0"
 GLYPH = "⟢"
-VERSION = "8.2.3"
+VERSION = "8.2.4"
 CLAIM = (
-    "Source admission is shadow-only retrieval telemetry. It does not change "
-    "live results, train the ranker, mutate topology, grant authority, or "
-    "establish consciousness or subjective sensing."
+    "Selective source admission and ranker attribution are shadow-only retrieval "
+    "telemetry. They do not change live results, train the ranker, mutate "
+    "topology, grant authority, or establish consciousness or subjective sensing."
 )
 SOURCE_SUFFIXES = (".py", ".pyi", ".rs", ".go", ".java", ".js", ".jsx", ".ts", ".tsx")
 DOCUMENT_PREFIXES = ("docs/", ".cortex/cards/", "examples/memory-packets/")
@@ -188,6 +188,49 @@ def _rerank(store: Any, repo: str, hits: Sequence[Any]) -> list[Any]:
     )
 
 
+def _hybrid(hits: Sequence[Any]) -> list[Any]:
+    """Return the copied pre-ranker order for attribution."""
+    return deepcopy(list(hits))
+
+
+def _selective_choice(
+    evaluated: Sequence[tuple[Any, dict[str, Any]]],
+    *,
+    minimum_alignment: float = 0.58,
+    minimum_relative_margin: float = 0.06,
+) -> tuple[Any, dict[str, Any]] | None:
+    """Abstain when the best source candidate is not decisively better.
+
+    The margin is dimensionless and computed only from the candidate field. It
+    is deliberately not fitted on the frozen exam; a later calibration corpus
+    may replace these priors after a separate receipt proves calibration.
+    """
+    eligible = [item for item in evaluated if item[1].get("eligible")]
+    if not eligible:
+        return None
+    top = eligible[0]
+    second_alignment = float(eligible[1][1].get("triadic_alignment") or 0.0) if len(eligible) > 1 else 0.0
+    alignment = float(top[1].get("triadic_alignment") or 0.0)
+    gap = max(0.0, alignment - second_alignment)
+    relative_margin = gap / max(alignment, 1e-9)
+    metadata = {
+        **top[1],
+        "selection_confidence": round(
+            max(0.0, min(1.0, 0.70 * alignment + 0.30 * relative_margin)), 8
+        ),
+        "predicted_harm_risk": round(
+            max(0.0, min(1.0, 1.0 - (0.70 * alignment + 0.30 * relative_margin))), 8
+        ),
+        "relative_margin": round(relative_margin, 8),
+        "shadow_only": True,
+        "abstained": False,
+        "selection_reason": "alignment_and_margin_pass",
+    }
+    if alignment < float(minimum_alignment) or relative_margin < float(minimum_relative_margin):
+        return None
+    return top[0], metadata
+
+
 def _source_candidates(
     store: Any,
     repo: str,
@@ -241,7 +284,8 @@ def source_admission_trial(
     widened = list(raw_hits[:widened_n])
     telemetry, evaluated = _source_candidates(store, repo, query_text, baseline)
     eligible = [(hit, item) for hit, item in evaluated if item["eligible"]]
-    selected = eligible[0] if eligible else None
+    top_candidate = eligible[0] if eligible else None
+    selected = _selective_choice(evaluated)
     source_hit = _rescale_candidate(selected[0], baseline, selected[1]) if selected else None
 
     random_selected = None
@@ -273,17 +317,29 @@ def source_admission_trial(
         "documentation_suppression": doc_suppressed,
     }
     ranked = {arm: _rerank(store, repo, hits) for arm, hits in pools.items()}
+    hybrid = {arm: _hybrid(hits) for arm, hits in pools.items()}
+    selected_metadata = dict(selected[1]) if selected else {
+        "abstained": True,
+        "selection_reason": "alignment_or_margin_failed",
+        "top_candidate": (top_candidate[1] if top_candidate else None),
+    }
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "query_hash": sha256(query_text.encode("utf-8")).hexdigest(),
         "formula": "A(q,v)=(lexical_alignment*semantic_similarity*evidence_reliability)^(1/3)",
-        "floors": {"lexical": 0.15, "semantic": 0.45, "evidence": 0.80, "alignment": 0.48},
+        "floors": {
+            "lexical": 0.15, "semantic": 0.45, "evidence": 0.80, "alignment": 0.48,
+            "selective_alignment": 0.58, "selective_relative_margin": 0.06,
+        },
         "pools": {arm: [_path(hit) for hit in hits] for arm, hits in pools.items()},
+        "hybrid": {arm: [_path(hit) for hit in hits[:k]] for arm, hits in hybrid.items()},
         "ranked": {arm: [_path(hit) for hit in hits[:k]] for arm, hits in ranked.items()},
         "source_candidates": telemetry[:12],
-        "selected": selected[1] if selected else None,
+        "selected": selected_metadata if selected else None,
+        "top_candidate": top_candidate[1] if top_candidate else None,
         "random_selected": random_selected[1] if random_selected else None,
+        "abstained": selected is None,
         "fixed_cardinality": len(source_pool) == len(baseline) == len(random_pool),
         "live_results_unchanged": True,
         "policy_effect": False,
@@ -308,6 +364,8 @@ def evaluate_source_admission_promotion(
     pool_arms: dict[str, dict[str, Any]],
     final_arms: dict[str, dict[str, Any]],
     *,
+    hybrid_arms: dict[str, dict[str, Any]] | None = None,
+    calibration_ready: bool = False,
     replication_history: Sequence[dict[str, Any]] = (),
     min_cases: int = 64,
     p95_overhead_ms: float = 0.0,
@@ -344,11 +402,15 @@ def evaluate_source_admission_promotion(
             float(random_final.get("recall") or 0.0), float(random_final.get("mrr") or 0.0)
         ),
         "no_harmful_replacements": harmful == 0,
-        "selection_bounded": selected / max(1, len(rows)) <= 0.50,
+        "selection_bounded": 0.05 <= selected / max(1, len(rows)) <= 0.50,
         "latency_bounded": float(p95_overhead_ms) <= 250.0,
         "fixed_cardinality": all(bool(row.get("fixed_cardinality")) for row in rows),
         "policy_inert": all(row.get("policy_effect") is False for row in rows),
         "replicated_three_contexts": len(contexts) >= 3 and len(consistent) >= 3,
+        "attribution_available": bool(hybrid_arms) and all(
+            arm in (hybrid_arms or {}) for arm in ("baseline", "source_reserve")
+        ),
+        "calibration_ready": bool(calibration_ready),
     }
     return {
         "eligible": all(gates.values()),
@@ -359,6 +421,14 @@ def evaluate_source_admission_promotion(
         "helpful_replacements": helpful,
         "harmful_replacements": harmful,
         "selection_rate": round(selected / max(1, len(rows)), 8),
+        "ranker_stage_delta": round(
+            float(source_final.get("recall") or 0.0)
+            - float((hybrid_arms or {}).get("source_reserve", {}).get("recall") or 0.0), 8
+        ),
+        "ranker_stage_lift": round(
+            float(source_final.get("recall") or 0.0)
+            - float((hybrid_arms or {}).get("source_reserve", {}).get("recall") or 0.0), 8
+        ),
         "replication_contexts": len(contexts),
         "policy_effect": False,
     }
@@ -399,7 +469,10 @@ def run_source_admission_suite(
     body_epoch_id = body_epoch.epoch_id if body_epoch else None
     parameters = {
         "pool_size": int(pool_size), "widened_size": int(widened_size), "top_k": int(top_k),
-        "floors": {"lexical": 0.15, "semantic": 0.45, "evidence": 0.80, "alignment": 0.48},
+        "floors": {
+            "lexical": 0.15, "semantic": 0.45, "evidence": 0.80, "alignment": 0.48,
+            "selective_alignment": 0.58, "selective_relative_margin": 0.06,
+        },
     }
     context_hash = source_trial_context_hash(
         corpus_hash=corpus_hash,
@@ -427,8 +500,10 @@ def run_source_admission_suite(
             "query_hash": trial["query_hash"],
             "expected_substrings": expected,
             "pool_ranks": {arm: _first_rank(paths, expected) for arm, paths in trial["pools"].items()},
+            "hybrid_ranks": {arm: _first_rank(paths, expected) for arm, paths in trial["hybrid"].items()},
             "final_ranks": {arm: _first_rank(paths, expected) for arm, paths in trial["ranked"].items()},
             "selected": trial.get("selected"),
+            "abstained": bool(trial.get("abstained")),
             "random_selected": trial.get("random_selected"),
             "candidate_count": len(trial.get("source_candidates") or []),
             "fixed_cardinality": trial["fixed_cardinality"],
@@ -436,6 +511,7 @@ def run_source_admission_suite(
         })
     arms = ("baseline", "widened", "source_reserve", "random_source", "documentation_suppression")
     pool_arms = {arm: _arm_metrics(rows, arm, "pool") for arm in arms}
+    hybrid_arms = {arm: _arm_metrics(rows, arm, "hybrid") for arm in arms}
     final_arms = {arm: _arm_metrics(rows, arm, "final") for arm in arms}
     history_key = f"source_admission_history:{repo}:{BRIDGE_TRIAL_FREEZE_ID}"
     history = list(store.get_setting(history_key, []) or [])
@@ -456,6 +532,8 @@ def run_source_admission_suite(
     evaluation_history = [*history, provisional][-8:]
     promotion = evaluate_source_admission_promotion(
         rows, pool_arms, final_arms,
+        hybrid_arms=hybrid_arms,
+        calibration_ready=False,
         replication_history=evaluation_history,
         min_cases=min_cases,
         p95_overhead_ms=p95,
@@ -474,6 +552,7 @@ def run_source_admission_suite(
         "parameters": parameters,
         "case_count": len(rows),
         "candidate_stage": pool_arms,
+        "hybrid_stage": hybrid_arms,
         "final_stage": final_arms,
         "promotion": promotion,
         "latency_ms": {"admission_and_rerank_p95": round(p95, 6)},

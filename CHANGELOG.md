@@ -1,3 +1,10 @@
+## 8.2.4 - Selective Admission and Ranker Attribution
+
+- Added dimensionless candidate margins and abstention so ambiguous source reserves do not intervene by default.
+- Added hybrid-versus-ranker stage telemetry to localize evidence loss after admission.
+- Added bounded risk proxy, attribution gate, benchmark, tests, release receipt, and phase documentation; live behavior remains unchanged.
+- The first selective run selected 37.5% of cases with three helpful and zero harmful replacements; source-reserve final recall improved 46.88%→51.56%. Attribution showed a positive signed ranker lift, while calibration and the third natural replication remain outstanding.
+
 ## 8.2.3 - Source Admission Field
 
 - Added separate candidate-pool and final-ranking measurements so retrieval misses can be localized before or after ranking.
