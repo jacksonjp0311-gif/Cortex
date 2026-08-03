@@ -3,6 +3,7 @@
 - Added a fixed 19-orientation quarter-turn sweep over the four-dimensional echo field.
 - Added evidence-backed subspace alignment, orthonormal reconstruction checks, and a reversible measurement-only surgery recommendation for silent temporal/interlock axes.
 - Added CLI, MCP, interconnect, tests, benchmark, release receipt, and phase documentation; rotation never changes routing, cadence, topology, or policy.
+- Added a stability gate to cadence evolution: explicit `STRESSED`/`UNBOUND` sensing, `DRIFT_REGIME` binding, or a measured no-peak resonance now holds ranker/plasticity injection while observation continues.
 
 ## 8.2.6 - Four-Dimensional Geometric Echo
 

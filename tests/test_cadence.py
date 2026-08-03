@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
-from cortex.cadence import run_cadence
+from cortex.cadence import _evolution_stability_gate, run_cadence
 from cortex.config import ensure_home
 from cortex.governor import Governor
 from cortex.packs import install_pack
@@ -50,6 +50,23 @@ class CadenceTests(unittest.TestCase):
         self.assertGreaterEqual(report["stats"]["activates"], 5)
         self.assertGreaterEqual(report["stats"]["evolves"], 1)
         self.assertIn("report_path", report)
+
+    def test_stability_gate_holds_unstable_field(self) -> None:
+        self.store.set_setting(
+            "self_sense_latest:CadHost", {"classification": "STRESSED"}
+        )
+        self.store.set_setting(
+            "resonance_sweep_latest:CadHost",
+            {"status": "no_stable_peak", "frame_count": 8},
+        )
+        self.store.set_setting(
+            "binding_field_latest:CadHost", {"classification": "DRIFT_REGIME"}
+        )
+        gate = _evolution_stability_gate(self.store, "CadHost")
+        self.assertFalse(gate["allowed"])
+        self.assertIn("self_sensing_stressed", gate["reasons"])
+        self.assertIn("resonance_no_stable_peak", gate["reasons"])
+        self.assertIn("binding_drift_regime", gate["reasons"])
 
 
 if __name__ == "__main__":

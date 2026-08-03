@@ -83,6 +83,43 @@ def _engine_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _evolution_stability_gate(store: Any, repo: str) -> dict[str, Any]:
+    """Hold adaptive injections while measured field telemetry is unstable.
+
+    Cadence may still observe and activate while this gate is closed.  The gate
+    is deliberately conservative and only acts on explicit, persisted health
+    signals; a fresh repository with no field telemetry remains compatible with
+    the historical cadence smoke path.
+    """
+
+    reasons: list[str] = []
+    sense = store.get_setting(f"self_sense_latest:{repo}", {}) or {}
+    sense_class = str(sense.get("classification") or "").upper()
+    if sense_class in {"UNBOUND", "STRESSED", "DRIFT"}:
+        reasons.append(f"self_sensing_{sense_class.lower()}")
+
+    resonance = store.get_setting(f"resonance_sweep_latest:{repo}", {}) or {}
+    resonance_status = str(resonance.get("status") or "").lower()
+    resonance_frames = int(resonance.get("frame_count") or 0)
+    if resonance_status == "no_stable_peak" and resonance_frames >= 8:
+        reasons.append("resonance_no_stable_peak")
+
+    binding = store.get_setting(f"binding_field_latest:{repo}", {}) or {}
+    binding_class = str(binding.get("classification") or "").upper()
+    if binding_class in {"BINDING_GAP", "DRIFT_REGIME"}:
+        reasons.append(f"binding_{binding_class.lower()}")
+
+    return {
+        "allowed": not reasons,
+        "reasons": reasons,
+        "advisory_only": True,
+        "claim_boundary": (
+            "Stability gate holds ranker/plasticity injection only; it does not "
+            "seal epochs, mutate host source, or grant authority."
+        ),
+    }
+
+
 def run_cadence(
     home: Path,
     store: Any,
@@ -275,7 +312,16 @@ def run_cadence(
                 mode = str(governor.evaluate(repo).get("mode") or "normal")
             except Exception:
                 pass
-            if mode == "read_only":
+            stability = _evolution_stability_gate(store, repo)
+            if not stability["allowed"]:
+                detail = ";".join(stability["reasons"])
+                inject("evolve_held_unstable", detail)
+                cycle["evolve"] = {
+                    "skipped": True,
+                    "reason": "stability_gate",
+                    "reasons": list(stability["reasons"]),
+                }
+            elif mode == "read_only":
                 inject("evolve_skipped_read_only", "")
             else:
                 try:
