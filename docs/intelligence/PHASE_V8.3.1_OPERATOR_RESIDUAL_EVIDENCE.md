@@ -1,13 +1,14 @@
-# Phase v8.3.1 — Operator Residual Evidence (planned)
+# Phase v8.3.1 — Operator Residual Evidence (shadow)
 
 ## Goal
 
 Measure the unresolved part of a typed transition without conflating it with
-Cortex's self-sensing residual, prediction error, or ranker score. This phase
-is a design gate, not an enabled learning path.
+Cortex's self-sensing residual, prediction error, or ranker score. v8.3.1 now
+implements the receipt and gate machinery, but remains a shadow-only review
+path: no residual is learned and no policy is changed.
 
-For a known operator `T_k` and observed output `y_k`, define a bounded residual
-burden only after a receipt exists:
+For a known operator `T_k` and observed output `y_k`, the receipt computes a
+bounded residual burden:
 
 \[
 B^R_k = \frac{\mathbb{E}\lVert y_k - T_k(x_k)\rVert}
@@ -23,7 +24,15 @@ Every future residual observation must carry the operator id, input and output
 types, known output, residual output, invariant projection, uncertainty rule,
 validation result, epoch/cohort identity, and an independent outcome witness.
 Exact and approximate paths must be distinguishable. An untyped residual is
-reported as unmeasured, never silently learned.
+reported as unmeasured, never silently learned. Use:
+
+```powershell
+python -m cortex ostt residual --repo CortexTeach --json
+```
+
+The live repository currently reports `status=unmeasured` because the existing
+Cortex operators do not yet emit shared typed output pairs. That is a deliberate
+safe result, not a missing fallback.
 
 ## Gates before any update
 
@@ -38,4 +47,17 @@ reported as unmeasured, never silently learned.
 
 No routing, cadence, plasticity, promotion, or policy change is authorized by
 this phase. A later proposal may open a bounded update only after these gates
-are measured and reviewed.
+are measured and reviewed. The implementation exposes `policy_effect=false`,
+`advisory_only=true`, and `update_authorized=false` in every report.
+
+## Verification
+
+```powershell
+python -m pytest tests/test_ostt.py tests/test_ostt_residuals.py -q
+python benchmarks/ostt_residual_benchmark.py
+```
+
+The benchmark covers exact operator output, bounded residual perturbation,
+untyped output refusal, invariant-failure injection, and comparison-mode
+disclosure. It is deterministic and synthetic; it validates the receipt
+machinery, not general transformation performance.

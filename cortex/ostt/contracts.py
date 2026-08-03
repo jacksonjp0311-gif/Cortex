@@ -239,6 +239,12 @@ def audit_runtime(runtime: Mapping[str, Any]) -> dict[str, Any]:
     if not facts["manifest_current"]:
         residuals.append("source_manifest_residual")
     admissible = sum(1 for trace in traces if trace["admissible"])
+    from .residuals import residual_evidence_report
+
+    residual_evidence = residual_evidence_report(
+        CORE_CONTRACTS,
+        runtime.get("operator_residuals") or (),
+    )
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
@@ -250,9 +256,11 @@ def audit_runtime(runtime: Mapping[str, Any]) -> dict[str, Any]:
         "operators": traces,
         "residuals": {
             "unresolved": residuals,
-            "burden_status": "unmeasured",
+            "burden_status": residual_evidence["status"],
+            "operator_evidence": residual_evidence["status"],
             "claim_boundary": "Self-sensing residual and OSTT residual burden are distinct until a dedicated receipt exists.",
         },
+        "residual_evidence": residual_evidence,
         "readiness": {
             "next_actions": list(readiness.get("next_actions") or []),
             "same_epoch_frames_remaining": (readiness.get("remaining") or {}).get("same_epoch_frames"),

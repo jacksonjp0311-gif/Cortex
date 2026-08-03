@@ -1,3 +1,10 @@
+## 8.3.1 - Operator Residual Evidence (shadow)
+
+- Added typed `ResidualReceipt` objects with deterministic vector norms, bounded residual burden, uncertainty calibration, invariant projections, epoch/cohort identity, witnesses, and comparison modes.
+- Added `cortex ostt residual` and wired residual evidence status into OSTT/interconnect output.
+- Added explicit review gates and failure-safe `unmeasured` receipts; no operator execution, routing, learning, or policy mutation is enabled.
+- Added deterministic residual benchmark and focused receipt/gate tests.
+
 ## 8.3.0 - OSTT Compatibility Layer
 
 - Added a shadow-only Operator-Structured Transformation Theory (OSTT) contract registry for existing Cortex transitions.

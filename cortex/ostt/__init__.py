@@ -16,6 +16,14 @@ from .contracts import (
     TypedState,
     audit_runtime,
 )
+from .residuals import (
+    DEFAULT_EPSILON,
+    DEFAULT_MAX_BURDEN,
+    RESIDUAL_GLYPH,
+    RESIDUAL_SCHEMA,
+    ResidualReceipt,
+    residual_evidence_report,
+)
 
 __all__ = [
     "CLAIM",
@@ -26,4 +34,10 @@ __all__ = [
     "OperatorTrace",
     "TypedState",
     "audit_runtime",
+    "DEFAULT_EPSILON",
+    "DEFAULT_MAX_BURDEN",
+    "RESIDUAL_GLYPH",
+    "RESIDUAL_SCHEMA",
+    "ResidualReceipt",
+    "residual_evidence_report",
 ]

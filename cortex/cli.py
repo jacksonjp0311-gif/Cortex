@@ -1264,10 +1264,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ostt_p.add_argument(
         "action",
-        choices=["status"],
+        choices=["status", "residual"],
         nargs="?",
         default="status",
-        help="status (default)",
+        help="status (default) or residual evidence",
     )
     ostt_p.add_argument("--repo", required=True)
     ostt_p.add_argument("--json", action="store_true")
@@ -3302,6 +3302,17 @@ def main(argv: list[str] | None = None) -> None:
 
         elif command == "ostt":
             mesh = mesh_status(store, args.repo, governor=governor, home=home)
+            if args.action == "residual":
+                emit(
+                    mesh.get("ostt", {}).get("residual_evidence")
+                    or {
+                        "status": "unmeasured",
+                        "advisory_only": True,
+                        "policy_effect": False,
+                    },
+                    args.json,
+                )
+                return
             emit(
                 mesh.get("ostt")
                 or {

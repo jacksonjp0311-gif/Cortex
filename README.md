@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.3.0-0ea5e9?style=for-the-badge" alt="v8.3.0" />
+  <img src="https://img.shields.io/badge/version-8.3.1-0ea5e9?style=for-the-badge" alt="v8.3.1" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## OSTT compatibility layer (v8.3.0)
+## OSTT compatibility and residual evidence (v8.3.1)
 
 Cortex now exposes a read-only **Operator-Structured Transformation Theory
 (OSTT)** audit over its existing transitions. The `▤` layer makes domains,
@@ -30,13 +30,14 @@ validation receipts explicit without introducing a second runtime:
 
 ```powershell
 python -m cortex ostt status --repo YourProject --json
+python -m cortex ostt residual --repo YourProject --json
 ```
 
 The same audit is wired into `cortex interconnect` and the mesh dashboard. It
 is shadow/advisory telemetry only: it does not execute operators, alter
 routing, train models, mutate the host, or establish a consciousness claim.
 See [`docs/intelligence/PHASE_V8.3.0_OSTT_COMPATIBILITY_LAYER.md`](docs/intelligence/PHASE_V8.3.0_OSTT_COMPATIBILITY_LAYER.md)
-and the planned next gate in
+and the measured shadow gate in
 [`docs/intelligence/PHASE_V8.3.1_OPERATOR_RESIDUAL_EVIDENCE.md`](docs/intelligence/PHASE_V8.3.1_OPERATOR_RESIDUAL_EVIDENCE.md).
 
 ### Local memory for AI coding agents — attach once, keep the host sovereign
@@ -153,6 +154,7 @@ python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
 | `interlock echo` | Four-dimensional fixed-pulse echo across evidence, geometry, temporal, and interlock axes |
 | `interlock rotate` | Fixed quarter-turn perception sweep and reversible measurement-only surgery plan |
 | `ostt status` | Shadow OSTT contract audit over typed runtime transitions |
+| `ostt residual` | Typed operator-residual receipts and review-gate status |
 | `claim` | Falsifiable promote receipt (when applicable) |
 
 **Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  

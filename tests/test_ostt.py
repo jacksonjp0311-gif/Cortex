@@ -70,6 +70,8 @@ class OsttContractTests(unittest.TestCase):
         self.assertIn("observer_regime_residual", report["residuals"]["unresolved"])
         self.assertIn("temporal_resonance_residual", report["residuals"]["unresolved"])
         self.assertIn("outcome_evidence_residual", report["residuals"]["unresolved"])
+        self.assertEqual(report["residual_evidence"]["status"], "unmeasured")
+        self.assertFalse(report["residual_evidence"]["policy_effect"])
 
     def test_audit_can_admit_all_declared_boundaries(self) -> None:
         report = audit_runtime(
@@ -97,6 +99,7 @@ class OsttContractTests(unittest.TestCase):
         self.assertEqual(report["held_count"], 0)
         self.assertEqual(report["admissible_count"], 6)
         self.assertFalse(report["policy_effect"])
+        self.assertEqual(report["residual_evidence"]["measured_count"], 0)
 
 
 if __name__ == "__main__":
