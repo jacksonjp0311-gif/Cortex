@@ -107,6 +107,27 @@ def record_outcome(
         credits=credits, updates=updates, apply_updates=apply_updates,
     )
     try:
+        interlock_resolution = store.resolve_interlock_outcome(
+            repo,
+            activation_id=activation_id,
+            outcome_id=outcome_id,
+            status=status,
+            reward=final_reward,
+            verification_type=verification_type,
+        )
+    except Exception as exc:
+        interlock_resolution = {
+            "resolved": False,
+            "error": f"{type(exc).__name__}:{exc}",
+        }
+    if interlock_resolution.get("resolved"):
+        try:
+            from ..math_net.info_interlock import refresh_interlock_shadow
+
+            interlock_resolution["shadow"] = refresh_interlock_shadow(store, repo)
+        except Exception as exc:
+            interlock_resolution["shadow_error"] = f"{type(exc).__name__}:{exc}"
+    try:
         from ..math_net.calibration import observe_outcome_for_calibration
         from ..math_net.plasticity_rct import record_rct_outcome
 
@@ -209,5 +230,6 @@ def record_outcome(
             "aria_cue_learning": aria_cue_learning,
             "ranker": ranker_result,
             "ranker_feature_vectors": len(vectors or []),
+            "information_interlock": interlock_resolution,
             "causal": causal_result,
             "signal_loop_hint": "cortex evolve --repo REPO --activation-id ID --status verified --verification test"}

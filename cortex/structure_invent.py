@@ -35,6 +35,9 @@ def invent_from_coactivation(
     capability: Any = None,
     conn: Any = None,
     commit: bool = True,
+    interlock_support: dict[str, dict[str, Any]] | None = None,
+    require_interlock: bool = False,
+    min_interlock_samples: int = 32,
 ) -> dict[str, Any]:
     """Create weak integrate edges between co-fired nodes that lack a direct synapse.
 
@@ -89,10 +92,22 @@ def invent_from_coactivation(
         existing.add((a, b) if a < b else (b, a))
 
     proposed: list[tuple[str, str]] = []
+    rejected_interlock = 0
     for i, a in enumerate(fired):
         for b in fired[i + 1 :]:
             key = (a, b) if a < b else (b, a)
             if key in existing:
+                continue
+            support_key = f"{key[0]}|{key[1]}"
+            support = (interlock_support or {}).get(support_key) or {}
+            supported = bool(
+                int(support.get("sample_n") or 0) >= int(min_interlock_samples)
+                and int(support.get("joint_support") or 0) > 0
+                and float(support.get("alignment") or 0.0) > 0.0
+                and support.get("constitutional_gate") is True
+            )
+            if require_interlock and not supported:
+                rejected_interlock += 1
                 continue
             proposed.append(key)
             if len(proposed) >= max_new:
@@ -111,6 +126,8 @@ def invent_from_coactivation(
     try:
         for a, b in proposed:
             sid = _synapse_id(a, b, "coactivated")
+            support_key = f"{a}|{b}"
+            support = (interlock_support or {}).get(support_key) or {}
             meta = {
                 "invented": True,
                 "kernel_class": "integrate",
@@ -120,6 +137,13 @@ def invent_from_coactivation(
                 "ancestors": [a, b],
                 "derived_from_coactivation": True,
                 "lineage_plane": "G_learned",
+                "information_interlock": {
+                    "mode": "enforced" if require_interlock else "shadow",
+                    "sample_n": int(support.get("sample_n") or 0),
+                    "joint_support": int(support.get("joint_support") or 0),
+                    "alignment": float(support.get("alignment") or 0.0),
+                    "constitutional_gate": bool(support.get("constitutional_gate")),
+                },
             }
             db.execute(
                 """
@@ -211,6 +235,12 @@ def invent_from_coactivation(
         "schema_version": SCHEMA,
         "glyph": GLYPH,
         "invented": created,
+        "interlock_gate": {
+            "required": bool(require_interlock),
+            "minimum_samples": int(min_interlock_samples),
+            "rejected": rejected_interlock,
+            "policy": "opt-in only until v8.2 release gates are sealed",
+        },
         "samples": samples[:8],
         "governance_mode": governance_mode,
         "claim_boundary": (

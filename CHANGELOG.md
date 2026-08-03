@@ -1,3 +1,41 @@
+## 8.2.3 - Source Admission Field
+
+- Added separate candidate-pool and final-ranking measurements so retrieval misses can be localized before or after ranking.
+- Added the `⟢` lexical × semantic × evidence admission triad with independent hard floors and host-source reliability classes.
+- Added baseline, widened, fixed source-reserve, deterministic random-source, and documentation-suppression arms on the sealed 64-case exam.
+- Promotion now requires 64 cases, no harmful replacements, control superiority, bounded cost, and three consistent distinct epoch/graph contexts.
+- Added CLI, MCP, interconnect, ARIA glyph, benchmark, tests, release receipt, and documentation; all behavior remains shadow-only.
+- First sealed 64-case measurement: source reserve raised pool recall 64.06%→71.88% and final top-5 recall 48.44%→51.56%, but one harmful replacement and 100% selection correctly blocked promotion; widening exposed an additional ranker-stage loss (84.38% pool recall→50.00% top-5).
+
+## 8.2.2 - Query-Conditioned Bridge Trials
+
+- Added the `⟐` query-conditioned bridge triad: relevance, structural bridge potential, and neighborhood novelty with independent hard floors.
+- Added fixed-cardinality baseline, annotation-only, bridge-reserve, and deterministic random-control arms; live hits are never changed.
+- Added paired recall, MRR, nDCG, replacement, selection-rate, bootstrap interval, and latency gates with a 64-case minimum.
+- Added CLI/MCP/interconnect surfaces plus deterministic falsification tests, benchmark, and CI receipt.
+- Initial 31-case development measurement improved recall from 30/31 to 31/31 with one helpful and zero harmful replacements, but promotion remains blocked because the sample minimum is unmet and the MRR interval includes zero.
+- Added the sealed `bridge64-v1-2026-08-02` exam: bridge recall improved from 23/64 to 24/64 versus 18/64 for random reserve, with zero harmful replacements; promotion remains blocked because the paired MRR interval touches zero.
+- A post-activation replication produced no bridge lift, exposing graph-epoch sensitivity; trial receipts now bind body epoch, full graph fingerprint, corpus, and parameters in one context hash.
+
+## 8.2.1 - Geometric Bridge Field
+
+- Added the `⟠` shadow bridge field to distinguish useful cross-region connectors from raw triangle density and hub mass.
+- Bridge potential combines open wedges, logarithmic reach, domain/relation diversity, and a non-hub factor.
+- Added `cortex interlock bridges`, MCP bridge refresh, interconnect panels, and post-ranking `geometric_bridge_shadow` metadata.
+- Bridge metadata cannot change retrieval score, order, topology, authority, or policy in v8.2.1.
+- Added synthetic two-region bridge falsification and route noninterference coverage.
+
+## 8.2.0 - Informational Interlocks
+
+- Added a bounded, receipt-bearing observation ledger that binds evidence and learned activation routes to independently recorded outcomes in a stable evidence/schema/constitutional cohort while retaining exact body epochs.
+- Added conservative E-L outcome synergy, typed closure, balance, redundancy/hub penalties, and a hard constitutional/witness gate under the ARIA glyph `⟁`.
+- Added a deterministic interlock lesion report; new signals remain shadow-only and are never automatically promoted into ranker, coherence, or authority decisions.
+- Retrieval can display cached interlock metadata after ranking without changing score, order, or evidence-floor behavior.
+- Structure invention has an opt-in sample/constitutional interlock gate; existing behavior remains unchanged until release gates are sealed.
+- Added complete-graph versus top-degree triadic sampling audits, exposing projection bias before geometric claims are used.
+- Added CLI/MCP/interconnect/coherence surfaces and explicit coherence observation-basis keys for valid score comparison.
+- Added deterministic XOR/redundancy, epoch, witness, lesion, sampling-bias, route noninterference, and topology-gate tests plus a v8.2 benchmark receipt.
+
 ## 8.1.1 - Measurement-First Routing
 
 - Dual-graph alignment now counts the complete structural substrate instead of the 500-row browsing window and centers alignment on an order-one compiled-layer ratio.

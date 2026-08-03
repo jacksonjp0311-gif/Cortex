@@ -448,6 +448,21 @@ def measure_coherence(
     except Exception as exc:
         temporal_field["error"] = f"{type(exc).__name__}:{exc}"
 
+    # v8.2 typed E-L-O field.  Kept outside components/weights until the
+    # preregistered outcome, lesion, recall, and latency gates are satisfied.
+    try:
+        from .math_net.info_interlock import interlock_report
+
+        informational_interlock = interlock_report(
+            store, repo, limit=512, top_paths=12, include_lesion=False
+        )
+    except Exception as exc:
+        informational_interlock = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+        }
+
     # Trend from history
     history = _load_history(store, repo)
     prev_score = history[-1]["score"] if history else None
@@ -559,6 +574,20 @@ def measure_coherence(
         },
         "seams": seams,
         "temporal_field": temporal_field,
+        "informational_interlock": informational_interlock,
+        "observation_basis": {
+            "governor_supplied": governor is not None,
+            "governor_mode": seams.get("governor_mode"),
+            "retrieval_confidence_supplied": retrieval_confidence is not None,
+            "retrieval_confidence": (
+                float(retrieval_confidence) if retrieval_confidence is not None else 0.5
+            ),
+            "comparable_key": (
+                f"governor:{seams.get('governor_mode')}|"
+                f"confidence:{float(retrieval_confidence) if retrieval_confidence is not None else 0.5:.6f}"
+            ),
+            "note": "Compare coherence only when this measurement context matches.",
+        },
         "self_sensing": None,  # filled below when available (v7.5 advisory panel)
         "notes": notes,
         "advice": advice,

@@ -235,6 +235,32 @@ TOOLS = [
         },
     },
     {
+        "name": "cortex_interlock",
+        "description": (
+            "Typed informational interlock field (⟁): epoch-scoped E→L→O synergy, "
+            "lesion gates, and optional full-graph sampling audit. " + _REFUSE
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["repo"],
+            "properties": {
+                "repo": {"type": "string"},
+                "geometry": {"type": "boolean", "default": False},
+                "bridges": {"type": "boolean", "default": False},
+                "trial_suite": {
+                    "type": "string",
+                    "enum": ["easy", "hard", "full", "stress", "train", "holdout", "all", "bridge64"],
+                },
+                "source_trial_suite": {
+                    "type": "string",
+                    "enum": ["bridge64"],
+                },
+                "top_k": {"type": "integer", "default": 5},
+                "limit": {"type": "integer", "default": 2048},
+            },
+        },
+    },
+    {
         "name": "cortex_kernels",
         "description": (
             "Retention regimes (≋): reset/integrate/retain priors — not consciousness. "
@@ -596,6 +622,46 @@ class CortexMCP:
                 str(arguments["repo"]),
                 governor=self.governor,
                 home=self.home,
+            )
+        if name == "cortex_interlock":
+            from .math_net.info_interlock import (
+                graph_sampling_audit,
+                interlock_report,
+                refresh_bridge_shadow,
+            )
+
+            repo = str(arguments["repo"])
+            if bool(arguments.get("geometry")):
+                return graph_sampling_audit(self.store, repo)
+            if bool(arguments.get("bridges")):
+                return refresh_bridge_shadow(self.store, repo)
+            if arguments.get("trial_suite"):
+                from .bridge_trials import run_bridge_trial_suite
+
+                return run_bridge_trial_suite(
+                    self.home,
+                    self.store,
+                    repo,
+                    suite=str(arguments["trial_suite"]),
+                    limit=max(8, min(64, int(arguments.get("limit") or 24))),
+                    top_k=max(1, int(arguments.get("top_k") or 5)),
+                )
+            if arguments.get("source_trial_suite"):
+                from .source_admission import run_source_admission_suite
+
+                requested_limit = int(arguments.get("limit") or 24)
+                limit = 24 if requested_limit == 2048 else max(8, min(48, requested_limit))
+                return run_source_admission_suite(
+                    self.home,
+                    self.store,
+                    repo,
+                    suite="bridge64",
+                    pool_size=limit,
+                    widened_size=max(48, min(96, limit * 2)),
+                    top_k=max(1, int(arguments.get("top_k") or 5)),
+                )
+            return interlock_report(
+                self.store, repo, limit=int(arguments.get("limit") or 2048)
             )
         if name == "cortex_emergence_log":
             from .emergence_log import log_milestone, read_emergence_log

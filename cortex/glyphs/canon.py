@@ -259,6 +259,39 @@ GLYPH_CANON: dict[str, dict[str, Any]] = {
         "role": "gate",
         "kernel": "reset",
     },
+    # ── v8.2 informational interlocks ────────────────────────────
+    "informational_interlock": {
+        "symbol": "⟁",
+        "spoken": "informational interlock",
+        "aria_id": "InformationalInterlock",
+        "maps_to": "cortex interlock / packet.informational_interlock",
+        "role": "organ",
+        "kernel": "integrate",
+    },
+    "geometric_bridge": {
+        "symbol": "⟠",
+        "spoken": "geometric bridge",
+        "aria_id": "GeometricBridge",
+        "maps_to": "cortex interlock bridges / metadata.geometric_bridge_shadow",
+        "role": "organ",
+        "kernel": "integrate",
+    },
+    "query_bridge_trial": {
+        "symbol": "⟐",
+        "spoken": "query bridge trial",
+        "aria_id": "QueryBridgeTrial",
+        "maps_to": "cortex interlock trial / bridge_trial_latest",
+        "role": "gate",
+        "kernel": "reset",
+    },
+    "source_admission": {
+        "symbol": "⟢",
+        "spoken": "source admission field",
+        "aria_id": "SourceAdmissionField",
+        "maps_to": "cortex interlock source-trial / source_admission_latest",
+        "role": "gate",
+        "kernel": "reset",
+    },
     # ── Closed loop / signal intelligence ──────────────────────────────────
     "causal": {
         "symbol": "↻",

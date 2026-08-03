@@ -272,6 +272,43 @@ CREATE TABLE IF NOT EXISTS task_outcomes(
 );
 CREATE INDEX IF NOT EXISTS idx_task_outcomes_repo_created ON task_outcomes(repo, created_at);
 
+-- v8.2 typed informational interlocks.  This is a bounded observation ledger,
+-- not a second memory substrate: activations remain the source of route truth
+-- and task_outcomes remain the source of verified outcome truth.
+CREATE TABLE IF NOT EXISTS information_interlock_observations(
+    observation_id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    activation_id TEXT NOT NULL,
+    session_id TEXT,
+    body_epoch_id TEXT NOT NULL,
+    task_family TEXT NOT NULL,
+    evidence_paths_json TEXT NOT NULL DEFAULT '[]',
+    learned_paths_json TEXT NOT NULL DEFAULT '[]',
+    u_before REAL,
+    u_after REAL,
+    delta_u REAL,
+    constitutional_valid INTEGER NOT NULL DEFAULT 0,
+    outcome_id TEXT,
+    outcome_status TEXT,
+    reward REAL,
+    witness_valid INTEGER NOT NULL DEFAULT 0,
+    created_at REAL NOT NULL,
+    resolved_at REAL,
+    receipt_hash TEXT NOT NULL,
+    resolution_receipt_hash TEXT,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(repo, activation_id),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE,
+    FOREIGN KEY(activation_id) REFERENCES neural_activations(activation_id) ON DELETE CASCADE,
+    FOREIGN KEY(outcome_id) REFERENCES task_outcomes(outcome_id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_info_interlock_repo_created
+ON information_interlock_observations(repo, created_at);
+CREATE INDEX IF NOT EXISTS idx_info_interlock_repo_epoch
+ON information_interlock_observations(repo, body_epoch_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_info_interlock_repo_task
+ON information_interlock_observations(repo, task_family, created_at);
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -1462,6 +1499,162 @@ class Store:
         return self.db.execute(
             "SELECT * FROM task_outcomes WHERE repo=? ORDER BY created_at DESC LIMIT ?", (repo, limit)
         ).fetchall()
+
+    def record_interlock_observation(
+        self,
+        repo: str,
+        *,
+        activation_id: str,
+        session_id: str | None,
+        body_epoch_id: str,
+        task_family: str,
+        evidence_paths: list[str],
+        learned_paths: list[str],
+        constitutional_valid: bool,
+        u_before: float | None = None,
+        u_after: float | None = None,
+        metadata: dict[str, Any] | None = None,
+        max_observations: int = 4096,
+    ) -> dict[str, Any]:
+        """Append one bounded E-L observation for an existing activation.
+
+        Outcome resolution is deliberately separate so learned association can
+        never masquerade as independently witnessed task utility.
+        """
+        activation = self.db.execute(
+            "SELECT 1 FROM neural_activations WHERE repo=? AND activation_id=?",
+            (repo, activation_id),
+        ).fetchone()
+        if not activation:
+            raise ValueError("Activation does not belong to this repository")
+        now = time.time()
+        evidence = sorted({str(p) for p in evidence_paths if str(p).strip()})[:64]
+        learned = sorted({str(p) for p in learned_paths if str(p).strip()})[:64]
+        delta_u = (
+            float(u_after) - float(u_before)
+            if u_before is not None and u_after is not None
+            else None
+        )
+        material = {
+            "repo": repo,
+            "activation_id": activation_id,
+            "session_id": session_id,
+            "body_epoch_id": body_epoch_id,
+            "task_family": task_family,
+            "evidence_paths": evidence,
+            "learned_paths": learned,
+            "u_before": u_before,
+            "u_after": u_after,
+            "delta_u": delta_u,
+            "constitutional_valid": bool(constitutional_valid),
+            "metadata": metadata or {},
+        }
+        canonical = json.dumps(material, sort_keys=True, separators=(",", ":"), default=str)
+        receipt_hash = sha256(canonical.encode("utf-8")).hexdigest()
+        observation_id = "ilo_" + receipt_hash[:24]
+        with self.transaction() as conn:
+            conn.execute(
+                """INSERT OR IGNORE INTO information_interlock_observations(
+                   observation_id, repo, activation_id, session_id, body_epoch_id,
+                   task_family, evidence_paths_json, learned_paths_json, u_before,
+                   u_after, delta_u, constitutional_valid, created_at, receipt_hash,
+                   metadata_json
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    observation_id, repo, activation_id, session_id, body_epoch_id,
+                    task_family, json.dumps(evidence), json.dumps(learned), u_before,
+                    u_after, delta_u, int(bool(constitutional_valid)), now, receipt_hash,
+                    json.dumps(metadata or {}, sort_keys=True),
+                ),
+            )
+            cap = max(128, int(max_observations))
+            conn.execute(
+                """DELETE FROM information_interlock_observations
+                   WHERE repo=? AND observation_id IN (
+                     SELECT observation_id FROM information_interlock_observations
+                     WHERE repo=? ORDER BY created_at DESC LIMIT -1 OFFSET ?
+                   )""",
+                (repo, repo, cap),
+            )
+        return {
+            "observation_id": observation_id,
+            "activation_id": activation_id,
+            "receipt_hash": receipt_hash,
+            "body_epoch_id": body_epoch_id,
+            "inserted_or_present": True,
+        }
+
+    def resolve_interlock_outcome(
+        self,
+        repo: str,
+        *,
+        activation_id: str,
+        outcome_id: str,
+        status: str,
+        reward: float,
+        verification_type: str,
+    ) -> dict[str, Any]:
+        """Bind independently recorded outcome truth to its E-L observation."""
+        row = self.db.execute(
+            """SELECT observation_id, receipt_hash
+               FROM information_interlock_observations
+               WHERE repo=? AND activation_id=?""",
+            (repo, activation_id),
+        ).fetchone()
+        if not row:
+            return {"resolved": False, "reason": "observation_missing"}
+        verification = str(verification_type).strip().casefold()
+        witness_valid = bool(
+            verification
+            and verification
+            not in {"self_report", "unverified", "unknown", "manual_claim"}
+        )
+        resolved_at = time.time()
+        resolution = {
+            "observation_id": row["observation_id"],
+            "observation_receipt_hash": row["receipt_hash"],
+            "outcome_id": outcome_id,
+            "status": status,
+            "reward": float(reward),
+            "verification_type": verification_type,
+            "witness_valid": witness_valid,
+        }
+        canonical = json.dumps(resolution, sort_keys=True, separators=(",", ":"))
+        resolution_hash = sha256(canonical.encode("utf-8")).hexdigest()
+        self.db.execute(
+            """UPDATE information_interlock_observations
+               SET outcome_id=?, outcome_status=?, reward=?, witness_valid=?,
+                   resolved_at=?, resolution_receipt_hash=?
+               WHERE repo=? AND activation_id=?""",
+            (
+                outcome_id, status, float(reward), int(witness_valid), resolved_at,
+                resolution_hash, repo, activation_id,
+            ),
+        )
+        self.db.commit()
+        return {
+            "resolved": True,
+            "observation_id": row["observation_id"],
+            "resolution_receipt_hash": resolution_hash,
+            "witness_valid": witness_valid,
+        }
+
+    def interlock_observations(self, repo: str, limit: int = 2048) -> list[dict[str, Any]]:
+        rows = self.db.execute(
+            """SELECT * FROM information_interlock_observations
+               WHERE repo=? ORDER BY created_at DESC LIMIT ?""",
+            (repo, max(1, int(limit))),
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["evidence_paths"] = json.loads(item.pop("evidence_paths_json") or "[]")
+            item["learned_paths"] = json.loads(item.pop("learned_paths_json") or "[]")
+            item["metadata"] = json.loads(item.pop("metadata_json") or "{}")
+            item["constitutional_valid"] = bool(item["constitutional_valid"])
+            item["witness_valid"] = bool(item["witness_valid"])
+            out.append(item)
+        return out
 
     def save_continuation_packet(
         self, repo: str, packet_id: str, origin_version: str, state_hash: str,

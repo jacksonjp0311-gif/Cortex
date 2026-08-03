@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.1.1-0ea5e9?style=for-the-badge" alt="v8.1.1" />
+  <img src="https://img.shields.io/badge/version-8.2.3-0ea5e9?style=for-the-badge" alt="v8.2.3" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -35,7 +35,7 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 | Activate / claim / field diagnostics | Recommend-only — no silent rewrites |
 | Resonant Frames (v7.3) — temporal coordination | Constitutional gates — authority is not a score |
 
-**v8.1.1 — Measurement-First Routing** · **v8.1 Canonical Predictive Observer** · **v8.0 Measured Predictive Self-Model**
+**v8.2.3 — Source Admission Field** · **v8.2.2 Query-Conditioned Bridge Trials** · **v8.2 Informational Interlocks**
 Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Binding Field names *local coupling vs global readiness*.  
 Stable body epochs now accrue one exactly-once observation per durable activation event until a real temporal window can close. When the seal lags the living tree, **realign explicitly**. Open buffers **commit** to frames — they do not seize authority.
 Each activation now records one measured pre/post state delta, predicts that delta before it occurs, scores the forecast afterward, simulates bounded alternatives, broadcasts four competing signals, and appends a hash-chained operational episode. Modeled event salience remains shadow-only.
@@ -43,6 +43,16 @@ Each activation now records one measured pre/post state delta, predicts that del
 v8.1 binds each repository to an explicit durable Cortex home, refuses silent home rebinding, learns separate transition models for refresh, decay, adaptation, evidence-only, and steady regimes, calibration-weights workspace competition, preserves signed field direction, requires connected two-key seam activation for emergence, and reports confidence-bounded predictor lesions. See [`PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md`](docs/intelligence/PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md).
 
 v8.1.1 makes routing measurement-first: full structural counts replace capped alignment denominators, fine→coarse budgets reclaim unused pools, interconnect uses one live verification snapshot, spectral enrichment follows the latest sealed ablation, visible top-k paths are unique, and causal claims require matched evidence. See [`PHASE_V8.1.1_MEASUREMENT_FIRST_ROUTING.md`](docs/intelligence/PHASE_V8.1.1_MEASUREMENT_FIRST_ROUTING.md).
+
+v8.2 closes the missing evidence→learning→outcome seam with a bounded, epoch-audited measurement-cohort ledger. The `⟁` field measures conservative joint-information synergy, typed closure, balance, redundancy, witness validity, and counterfactual lesion effect. It stamps routing metadata only after ranking and cannot change scores or order. Top-degree graph geometry is now audited against the complete graph before release decisions. See [`PHASE_V8.2_INFORMATIONAL_INTERLOCKS.md`](docs/intelligence/PHASE_V8.2_INFORMATIONAL_INTERLOCKS.md).
+
+v8.2.1 adds the `⟠` Geometric Bridge Field: open-wedge, reach, neighbor-diversity, and non-hub telemetry for finding useful connectors across Cortex’s dense core and sparse periphery. Bridge metadata is cached and attached only after ranking; policy effect remains exactly false. See [`PHASE_V8.2.1_GEOMETRIC_BRIDGE_FIELD.md`](docs/intelligence/PHASE_V8.2.1_GEOMETRIC_BRIDGE_FIELD.md).
+
+v8.2.2 adds the `⟐` Query-Conditioned Bridge Trial: fixed-cardinality baseline, annotation, bridge-reserve, and deterministic random-control arms. The triad `T(q,v)=(relevance×bridge×novelty)^(1/3)` has independent hard floors and can only produce counterfactual reports. Live routing remains unchanged until a 64+ case paired gate demonstrates non-inferior recall, positive MRR lift, control superiority, bounded selection and latency, and zero harmful replacements. See [`PHASE_V8.2.2_QUERY_BRIDGE_TRIALS.md`](docs/intelligence/PHASE_V8.2.2_QUERY_BRIDGE_TRIALS.md).
+
+v8.2.3 adds the `⟢` Source Admission Field and measures candidate-pool entry separately from final top-5 ranking. `A(q,v)=(lexical×semantic×evidence)^(1/3)` is tested against widened, random-source, and documentation-suppression controls on the sealed 64-case corpus. It remains shadow-only and additionally requires three consistent epoch/graph replications before promotion. See [`PHASE_V8.2.3_SOURCE_ADMISSION_FIELD.md`](docs/intelligence/PHASE_V8.2.3_SOURCE_ADMISSION_FIELD.md).
+
+The first sealed run improved source-reserve pool recall from 64.06% to 71.88% and final top-5 recall from 48.44% to 51.56%, while one harmful replacement and over-broad selection kept promotion blocked. Widened-pool recall reached 84.38%, localizing a second bottleneck in final ranking.
 
 Inspect the functional self-model with `cortex self-model status --repo <name> --json`; run its falsification surface with `cortex self-model lesion --repo <name> --json`.
 **No temporal metric can move a constitutional bit.**
@@ -104,6 +114,11 @@ python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
 | `warm-in run` | Warm field + sense to verified operating regime |
 | `binding-field observe` | Local coupling vs binding gap (advisory) |
 | `binding-field commit` | Close live buffer → Resonant Frame (no epoch seal) |
+| `interlock status` | Shadow E→L→O field, synergy, lesion, and promotion gates |
+| `interlock geometry` | Complete graph vs top-degree triadic sampling audit |
+| `interlock bridges` | Refresh shadow cross-region bridge candidates (`policy_effect=false`) |
+| `interlock trial` | Run paired query-conditioned bridge/control arms without changing live retrieval |
+| `interlock source-trial` | Measure candidate admission and matched source/control arms (`policy_effect=false`) |
 | `claim` | Falsifiable promote receipt (when applicable) |
 
 **Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  

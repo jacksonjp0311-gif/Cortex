@@ -272,6 +272,8 @@ def triadic_metrics(
             "connected_triples": 0,
             "global_closure_T": 0.0,
             "mean_local_closure": 0.0,
+            "sampling_basis": "complete_graph" if max_nodes <= 0 else "top_degree_projection",
+            "max_nodes": int(max_nodes),
             "open_bridges_sample": [],
             "claim_boundary": CLAIM,
         }
@@ -301,6 +303,8 @@ def triadic_metrics(
         "connected_triples": wedges,
         "global_closure_T": round(T, 6),
         "mean_local_closure": round(mean_c, 6),
+        "sampling_basis": "complete_graph" if max_nodes <= 0 else "top_degree_projection",
+        "max_nodes": int(max_nodes),
         "open_bridges_sample": bridges,
         "claim_boundary": (
             "Triadic closure is graph clustering / common-neighbor telemetry on "

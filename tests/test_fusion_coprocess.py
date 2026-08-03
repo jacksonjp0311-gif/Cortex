@@ -73,6 +73,17 @@ class FusionCoprocessTests(unittest.TestCase):
         nodes = [str(r["node_id"]) for r in self.store.neural_nodes("FuseHost")[:6]]
         if len(nodes) < 2:
             self.skipTest("need neural nodes")
+        interlock_blocked = invent_from_coactivation(
+            self.store,
+            "FuseHost",
+            fired_node_ids=nodes,
+            governance_mode="normal",
+            max_new=3,
+            require_interlock=True,
+            interlock_support={},
+        )
+        self.assertEqual(interlock_blocked.get("invented"), 0)
+        self.assertGreater(interlock_blocked["interlock_gate"]["rejected"], 0)
         out = invent_from_coactivation(
             self.store,
             "FuseHost",

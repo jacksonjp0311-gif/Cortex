@@ -326,6 +326,52 @@ def mesh_status(
     except Exception as exc:
         self_sense_panel = {"error": f"{type(exc).__name__}:{exc}", "advisory_only": True}
 
+    try:
+        from .math_net.info_interlock import interlock_report
+
+        interlock_panel = interlock_report(
+            store, repo, limit=512, top_paths=12, include_lesion=False
+        )
+    except Exception as exc:
+        interlock_panel = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+        }
+    bridge_shadow = store.get_setting(f"bridge_shadow_latest:{repo}", {}) or {}
+    bridge_panel = {
+        "available": bool(bridge_shadow),
+        "glyph": bridge_shadow.get("glyph") or "⟠",
+        "top_decile_degree_share": bridge_shadow.get("top_decile_degree_share"),
+        "candidate_count": len(bridge_shadow.get("candidates") or []),
+        "top_candidates": (bridge_shadow.get("candidates") or [])[:5],
+        "policy_effect": False,
+        "advisory_only": True,
+    }
+    bridge_trial = store.get_setting(f"bridge_trial_latest:{repo}", {}) or {}
+    bridge_trial_panel = {
+        "available": bool(bridge_trial),
+        "glyph": bridge_trial.get("glyph") or "⟐",
+        "suite": bridge_trial.get("suite"),
+        "case_count": bridge_trial.get("case_count"),
+        "arms": bridge_trial.get("arms"),
+        "promotion": bridge_trial.get("promotion"),
+        "policy_effect": False,
+        "advisory_only": True,
+    }
+    source_admission = store.get_setting(f"source_admission_latest:{repo}", {}) or {}
+    source_admission_panel = {
+        "available": bool(source_admission),
+        "glyph": source_admission.get("glyph") or "⟢",
+        "suite": source_admission.get("suite"),
+        "case_count": source_admission.get("case_count"),
+        "candidate_stage": source_admission.get("candidate_stage"),
+        "final_stage": source_admission.get("final_stage"),
+        "promotion": source_admission.get("promotion"),
+        "policy_effect": False,
+        "advisory_only": True,
+    }
+
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
@@ -344,6 +390,10 @@ def mesh_status(
         "bottlenecks": bottlenecks,
         "realign": realign_advice,
         "self_sensing": self_sense_panel,
+        "informational_interlock": interlock_panel,
+        "geometric_bridges": bridge_panel,
+        "query_bridge_trials": bridge_trial_panel,
+        "source_admission_trials": source_admission_panel,
         "warm_in": {
             "command": f"python -m cortex warm-in status --repo {repo}",
             "run": f"python -m cortex warm-in run --repo {repo}",
@@ -487,6 +537,10 @@ def mesh_dashboard(store: Any, repo: str, *, governor: Any | None = None, home: 
         "runtime_phase": cont.get("runtime_phase"),
         "resonance": (mesh.get("intelligence") or {}).get("resonance"),
         "observation_snapshot": mesh.get("observation_snapshot"),
+        "informational_interlock": mesh.get("informational_interlock"),
+        "geometric_bridges": mesh.get("geometric_bridges"),
+        "query_bridge_trials": mesh.get("query_bridge_trials"),
+        "source_admission_trials": mesh.get("source_admission_trials"),
         "law": "common_pulse_through_kernel_spectrum_and_body_epoch",
         "claim_boundary": mesh.get("claim_boundary"),
     }

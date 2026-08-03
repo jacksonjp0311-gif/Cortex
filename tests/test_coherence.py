@@ -61,11 +61,34 @@ class CoherenceTests(unittest.TestCase):
         self.assertIn("occupied_bonds", c["couple_percolation"])
         self.assertIn("lyapunov", c)
         self.assertIn("V", c["lyapunov"])
+        self.assertIn("informational_interlock", c)
+        self.assertTrue(c["observation_basis"]["governor_supplied"])
         self.assertIsInstance(c["above_threshold"], bool)
         # Persisted latest
         latest = self.store.get_setting("coherence_latest:CohHost", None)
         self.assertIsInstance(latest, dict)
         self.assertIn("score", latest or {})
+
+    def test_observation_basis_prevents_false_score_comparison(self) -> None:
+        canonical = measure_coherence(
+            self.store,
+            "CohHost",
+            governor=self.gov,
+            home=self.home,
+            retrieval_confidence=0.7,
+            persist=False,
+        )
+        proxy = measure_coherence(
+            self.store,
+            "CohHost",
+            retrieval_confidence=0.7,
+            persist=False,
+        )
+        self.assertNotEqual(
+            canonical["observation_basis"]["comparable_key"],
+            proxy["observation_basis"]["comparable_key"],
+        )
+        self.assertFalse(proxy["observation_basis"]["governor_supplied"])
 
     def test_percolation_requires_learning_operations_and_governance(self) -> None:
         def indicators(active: set[str]) -> list[dict]:

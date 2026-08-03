@@ -595,6 +595,26 @@ def build_parser() -> argparse.ArgumentParser:
     coherence_p.add_argument("--repo", required=True)
     coherence_p.add_argument("--json", action="store_true")
 
+    interlock_field_p = sub.add_parser(
+        "interlock",
+        help="v8.2 typed E→L→O informational interlocks and triadic sampling audit.",
+    )
+    interlock_field_p.add_argument(
+        "action",
+        choices=["status", "geometry", "bridges", "trial", "source-trial"],
+        nargs="?",
+        default="status",
+    )
+    interlock_field_p.add_argument("--repo", required=True)
+    interlock_field_p.add_argument("--limit", type=int, default=2048)
+    interlock_field_p.add_argument(
+        "--suite",
+        choices=["easy", "hard", "full", "stress", "train", "holdout", "all", "bridge64"],
+        default="all",
+    )
+    interlock_field_p.add_argument("--top-k", type=int, default=5)
+    interlock_field_p.add_argument("--json", action="store_true")
+
     emergence_p = sub.add_parser(
         "emergence-log",
         help="Emergence log ⧉◎ — MUST READ progress history (coupling events). Agents: read each turn.",
@@ -1941,6 +1961,52 @@ def main(argv: list[str] | None = None) -> None:
                 ),
                 args.json,
             )
+
+        elif command == "interlock":
+            from .math_net.info_interlock import (
+                graph_sampling_audit,
+                interlock_report,
+                refresh_bridge_shadow,
+            )
+
+            if args.action == "geometry":
+                emit(graph_sampling_audit(store, args.repo), args.json)
+            elif args.action == "bridges":
+                emit(refresh_bridge_shadow(store, args.repo), args.json)
+            elif args.action == "trial":
+                from .bridge_trials import run_bridge_trial_suite
+
+                emit(
+                    run_bridge_trial_suite(
+                        home,
+                        store,
+                        args.repo,
+                        suite=str(args.suite),
+                        limit=max(8, min(64, int(args.limit or 24))),
+                        top_k=max(1, int(args.top_k or 5)),
+                    ),
+                    args.json,
+                )
+            elif args.action == "source-trial":
+                from .source_admission import run_source_admission_suite
+
+                source_pool = 24 if int(args.limit or 0) == 2048 else max(
+                    8, min(48, int(args.limit or 24))
+                )
+                emit(
+                    run_source_admission_suite(
+                        home,
+                        store,
+                        args.repo,
+                        suite="bridge64",
+                        pool_size=source_pool,
+                        widened_size=max(48, min(96, source_pool * 2)),
+                        top_k=max(1, int(args.top_k or 5)),
+                    ),
+                    args.json,
+                )
+            else:
+                emit(interlock_report(store, args.repo, limit=args.limit), args.json)
 
         elif command == "emergence-log":
             from .emergence_log import log_milestone, read_emergence_log

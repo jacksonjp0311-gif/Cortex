@@ -107,6 +107,22 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v800.py
+      - name: Informational Interlocks receipt (v8.2.0 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v820.py
+      - name: Geometric Bridge Field receipt (v8.2.1 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v821.py
+      - name: Query-Conditioned Bridge Trials receipt (v8.2.2 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v822.py
+      - name: Source Admission Field receipt (v8.2.3 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v823.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -124,6 +140,10 @@ jobs:
             work/release_receipt_v780.json
             work/release_receipt_v781.json
             work/release_receipt_v800.json
+            work/release_receipt_v820.json
+            work/release_receipt_v821.json
+            work/release_receipt_v822.json
+            work/release_receipt_v823.json
           if-no-files-found: ignore
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json

@@ -611,6 +611,14 @@ def query(
                     pass
     except Exception:
         pass
+    # v8.2: route metadata only.  The cached interlock stamp is deliberately
+    # applied after ranking and never changes score, order, or evidence floors.
+    try:
+        from .math_net.info_interlock import stamp_hits_with_interlock_shadow
+
+        stamp_hits_with_interlock_shadow(store, repo, floor)
+    except Exception:
+        pass
     return _deduplicate_hits_by_path(floor, limit=limit)
 
 

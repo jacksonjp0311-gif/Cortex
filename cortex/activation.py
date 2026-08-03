@@ -1147,4 +1147,18 @@ def activate_repository(
                 out["cognitive_cycle_finalization_error"] = (
                     f"{type(exc).__name__}:{exc}"
                 )
+        # v8.2: append exactly one unresolved E-L observation after the final
+        # body epoch is sealed.  Outcome truth is bound later by record_outcome.
+        try:
+            from .math_net.info_interlock import observe_activation_interlock
+
+            out["information_interlock"] = observe_activation_interlock(
+                store, repo, out, task=task
+            )
+        except Exception as exc:
+            out["information_interlock"] = {
+                "observed": False,
+                "error": f"{type(exc).__name__}:{exc}",
+                "advisory_only": True,
+            }
     return out
