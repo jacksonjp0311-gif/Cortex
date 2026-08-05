@@ -410,6 +410,55 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical activation conformance receipts cannot be updated');
 END;
 
+-- v8.4.1 canonical symbiotic circulation ledger.  One append-only hash chain
+-- per repository/session.  Exactly-once per repository/session/kind keeps the
+-- six (+ outcome) receipt types from being silently replaced.
+CREATE TABLE IF NOT EXISTS symbiotic_circulation_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    subject_receipt_hash TEXT NOT NULL CHECK(length(subject_receipt_hash) = 64),
+    previous_receipt_hash TEXT NOT NULL CHECK(length(previous_receipt_hash) = 64),
+    chain_sequence INTEGER NOT NULL CHECK(chain_sequence >= 1),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    body_epoch_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    status TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, session_id, kind),
+    UNIQUE(repository_id, session_id, chain_sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_session
+ON symbiotic_circulation_receipts(repo, session_id, chain_sequence);
+CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_created
+ON symbiotic_circulation_receipts(repo, created_at DESC, receipt_hash);
+
+CREATE TABLE IF NOT EXISTS symbiotic_circulation_chain_tips(
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    body_epoch_id TEXT NOT NULL,
+    tip_receipt_hash TEXT NOT NULL,
+    receipt_count INTEGER NOT NULL CHECK(receipt_count >= 1),
+    updated_at REAL NOT NULL,
+    PRIMARY KEY(repository_id, session_id),
+    FOREIGN KEY(tip_receipt_hash)
+        REFERENCES symbiotic_circulation_receipts(receipt_hash) ON DELETE RESTRICT
+);
+
+CREATE TRIGGER IF NOT EXISTS symbiotic_circulation_receipts_no_delete
+BEFORE DELETE ON symbiotic_circulation_receipts
+BEGIN
+    SELECT RAISE(ABORT, 'canonical symbiotic circulation receipts cannot be deleted');
+END;
+
+CREATE TRIGGER IF NOT EXISTS symbiotic_circulation_receipts_no_update
+BEFORE UPDATE ON symbiotic_circulation_receipts
+BEGIN
+    SELECT RAISE(ABORT, 'canonical symbiotic circulation receipts cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -2707,6 +2756,428 @@ class Store:
                 "invalid_receipt_hashes": invalid_receipt_hashes,
                 "errors": errors,
             }
+
+    # ------------------------------------------------------------------
+    # v8.4.1 symbiotic circulation ledger
+    # ------------------------------------------------------------------
+
+    SYMBIOTIC_ZERO_HASH = "0" * 64
+    SYMBIOTIC_LEDGER_SCHEMA = "cortex-symbiotic-circulation-ledger/1.0"
+
+    @staticmethod
+    def _symbiotic_canonical_json(body: dict[str, Any]) -> str:
+        return json.dumps(body, sort_keys=True, separators=(",", ":"), default=str)
+
+    def _decode_symbiotic_row(self, row: sqlite3.Row) -> dict[str, Any]:
+        try:
+            body = json.loads(row["receipt_json"])
+            if not isinstance(body, dict):
+                body = {}
+        except (TypeError, ValueError, json.JSONDecodeError):
+            body = {}
+        return {
+            **body,
+            "receipt_hash": row["receipt_hash"],
+            "subject_receipt_hash": row["subject_receipt_hash"],
+            "previous_receipt_hash": row["previous_receipt_hash"],
+            "chain_sequence": int(row["chain_sequence"]),
+            "repository_id": row["repository_id"],
+            "repo": row["repo"],
+            "session_id": row["session_id"],
+            "body_epoch_id": row["body_epoch_id"],
+            "kind": row["kind"],
+            "status": row["status"],
+            "created_at": float(row["created_at"]),
+            "ledger_schema_version": self.SYMBIOTIC_LEDGER_SCHEMA,
+        }
+
+    def append_symbiotic_receipt(
+        self,
+        repo: str,
+        receipt_body: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Append one immutable symbiotic receipt and advance the session tip.
+
+        Exactly-once identity is ``(repository_id, session_id, kind)``.  Replaying
+        byte-equivalent content returns the existing row; different content fails.
+        """
+        if not isinstance(receipt_body, dict):
+            raise TypeError("symbiotic receipt body must be a dict")
+        kind = str(receipt_body.get("kind") or "").strip()
+        session_id = str(receipt_body.get("session_id") or "").strip()
+        body_epoch_id = str(receipt_body.get("body_epoch_id") or "").strip()
+        if not kind or not session_id or not body_epoch_id:
+            raise ValueError("symbiotic receipt requires kind, session_id, body_epoch_id")
+
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "").strip()
+            if not repository_id:
+                raise ValueError("repository_id is required for symbiotic evidence")
+
+            body = dict(receipt_body)
+            for key in (
+                "receipt_hash",
+                "subject_receipt_hash",
+                "previous_receipt_hash",
+                "chain_sequence",
+                "inserted",
+                "duplicate",
+                "chain_valid",
+                "ledger_schema_version",
+            ):
+                body.pop(key, None)
+            body.update(
+                {
+                    "repository_id": repository_id,
+                    "repo": repo,
+                    "session_id": session_id,
+                    "body_epoch_id": body_epoch_id,
+                    "kind": kind,
+                    "status": str(body.get("status") or kind),
+                }
+            )
+            # Scientific subject excludes ledger linkage.
+            subject_material = {
+                key: value
+                for key, value in body.items()
+                if key
+                not in {
+                    "created_at",
+                    "previous_receipt_hash",
+                    "chain_sequence",
+                    "ledger_schema_version",
+                }
+            }
+            subject_json = self._symbiotic_canonical_json(subject_material)
+            subject_hash = sha256(subject_json.encode("utf-8")).hexdigest()
+            existing = conn.execute(
+                """SELECT * FROM symbiotic_circulation_receipts
+                   WHERE repository_id=? AND session_id=? AND kind=?""",
+                (repository_id, session_id, kind),
+            ).fetchone()
+            created_at = float(existing["created_at"]) if existing else time.time()
+            body["created_at"] = created_at
+            receipt_json = self._symbiotic_canonical_json(body)
+
+            if existing is not None:
+                if (
+                    str(existing["subject_receipt_hash"]) != subject_hash
+                    or str(existing["receipt_json"]) != receipt_json
+                ):
+                    raise ValueError(
+                        "symbiotic receipt kind already has different content "
+                        f"for session {session_id}"
+                    )
+                decoded = self._decode_symbiotic_row(existing)
+                decoded.update({"inserted": False, "duplicate": True, "chain_valid": True})
+                return decoded
+
+            tip = conn.execute(
+                """SELECT * FROM symbiotic_circulation_chain_tips
+                   WHERE repository_id=? AND session_id=?""",
+                (repository_id, session_id),
+            ).fetchone()
+            if tip is None:
+                previous_hash = self.SYMBIOTIC_ZERO_HASH
+                chain_sequence = 1
+            else:
+                previous_hash = str(tip["tip_receipt_hash"])
+                chain_sequence = int(tip["receipt_count"]) + 1
+
+            final_material = {
+                "subject_receipt_hash": subject_hash,
+                "previous_receipt_hash": previous_hash,
+                "chain_sequence": chain_sequence,
+                "repository_id": repository_id,
+                "repo": repo,
+                "session_id": session_id,
+                "body_epoch_id": body_epoch_id,
+                "kind": kind,
+                "status": body["status"],
+                "receipt_json": receipt_json,
+                "created_at": created_at,
+            }
+            receipt_hash = sha256(
+                self._symbiotic_canonical_json(final_material).encode("utf-8")
+            ).hexdigest()
+            conn.execute(
+                """INSERT INTO symbiotic_circulation_receipts(
+                       receipt_hash, subject_receipt_hash, previous_receipt_hash,
+                       chain_sequence, repository_id, repo, session_id, body_epoch_id,
+                       kind, status, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    subject_hash,
+                    previous_hash,
+                    chain_sequence,
+                    repository_id,
+                    repo,
+                    session_id,
+                    body_epoch_id,
+                    kind,
+                    body["status"],
+                    receipt_json,
+                    created_at,
+                ),
+            )
+            if tip is None:
+                conn.execute(
+                    """INSERT INTO symbiotic_circulation_chain_tips(
+                           repository_id, repo, session_id, body_epoch_id,
+                           tip_receipt_hash, receipt_count, updated_at
+                       ) VALUES(?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        repository_id,
+                        repo,
+                        session_id,
+                        body_epoch_id,
+                        receipt_hash,
+                        chain_sequence,
+                        created_at,
+                    ),
+                )
+            else:
+                cursor = conn.execute(
+                    """UPDATE symbiotic_circulation_chain_tips
+                       SET tip_receipt_hash=?, receipt_count=?, updated_at=?, body_epoch_id=?
+                       WHERE repository_id=? AND session_id=?
+                         AND tip_receipt_hash=? AND receipt_count=?""",
+                    (
+                        receipt_hash,
+                        chain_sequence,
+                        created_at,
+                        body_epoch_id,
+                        repository_id,
+                        session_id,
+                        previous_hash,
+                        chain_sequence - 1,
+                    ),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError("symbiotic chain tip changed during append")
+
+            verification = self._verify_symbiotic_session_conn(
+                conn, repository_id, repo, session_id
+            )
+            if not verification["valid"]:
+                raise RuntimeError(
+                    "symbiotic append failed verification: "
+                    + ",".join(verification["errors"])
+                )
+            row = conn.execute(
+                "SELECT * FROM symbiotic_circulation_receipts WHERE receipt_hash=?",
+                (receipt_hash,),
+            ).fetchone()
+            if row is None:
+                raise RuntimeError("symbiotic receipt append was not persisted")
+            result = self._decode_symbiotic_row(row)
+            result.update({"inserted": True, "duplicate": False, "chain_valid": True})
+            return result
+
+    def symbiotic_receipt(
+        self, receipt_hash: str, *, repo: str | None = None
+    ) -> dict[str, Any] | None:
+        if repo is None:
+            row = self.db.execute(
+                "SELECT * FROM symbiotic_circulation_receipts WHERE receipt_hash=?",
+                (str(receipt_hash),),
+            ).fetchone()
+        else:
+            repository = self.db.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                return None
+            row = self.db.execute(
+                """SELECT * FROM symbiotic_circulation_receipts
+                   WHERE receipt_hash=? AND repository_id=? AND repo=?""",
+                (str(receipt_hash), str(repository["repository_id"]), str(repo)),
+            ).fetchone()
+        return self._decode_symbiotic_row(row) if row else None
+
+    def symbiotic_session_receipts(
+        self, repo: str, session_id: str
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        rows = self.db.execute(
+            """SELECT * FROM symbiotic_circulation_receipts
+               WHERE repository_id=? AND repo=? AND session_id=?
+               ORDER BY chain_sequence ASC""",
+            (str(repository["repository_id"]), str(repo), str(session_id)),
+        ).fetchall()
+        return [self._decode_symbiotic_row(row) for row in rows]
+
+    def _verify_symbiotic_session_conn(
+        self,
+        conn: sqlite3.Connection,
+        repository_id: str,
+        repo: str,
+        session_id: str,
+    ) -> dict[str, Any]:
+        rows = conn.execute(
+            """SELECT * FROM symbiotic_circulation_receipts
+               WHERE repository_id=? AND repo=? AND session_id=?
+               ORDER BY chain_sequence ASC""",
+            (repository_id, repo, session_id),
+        ).fetchall()
+        tip = conn.execute(
+            """SELECT * FROM symbiotic_circulation_chain_tips
+               WHERE repository_id=? AND session_id=?""",
+            (repository_id, session_id),
+        ).fetchone()
+        errors: list[str] = []
+        invalid: list[str] = []
+        previous = self.SYMBIOTIC_ZERO_HASH
+        for index, row in enumerate(rows, start=1):
+            if int(row["chain_sequence"]) != index:
+                errors.append(f"sequence_gap:{row['chain_sequence']}")
+            if str(row["previous_receipt_hash"]) != previous:
+                errors.append(f"previous_hash_mismatch:{row['receipt_hash']}")
+                invalid.append(str(row["receipt_hash"]))
+            try:
+                body = json.loads(row["receipt_json"])
+            except (TypeError, ValueError, json.JSONDecodeError):
+                body = None
+            if not isinstance(body, dict):
+                errors.append(f"receipt_json_invalid:{row['receipt_hash']}")
+                invalid.append(str(row["receipt_hash"]))
+                previous = str(row["receipt_hash"])
+                continue
+            # Subject hash is the scientific body without created_at / ledger linkage.
+            subject_only = {
+                key: value
+                for key, value in body.items()
+                if key
+                not in {
+                    "created_at",
+                    "previous_receipt_hash",
+                    "chain_sequence",
+                    "ledger_schema_version",
+                    "receipt_hash",
+                    "subject_receipt_hash",
+                    "inserted",
+                    "duplicate",
+                    "chain_valid",
+                }
+            }
+            expected_subject = sha256(
+                self._symbiotic_canonical_json(subject_only).encode("utf-8")
+            ).hexdigest()
+            if expected_subject != str(row["subject_receipt_hash"]):
+                errors.append(f"subject_hash_invalid:{row['receipt_hash']}")
+                invalid.append(str(row["receipt_hash"]))
+            final_material = {
+                "subject_receipt_hash": row["subject_receipt_hash"],
+                "previous_receipt_hash": row["previous_receipt_hash"],
+                "chain_sequence": int(row["chain_sequence"]),
+                "repository_id": row["repository_id"],
+                "repo": row["repo"],
+                "session_id": row["session_id"],
+                "body_epoch_id": row["body_epoch_id"],
+                "kind": row["kind"],
+                "status": row["status"],
+                "receipt_json": row["receipt_json"],
+                "created_at": float(row["created_at"]),
+            }
+            expected_hash = sha256(
+                self._symbiotic_canonical_json(final_material).encode("utf-8")
+            ).hexdigest()
+            if expected_hash != str(row["receipt_hash"]):
+                errors.append(f"receipt_hash_invalid:{row['receipt_hash']}")
+                invalid.append(str(row["receipt_hash"]))
+            previous = str(row["receipt_hash"])
+        if tip is None and rows:
+            errors.append("chain_tip_missing")
+        if tip is not None:
+            if int(tip["receipt_count"]) != len(rows):
+                errors.append("tip_count_mismatch")
+            if rows and str(tip["tip_receipt_hash"]) != str(rows[-1]["receipt_hash"]):
+                errors.append("tip_hash_mismatch")
+        return {
+            "valid": not errors,
+            "chain_valid": not errors,
+            "repository_id": repository_id,
+            "repo": repo,
+            "session_id": session_id,
+            "receipt_count": len(rows),
+            "tip_receipt_hash": (
+                str(tip["tip_receipt_hash"]) if tip is not None else None
+            ),
+            "invalid_receipt_hashes": sorted(set(invalid)),
+            "errors": errors,
+            "advisory_only": True,
+            "policy_effect": False,
+            "update_authorized": False,
+        }
+
+    def verify_symbiotic_session(
+        self, repo: str, session_id: str
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                return {
+                    "valid": False,
+                    "chain_valid": False,
+                    "repo": repo,
+                    "session_id": session_id,
+                    "receipt_count": 0,
+                    "errors": ["repository_missing"],
+                    "advisory_only": True,
+                    "policy_effect": False,
+                    "update_authorized": False,
+                }
+            return self._verify_symbiotic_session_conn(
+                conn,
+                str(repository["repository_id"]),
+                str(repo),
+                str(session_id),
+            )
+
+    def verify_symbiotic_receipt(
+        self, repo: str, receipt_hash: str
+    ) -> dict[str, Any]:
+        receipt = self.symbiotic_receipt(receipt_hash, repo=repo)
+        if not receipt:
+            return {
+                "verification_status": "not_found",
+                "receipt_hash": receipt_hash,
+                "valid": False,
+                "advisory_only": True,
+                "policy_effect": False,
+                "update_authorized": False,
+            }
+        chain = self.verify_symbiotic_session(
+            repo, str(receipt.get("session_id") or "")
+        )
+        row_valid = bool(chain.get("valid")) and receipt_hash not in set(
+            chain.get("invalid_receipt_hashes") or []
+        )
+        return {
+            "verification_status": "verified" if row_valid else "failed",
+            "receipt_hash": receipt_hash,
+            "kind": receipt.get("kind"),
+            "session_id": receipt.get("session_id"),
+            "valid": row_valid,
+            "chain_valid": bool(chain.get("valid")),
+            "chain": chain,
+            "receipt": receipt,
+            "advisory_only": True,
+            "policy_effect": False,
+            "update_authorized": False,
+        }
 
     def save_continuation_packet(
         self, repo: str, packet_id: str, origin_version: str, state_hash: str,

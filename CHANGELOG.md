@@ -1,3 +1,11 @@
+## 8.4.1 - Verified Symbiotic Circulation
+
+- Moved symbiotic receipts into an exactly-once canonical SQLite ledger per repository/session with immutable rows and hash-chained tips.
+- Added independent receipt and session-chain verification (`verify_symbiotic_session`, `verify_session_circulation`, CLI `symbiosis verify`).
+- Bound evaluation gates to live Cortex measurements (epoch, measured events, outcomes, residual/conformance status, self-sensing, binding, resonance) instead of constants.
+- Added typed, independently witnessed `outcome` receipts; consolidation reads witnessed/closed outcome state by default.
+- Still advisory-only: no automatic execution, durable write, or policy promotion.
+
 ## 8.4.0 - AI–Cortex Symbiotic Runtime
 
 - Centered the architecture on the AI model ↔ Cortex bond: temporary working cortex + durable body, separable, neither host authority.

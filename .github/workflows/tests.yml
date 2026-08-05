@@ -76,6 +76,7 @@ jobs:
           tests/test_geometric_echo.py
           tests/test_rotated_echo.py
           tests/test_symbiosis.py
+          tests/test_symbiosis_ledger.py
           -q --tb=line
       - name: Constitutional seal release receipt
         env:

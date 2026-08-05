@@ -1288,10 +1288,34 @@ def build_parser() -> argparse.ArgumentParser:
     )
     symbiosis_p.add_argument(
         "action",
-        choices=["status", "open", "propose", "action", "consolidate", "next"],
+        choices=[
+            "status",
+            "open",
+            "propose",
+            "action",
+            "outcome",
+            "consolidate",
+            "next",
+            "verify",
+        ],
         nargs="?",
         default="status",
-        help="status | open session | propose | joint action | consolidate | next brief",
+        help="status | open | propose | action | outcome | consolidate | next | verify",
+    )
+    symbiosis_p.add_argument(
+        "--session",
+        default="",
+        help="Session id for verify (defaults to latest).",
+    )
+    symbiosis_p.add_argument(
+        "--success",
+        action="store_true",
+        help="Mark outcome success=true (outcome action).",
+    )
+    symbiosis_p.add_argument(
+        "--witnessed",
+        action="store_true",
+        help="Attach a local OUTCOME witness for outcome action (test/dev only).",
     )
     symbiosis_p.add_argument("--repo", required=True)
     symbiosis_p.add_argument("--task", default="", help="Task for open/propose.")
@@ -3392,9 +3416,11 @@ def main(argv: list[str] | None = None) -> None:
                 consolidate_session,
                 open_symbiotic_session,
                 record_joint_action,
+                record_outcome,
                 record_proposal,
                 reconstruct_next_session_brief,
                 symbiotic_status,
+                verify_session_circulation,
             )
 
             if args.action == "status":
@@ -3402,6 +3428,16 @@ def main(argv: list[str] | None = None) -> None:
                 return
             if args.action == "next":
                 emit(reconstruct_next_session_brief(store, args.repo), args.json)
+                return
+            if args.action == "verify":
+                latest = store.get_setting(f"symbiosis_latest:{args.repo}", None) or {}
+                session_id = str(args.session or latest.get("session_id") or "")
+                if not session_id:
+                    raise ValueError("no session to verify; open a symbiotic session first")
+                emit(
+                    verify_session_circulation(store, args.repo, session_id),
+                    args.json,
+                )
                 return
             if args.action == "open":
                 task = str(args.task or "").strip() or "symbiotic session"
@@ -3458,6 +3494,45 @@ def main(argv: list[str] | None = None) -> None:
                     args.json,
                 )
                 return
+            if args.action == "outcome":
+                witness = None
+                if bool(getattr(args, "witnessed", False)):
+                    # Dev-only local witness; production paths must supply independent material.
+                    joint = (latest.get("receipts") or {}).get("joint_action") or {}
+                    subject = {
+                        "outcome_kind": "task_result",
+                        "success": bool(getattr(args, "success", False)),
+                        "metrics": {},
+                        "external_reference": None,
+                        "joint_action_receipt_hash": joint.get("receipt_hash") or "",
+                        "session_id": latest.get("session_id"),
+                        "body_epoch_id": latest.get("body_epoch_id"),
+                        "repository_id": latest.get("repository_id"),
+                        "repo": args.repo,
+                    }
+                    from .symbiosis import _sha
+
+                    subject_hash = _sha(subject)
+                    witness = {
+                        "witness_kind": "OUTCOME",
+                        "verifier": "cortex.cli.local_dev_witness",
+                        "subject_receipt_hash": subject_hash,
+                        "evidence_hashes": [subject_hash],
+                        "passed": True,
+                        "issued_at": __import__("time").time(),
+                    }
+                    witness["witness_id"] = "ow_" + _sha(witness)[:24]
+                emit(
+                    record_outcome(
+                        store,
+                        args.repo,
+                        latest,
+                        success=bool(getattr(args, "success", False)) or None,
+                        witness=witness,
+                    ),
+                    args.json,
+                )
+                return
             if args.action == "consolidate":
                 emit(
                     consolidate_session(
@@ -3466,9 +3541,6 @@ def main(argv: list[str] | None = None) -> None:
                         latest,
                         candidates=[],
                         constitutional_gate=False,
-                        witness_present=False,
-                        outcome_closed=False,
-                        stable_regime=False,
                     ),
                     args.json,
                 )
