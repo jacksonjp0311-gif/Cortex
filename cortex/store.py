@@ -536,6 +536,38 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical interconnect transitions cannot be updated');
 END;
 
+-- v8.4.5 distillation candidate ledger (candidates only — not durable memory)
+CREATE TABLE IF NOT EXISTS distillation_candidate_batches(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    turn_id INTEGER NOT NULL,
+    transition_hash TEXT,
+    prior_frame_hash TEXT,
+    next_frame_hash TEXT,
+    extraction_status TEXT NOT NULL,
+    candidate_count INTEGER NOT NULL DEFAULT 0,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, session_id, turn_id),
+    UNIQUE(repository_id, session_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_distill_cand_session
+ON distillation_candidate_batches(repo, session_id, turn_id);
+
+CREATE TRIGGER IF NOT EXISTS distillation_candidate_batches_no_delete
+BEFORE DELETE ON distillation_candidate_batches
+BEGIN
+    SELECT RAISE(ABORT, 'canonical distillation candidate batches cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS distillation_candidate_batches_no_update
+BEFORE UPDATE ON distillation_candidate_batches
+BEGIN
+    SELECT RAISE(ABORT, 'canonical distillation candidate batches cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -3394,6 +3426,88 @@ class Store:
             return []
         rows = self.db.execute(
             """SELECT receipt_json FROM interconnect_transitions
+               WHERE repository_id=? AND repo=? AND session_id=?
+               ORDER BY turn_id ASC""",
+            (str(repository["repository_id"]), repo, session_id),
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                out.append(json.loads(row["receipt_json"]))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+        return out
+
+    def append_distillation_candidate_batch(
+        self, repo: str, batch: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Append one immutable distillation candidate batch (exactly-once per turn)."""
+        if not isinstance(batch, dict):
+            raise TypeError("distillation candidate batch must be a dict")
+        session_id = str(batch.get("session_id") or "").strip()
+        try:
+            turn_id = int(batch.get("turn_id", 0))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("distillation candidate batch requires turn_id") from exc
+        receipt_hash = str(batch.get("receipt_hash") or "").strip()
+        event_id = str(batch.get("event_id") or "").strip()
+        if not all([session_id, receipt_hash, event_id]):
+            raise ValueError("distillation candidate batch missing required fields")
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "")
+            existing = conn.execute(
+                """SELECT * FROM distillation_candidate_batches
+                   WHERE repository_id=? AND session_id=? AND turn_id=?""",
+                (repository_id, session_id, turn_id),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError(
+                        "distillation candidate turn already has different content"
+                    )
+                return {**batch, "inserted": False, "duplicate": True}
+            source = dict(batch.get("source") or {})
+            created_at = float(batch.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO distillation_candidate_batches(
+                       receipt_hash, repository_id, repo, session_id, turn_id,
+                       transition_hash, prior_frame_hash, next_frame_hash,
+                       extraction_status, candidate_count, event_id,
+                       receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    repository_id,
+                    repo,
+                    session_id,
+                    turn_id,
+                    source.get("transition_hash"),
+                    source.get("prior_frame_hash"),
+                    source.get("next_frame_hash"),
+                    str(batch.get("extraction_status") or "empty"),
+                    int(batch.get("candidate_count") or 0),
+                    event_id,
+                    self._symbiotic_canonical_json(batch),
+                    created_at,
+                ),
+            )
+            return {**batch, "inserted": True, "duplicate": False}
+
+    def distillation_session_candidates(
+        self, repo: str, session_id: str
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        rows = self.db.execute(
+            """SELECT receipt_json FROM distillation_candidate_batches
                WHERE repository_id=? AND repo=? AND session_id=?
                ORDER BY turn_id ASC""",
             (str(repository["repository_id"]), repo, session_id),

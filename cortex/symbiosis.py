@@ -21,15 +21,15 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.4"
+SCHEMA = "cortex-symbiosis/1.5"
 GLYPH = "☍"
-VERSION = "8.4.4"
+VERSION = "8.4.5"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
     "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "
     "provenance under independent verification — not consciousness, host authority, "
-    "or automatic learning. Direction requires an authenticated will (v8.5+); "
-    "this release only hardens recurrent, verifiable circulation."
+    "or automatic learning. Distillation candidates (v8.4.5) are typed trajectory "
+    "lessons, not durable memory. Direction requires an authenticated will (v8.5+)."
 )
 GATE_PASS = "pass"
 GATE_FAIL = "fail"
@@ -44,7 +44,10 @@ CONSOLIDATION_KINDS = frozenset(
         "verified_fact",
         "successful_procedure",
         "failed_hypothesis",
+        "counterevidence",
         "useful_route",
+        "persistent_constraint",
+        "regime_warning",
         "operator_correction",
         "unresolved_ambiguity",
         "model_specific_preference",
@@ -61,6 +64,7 @@ RECEIPT_KINDS = (
     "cortex_evaluation",
     "joint_action",
     "outcome",
+    "distillation_candidate_batch",
     "symbiotic_consolidation",
 )
 
@@ -1320,6 +1324,7 @@ def record_proposal(
     ledgered.  Before the proposal, Cortex captures a turn-bound interconnect
     frame and regenerates context C_k (reciprocal pulse).
     """
+    from .distillation_candidates import extract_distillation_candidates
     from .interconnect_frame import (
         build_context_delta,
         build_interconnect_transition,
@@ -1373,6 +1378,7 @@ def record_proposal(
     )
     transition = None
     context_delta = None
+    distillation_batch = None
     last_turn_payload: Mapping[str, Any] = {}
     if turns:
         last_turn_payload = (
@@ -1466,6 +1472,17 @@ def record_proposal(
             next_frame=frame,
             outcome=dict(last_turn_payload.get("outcome") or {}),
         )
+    if transition and last_turn_payload.get("interconnect_frame"):
+        distillation_batch = extract_distillation_candidates(
+            prior_frame=dict(last_turn_payload.get("interconnect_frame") or {}),
+            next_frame=frame,
+            transition=transition,
+            outcome=dict(last_turn_payload.get("outcome") or {}),
+            proposal=dict(last_turn_payload.get("agent_proposal") or {}),
+            evaluation=dict(last_turn_payload.get("cortex_evaluation") or {}),
+            joint_action=dict(last_turn_payload.get("joint_action") or {}),
+            context_delta=context_delta or {},
+        )
     measured_gates = measure_evaluation_gates(
         store, repo, proposal=proposal, context=context
     )
@@ -1515,12 +1532,15 @@ def record_proposal(
         "frame_proposal_compatible": frame_bind,
         "interconnect_transition": transition,
         "context_delta": context_delta,
+        "distillation_candidates": distillation_batch,
     }
     turns[str(turn_id)] = turn_receipts
     if transition:
         receipts["interconnect_transition"] = transition
     if context_delta:
         receipts["context_delta"] = context_delta
+    if distillation_batch:
+        receipts["distillation_candidates"] = distillation_batch
     chain = list(session_body.get("chain") or [])
     chain.extend(
         [
@@ -1532,6 +1552,8 @@ def record_proposal(
     )
     if transition:
         chain.append(transition["receipt_hash"])
+    if distillation_batch:
+        chain.append(distillation_batch["receipt_hash"])
     session_body.update(
         {
             "receipts": receipts,
@@ -1546,6 +1568,12 @@ def record_proposal(
                 "overall_state"
             ),
             "latest_transition_class": (transition or {}).get("transition_class"),
+            "latest_distillation_count": (distillation_batch or {}).get(
+                "candidate_count"
+            ),
+            "latest_distillation_status": (distillation_batch or {}).get(
+                "extraction_status"
+            ),
             "epoch_verified": measured_gates.get("gate_states", {}).get("epoch_current")
             == GATE_PASS,
             "updated_at": time.time(),
@@ -1562,6 +1590,13 @@ def record_proposal(
         if transition:
             try:
                 store.append_interconnect_transition(repo, dict(transition))
+            except Exception:
+                pass
+        if distillation_batch:
+            try:
+                store.append_distillation_candidate_batch(
+                    repo, dict(distillation_batch)
+                )
             except Exception:
                 pass
         _persist_session(store, repo, session_body)
@@ -1691,10 +1726,22 @@ def consolidate_session(
     stable_regime: bool | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
+    from .distillation_candidates import (
+        extract_session_distillation_candidates,
+        flatten_candidates,
+    )
+
     session_body = dict(session)
     receipts = dict(session_body.get("receipts") or {})
     joint = dict(receipts.get("joint_action") or {})
     outcome = dict(receipts.get("outcome") or {})
+    # Prefer explicit candidates; otherwise flatten trajectory-derived batches.
+    # Extraction never sets retain=True, so gates still block durable retention.
+    if candidates is None:
+        batches = extract_session_distillation_candidates(session_body)
+        candidates = flatten_candidates(batches)
+        if batches:
+            receipts["distillation_candidate_batches"] = batches
     measured = measure_evaluation_gates(
         store,
         repo,
@@ -1986,8 +2033,10 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
     evaluation = dict(receipts.get("cortex_evaluation") or {})
     consolidation = dict(receipts.get("symbiotic_consolidation") or {})
     outcome = dict(receipts.get("outcome") or {})
+    distill_batch = dict(receipts.get("distillation_candidates") or {})
+    distill_candidates = list(distill_batch.get("candidates") or ())
     brief = {
-        "schema_version": "cortex-symbiosis-next-session/1.1",
+        "schema_version": "cortex-symbiosis-next-session/1.2",
         "repo": repo,
         "what_the_project_is": {
             "repository_id": latest.get("repository_id"),
@@ -1998,15 +2047,22 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
             "measured_result": (receipts.get("joint_action") or {}).get(
                 "measured_result"
             ),
+            "transition_class": (
+                receipts.get("interconnect_transition") or {}
+            ).get("transition_class"),
         },
         "what_is_currently_believed": {
             "operating_regime": context.get("operating_regime"),
             "retained": consolidation.get("retained") or [],
+            "distillation_candidates": distill_candidates,
+            "distillation_by_type": distill_batch.get("by_type") or {},
         },
         "why_it_is_believed": {
             "context_packet_digest": context.get("context_packet_digest"),
             "interconnect_frame_hash": context.get("interconnect_frame_hash"),
             "gates": consolidation.get("gates") or evaluation.get("gates"),
+            "distillation_support_ceiling": distill_batch.get("support_ceiling"),
+            "distillation_extraction_status": distill_batch.get("extraction_status"),
         },
         "assumptions": {
             bucket: []

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.4.4-0ea5e9?style=for-the-badge" alt="v8.4.4" />
+  <img src="https://img.shields.io/badge/version-8.4.5-0ea5e9?style=for-the-badge" alt="v8.4.5" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.4.4)
+## AI–Cortex symbiosis (v8.4.5)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -32,10 +32,9 @@ slow memory retains only what survives verification:
 Δc = 0 whenever Γ Ξ W O S = 0
 ```
 
-v8.4.4 adds **atomic interconnect trajectories**: snapshot frame capture,
-tri-state validity planes, frame transitions, trajectory ledger, context deltas,
-and tri-state readiness. `mesh_green` remains constitutional-path only.
-Authenticated will remains deferred to v8.5.0.
+v8.4.5 extracts **typed distillation candidates** from verified frame transitions
+\((F_k,T_k,O_k,F_{k+1})\rightarrow D_k\). Candidates are not durable memory and
+never auto-retain. Authenticated will remains deferred to v8.5.0.
 
 ```powershell
 python -m cortex symbiosis status --repo YourProject --json
@@ -44,9 +43,9 @@ python -m cortex symbiosis verify --repo YourProject --json
 python -m cortex symbiosis next --repo YourProject --json
 ```
 
-See [`docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md`](docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md)
-(and prior phases [`v8.4.3`](docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md),
-[`v8.4.2`](docs/intelligence/PHASE_V8.4.2_RECURRENT_CIRCULATION.md)).
+See [`docs/intelligence/PHASE_V8.4.5_DISTILLATION_CANDIDATES.md`](docs/intelligence/PHASE_V8.4.5_DISTILLATION_CANDIDATES.md)
+(and prior phases [`v8.4.4`](docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md),
+[`v8.4.3`](docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md)).
 
 ## Interconnect mathematics (v8.3.4)
 

@@ -1,3 +1,16 @@
+## 8.4.5 - Distillation Candidate Extraction
+
+- Verified frame transitions produce typed `DistillationCandidateBatch` receipts:
+  `verified_fact`, `successful_procedure`, `failed_hypothesis`, `counterevidence`,
+  `useful_route`, `persistent_constraint`, `regime_warning`, `unresolved_ambiguity`.
+- Candidates require trajectory link integrity; outcome-linked types require
+  `outcome_bound` / `comparison_supported` causal status. `retain` is always false
+  on extraction — no durable memory write.
+- Immutable ledger table `distillation_candidate_batches`; wired into symbiotic
+  turns and consolidation input (still gated by ΓΞWOS).
+- Next-session brief surfaces candidate types and support ceiling.
+- Docs: `docs/intelligence/PHASE_V8.4.5_DISTILLATION_CANDIDATES.md`.
+
 ## 8.4.4 - Atomic Interconnect Trajectories
 
 - Atomic interconnect frame capture under one DB snapshot when available, with per-surface digest/schema/age/freshness metadata.
