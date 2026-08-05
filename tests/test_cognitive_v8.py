@@ -43,14 +43,55 @@ class CognitiveV8Tests(unittest.TestCase):
         self.temp.cleanup()
 
     def _delta(self, value: float = 0.1, event: str = "e1") -> dict:
-        before = {"state_hash": "before", "values": {name: 0.0 for name in METRICS}}
-        after = {
-            "state_hash": "after",
-            "values": {
-                name: value * METRICS[name][2] for name in METRICS
-            },
+        from cortex.cognitive.measured import (
+            COORDINATE_SCHEMA_VERSION,
+            STATE_SCHEMA,
+            coordinate_schema_payload,
+        )
+
+        metadata = coordinate_schema_payload()
+        ordered = list(metadata["ordered_coordinate_names"])
+
+        def _snapshot(values: dict[str, float], state_label: str) -> dict:
+            validity = {name: True for name in ordered}
+            material = {
+                "repo": self.repo,
+                "repository_id": "rid-cognitive",
+                "coordinate_schema_digest": metadata["coordinate_schema_digest"],
+                "values": {name: float(values[name]) for name in ordered},
+                "validity_mask": validity,
+                "failure_reasons": {name: None for name in ordered},
+            }
+            import hashlib
+            import json
+
+            state_hash = hashlib.sha256(
+                json.dumps(
+                    material, sort_keys=True, separators=(",", ":"), default=str
+                ).encode()
+            ).hexdigest()
+            return {
+                "schema_version": STATE_SCHEMA,
+                **material,
+                "coordinate_schema_version": COORDINATE_SCHEMA_VERSION,
+                "ordered_coordinate_names": ordered,
+                "ordered_shape_signature": list(metadata["ordered_shape_signature"]),
+                "scale_digest": metadata["scale_digest"],
+                "valid_count": len(ordered),
+                "required_count": len(ordered),
+                "valid_fraction": 1.0,
+                "state_hash": state_hash,
+            }
+
+        before_values = {name: 0.0 for name in ordered}
+        after_values = {
+            name: float(value) * float(METRICS[name][2]) for name in ordered
         }
-        return measured_delta(before, after, event_id=event)
+        return measured_delta(
+            _snapshot(before_values, "before"),
+            _snapshot(after_values, "after"),
+            event_id=event,
+        )
 
     def test_measured_delta_and_field_provenance(self) -> None:
         before = capture_measured_state(self.store, self.repo)

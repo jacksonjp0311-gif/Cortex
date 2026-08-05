@@ -28,16 +28,22 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
             float(item.get("normalized_mae") or 0.0)
             for item in evaluation_history
         ) / len(evaluation_history)
+        def _abs_mean(mapping: dict) -> float:
+            values = []
+            for value in (mapping or {}).values():
+                try:
+                    number = float(value)
+                except (TypeError, ValueError):
+                    continue
+                if number == number and number not in (float("inf"), float("-inf")):
+                    values.append(abs(number))
+            return sum(values) / max(1, len(values))
+
         zero_error = sum(
-            sum(abs(float(value)) for value in (item.get("actual") or {}).values())
-            / max(1, len(item.get("actual") or {}))
-            for item in evaluation_history
+            _abs_mean(item.get("actual") or {}) for item in evaluation_history
         ) / len(evaluation_history)
         paired_effects = [
-            (
-                sum(abs(float(value)) for value in (item.get("actual") or {}).values())
-                / max(1, len(item.get("actual") or {}))
-            )
+            _abs_mean(item.get("actual") or {})
             - float(item.get("normalized_mae") or 0.0)
             for item in evaluation_history
         ]
@@ -45,10 +51,20 @@ def run_lesion_benchmarks(store: Any, repo: str) -> dict[str, Any]:
         lifetime_intact_error = sum(
             float(item.get("normalized_mae") or 0.0) for item in history
         ) / len(history)
+
+        def _abs_mean_lifetime(mapping: dict) -> float:
+            values = []
+            for value in (mapping or {}).values():
+                try:
+                    number = float(value)
+                except (TypeError, ValueError):
+                    continue
+                if number == number and number not in (float("inf"), float("-inf")):
+                    values.append(abs(number))
+            return sum(values) / max(1, len(values))
+
         lifetime_zero_error = sum(
-            sum(abs(float(value)) for value in (item.get("actual") or {}).values())
-            / max(1, len(item.get("actual") or {}))
-            for item in history
+            _abs_mean_lifetime(item.get("actual") or {}) for item in history
         ) / len(history)
     workspace = workspace_status(store, repo)
     latest_workspace = workspace.get("latest") or {}
