@@ -18,25 +18,41 @@ CONFIDENCE_DEFINITION = "beta_posterior_probability_mae_at_most_0.20"
 MAX_CALIBRATION_BRIER = 0.25
 
 
+def _finite_or_zero(value: Any) -> float:
+    """Coerce missing/null coordinates to 0 for legacy predictive scoring only.
+
+    Explicit nulls remain meaningful on the conformance surface; this helper
+    prevents None from crashing the self-model without treating null as a
+    verified zero measurement for authority purposes.
+    """
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if number != number or number in (float("inf"), float("-inf")):
+        return 0.0
+    return number
+
+
 def classify_regime(measured: dict[str, Any]) -> str:
     """Classify the observed plant transition without granting it authority."""
     delta = dict(measured.get("normalized_delta") or {})
     if (
-        float(delta.get("neural_synapses", 0.0)) < -1e-12
-        or float(delta.get("synapse_mass", 0.0)) < -1e-12
+        _finite_or_zero(delta.get("neural_synapses")) < -1e-12
+        or _finite_or_zero(delta.get("synapse_mass")) < -1e-12
     ):
         return "scheduled_decay"
     if any(
-        abs(float(delta.get(name, 0.0))) > 1e-12
+        abs(_finite_or_zero(delta.get(name))) > 1e-12
         for name in ("indexed_files", "neural_nodes", "neural_synapses")
     ):
         return "refresh_recompile"
     if any(
-        abs(float(delta.get(name, 0.0))) > 1e-12
+        abs(_finite_or_zero(delta.get(name))) > 1e-12
         for name in ("ranker_train_count", "outcomes", "mean_reward")
     ):
         return "adaptive_learning"
-    if any(abs(float(value)) > 1e-12 for value in delta.values()):
+    if any(abs(_finite_or_zero(value)) > 1e-12 for value in delta.values()):
         return "evidence_only"
     return "steady"
 
@@ -212,7 +228,10 @@ def score_and_update(
     state = load_model(store, repo)
     predicted = dict(forecast.get("predicted_normalized_delta") or {})
     actual = dict(measured.get("normalized_delta") or {})
-    errors = {name: float(actual.get(name, 0.0)) - float(predicted.get(name, 0.0)) for name in METRICS}
+    errors = {
+        name: _finite_or_zero(actual.get(name)) - _finite_or_zero(predicted.get(name))
+        for name in METRICS
+    }
     mae = sum(abs(value) for value in errors.values()) / max(1, len(errors))
     accurate = mae <= 0.20
     confidence = float(forecast.get("confidence") or 0.0)
@@ -236,7 +255,7 @@ def score_and_update(
     mean = dict(state.get("mean_delta") or {})
     variance = dict(state.get("variance") or {})
     for name in METRICS:
-        x = float(actual.get(name, 0.0))
+        x = _finite_or_zero(actual.get(name))
         old = float(mean.get(name, 0.0))
         new = x if n == 0 else (1.0 - ALPHA) * old + ALPHA * x
         mean[name] = new
@@ -249,14 +268,14 @@ def score_and_update(
     regime_mean = dict(regime_state.get("mean_delta") or {})
     regime_variance = dict(regime_state.get("variance") or {})
     for name in METRICS:
-        x = float(actual.get(name, 0.0))
-        old = float(regime_mean.get(name, 0.0))
+        x = _finite_or_zero(actual.get(name))
+        old = _finite_or_zero(regime_mean.get(name))
         new = x if regime_n == 0 else (1.0 - ALPHA) * old + ALPHA * x
         regime_mean[name] = new
         regime_variance[name] = (
             0.05
             if regime_n == 0
-            else (1.0 - ALPHA) * float(regime_variance.get(name, 0.05))
+            else (1.0 - ALPHA) * _finite_or_zero(regime_variance.get(name, 0.05))
             + ALPHA * (x - old) ** 2
         )
     regimes[observed_regime] = {

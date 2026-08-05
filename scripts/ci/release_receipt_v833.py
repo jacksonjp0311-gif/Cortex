@@ -29,8 +29,22 @@ from cortex.state_transition import logical_state_digest  # noqa: E402
 from cortex.store import Store  # noqa: E402
 
 
-EXPECTED_VERSION = "8.3.3"
+# Receipt remains the v8.3.3 conformance probe; package may be newer.
+MINIMUM_VERSION = "8.3.3"
 OUTPUT = ROOT / "work" / "release_receipt_v833.json"
+
+
+def _version_at_least(current: str, minimum: str) -> bool:
+    def parts(value: str) -> tuple[int, ...]:
+        core = value.split("+", 1)[0].split("-", 1)[0]
+        return tuple(int(part) for part in core.split(".") if part.isdigit())
+
+    left = parts(current)
+    right = parts(minimum)
+    width = max(len(left), len(right))
+    left = left + (0,) * (width - len(left))
+    right = right + (0,) * (width - len(right))
+    return left >= right
 
 
 def _sha(value: Any) -> str:
@@ -257,7 +271,7 @@ def main() -> int:
         probe = {"gates": {}, "activation_receipt_hash": None}
         error = f"{type(exc).__name__}:{exc}"
     gates = {
-        "version_exact": __version__ == EXPECTED_VERSION,
+        "version_at_least_8_3_3": _version_at_least(__version__, MINIMUM_VERSION),
         "focused_tests": bool(focused.get("passed")),
         **dict(probe.get("gates") or {}),
     }
