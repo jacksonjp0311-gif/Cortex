@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from hashlib import sha256
 import json
+import math
 import sqlite3
 import time
 from pathlib import Path
@@ -11,6 +12,18 @@ from typing import Any, Iterable
 from .embeddings import VECTOR_MAGIC, deserialize_vector, vector_bucket, vector_to_bytes
 
 VECTOR_BUCKET_MODEL = "random-hyperplane-v1"
+ACTIVATION_CONFORMANCE_LEDGER_SCHEMA = "cortex-activation-conformance-ledger/1.0"
+ACTIVATION_CONFORMANCE_ZERO_HASH = "0" * 64
+ACTIVATION_CONFORMANCE_ADMISSION_SCHEMA = (
+    "cortex-activation-conformance-ledger-admission/1.0"
+)
+ACTIVATION_CONFORMANCE_PARTITION_FIELDS = (
+    "repository_id",
+    "operator_id",
+    "body_epoch_id",
+    "measurement_cohort_id",
+    "coordinate_schema_digest",
+)
 
 SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -308,6 +321,94 @@ CREATE INDEX IF NOT EXISTS idx_info_interlock_repo_epoch
 ON information_interlock_observations(repo, body_epoch_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_info_interlock_repo_task
 ON information_interlock_observations(repo, task_family, created_at);
+
+-- v8.3.3 canonical activation-conformance evidence.  Scientific receipt
+-- content is hashed independently from its append-only ledger envelope so a
+-- receipt can be verified without a circular self-hash.  The partition tip is
+-- updated in the same BEGIN IMMEDIATE transaction as every canonical append.
+CREATE TABLE IF NOT EXISTS activation_conformance_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    subject_receipt_hash TEXT NOT NULL CHECK(length(subject_receipt_hash) = 64),
+    previous_receipt_hash TEXT NOT NULL CHECK(length(previous_receipt_hash) = 64),
+    chain_sequence INTEGER NOT NULL CHECK(chain_sequence >= 1),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    operator_id TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    case_id TEXT NOT NULL,
+    comparison_arm TEXT NOT NULL,
+    body_epoch_id TEXT NOT NULL,
+    measurement_cohort_id TEXT NOT NULL,
+    coordinate_schema_digest TEXT NOT NULL,
+    status TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, operator_id, event_id),
+    UNIQUE(
+        repository_id,
+        operator_id,
+        body_epoch_id,
+        measurement_cohort_id,
+        coordinate_schema_digest,
+        chain_sequence
+    )
+);
+CREATE INDEX IF NOT EXISTS idx_activation_conformance_repo_created
+ON activation_conformance_receipts(repo, created_at DESC, receipt_hash);
+CREATE INDEX IF NOT EXISTS idx_activation_conformance_partition
+ON activation_conformance_receipts(
+    repository_id,
+    operator_id,
+    body_epoch_id,
+    measurement_cohort_id,
+    coordinate_schema_digest,
+    chain_sequence
+);
+CREATE INDEX IF NOT EXISTS idx_activation_conformance_cases
+ON activation_conformance_receipts(
+    repo,
+    operator_id,
+    case_id,
+    comparison_arm,
+    created_at DESC
+);
+
+CREATE TABLE IF NOT EXISTS activation_conformance_chain_tips(
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    operator_id TEXT NOT NULL,
+    body_epoch_id TEXT NOT NULL,
+    measurement_cohort_id TEXT NOT NULL,
+    coordinate_schema_digest TEXT NOT NULL,
+    tip_receipt_hash TEXT NOT NULL,
+    receipt_count INTEGER NOT NULL CHECK(receipt_count >= 1),
+    updated_at REAL NOT NULL,
+    PRIMARY KEY(
+        repository_id,
+        operator_id,
+        body_epoch_id,
+        measurement_cohort_id,
+        coordinate_schema_digest
+    ),
+    FOREIGN KEY(tip_receipt_hash)
+        REFERENCES activation_conformance_receipts(receipt_hash) ON DELETE RESTRICT
+);
+
+CREATE TRIGGER IF NOT EXISTS activation_conformance_receipts_no_delete
+BEFORE DELETE ON activation_conformance_receipts
+BEGIN
+    SELECT RAISE(ABORT, 'canonical activation conformance receipts cannot be deleted');
+END;
+
+-- Migrate the narrower v8.3.3 development trigger in place.  Canonical rows
+-- are immutable in full; append advances only the separate chain-tip row.
+DROP TRIGGER IF EXISTS activation_conformance_receipt_identity_immutable;
+DROP TRIGGER IF EXISTS activation_conformance_receipts_no_update;
+CREATE TRIGGER activation_conformance_receipts_no_update
+BEFORE UPDATE ON activation_conformance_receipts
+BEGIN
+    SELECT RAISE(ABORT, 'canonical activation conformance receipts cannot be updated');
+END;
 
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
@@ -1655,6 +1756,957 @@ class Store:
             item["witness_valid"] = bool(item["witness_valid"])
             out.append(item)
         return out
+
+    @staticmethod
+    def _activation_conformance_canonical_json(value: Any) -> str:
+        """Encode strict canonical JSON used by both receipt hash layers."""
+        return json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+
+    @staticmethod
+    def _activation_conformance_is_sha256(value: Any) -> bool:
+        text = str(value or "")
+        return len(text) == 64 and all(character in "0123456789abcdef" for character in text)
+
+    @classmethod
+    def _activation_conformance_admit_body(
+        cls, body: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Return the canonical body and its verifier-bound admission marker.
+
+        A scientific finalizer may propose ``conformance_candidate``, but only
+        this transactional append boundary may promote it to Gate B.  Direct
+        ``conformance_measured`` claims traverse the identical independent
+        validation path.  The import is intentionally local so Store remains
+        usable while the OSTT package is importing its persistence surface.
+        """
+
+        status = str(body.get("status") or "")
+        if status in {"observed", "observed_incomplete"}:
+            return body, {
+                "schema_version": ACTIVATION_CONFORMANCE_ADMISSION_SCHEMA,
+                "admission_status": "observation_only",
+                "scientific_status": status,
+            }
+        if status not in {"conformance_candidate", "conformance_measured"}:
+            raise ValueError(
+                "activation conformance receipt status is not ledger-admissible"
+            )
+
+        from .ostt.independent_verifier import (
+            VERIFIER_DIGEST,
+            VERIFIER_IMPLEMENTATION_VERSION,
+            validate_conformance_payload,
+        )
+
+        promoted = dict(body)
+        promoted.update(
+            {
+                "status": "conformance_measured",
+                "gate_state": "CONFORMANCE_MEASURED",
+                "evidence_ready": True,
+                "conformance_ready": True,
+            }
+        )
+        invariant_values = promoted.get("invariant_results")
+        if isinstance(invariant_values, list):
+            projected_invariants: list[Any] = []
+            for value in invariant_values:
+                if not isinstance(value, dict):
+                    projected_invariants.append(value)
+                    continue
+                projection = dict(value)
+                invariant_id = str(projection.get("invariant_id") or "")
+                if invariant_id == "exactly_once_event":
+                    projection.update(
+                        {
+                            "passed": True,
+                            "observed": "enforced_by_transactional_ledger",
+                            "reason": (
+                                "the canonical repository/operator/event identity "
+                                "is checked and appended under BEGIN IMMEDIATE"
+                            ),
+                        }
+                    )
+                elif invariant_id == "receipt_hash_valid":
+                    projection.update(
+                        {
+                            "passed": True,
+                            "observed": "verified_on_ledger_append_and_read",
+                            "reason": (
+                                "the scientific subject and canonical envelope are "
+                                "recomputed at append and verification boundaries"
+                            ),
+                        }
+                    )
+                projected_invariants.append(projection)
+            promoted["invariant_results"] = projected_invariants
+        validation = validate_conformance_payload(promoted)
+        if validation.get("valid") is not True:
+            errors = validation.get("errors")
+            if not isinstance(errors, list):
+                errors = ["independent_validator_failed"]
+            raise ValueError(
+                "activation conformance receipt is not independently valid: "
+                + ",".join(sorted({str(error) for error in errors}))
+            )
+
+        witness = promoted.get("measurement_witness")
+        marker = {
+            "schema_version": ACTIVATION_CONFORMANCE_ADMISSION_SCHEMA,
+            "admission_status": "verifier_bound",
+            "submitted_status": status,
+            "scientific_status": "conformance_measured",
+            "verifier_implementation_version": VERIFIER_IMPLEMENTATION_VERSION,
+            "verifier_digest": VERIFIER_DIGEST,
+            "measurement_subject_hash": str(
+                validation.get("measurement_subject_hash") or ""
+            ),
+            "measurement_witness_id": (
+                str(witness.get("witness_id") or "")
+                if isinstance(witness, dict)
+                else ""
+            ),
+        }
+        return promoted, marker
+
+    @staticmethod
+    def _activation_conformance_required_text(
+        receipt_body: dict[str, Any],
+        field: str,
+        *aliases: str,
+    ) -> str:
+        values: list[str] = []
+        for key in (field, *aliases):
+            raw = receipt_body.get(key)
+            if raw is None:
+                continue
+            value = str(raw).strip()
+            if value:
+                values.append(value)
+        if not values:
+            raise ValueError(f"activation conformance receipt missing {field}")
+        if any(value != values[0] for value in values[1:]):
+            raise ValueError(f"activation conformance receipt has conflicting {field}")
+        return values[0]
+
+    def _normalize_activation_conformance_body(
+        self,
+        *,
+        repo: str,
+        repository_id: str,
+        receipt_body: dict[str, Any],
+        created_at: float,
+    ) -> tuple[dict[str, Any], str, str]:
+        """Return normalized scientific content, canonical JSON, and subject hash.
+
+        Ledger linkage fields are deliberately excluded from this subject.  They
+        are committed by the final receipt hash after the current partition tip
+        is read under ``BEGIN IMMEDIATE``.
+        """
+        if not isinstance(receipt_body, dict):
+            raise TypeError("activation conformance receipt body must be a dict")
+        body = dict(receipt_body)
+        for key in (
+            "receipt_hash",
+            "subject_receipt_hash",
+            "previous_receipt_hash",
+            "chain_sequence",
+            "inserted",
+            "duplicate",
+            "chain_valid",
+            "receipt_body",
+            "receipt_json",
+            "ledger_admission",
+        ):
+            body.pop(key, None)
+
+        claimed_repo = str(body.get("repo") or repo).strip()
+        claimed_repository_id = str(body.get("repository_id") or repository_id).strip()
+        if claimed_repo != repo:
+            raise ValueError("activation conformance receipt repository name mismatch")
+        if claimed_repository_id != repository_id:
+            raise ValueError("activation conformance receipt repository_id mismatch")
+
+        body_epoch = body.get("body_epoch")
+        if isinstance(body_epoch, dict) and body_epoch.get("epoch_id"):
+            nested_epoch = str(body_epoch["epoch_id"]).strip()
+            direct_epoch = str(
+                body.get("body_epoch_id") or body.get("epoch_id") or nested_epoch
+            ).strip()
+            if direct_epoch != nested_epoch:
+                raise ValueError(
+                    "activation conformance receipt has conflicting body_epoch_id"
+                )
+            body.setdefault("body_epoch_id", nested_epoch)
+        interlock = body.get("information_interlock")
+        if isinstance(interlock, dict) and interlock.get("measurement_cohort_id"):
+            nested_cohort = str(interlock["measurement_cohort_id"]).strip()
+            direct_cohort = str(
+                body.get("measurement_cohort_id")
+                or body.get("cohort_id")
+                or nested_cohort
+            ).strip()
+            if direct_cohort != nested_cohort:
+                raise ValueError(
+                    "activation conformance receipt has conflicting measurement_cohort_id"
+                )
+            body.setdefault("measurement_cohort_id", nested_cohort)
+
+        operator_id = self._activation_conformance_required_text(body, "operator_id")
+        event_id = self._activation_conformance_required_text(body, "event_id")
+        case_id = self._activation_conformance_required_text(body, "case_id")
+        comparison_arm = self._activation_conformance_required_text(
+            body, "comparison_arm"
+        )
+        body_epoch_id = self._activation_conformance_required_text(
+            body, "body_epoch_id", "epoch_id"
+        )
+        measurement_cohort_id = self._activation_conformance_required_text(
+            body, "measurement_cohort_id", "cohort_id"
+        )
+        coordinate_schema_digest = self._activation_conformance_required_text(
+            body, "coordinate_schema_digest"
+        )
+        status = self._activation_conformance_required_text(body, "status")
+        timestamp = float(created_at)
+        if timestamp != timestamp or timestamp in (float("inf"), float("-inf")):
+            raise ValueError("activation conformance receipt created_at must be finite")
+
+        body.update(
+            {
+                "ledger_schema_version": ACTIVATION_CONFORMANCE_LEDGER_SCHEMA,
+                "repository_id": repository_id,
+                "repo": repo,
+                "operator_id": operator_id,
+                "event_id": event_id,
+                "case_id": case_id,
+                "comparison_arm": comparison_arm,
+                "body_epoch_id": body_epoch_id,
+                "measurement_cohort_id": measurement_cohort_id,
+                "coordinate_schema_digest": coordinate_schema_digest,
+                "status": status,
+                "created_at": timestamp,
+            }
+        )
+        body, admission = self._activation_conformance_admit_body(body)
+        body["ledger_admission"] = admission
+        receipt_json = self._activation_conformance_canonical_json(body)
+        normalized = json.loads(receipt_json)
+        if not isinstance(normalized, dict):
+            raise ValueError("activation conformance receipt body must encode an object")
+        subject_hash = sha256(receipt_json.encode("utf-8")).hexdigest()
+        return normalized, receipt_json, subject_hash
+
+    @staticmethod
+    def _activation_conformance_partition(row: Any) -> dict[str, str]:
+        return {
+            "repository_id": str(row["repository_id"]),
+            "repo": str(row["repo"]),
+            "operator_id": str(row["operator_id"]),
+            "body_epoch_id": str(row["body_epoch_id"]),
+            "measurement_cohort_id": str(row["measurement_cohort_id"]),
+            "coordinate_schema_digest": str(row["coordinate_schema_digest"]),
+        }
+
+    @classmethod
+    def _activation_conformance_final_hash(cls, row: Any) -> str:
+        material = {
+            "ledger_schema_version": ACTIVATION_CONFORMANCE_LEDGER_SCHEMA,
+            "subject_receipt_hash": str(row["subject_receipt_hash"]),
+            "previous_receipt_hash": str(row["previous_receipt_hash"]),
+            "chain_sequence": int(row["chain_sequence"]),
+            "repository_id": str(row["repository_id"]),
+            "repo": str(row["repo"]),
+            "operator_id": str(row["operator_id"]),
+            "event_id": str(row["event_id"]),
+            "case_id": str(row["case_id"]),
+            "comparison_arm": str(row["comparison_arm"]),
+            "body_epoch_id": str(row["body_epoch_id"]),
+            "measurement_cohort_id": str(row["measurement_cohort_id"]),
+            "coordinate_schema_digest": str(row["coordinate_schema_digest"]),
+            "status": str(row["status"]),
+            "receipt_json": str(row["receipt_json"]),
+            "created_at": float(row["created_at"]),
+        }
+        canonical = cls._activation_conformance_canonical_json(material)
+        return sha256(canonical.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _decode_activation_conformance_row(row: sqlite3.Row) -> dict[str, Any]:
+        decode_error: str | None = None
+        try:
+            body = json.loads(row["receipt_json"])
+            if not isinstance(body, dict):
+                raise ValueError("receipt_json_not_object")
+        except (
+            TypeError,
+            ValueError,
+            json.JSONDecodeError,
+            UnicodeError,
+            RecursionError,
+            OverflowError,
+        ) as exc:
+            body = {}
+            decode_error = f"{type(exc).__name__}:{exc}"
+        try:
+            chain_sequence: int | None = int(row["chain_sequence"])
+        except (TypeError, ValueError, OverflowError):
+            chain_sequence = None
+            decode_error = decode_error or "chain_sequence_invalid"
+        try:
+            created_at: float | None = float(row["created_at"])
+            if not math.isfinite(created_at):
+                raise ValueError("created_at_not_finite")
+        except (TypeError, ValueError, OverflowError):
+            created_at = None
+            decode_error = decode_error or "created_at_invalid"
+        envelope = {
+            "ledger_schema_version": ACTIVATION_CONFORMANCE_LEDGER_SCHEMA,
+            "receipt_hash": row["receipt_hash"],
+            "subject_receipt_hash": row["subject_receipt_hash"],
+            "previous_receipt_hash": row["previous_receipt_hash"],
+            "chain_sequence": chain_sequence,
+            "repository_id": row["repository_id"],
+            "repo": row["repo"],
+            "operator_id": row["operator_id"],
+            "event_id": row["event_id"],
+            "case_id": row["case_id"],
+            "comparison_arm": row["comparison_arm"],
+            "body_epoch_id": row["body_epoch_id"],
+            "measurement_cohort_id": row["measurement_cohort_id"],
+            "coordinate_schema_digest": row["coordinate_schema_digest"],
+            "status": row["status"],
+            "created_at": created_at,
+            "receipt_json": row["receipt_json"],
+        }
+        decoded = {**body, **envelope, "receipt_body": body}
+        if decode_error:
+            decoded["receipt_decode_error"] = decode_error
+        return decoded
+
+    def _verify_activation_conformance_partition(
+        self,
+        conn: sqlite3.Connection,
+        partition: dict[str, str],
+    ) -> dict[str, Any]:
+        args = (
+            partition["repository_id"],
+            partition["operator_id"],
+            partition["body_epoch_id"],
+            partition["measurement_cohort_id"],
+            partition["coordinate_schema_digest"],
+        )
+        rows = conn.execute(
+            """SELECT * FROM activation_conformance_receipts
+               WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                 AND measurement_cohort_id=? AND coordinate_schema_digest=?
+               ORDER BY chain_sequence ASC""",
+            args,
+        ).fetchall()
+        tip = conn.execute(
+            """SELECT * FROM activation_conformance_chain_tips
+               WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                 AND measurement_cohort_id=? AND coordinate_schema_digest=?""",
+            args,
+        ).fetchone()
+        errors: list[str] = []
+        repo_row = conn.execute(
+            "SELECT 1 FROM repositories WHERE name=? AND repository_id=? LIMIT 1",
+            (partition["repo"], partition["repository_id"]),
+        ).fetchone()
+        repository_current = repo_row is not None
+        if not repository_current:
+            errors.append("repository_identity_not_current")
+        if not rows:
+            errors.append("receipt_chain_empty")
+        if tip is None:
+            errors.append("chain_tip_missing")
+
+        previous = ACTIVATION_CONFORMANCE_ZERO_HASH
+        seen_events: set[tuple[str, str, str]] = set()
+        invalid_receipt_hashes: list[str] = []
+        indexed_body_fields = (
+            "repository_id",
+            "repo",
+            "operator_id",
+            "event_id",
+            "case_id",
+            "comparison_arm",
+            "body_epoch_id",
+            "measurement_cohort_id",
+            "coordinate_schema_digest",
+            "status",
+        )
+        for expected_sequence, row in enumerate(rows, start=1):
+            receipt_hash = str(row["receipt_hash"] or "")
+            prefix = f"receipt:{receipt_hash or expected_sequence}:"
+            errors_before = len(errors)
+            if not self._activation_conformance_is_sha256(receipt_hash):
+                errors.append(prefix + "receipt_hash_invalid")
+            try:
+                sequence = int(row["chain_sequence"])
+            except (TypeError, ValueError, OverflowError):
+                sequence = None
+                errors.append(prefix + "chain_sequence_invalid")
+            if sequence != expected_sequence:
+                errors.append(prefix + "chain_sequence_mismatch")
+            previous_receipt_hash = str(row["previous_receipt_hash"] or "")
+            if not self._activation_conformance_is_sha256(previous_receipt_hash):
+                errors.append(prefix + "previous_receipt_hash_invalid")
+            if previous_receipt_hash != previous:
+                errors.append(prefix + "previous_receipt_hash_mismatch")
+            for field in (
+                "repository_id",
+                "repo",
+                "operator_id",
+                "body_epoch_id",
+                "measurement_cohort_id",
+                "coordinate_schema_digest",
+            ):
+                if str(row[field] or "") != str(partition[field]):
+                    errors.append(prefix + f"partition_field_mismatch:{field}")
+            try:
+                body = json.loads(row["receipt_json"])
+                if not isinstance(body, dict):
+                    raise ValueError("not_object")
+                canonical_body = self._activation_conformance_canonical_json(body)
+            except (
+                TypeError,
+                ValueError,
+                json.JSONDecodeError,
+                UnicodeError,
+                RecursionError,
+                OverflowError,
+            ):
+                body = {}
+                canonical_body = ""
+                errors.append(prefix + "receipt_json_invalid")
+            if canonical_body and canonical_body != str(row["receipt_json"]):
+                errors.append(prefix + "receipt_json_not_canonical")
+            for field in indexed_body_fields:
+                if str(body.get(field) or "") != str(row[field]):
+                    errors.append(prefix + f"indexed_field_mismatch:{field}")
+            try:
+                body_created_at = float(body.get("created_at"))
+                row_created_at = float(row["created_at"])
+                created_at_valid = math.isfinite(body_created_at) and math.isfinite(
+                    row_created_at
+                )
+            except (TypeError, ValueError, OverflowError):
+                body_created_at = None
+                row_created_at = None
+                created_at_valid = False
+            if not created_at_valid:
+                errors.append(prefix + "created_at_invalid")
+            elif body_created_at != row_created_at:
+                errors.append(prefix + "indexed_field_mismatch:created_at")
+            expected_subject = (
+                sha256(canonical_body.encode("utf-8")).hexdigest()
+                if canonical_body
+                else ""
+            )
+            if not self._activation_conformance_is_sha256(
+                row["subject_receipt_hash"]
+            ):
+                errors.append(prefix + "subject_receipt_hash_invalid")
+            if expected_subject != str(row["subject_receipt_hash"]):
+                errors.append(prefix + "subject_receipt_hash_mismatch")
+            try:
+                expected_receipt_hash = self._activation_conformance_final_hash(row)
+            except (TypeError, ValueError, OverflowError, KeyError) as exc:
+                expected_receipt_hash = ""
+                errors.append(
+                    prefix + f"receipt_hash_material_invalid:{type(exc).__name__}"
+                )
+            if expected_receipt_hash != receipt_hash:
+                errors.append(prefix + "receipt_hash_mismatch")
+            event_key = (
+                str(row["repository_id"]),
+                str(row["operator_id"]),
+                str(row["event_id"]),
+            )
+            if event_key in seen_events:
+                errors.append(prefix + "duplicate_operator_event")
+            seen_events.add(event_key)
+            if len(errors) > errors_before:
+                invalid_receipt_hashes.append(receipt_hash)
+            previous = receipt_hash
+
+        if tip is not None:
+            for field in (
+                "repository_id",
+                "repo",
+                "operator_id",
+                "body_epoch_id",
+                "measurement_cohort_id",
+                "coordinate_schema_digest",
+            ):
+                if str(tip[field]) != partition[field]:
+                    errors.append(f"chain_tip_partition_mismatch:{field}")
+            try:
+                tip_count = int(tip["receipt_count"])
+            except (TypeError, ValueError, OverflowError):
+                tip_count = None
+                errors.append("chain_tip_count_invalid")
+            if tip_count != len(rows):
+                errors.append("chain_tip_count_mismatch")
+            expected_tip = str(rows[-1]["receipt_hash"]) if rows else ""
+            tip_receipt_hash = str(tip["tip_receipt_hash"] or "")
+            if not self._activation_conformance_is_sha256(tip_receipt_hash):
+                errors.append("chain_tip_hash_invalid")
+            if tip_receipt_hash != expected_tip:
+                errors.append("chain_tip_hash_mismatch")
+        return {
+            "valid": not errors,
+            "chain_valid": not errors,
+            "partition": dict(partition),
+            "receipt_count": len(rows),
+            "tip_receipt_hash": str(tip["tip_receipt_hash"]) if tip else None,
+            "repository_current": repository_current,
+            "invalid_receipt_hashes": invalid_receipt_hashes,
+            "errors": errors,
+        }
+
+    def append_activation_conformance_receipt(
+        self,
+        repo: str,
+        receipt_body: dict[str, Any] | None = None,
+        *,
+        receipt: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Append one immutable receipt and atomically advance its partition tip.
+
+        Replaying byte-equivalent scientific content for the same
+        repository/operator/event returns the existing row with ``duplicate``
+        true.  Reusing that identity for different content fails closed.
+        """
+        if receipt_body is None:
+            receipt_body = receipt
+        elif receipt is not None:
+            raise ValueError("provide receipt_body or receipt, not both")
+        if not isinstance(receipt_body, dict):
+            raise TypeError("activation conformance receipt body must be a dict")
+        operator_id = self._activation_conformance_required_text(
+            receipt_body, "operator_id"
+        )
+        event_id = self._activation_conformance_required_text(receipt_body, "event_id")
+
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "").strip()
+            if not repository_id:
+                raise ValueError("repository_id is required for conformance evidence")
+
+            existing = conn.execute(
+                """SELECT * FROM activation_conformance_receipts
+                   WHERE repository_id=? AND operator_id=? AND event_id=?""",
+                (repository_id, operator_id, event_id),
+            ).fetchone()
+            created_at = float(existing["created_at"]) if existing else time.time()
+            _, receipt_json, subject_hash = self._normalize_activation_conformance_body(
+                repo=repo,
+                repository_id=repository_id,
+                receipt_body=receipt_body,
+                created_at=created_at,
+            )
+            if existing is not None:
+                if (
+                    str(existing["subject_receipt_hash"]) != subject_hash
+                    or str(existing["receipt_json"]) != receipt_json
+                ):
+                    raise ValueError(
+                        "activation conformance operator/event already has different content"
+                    )
+                partition = self._activation_conformance_partition(existing)
+                verification = self._verify_activation_conformance_partition(
+                    conn, partition
+                )
+                if not verification["valid"]:
+                    raise RuntimeError(
+                        "activation conformance duplicate belongs to an invalid chain: "
+                        + ",".join(verification["errors"])
+                    )
+                result = self._decode_activation_conformance_row(existing)
+                result.update(
+                    {
+                        "inserted": False,
+                        "duplicate": True,
+                        "chain_valid": True,
+                    }
+                )
+                return result
+
+            normalized = json.loads(receipt_json)
+            partition = {
+                "repository_id": repository_id,
+                "repo": repo,
+                "operator_id": str(normalized["operator_id"]),
+                "body_epoch_id": str(normalized["body_epoch_id"]),
+                "measurement_cohort_id": str(normalized["measurement_cohort_id"]),
+                "coordinate_schema_digest": str(
+                    normalized["coordinate_schema_digest"]
+                ),
+            }
+            partition_args = tuple(
+                partition[field] for field in ACTIVATION_CONFORMANCE_PARTITION_FIELDS
+            )
+            tip = conn.execute(
+                """SELECT * FROM activation_conformance_chain_tips
+                   WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                     AND measurement_cohort_id=? AND coordinate_schema_digest=?""",
+                partition_args,
+            ).fetchone()
+            partition_count = int(
+                conn.execute(
+                    """SELECT COUNT(*) AS n FROM activation_conformance_receipts
+                       WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                         AND measurement_cohort_id=? AND coordinate_schema_digest=?""",
+                    partition_args,
+                ).fetchone()["n"]
+            )
+            if tip is None and partition_count:
+                raise RuntimeError(
+                    "activation conformance partition has receipts but no chain tip"
+                )
+            if tip is not None:
+                verification = self._verify_activation_conformance_partition(
+                    conn, partition
+                )
+                if not verification["valid"]:
+                    raise RuntimeError(
+                        "refusing to extend invalid activation conformance chain: "
+                        + ",".join(verification["errors"])
+                    )
+                previous_hash = str(tip["tip_receipt_hash"])
+                chain_sequence = int(tip["receipt_count"]) + 1
+            else:
+                previous_hash = ACTIVATION_CONFORMANCE_ZERO_HASH
+                chain_sequence = 1
+
+            final_material = {
+                "subject_receipt_hash": subject_hash,
+                "previous_receipt_hash": previous_hash,
+                "chain_sequence": chain_sequence,
+                "repository_id": repository_id,
+                "repo": repo,
+                "operator_id": normalized["operator_id"],
+                "event_id": normalized["event_id"],
+                "case_id": normalized["case_id"],
+                "comparison_arm": normalized["comparison_arm"],
+                "body_epoch_id": normalized["body_epoch_id"],
+                "measurement_cohort_id": normalized["measurement_cohort_id"],
+                "coordinate_schema_digest": normalized["coordinate_schema_digest"],
+                "status": normalized["status"],
+                "receipt_json": receipt_json,
+                "created_at": created_at,
+            }
+            receipt_hash = self._activation_conformance_final_hash(final_material)
+            conn.execute(
+                """INSERT INTO activation_conformance_receipts(
+                       receipt_hash, subject_receipt_hash, previous_receipt_hash,
+                       chain_sequence, repository_id, repo, operator_id, event_id,
+                       case_id, comparison_arm, body_epoch_id, measurement_cohort_id,
+                       coordinate_schema_digest, status, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    subject_hash,
+                    previous_hash,
+                    chain_sequence,
+                    repository_id,
+                    repo,
+                    normalized["operator_id"],
+                    normalized["event_id"],
+                    normalized["case_id"],
+                    normalized["comparison_arm"],
+                    normalized["body_epoch_id"],
+                    normalized["measurement_cohort_id"],
+                    normalized["coordinate_schema_digest"],
+                    normalized["status"],
+                    receipt_json,
+                    created_at,
+                ),
+            )
+            if tip is None:
+                conn.execute(
+                    """INSERT INTO activation_conformance_chain_tips(
+                           repository_id, repo, operator_id, body_epoch_id,
+                           measurement_cohort_id, coordinate_schema_digest,
+                           tip_receipt_hash, receipt_count, updated_at
+                       ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        repository_id,
+                        repo,
+                        normalized["operator_id"],
+                        normalized["body_epoch_id"],
+                        normalized["measurement_cohort_id"],
+                        normalized["coordinate_schema_digest"],
+                        receipt_hash,
+                        chain_sequence,
+                        created_at,
+                    ),
+                )
+            else:
+                cursor = conn.execute(
+                    """UPDATE activation_conformance_chain_tips
+                       SET tip_receipt_hash=?, receipt_count=?, updated_at=?
+                       WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                         AND measurement_cohort_id=? AND coordinate_schema_digest=?
+                         AND tip_receipt_hash=? AND receipt_count=?""",
+                    (
+                        receipt_hash,
+                        chain_sequence,
+                        created_at,
+                        *partition_args,
+                        previous_hash,
+                        chain_sequence - 1,
+                    ),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError(
+                        "activation conformance chain tip changed during append"
+                    )
+
+            verification = self._verify_activation_conformance_partition(conn, partition)
+            if not verification["valid"]:
+                raise RuntimeError(
+                    "activation conformance append failed verification: "
+                    + ",".join(verification["errors"])
+                )
+            row = conn.execute(
+                "SELECT * FROM activation_conformance_receipts WHERE receipt_hash=?",
+                (receipt_hash,),
+            ).fetchone()
+            if row is None:
+                raise RuntimeError("activation conformance append was not persisted")
+            result = self._decode_activation_conformance_row(row)
+            result.update(
+                {"inserted": True, "duplicate": False, "chain_valid": True}
+            )
+            return result
+
+    def activation_conformance_receipt(
+        self, receipt_hash: str, *, repo: str | None = None
+    ) -> dict[str, Any] | None:
+        if repo is None:
+            row = self.db.execute(
+                "SELECT * FROM activation_conformance_receipts WHERE receipt_hash=?",
+                (str(receipt_hash),),
+            ).fetchone()
+        else:
+            repository = self.db.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                return None
+            row = self.db.execute(
+                """SELECT * FROM activation_conformance_receipts
+                   WHERE receipt_hash=? AND repository_id=? AND repo=?""",
+                (str(receipt_hash), str(repository["repository_id"]), str(repo)),
+            ).fetchone()
+        return self._decode_activation_conformance_row(row) if row else None
+
+    def get_activation_conformance_receipt(
+        self, receipt_hash: str, *, repo: str | None = None
+    ) -> dict[str, Any] | None:
+        return self.activation_conformance_receipt(receipt_hash, repo=repo)
+
+    def activation_conformance_receipts(
+        self,
+        repo: str,
+        *,
+        operator_id: str | None = None,
+        event_id: str | None = None,
+        case_id: str | None = None,
+        comparison_arm: str | None = None,
+        body_epoch_id: str | None = None,
+        measurement_cohort_id: str | None = None,
+        coordinate_schema_digest: str | None = None,
+        status: str | None = None,
+        limit: int = 128,
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        clauses = ["repository_id=?", "repo=?"]
+        args: list[Any] = [str(repository["repository_id"]), str(repo)]
+        for field, value in (
+            ("operator_id", operator_id),
+            ("event_id", event_id),
+            ("case_id", case_id),
+            ("comparison_arm", comparison_arm),
+            ("body_epoch_id", body_epoch_id),
+            ("measurement_cohort_id", measurement_cohort_id),
+            ("coordinate_schema_digest", coordinate_schema_digest),
+            ("status", status),
+        ):
+            if value is not None:
+                clauses.append(f"{field}=?")
+                args.append(str(value))
+        bounded_limit = max(1, min(4096, int(limit)))
+        args.append(bounded_limit)
+        rows = self.db.execute(
+            "SELECT * FROM activation_conformance_receipts WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY created_at DESC, receipt_hash DESC LIMIT ?",
+            tuple(args),
+        ).fetchall()
+        return [self._decode_activation_conformance_row(row) for row in rows]
+
+    def latest_activation_conformance_receipt(
+        self,
+        repo: str,
+        *,
+        operator_id: str | None = None,
+        body_epoch_id: str | None = None,
+        measurement_cohort_id: str | None = None,
+        coordinate_schema_digest: str | None = None,
+    ) -> dict[str, Any] | None:
+        rows = self.activation_conformance_receipts(
+            repo,
+            operator_id=operator_id,
+            body_epoch_id=body_epoch_id,
+            measurement_cohort_id=measurement_cohort_id,
+            coordinate_schema_digest=coordinate_schema_digest,
+            limit=1,
+        )
+        return rows[0] if rows else None
+
+    def verify_activation_conformance_chain(
+        self,
+        repo: str,
+        operator_id: str,
+        body_epoch_id: str,
+        measurement_cohort_id: str,
+        coordinate_schema_digest: str,
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            current = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if current is None:
+                return {
+                    "valid": False,
+                    "chain_valid": False,
+                    "partition": {
+                        "repository_id": "",
+                        "repo": str(repo),
+                        "operator_id": str(operator_id),
+                        "body_epoch_id": str(body_epoch_id),
+                        "measurement_cohort_id": str(measurement_cohort_id),
+                        "coordinate_schema_digest": str(coordinate_schema_digest),
+                    },
+                    "receipt_count": 0,
+                    "tip_receipt_hash": None,
+                    "repository_current": False,
+                    "invalid_receipt_hashes": [],
+                    "errors": ["repository_missing"],
+                }
+            repository_id = str(current["repository_id"])
+            partition = {
+                "repository_id": repository_id,
+                "repo": str(repo),
+                "operator_id": str(operator_id),
+                "body_epoch_id": str(body_epoch_id),
+                "measurement_cohort_id": str(measurement_cohort_id),
+                "coordinate_schema_digest": str(coordinate_schema_digest),
+            }
+            return self._verify_activation_conformance_partition(conn, partition)
+
+    def verify_all_activation_conformance_chains(
+        self, repo: str | None = None
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            if repo is not None:
+                repository = conn.execute(
+                    "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+                ).fetchone()
+                if repository is None:
+                    return {
+                        "valid": False,
+                        "chain_valid": False,
+                        "repo": repo,
+                        "chain_count": 0,
+                        "valid_chain_count": 0,
+                        "invalid_chain_count": 0,
+                        "receipt_count": 0,
+                        "partitions": [],
+                        "invalid_receipt_hashes": [],
+                        "errors": ["repository_missing"],
+                    }
+                args: tuple[Any, ...] = (str(repository["repository_id"]), str(repo))
+                where = " WHERE repository_id=? AND repo=?"
+            else:
+                args = ()
+                where = ""
+            tips = conn.execute(
+                """SELECT repository_id, repo, operator_id, body_epoch_id,
+                          measurement_cohort_id, coordinate_schema_digest
+                   FROM activation_conformance_chain_tips"""
+                + where,
+                args,
+            ).fetchall()
+            receipts = conn.execute(
+                """SELECT DISTINCT repository_id, repo, operator_id, body_epoch_id,
+                          measurement_cohort_id, coordinate_schema_digest
+                   FROM activation_conformance_receipts"""
+                + where,
+                args,
+            ).fetchall()
+            partitions: dict[tuple[str, ...], dict[str, str]] = {}
+            for row in [*tips, *receipts]:
+                partition = self._activation_conformance_partition(row)
+                key = (
+                    partition["repo"],
+                    *(
+                        partition[field]
+                        for field in ACTIVATION_CONFORMANCE_PARTITION_FIELDS
+                    ),
+                )
+                partitions[key] = partition
+            reports = [
+                self._verify_activation_conformance_partition(conn, partition)
+                for _, partition in sorted(partitions.items())
+            ]
+            errors = [
+                error
+                for report in reports
+                for error in report.get("errors", [])
+            ]
+            valid_count = sum(1 for report in reports if report["valid"])
+            invalid_receipt_hashes = sorted(
+                {
+                    receipt_hash
+                    for report in reports
+                    for receipt_hash in report.get("invalid_receipt_hashes", [])
+                }
+            )
+            return {
+                "valid": not errors,
+                "chain_valid": not errors,
+                "repo": repo,
+                "chain_count": len(reports),
+                "valid_chain_count": valid_count,
+                "invalid_chain_count": len(reports) - valid_count,
+                "receipt_count": sum(
+                    int(report["receipt_count"]) for report in reports
+                ),
+                "partitions": reports,
+                "invalid_receipt_hashes": invalid_receipt_hashes,
+                "errors": errors,
+            }
 
     def save_continuation_packet(
         self, repo: str, packet_id: str, origin_version: str, state_hash: str,

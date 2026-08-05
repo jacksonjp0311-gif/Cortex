@@ -91,6 +91,18 @@ def rotated_echo_report(base: Mapping[str, Any]) -> dict[str, Any]:
     second = ordered[1] if len(ordered) > 1 else None
     best_alignment = float((best or {}).get("alignment") or 0.0)
     second_alignment = float((second or {}).get("alignment") or 0.0)
+    alignments = [float(item["alignment"]) for item in rotations]
+    # Active-subspace fragility χ_A = max_R α_R − min_R α_R over the fixed
+    # 19-orientation orbit.  Large χ_A means conclusions depend on axis choice.
+    fragility = (max(alignments) - min(alignments)) if alignments else 0.0
+    identity_alignment = next(
+        (
+            float(item["alignment"])
+            for item in rotations
+            if item["name"] == "identity"
+        ),
+        0.0,
+    )
     silent_axes = [axis for axis in AXES if axis not in active_axes]
     if total_energy <= 1e-12:
         status = "silent_field"
@@ -118,6 +130,17 @@ def rotated_echo_report(base: Mapping[str, Any]) -> dict[str, Any]:
         "best": best,
         "alignment_margin": round(best_alignment - second_alignment, 8),
         "alignment_unique": bool(best and best_alignment - second_alignment >= 0.05),
+        "active_subspace_fragility": round(fragility, 8),
+        "identity_alignment": round(identity_alignment, 8),
+        "fragility_interpretation": (
+            "coordinate_artifact_risk"
+            if identity_alignment >= 0.95 and fragility >= 0.5
+            else "orientation_sensitive"
+            if fragility >= 0.5
+            else "orientation_stable"
+            if fragility <= 0.15
+            else "moderate_sensitivity"
+        ),
         "status": status,
         "surgery": {
             "actions": surgery,

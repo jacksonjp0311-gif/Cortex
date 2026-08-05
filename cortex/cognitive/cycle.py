@@ -57,7 +57,16 @@ def close_cognitive_cycle(
         before, after, event_id=event_id, event_kind="activation_transaction"
     )
     forecast = dict(cycle.get("forecast") or {})
-    prediction_score = score_and_update(store, repo, forecast, measured)
+    if measured.get("baseline_eligible") is True:
+        prediction_score = score_and_update(store, repo, forecast, measured)
+    else:
+        prediction_score = {
+            "status": "held",
+            "reason": "required_measurement_incomplete",
+            "model_updated": False,
+            "valid_fraction": measured.get("valid_fraction"),
+            "advisory_only": True,
+        }
     counterfactuals = simulate_counterfactuals(
         forecast, realized_action=realized_action
     )

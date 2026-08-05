@@ -791,6 +791,34 @@ def activate_repository(
                 }
         except Exception:
             pass
+        # v8.3.3: both controller arms cross the same observation-only
+        # finalizer.  The baseline remains sterile: no predictor update,
+        # interlock observation, frame seed, routing, or adaptive machinery is
+        # invoked here; only local measurement evidence is appended.
+        try:
+            from .ostt.conformance import finalize_activation_observation
+
+            out["ostt_residual_receipt"] = finalize_activation_observation(
+                store,
+                repo,
+                out,
+                task=task,
+                controller=controller,
+                realized_action="evidence_only",
+                capability_id=str(cap.capability_id or ""),
+                pre_epoch_id=str(epoch.epoch_id or ""),
+                before_state=dict((cognitive_cycle_open or {}).get("before") or {}),
+                host_manifest_before=str(observed_manifest or ""),
+                host_manifest_after=str(current_manifest_hash(root, config) or ""),
+            )
+        except Exception as exc:
+            out["ostt_residual_receipt"] = {
+                "status": "observed_incomplete",
+                "error": f"{type(exc).__name__}:{exc}",
+                "advisory_only": True,
+                "policy_effect": False,
+                "update_authorized": False,
+            }
         return out
 
     # Phase 2b: advanced — may still refresh if not already done above
@@ -1161,30 +1189,31 @@ def activate_repository(
                 "error": f"{type(exc).__name__}:{exc}",
                 "advisory_only": True,
             }
-        # v8.3.2: capture the existing measured activation output as a typed
-        # OSTT observation.  The known operator output remains an explicit
-        # review gate; no residual update or policy effect is possible here.
-        try:
-            from .ostt import activation_observation_receipt
+    # v8.3.3 shared metrology finalizer.  This remains outside the adaptive
+    # final-epoch success branch so a failed activation still emits an explicit
+    # incomplete observation rather than silently disappearing.
+    try:
+        from .ostt.conformance import finalize_activation_observation
 
-            ostt_receipt = activation_observation_receipt(out)
-            out["ostt_residual_receipt"] = ostt_receipt
-            store.set_setting(f"ostt_residual_latest:{repo}", ostt_receipt)
-            history_key = f"ostt_residual_history:{repo}"
-            history = list(store.get_setting(history_key, []) or [])
-            receipt_hash = ostt_receipt.get("receipt_hash")
-            if receipt_hash and not any(
-                item.get("receipt_hash") == receipt_hash
-                for item in history
-                if isinstance(item, dict)
-            ):
-                history.append(ostt_receipt)
-            store.set_setting(history_key, history[-128:])
-        except Exception as exc:
-            out["ostt_residual_receipt"] = {
-                "status": "unmeasured",
-                "error": f"{type(exc).__name__}:{exc}",
-                "advisory_only": True,
-                "policy_effect": False,
-            }
+        out["ostt_residual_receipt"] = finalize_activation_observation(
+            store,
+            repo,
+            out,
+            task=task,
+            controller=controller,
+            realized_action="bounded_adapt",
+            capability_id=str(cap.capability_id or ""),
+            pre_epoch_id=str(epoch.epoch_id or ""),
+            before_state=dict((cognitive_cycle_open or {}).get("before") or {}),
+            host_manifest_before=str(observed_manifest or ""),
+            host_manifest_after=str(current_manifest_hash(root, config) or ""),
+        )
+    except Exception as exc:
+        out["ostt_residual_receipt"] = {
+            "status": "observed_incomplete",
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+            "policy_effect": False,
+            "update_authorized": False,
+        }
     return out

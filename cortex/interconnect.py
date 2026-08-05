@@ -402,7 +402,25 @@ def mesh_status(
             "advisory_only": True,
         }
     binding_panel = _binding_field_panel(store, repo)
-    latest_ostt_receipt = store.get_setting(f"ostt_residual_latest:{repo}", None)
+    try:
+        latest_ostt_receipt = store.latest_activation_conformance_receipt(repo)
+        if latest_ostt_receipt:
+            from .ostt.conformance import verify_activation_receipt
+
+            latest_ostt_receipt = dict(latest_ostt_receipt)
+            latest_ostt_receipt["canonical_verification"] = (
+                verify_activation_receipt(
+                    store,
+                    repo,
+                    str(latest_ostt_receipt.get("receipt_hash") or ""),
+                )
+            )
+    except Exception:
+        latest_ostt_receipt = None
+    if not latest_ostt_receipt:
+        latest_ostt_receipt = store.get_setting(
+            f"ostt_residual_latest:{repo}", None
+        )
     try:
         from .ostt import audit_runtime
 

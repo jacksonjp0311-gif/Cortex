@@ -56,6 +56,95 @@ class TypedState:
 
 
 @dataclass(frozen=True)
+class ActivationObservationInput:
+    """Identity-bound input to activation-transition measurement.
+
+    This is deliberately narrower than the activation request itself.  It
+    names the immutable material needed to bind an observation to a task,
+    controller, repository, epoch, and coordinate schema.
+    """
+
+    task_hash: str
+    controller: str
+    capability_id: str
+    repository_id: str
+    pre_epoch_id: str
+    coordinate_schema_digest: str
+
+    def validate(self) -> list[str]:
+        return [
+            f"{name}_missing"
+            for name in (
+                "task_hash",
+                "controller",
+                "capability_id",
+                "repository_id",
+                "pre_epoch_id",
+                "coordinate_schema_digest",
+            )
+            if not str(getattr(self, name) or "").strip()
+        ]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "type_id": "ActivationObservationInput",
+            "task_hash": self.task_hash,
+            "controller": self.controller,
+            "capability_id": self.capability_id,
+            "repository_id": self.repository_id,
+            "pre_epoch_id": self.pre_epoch_id,
+            "coordinate_schema_digest": self.coordinate_schema_digest,
+            "valid": not self.validate(),
+        }
+
+
+@dataclass(frozen=True)
+class MeasuredActivationTransition:
+    """Raw and normalized representation of one measured state transition.
+
+    The type describes what changed.  It is not a complete activation receipt,
+    a prediction, an outcome witness, or a learning signal.
+    """
+
+    before_state: Mapping[str, Any]
+    after_state: Mapping[str, Any]
+    raw_delta: Mapping[str, Any]
+    normalized_delta: Mapping[str, Any]
+    coordinate_validity: Mapping[str, bool]
+    signed_channel_mass: Mapping[str, Any]
+    event_id: str
+
+    def validate(self) -> list[str]:
+        errors: list[str] = []
+        if not self.event_id:
+            errors.append("event_id_missing")
+        for name in (
+            "before_state",
+            "after_state",
+            "raw_delta",
+            "normalized_delta",
+            "coordinate_validity",
+            "signed_channel_mass",
+        ):
+            if not isinstance(getattr(self, name), Mapping):
+                errors.append(f"{name}_not_mapping")
+        return errors
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "type_id": "MeasuredActivationTransition",
+            "before_state": dict(self.before_state),
+            "after_state": dict(self.after_state),
+            "raw_delta": dict(self.raw_delta),
+            "normalized_delta": dict(self.normalized_delta),
+            "coordinate_validity": dict(self.coordinate_validity),
+            "signed_channel_mass": dict(self.signed_channel_mass),
+            "event_id": self.event_id,
+            "valid": not self.validate(),
+        }
+
+
+@dataclass(frozen=True)
 class OperatorContract:
     """Declared domain, gates, invariants, uncertainty, and cost for a step."""
 
@@ -151,8 +240,8 @@ CORE_CONTRACTS: tuple[OperatorContract, ...] = (
     ),
     OperatorContract(
         "activation_observation",
-        "TaskRequest",
-        "ActivationReceipt",
+        "ActivationObservationInput",
+        "MeasuredActivationTransition",
         ("epoch_current", "governor_allows"),
         ("measured_delta",),
         ("host_immutable",),
@@ -217,7 +306,7 @@ def audit_runtime(runtime: Mapping[str, Any]) -> dict[str, Any]:
     state_types = {
         "repository_assimilation": "RepositorySource",
         "epoch_binding": "EvidenceIndex",
-        "activation_observation": "TaskRequest",
+        "activation_observation": "ActivationObservationInput",
         "temporal_resonance": "EpochFrames",
         "informational_interlock": "ActivationReceipt",
         "bounded_learning": "VerifiedOutcome",
@@ -273,9 +362,11 @@ def audit_runtime(runtime: Mapping[str, Any]) -> dict[str, Any]:
 
 
 __all__ = [
+    "ActivationObservationInput",
     "CLAIM",
     "CORE_CONTRACTS",
     "GLYPH",
+    "MeasuredActivationTransition",
     "OperatorContract",
     "OperatorTrace",
     "SCHEMA",

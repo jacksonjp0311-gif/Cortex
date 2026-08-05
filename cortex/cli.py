@@ -1264,12 +1264,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ostt_p.add_argument(
         "action",
-        choices=["status", "residual"],
+        choices=[
+            "status",
+            "residual",
+            "activation-receipt",
+            "activation-cohort",
+            "verify-receipt",
+        ],
         nargs="?",
         default="status",
-        help="status (default) or residual evidence",
+        help="status, residual evidence, or read-only activation conformance inspection",
     )
     ostt_p.add_argument("--repo", required=True)
+    ostt_p.add_argument(
+        "--receipt",
+        help="Canonical receipt hash (required for verify-receipt).",
+    )
     ostt_p.add_argument("--json", action="store_true")
 
     prune_p = sub.add_parser(
@@ -3301,6 +3311,30 @@ def main(argv: list[str] | None = None) -> None:
             emit(compile_interlink(store, args.repo, resolutions=res or ("file", "symbol")), args.json)
 
         elif command == "ostt":
+            if args.action in {
+                "activation-receipt",
+                "activation-cohort",
+                "verify-receipt",
+            }:
+                from .ostt.conformance import (
+                    activation_cohort_report,
+                    activation_receipt_report,
+                    verify_activation_receipt,
+                )
+
+                if args.action == "activation-receipt":
+                    emit(activation_receipt_report(store, args.repo), args.json)
+                    return
+                if args.action == "activation-cohort":
+                    emit(activation_cohort_report(store, args.repo), args.json)
+                    return
+                if not args.receipt:
+                    raise ValueError("--receipt is required for ostt verify-receipt")
+                emit(
+                    verify_activation_receipt(store, args.repo, args.receipt),
+                    args.json,
+                )
+                return
             mesh = mesh_status(store, args.repo, governor=governor, home=home)
             if args.action == "residual":
                 emit(

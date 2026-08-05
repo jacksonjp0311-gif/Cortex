@@ -63,20 +63,39 @@ def test_gated_axes_stay_silent() -> None:
     assert state["values"]["geometry"] == 0.5
     assert state["values"]["temporal"] == 0.0
     assert state["values"]["interlock"] == 0.0
+    assert state["gate_mask"]["temporal"] == 0
+    assert state["gate_mask"]["interlock"] == 0
+    assert state["observability_rank"] == 2
 
     report = geometric_echo_report(state)
     assert "evidence" in report["active_axes"]
-    assert "temporal" in report["silent_axes"]
-    assert "interlock" in report["silent_axes"]
+    assert "temporal" in report["silent_unmeasured_axes"]
+    assert "interlock" in report["silent_unmeasured_axes"]
+    assert report["tight_frame"]["holds"] is True
     assert report["claim_boundary"].startswith("Four-dimensional")
 
 
 def test_missing_inputs_do_not_create_a_geometry_echo() -> None:
     state = operational_state(FakeStore(), "R")
     assert state["vector"] == [0.0, 0.0, 0.0, 0.0]
+    assert state["observability_rank"] == 0
     report = geometric_echo_report(state)
     assert report["field_condition"] == "silent"
-    assert report["silent_axes"] == ["evidence", "geometry", "temporal", "interlock"]
+    assert report["silent_unmeasured_axes"] == [
+        "evidence",
+        "geometry",
+        "temporal",
+        "interlock",
+    ]
+    assert report["observability_rank"] == 0
+
+
+def test_eight_probes_form_a_2_tight_frame() -> None:
+    report = geometric_echo_report({"vector": [0.2, 0.4, 0.6, 0.8]})
+    assert report["tight_frame"]["holds"] is True
+    expected = 2.0 * sum(value * value for value in report["masked_state_vector"])
+    assert abs(report["echo_energy"] - expected) < 1e-8
+    assert report["reconstruction_error"] == 0.0
 
 
 def test_run_is_read_only_unless_persistence_is_explicit(tmp_path: Path) -> None:

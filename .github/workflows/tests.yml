@@ -63,6 +63,19 @@ jobs:
           tests/test_warm_in.py
           tests/test_binding_field.py
           -q --tb=line
+      - name: v8.3.3/v8.3.4 activation conformance and interconnect math gates
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: >
+          python -m pytest
+          tests/test_ostt.py
+          tests/test_ostt_residuals.py
+          tests/test_activation_conformance.py
+          tests/test_activation_conformance_integration.py
+          tests/test_composition_law.py
+          tests/test_geometric_echo.py
+          tests/test_rotated_echo.py
+          -q --tb=line
       - name: Constitutional seal release receipt
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -139,6 +152,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/ci/release_receipt_v827.py
+      - name: Independent Activation Conformance receipt (v8.3.3 hard gate)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/ci/release_receipt_v833.py
       - name: Upload release receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -164,7 +181,15 @@ jobs:
             work/release_receipt_v825.json
             work/release_receipt_v826.json
             work/release_receipt_v827.json
+            work/release_receipt_v833.json
           if-no-files-found: ignore
+      - name: Upload v8.3.3 activation conformance receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: activation-conformance-v833-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: work/release_receipt_v833.json
+          if-no-files-found: error
       - name: Controlled benchmark gates
         run: python -m cortex benchmark --verify --json
       # Benchmark scripts may be invoked as files (sys.path[0]=benchmarks/).

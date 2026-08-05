@@ -1,3 +1,21 @@
+## 8.3.4 - Interconnect Mathematics Alignment
+
+- Aligned geometric-echo observability with activation null-preserving metrology: gate masks distinguish unmeasured silence from measured zeros; echoes observe `y = P D_g x`.
+- Exposed the eight-probe unit-norm 2-tight frame residual (`PᵀP = 2I₄`) and reconstruction of the evidence-backed active subspace.
+- Added active-subspace fragility `χ_A` over the fixed 19-orientation rotation orbit, including coordinate-artifact risk labeling.
+- Added a shared noncompensatory composition law and typed residual-bundle diagnostic energy (direct sum; no cross-domain impersonation; no authority).
+- Hardened v8.3.3 activation conformance: schema-backed signed channel mass only, order-invariant residual panels after canonical JSON, scientific cohort counting.
+- Documentation: `docs/intelligence/PHASE_V8.3.4_INTERCONNECT_MATHEMATICS.md`. Advisory only — not a claim of improved cognition or task utility.
+
+## 8.3.3 - Independent Activation Conformance Receipts
+
+- Replaced the activation observation's overstated output type with the explicit `ActivationObservationInput -> MeasuredActivationTransition` contract and a frozen, ordered coordinate schema with schema, shape, and scale digests.
+- Preserved typed raw before/after snapshots with null validity and typed failure reasons; any unknown required coordinate now holds the receipt at `observed_incomplete` and blocks evidence, baseline, and policy eligibility.
+- Added a separate verifier that reconstructs normalized deltas from raw snapshots, reports per-coordinate and per-channel residual burdens, and uses a deterministic conformance tolerance without reusing prediction error.
+- Added structured invariant and measurement-witness receipts, current epoch/cohort verification, one finalizer for baseline and advanced controllers, and an exactly-once hash-chained SQLite receipt ledger.
+- Added paired cohort reporting, read-only receipt inspection, production-path integration coverage, and a dedicated v8.3.3 CI receipt. Gate C remains cold until 16 compatible same-epoch production receipts exist.
+- v8.3.3 verifies activation-measurement conformance. It does not establish that Cortex improves task performance, reasoning quality, cognition, consciousness, agency, or authority.
+
 ## 8.3.2 - Typed Activation Observations (shadow)
 
 - Added an activation adapter that captures the existing measured-event normalized vector as a typed, hash-linked `observed` receipt.

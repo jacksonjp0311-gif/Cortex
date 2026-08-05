@@ -7,12 +7,14 @@ change routing, or grant mutation authority.
 """
 
 from .contracts import (
+    ActivationObservationInput,
     CLAIM,
     GLYPH,
     SCHEMA,
     CORE_CONTRACTS,
     OperatorContract,
     OperatorTrace,
+    MeasuredActivationTransition,
     TypedState,
     audit_runtime,
 )
@@ -25,8 +27,18 @@ from .residuals import (
     residual_evidence_report,
 )
 from .activation import activation_observation_receipt
+from .conformance import (
+    CLAIM_BOUNDARY as ACTIVATION_CONFORMANCE_CLAIM,
+    activation_cohort_report,
+    activation_receipt_report,
+    build_activation_conformance_receipt,
+    finalize_activation_observation,
+    verify_activation_receipt,
+)
 
 __all__ = [
+    "ActivationObservationInput",
+    "MeasuredActivationTransition",
     "CLAIM",
     "GLYPH",
     "SCHEMA",
@@ -42,4 +54,10 @@ __all__ = [
     "ResidualReceipt",
     "residual_evidence_report",
     "activation_observation_receipt",
+    "ACTIVATION_CONFORMANCE_CLAIM",
+    "activation_cohort_report",
+    "activation_receipt_report",
+    "build_activation_conformance_receipt",
+    "finalize_activation_observation",
+    "verify_activation_receipt",
 ]

@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import Counter
 from hashlib import sha256
 from itertools import product
+import json
 import math
 import random
 from typing import Any, Iterable, Sequence
@@ -29,6 +30,37 @@ CLAIM = (
     "Synergy is a conservative mutual-information proxy, not full PID; "
     "the field is advisory and is not consciousness or mutation authority."
 )
+
+
+def measurement_cohort_identity(
+    *,
+    repo: str,
+    repository_id: str,
+    evidence_root_hash: str,
+    schema_hash: str,
+    constitutional_config_hash: str,
+    coordinate_schema_digest: str | None = None,
+    prefix: str = "ico",
+) -> str:
+    """Derive one canonical compatible-measurement cohort identifier.
+
+    Activation conformance passes its coordinate schema digest and uses the
+    ``aco`` namespace.  Existing E-L-O cohorts omit it for backward-compatible
+    information-interlock reporting.
+    """
+    material = {
+        "repo": str(repo),
+        "repository_id": str(repository_id),
+        "evidence_root_hash": str(evidence_root_hash),
+        "schema_hash": str(schema_hash),
+        "constitutional_config_hash": str(constitutional_config_hash),
+    }
+    if coordinate_schema_digest is not None:
+        material["coordinate_schema_digest"] = str(coordinate_schema_digest)
+    if not all(material.values()):
+        raise ValueError("measurement_cohort_identity_incomplete")
+    canonical = json.dumps(material, sort_keys=True, separators=(",", ":"))
+    return f"{prefix}_" + sha256(canonical.encode("utf-8")).hexdigest()[:24]
 
 
 def _task_family(task: str, thalamus: dict[str, Any]) -> str:
@@ -82,10 +114,7 @@ def observe_activation_interlock(
     }
     cohort_ready = all(cohort_material.values())
     cohort_id = (
-        "ico_"
-        + sha256(
-            str(sorted(cohort_material.items())).encode("utf-8")
-        ).hexdigest()[:24]
+        measurement_cohort_identity(**cohort_material)
         if cohort_ready
         else f"epoch:{epoch_id}"
     )
@@ -601,10 +630,7 @@ def interlock_report(
             "schema_hash": live_epoch.schema_hash,
             "constitutional_config_hash": live_epoch.constitutional_config_hash,
         }
-        expected_cohort = (
-            "ico_"
-            + sha256(str(sorted(cohort_material.items())).encode("utf-8")).hexdigest()[:24]
-        )
+        expected_cohort = measurement_cohort_identity(**cohort_material)
         cohort_current = bool(latest_cohort and latest_cohort == expected_cohort)
         if not cohort_current:
             latest_cohort = ""
@@ -862,6 +888,7 @@ __all__ = [
     "graph_sampling_audit",
     "bridge_deconcentration_report",
     "interlock_report",
+    "measurement_cohort_identity",
     "mutual_information_bits",
     "observe_activation_interlock",
     "refresh_interlock_shadow",

@@ -105,7 +105,7 @@ class OsttResidualTests(unittest.TestCase):
         self.assertFalse(payload["evidence_ready"])
         self.assertFalse(payload["validation"]["known_output_declared"])
 
-    def test_review_report_requires_all_declared_gates(self) -> None:
+    def test_unpaired_mode_labels_do_not_satisfy_comparison_matrix(self) -> None:
         report = residual_evidence_report(
             (self.contract,),
             [
@@ -113,10 +113,11 @@ class OsttResidualTests(unittest.TestCase):
                 for mode in ("ostt", "black_box", "operator_only", "residual_only", "untyped")
             ],
         )
-        self.assertEqual(report["status"], "ready_for_review")
-        self.assertTrue(report["gates"]["typed_compatibility"])
-        self.assertTrue(report["gates"]["comparison_matrix"])
-        self.assertTrue(report["gates"]["independent_witness"])
+        self.assertEqual(report["status"], "measured_shadow")
+        self.assertFalse(report["gates"]["typed_compatibility"])
+        self.assertFalse(report["gates"]["comparison_matrix"])
+        self.assertFalse(report["gates"]["independent_witness"])
+        self.assertGreater(report["incompatible_receipt_count"], 0)
         self.assertTrue(report["update_authorized"] is False)
         self.assertFalse(report["policy_effect"])
 

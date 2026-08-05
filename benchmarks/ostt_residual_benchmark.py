@@ -13,12 +13,21 @@ sys.path.insert(0, str(ROOT))
 
 from cortex.ostt import OperatorContract  # noqa: E402
 from cortex.ostt.residuals import (  # noqa: E402
+    REQUIRED_COMPARISON_ARMS,
+    REQUIRED_COMPARISON_MODES,
     ResidualReceipt,
     residual_evidence_report,
 )
 
 
-def _make_receipt(index: int, mode: str = "ostt", *, invariant_ok: bool = True) -> ResidualReceipt:
+def _make_receipt(
+    index: int,
+    mode: str = "ostt",
+    *,
+    arm: str = "advanced",
+    case_id: str = "case-bench",
+    invariant_ok: bool = True,
+) -> ResidualReceipt:
     base = [1.0 + index * 0.001, 2.0 - index * 0.001]
     observed = [base[0] + 0.01, base[1] - 0.01]
     return ResidualReceipt.measure(
@@ -33,6 +42,11 @@ def _make_receipt(index: int, mode: str = "ostt", *, invariant_ok: bool = True) 
         validation={"independent_outcome": True},
         epoch_id="epoch-bench",
         cohort_id="cohort-bench",
+        coordinate_schema_digest="schema-bench",
+        repository_id="repo-bench",
+        repo="BenchRepo",
+        case_id=case_id,
+        comparison_arm=arm,
         independent_witness=True,
         approximation_mode="exact",
         comparison_mode=mode,
@@ -48,15 +62,27 @@ def main() -> int:
         ("observed",),
         ("finite",),
     )
-    modes = ("ostt", "black_box", "operator_only", "residual_only", "untyped")
+    modes = tuple(sorted(REQUIRED_COMPARISON_MODES))
     samples: list[ResidualReceipt] = []
     timings: list[float] = []
     for index in range(256):
         started = time.perf_counter()
-        samples.append(_make_receipt(index, modes[index] if index < len(modes) else "ostt"))
+        samples.append(
+            _make_receipt(
+                index,
+                modes[index % len(modes)],
+                arm="advanced" if index % 2 == 0 else "evidence_baseline",
+            )
+        )
         timings.append((time.perf_counter() - started) * 1000.0)
 
-    report = residual_evidence_report((contract,), samples)
+    # Full paired comparison matrix for the review-gate surface.
+    matrix_samples = [
+        _make_receipt(0, mode, arm=arm)
+        for arm in sorted(REQUIRED_COMPARISON_ARMS)
+        for mode in modes
+    ]
+    report = residual_evidence_report((contract,), matrix_samples)
     try:
         ResidualReceipt.measure(
             operator_id="scale_two",
@@ -74,7 +100,11 @@ def main() -> int:
 
     invariant_failure = residual_evidence_report(
         (contract,),
-        [_make_receipt(0, invariant_ok=False)] + [_make_receipt(0, mode) for mode in modes[1:]],
+        [
+            _make_receipt(0, mode, arm=arm, invariant_ok=False)
+            for arm in sorted(REQUIRED_COMPARISON_ARMS)
+            for mode in modes
+        ],
     )
     type_failure = residual_evidence_report(
         (contract,),
@@ -90,6 +120,11 @@ def main() -> int:
                 invariant_projection={"ok": True},
                 epoch_id="epoch-bench",
                 cohort_id="cohort-bench",
+                coordinate_schema_digest="schema-bench",
+                repository_id="repo-bench",
+                repo="BenchRepo",
+                case_id="case-bench",
+                comparison_arm="advanced",
                 independent_witness=True,
             )
         ],
@@ -117,7 +152,13 @@ def main() -> int:
             "median": round(statistics.median(timings), 4),
             "p95": round(sorted(timings)[int(0.95 * (len(timings) - 1))], 4),
         },
-        "review": report,
+        "review": {
+            "status": report["status"],
+            "ready_count": report["ready_count"],
+            "gates": report["gates"],
+            "policy_effect": report["policy_effect"],
+            "update_authorized": report["update_authorized"],
+        },
         "checks": checks,
         "claim_boundary": report["claim_boundary"],
     }

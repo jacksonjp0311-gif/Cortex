@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.3.2-0ea5e9?style=for-the-badge" alt="v8.3.2" />
+  <img src="https://img.shields.io/badge/version-8.3.4-0ea5e9?style=for-the-badge" alt="v8.3.4" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,43 @@
 
 # Cortex
 
-## OSTT typed activation observations (v8.3.2)
+## Interconnect mathematics (v8.3.4)
+
+v8.3.4 freezes the cross-module measurement law already emerging in Cortex:
+noncompensatory composition, null-preserving observability (`unmeasured ≠ zero`),
+an eight-probe 2-tight geometric frame, active-subspace fragility over the
+fixed rotation orbit, and typed residual bundles that cannot impersonate each
+other. See
+[`docs/intelligence/PHASE_V8.3.4_INTERCONNECT_MATHEMATICS.md`](docs/intelligence/PHASE_V8.3.4_INTERCONNECT_MATHEMATICS.md).
+
+## Independent activation conformance (v8.3.3)
+
+v8.3.3 turns one production-path activation observation into an independently
+verifiable measurement receipt. Cortex retains typed raw before/after state,
+uses null validity instead of false zeroes, and recomputes the normalized
+transition in a separate verifier from the frozen coordinate schema. The
+persisted and reconstructed vectors are compared with per-coordinate,
+per-channel, RMS, maximum, and invalid-measurement burdens.
+
+Both `evidence_baseline` and `advanced` activations pass through the same
+read-only observation finalizer. Canonical receipts are appended exactly once
+to an epoch/cohort/schema-partitioned hash-chain ledger; observation cannot
+change the controller result, routing, learning, cadence, policy, host source,
+or constitutional authority.
+
+Inspect existing evidence without executing another activation:
+
+```powershell
+python -m cortex ostt activation-receipt --repo YourProject --json
+python -m cortex ostt activation-cohort --repo YourProject --json
+python -m cortex ostt verify-receipt --repo YourProject --receipt <hash> --json
+```
+
+Gate B, `CONFORMANCE_MEASURED`, requires complete required coordinates, current
+epoch and cohort bindings, a structured measurement witness, valid invariants,
+independent recomputation, and an exactly-once ledger append. Gate C remains
+cold until at least 16 compatible same-epoch production-path receipts exist.
+This is measurement conformance, not prediction accuracy or task utility.
 
 Cortex now exposes a read-only **Operator-Structured Transformation Theory
 (OSTT)** audit over its existing transitions. The `▤` layer makes domains,
@@ -42,6 +78,13 @@ the measured residual gate in
 Activation now captures the existing measured event vector as an epoch/cohort-bound
 `observed` receipt; the known operator output remains an explicit gate. See
 [`docs/intelligence/PHASE_V8.3.2_TYPED_ACTIVATION_OBSERVATIONS.md`](docs/intelligence/PHASE_V8.3.2_TYPED_ACTIVATION_OBSERVATIONS.md).
+v8.3.3 replaces that prospective known-output framing with independent
+measurement reconstruction from raw state; see
+[`docs/intelligence/PHASE_V8.3.3_INDEPENDENT_ACTIVATION_CONFORMANCE.md`](docs/intelligence/PHASE_V8.3.3_INDEPENDENT_ACTIVATION_CONFORMANCE.md).
+
+**Claim boundary:** v8.3.3 verifies activation-measurement conformance. It does
+not establish that Cortex improves task performance, reasoning quality,
+cognition, consciousness, agency, or authority.
 
 ### Local memory for AI coding agents — attach once, keep the host sovereign
 
@@ -158,6 +201,9 @@ python -m cortex --home "$HOME/.cortex" claim --repo YourProject --json
 | `interlock rotate` | Fixed quarter-turn perception sweep and reversible measurement-only surgery plan |
 | `ostt status` | Shadow OSTT contract audit over typed runtime transitions |
 | `ostt residual` | Typed operator-residual receipts and review-gate status |
+| `ostt activation-receipt` | Latest canonical activation-conformance receipt (read-only) |
+| `ostt activation-cohort` | Compatible epoch/cohort/schema partition and Gate C readiness |
+| `ostt verify-receipt` | Recompute and verify a stored receipt and its ledger chain |
 | `claim` | Falsifiable promote receipt (when applicable) |
 
 **Trust order:** host source & tests → runtime evidence → verified model → consolidated memory → learned associations → inference.  

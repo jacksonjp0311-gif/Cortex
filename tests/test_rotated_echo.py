@@ -30,4 +30,8 @@ def test_cross_axis_rotation_loses_alignment() -> None:
     cross = next(item for item in report["rotations"] if item["name"] == "evidence_temporal_90")
     assert cross["alignment"] == 0.0
     assert cross["reconstruction_error"] == 0.0
+    # High identity alignment with high fragility is a coordinate-artifact risk.
+    assert report["identity_alignment"] == 1.0
+    assert report["active_subspace_fragility"] == 1.0
+    assert report["fragility_interpretation"] == "coordinate_artifact_risk"
 

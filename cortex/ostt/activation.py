@@ -22,15 +22,15 @@ def activation_observation_receipt(activation: Mapping[str, Any]) -> dict[str, A
     if not normalized:
         receipt = ResidualReceipt.unmeasured(
             operator_id="activation_observation",
-            input_type="TaskRequest",
-            output_type="ActivationReceipt",
+            input_type="ActivationObservationInput",
+            output_type="MeasuredActivationTransition",
             reason="measured_event_output_missing",
         )
     else:
         receipt = ResidualReceipt.observed(
             operator_id="activation_observation",
-            input_type="TaskRequest",
-            output_type="ActivationReceipt",
+            input_type="ActivationObservationInput",
+            output_type="MeasuredActivationTransition",
             observed_output=normalized,
             validation={
                 "typed_output_schema": measured.get("schema_version"),
@@ -38,7 +38,7 @@ def activation_observation_receipt(activation: Mapping[str, Any]) -> dict[str, A
                 "event_kind": measured.get("event_kind"),
                 "measurement_basis": measured.get("measurement_basis"),
                 "observed_receipt_hash": measured.get("receipt_hash"),
-                "host_immutable": True,
+                "host_immutable_measured": False,
                 "known_output_declared": False,
             },
             epoch_id=str(body_epoch.get("epoch_id") or "") or None,
@@ -53,8 +53,8 @@ def activation_observation_receipt(activation: Mapping[str, Any]) -> dict[str, A
         "measurement_cohort_id": interlock.get("measurement_cohort_id"),
     }
     payload["claim_boundary"] = (
-        "This is a typed observed activation output. It is not a measured "
-        "operator residual, learning signal, authority, or consciousness claim."
+        "This compatibility projection is an observed normalized transition, "
+        "not a conformance receipt, learning signal, authority, or consciousness claim."
     )
     return payload
 
