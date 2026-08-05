@@ -1,3 +1,12 @@
+## 8.5.2 - Observer Cold-Start Recovery (CI heal)
+
+- Cold-start no longer requires field 16/16 (restores bootstrap observer warm
+  path broken by 8.5.1 over-constraint `field_not_ready_for_cold_start`).
+- Cold-start still skips QUIESCENT/COHERENT frame requirement so INDETERMINATE
+  cannot lock the observer at COLD; post-warm baseline rewrites stay strict.
+- Regression tests: bootstrap-without-field, INDETERMINATE cold-start, and
+  warm-observer reject of indeterminate rewrite.
+
 ## 8.5.1 - Observer Cold-Start, Durable Will Policy, Surface Bind
 
 - Self-sensing cold-start can accumulate EMA under warm field even when the

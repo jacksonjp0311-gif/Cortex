@@ -38,8 +38,8 @@ class SelfSensingColdStartTests(unittest.TestCase):
         self.store.close()
         self.temporary.cleanup()
 
-    def test_cold_start_updates_under_indeterminate_when_field_ready(self) -> None:
-        sample = {
+    def _sample(self, **overrides: object) -> dict:
+        base = {
             "z": {k: 0.5 for k in (
                 "C", "N", "I", "L", "D", "H", "G", "Q",
                 "eta_E", "eta_M", "T", "delta_E", "U",
@@ -50,6 +50,54 @@ class SelfSensingColdStartTests(unittest.TestCase):
             "F_t": 0.5,
             "F_spec_literal": 0.5,
             "gates": {
+                "baseline_warm": False,
+                "epoch_current": True,
+                "phase_bound": True,
+                "evidence_valid": True,
+                "witness_available": False,
+                "field_frames_ready": False,
+            },
+            "coherence_score": 0.5,
+            "frame_id": None,
+            "frame_classification": None,
+            "frame_measurement_basis": "direct_snapshot",
+            "frame_policy_eligible": True,
+            "frame_baseline_eligible": True,
+            "field_warmup": {
+                "baseline_frames_seen": 0,
+                "baseline_ready": False,
+            },
+            "spectral_mass": None,
+            "temporal_field_panel": {},
+            "sampled_at": 1.0,
+            "claim_boundary": "test",
+        }
+        base.update(overrides)
+        if "gates" in overrides and isinstance(overrides["gates"], dict):
+            g = dict(base["gates"])
+            g.update(overrides["gates"])  # type: ignore[arg-type]
+            base["gates"] = g
+        return base
+
+    def test_cold_start_updates_without_field_frames(self) -> None:
+        """Bootstrap path: epoch/phase/evidence alone may warm observer (CI regression)."""
+        sample = self._sample()
+        with mock.patch(
+            "cortex.self_sensing.sample_observer_state", return_value=sample
+        ):
+            first = observe_self_sensing(
+                self.store, self.repo, update=True, persist=True
+            )
+            self.assertTrue(
+                first["baseline_updated"], first.get("baseline_update_decision")
+            )
+            self.assertEqual(first["baseline_n_updates"], 1)
+
+    def test_cold_start_updates_under_indeterminate_when_field_ready(self) -> None:
+        sample = self._sample(
+            frame_id="f1",
+            frame_classification="INDETERMINATE",
+            gates={
                 "baseline_warm": True,
                 "epoch_current": True,
                 "phase_bound": True,
@@ -57,21 +105,11 @@ class SelfSensingColdStartTests(unittest.TestCase):
                 "witness_available": True,
                 "field_frames_ready": True,
             },
-            "coherence_score": 0.5,
-            "frame_id": "f1",
-            "frame_classification": "INDETERMINATE",
-            "frame_measurement_basis": "direct_snapshot",
-            "frame_policy_eligible": True,
-            "frame_baseline_eligible": True,
-            "field_warmup": {
+            field_warmup={
                 "baseline_frames_seen": 16,
                 "baseline_ready": True,
             },
-            "spectral_mass": None,
-            "temporal_field_panel": {},
-            "sampled_at": 1.0,
-            "claim_boundary": "test",
-        }
+        )
         with mock.patch(
             "cortex.self_sensing.sample_observer_state", return_value=sample
         ):
@@ -88,6 +126,49 @@ class SelfSensingColdStartTests(unittest.TestCase):
             surface = self.store.get_setting(f"self_sensing_latest:{self.repo}")
             self.assertIsInstance(surface, dict)
             self.assertEqual(surface.get("baseline_n_updates"), 2)
+
+    def test_warm_observer_rejects_indeterminate_rewrite(self) -> None:
+        """After n>=16, INDETERMINATE must not keep rewriting the baseline."""
+        # Seed warm baseline
+        sample_warm = self._sample(
+            frame_classification="QUIESCENT",
+            gates={
+                "baseline_warm": True,
+                "epoch_current": True,
+                "phase_bound": True,
+                "evidence_valid": True,
+                "witness_available": True,
+                "field_frames_ready": True,
+            },
+        )
+        with mock.patch(
+            "cortex.self_sensing.sample_observer_state", return_value=sample_warm
+        ):
+            for _ in range(16):
+                observe_self_sensing(self.store, self.repo, update=True, persist=True)
+        sample_bad = self._sample(
+            frame_id="f2",
+            frame_classification="INDETERMINATE",
+            gates={
+                "baseline_warm": True,
+                "epoch_current": True,
+                "phase_bound": True,
+                "evidence_valid": True,
+                "witness_available": True,
+                "field_frames_ready": True,
+            },
+        )
+        with mock.patch(
+            "cortex.self_sensing.sample_observer_state", return_value=sample_bad
+        ):
+            r = observe_self_sensing(self.store, self.repo, update=True, persist=True)
+            self.assertFalse(r["baseline_updated"], r.get("baseline_update_decision"))
+            self.assertEqual(r["baseline_n_updates"], 16)
+            reasons = (r.get("baseline_update_decision") or {}).get("reasons") or []
+            self.assertTrue(
+                any("not_stable" in str(x) or "not_nominal" in str(x) for x in reasons),
+                reasons,
+            )
 
 
 class DurableWillPolicyTests(unittest.TestCase):

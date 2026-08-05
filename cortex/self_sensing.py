@@ -551,13 +551,13 @@ def observe_self_sensing(
 
     stable_frame_classes = {"QUIESCENT", "COHERENT_DIFFERENTIATED"}
     frame_class = str(sample.get("frame_classification") or "")
-    # Cold-start bootstrap: field can be 16/16 while closed frames stay
-    # INDETERMINATE (low activity). Observer EMA must still accumulate or the
-    # system is stuck COLD forever (chicken-and-egg with stable-frame gate).
+    # Cold-start (n < BASELINE_MIN): accumulate EMA whenever hard identity gates
+    # pass. Do NOT require:
+    #   - field 16/16 (bootstrap path warms observer before resonant frames), or
+    #   - QUIESCENT/COHERENT frames (INDETERMINATE is common during field warm).
+    # After warm, keep strict stable-frame + NOMINAL discipline so stressed or
+    # indeterminate regimes cannot quietly rewrite the baseline.
     cold_start = prior_n < BASELINE_MIN
-    field_ready = bool(
-        gates.get("field_frames_ready") or gates.get("baseline_warm")
-    )
     update_reasons: list[str] = []
     if not update:
         update_reasons.append("update_not_requested")
@@ -569,14 +569,7 @@ def observe_self_sensing(
         update_reasons.append("evidence_invalid")
     if not sample.get("frame_baseline_eligible", True):
         update_reasons.append("measurement_not_baseline_eligible")
-    if cold_start:
-        # Require a warm field before inventing an observer baseline, but do not
-        # demand QUIESCENT/COHERENT frames — those often appear only after the
-        # observer itself is warm and coupling is live.
-        if not field_ready:
-            update_reasons.append("field_not_ready_for_cold_start")
-        # Explicitly allow INDETERMINATE / missing frame class during cold-start.
-    else:
+    if not cold_start:
         if frame_class and frame_class not in stable_frame_classes:
             update_reasons.append(f"frame_{frame_class.lower()}_not_stable")
         if classification != SelfSenseClass.NOMINAL.value:
