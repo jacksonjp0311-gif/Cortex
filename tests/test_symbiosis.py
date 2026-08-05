@@ -47,7 +47,7 @@ class SymbiosisTests(unittest.TestCase):
             provider="xai",
             model_id="grok-test",
         )
-        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.7")
+        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.8")
         self.assertIn("agent_instantiation", session["receipts"])
         self.assertIn("cortex_context", session["receipts"])
         self.assertFalse(session["policy_effect"])
@@ -55,7 +55,9 @@ class SymbiosisTests(unittest.TestCase):
         self.assertFalse(
             session["receipts"]["agent_instantiation"]["persistent_self"]
         )
-        self.assertEqual(len(session["chain"]), 2)
+        # Instantiation + context; optional memory projection receipt may append.
+        self.assertGreaterEqual(len(session["chain"]), 2)
+        self.assertLessEqual(len(session["chain"]), 3)
         status = symbiotic_status(self.store, self.repo)
         self.assertEqual(status["session_id"], session["session_id"])
         self.assertEqual(status["status"], "open")

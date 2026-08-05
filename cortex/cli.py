@@ -1394,6 +1394,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     will_p.add_argument("--json", action="store_true")
 
+    memory_p = sub.add_parser(
+        "memory",
+        help="Governed memory rehydration and revision (v8.7).",
+    )
+    memory_p.add_argument(
+        "action",
+        choices=[
+            "status",
+            "project",
+            "inspect",
+            "challenge",
+            "supersede",
+            "verify",
+            "credit",
+        ],
+        nargs="?",
+        default="status",
+    )
+    memory_p.add_argument("--repo", required=True)
+    memory_p.add_argument("--task", default="", help="Task text for project.")
+    memory_p.add_argument("--memory", default="", help="memory_id for inspect/challenge.")
+    memory_p.add_argument("--candidate", default="", help="challenger candidate_id.")
+    memory_p.add_argument("--old", default="", help="superseded memory_id.")
+    memory_p.add_argument("--new", default="", help="replacement memory_id.")
+    memory_p.add_argument("--deep", action="store_true", help="Deep lineage verify.")
+    memory_p.add_argument(
+        "--authorize-supersede",
+        action="store_true",
+        help="Apply supersession state change (review-only without this).",
+    )
+    memory_p.add_argument("--json", action="store_true")
+
     admitted_p = sub.add_parser(
         "admitted",
         help="Will-bound admitted memory ledger (v8.6).",
@@ -3789,6 +3821,104 @@ def main(argv: list[str] | None = None) -> None:
                 return
             emit(will_status(store, args.repo), args.json)
 
+        elif command == "memory":
+            from .admitted_memory import (
+                admitted_memory_status,
+                list_admitted_memories,
+                verify_admitted_memories,
+            )
+            from .memory_conflict import challenge_memory, supersede_memory
+            from .memory_projection import project_memories
+            from .memory_state import current_memory_state
+
+            if args.action == "status":
+                base = admitted_memory_status(store, args.repo)
+                base["schema_version"] = "cortex-memory-status/1.0"
+                base["phase"] = "v8.7"
+                emit(base, args.json)
+                return
+            if args.action == "project":
+                task = str(args.task or "").strip() or "memory project"
+                will = store.get_setting(f"will_latest:{args.repo}", None) or {}
+                emit(
+                    project_memories(
+                        store,
+                        args.repo,
+                        task=task,
+                        current_will=will if will.get("receipt_hash") else None,
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "inspect":
+                mid = str(args.memory or "").strip()
+                if not mid:
+                    raise ValueError("memory inspect requires --memory")
+                rows = [
+                    r
+                    for r in list_admitted_memories(store, args.repo, limit=5000)
+                    if str(r.get("memory_id")) == mid
+                ]
+                emit(
+                    {
+                        "memory": rows[0] if rows else None,
+                        "state": current_memory_state(store, args.repo, mid),
+                        "found": bool(rows),
+                    },
+                    args.json,
+                )
+                return
+            if args.action == "challenge":
+                mid = str(args.memory or "").strip()
+                cand = str(args.candidate or "").strip()
+                if not mid or not cand:
+                    raise ValueError(
+                        "memory challenge requires --memory and --candidate"
+                    )
+                emit(
+                    challenge_memory(
+                        store,
+                        args.repo,
+                        challenged_memory_id=mid,
+                        challenger_candidate_id=cand,
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "supersede":
+                old = str(args.old or "").strip()
+                new = str(args.new or "").strip()
+                if not old or not new:
+                    raise ValueError("memory supersede requires --old and --new")
+                emit(
+                    supersede_memory(
+                        store,
+                        args.repo,
+                        superseded_memory_id=old,
+                        replacement_memory_id=new,
+                        authorized=bool(args.authorize_supersede),
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "verify":
+                emit(
+                    verify_admitted_memories(
+                        store, args.repo, deep=bool(args.deep)
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "credit":
+                # Latest use-linked credits are append-only; surface latest setting if any.
+                emit(
+                    store.get_setting(f"memory_projection_latest:{args.repo}", None)
+                    or {"status": "no_projection_yet", "repo": args.repo},
+                    args.json,
+                )
+                return
+            emit(admitted_memory_status(store, args.repo), args.json)
+
         elif command == "admitted":
             from .admitted_memory import (
                 admitted_memory_status,
@@ -3816,6 +3946,7 @@ def main(argv: list[str] | None = None) -> None:
                         store,
                         args.repo,
                         session_id=str(args.session or "") or None,
+                        deep=bool(getattr(args, "deep", False)),
                     ),
                     args.json,
                 )

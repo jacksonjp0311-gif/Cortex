@@ -21,15 +21,14 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.7"
+SCHEMA = "cortex-symbiosis/1.8"
 GLYPH = "☍"
-VERSION = "8.6.0"
+VERSION = "8.7.0"
 CLAIM_BOUNDARY = (
-    "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
-    "proposes meaning; Cortex preserves tested continuity. Distillation candidates "
-    "are trajectory lessons; authenticated will supplies direction; the membrane "
-    "admits under will ∧ ΓΞWOS; v8.6 writes admitted memories to an immutable "
-    "ledger only — never host mutation, never invents facts, never auto-executes."
+    "AI–Cortex symbiotic circulation is a typed two-timescale ledger. v8.7 projects "
+    "admitted memories into task-bound context under eligibility gates, records "
+    "memory use/credit, and allows challenge/supersession without deleting history. "
+    "Never host mutation, never invents facts, never auto-executes."
 )
 GATE_PASS = "pass"
 GATE_FAIL = "fail"
@@ -1050,6 +1049,37 @@ def complementarity_surplus(
     }
 
 
+def _memory_projection_for_task(
+    store: Any,
+    repo: str,
+    *,
+    task: str,
+    session_id: str,
+    turn_id: int,
+    body_epoch_id: str,
+    persist: bool = True,
+) -> dict[str, Any] | None:
+    """Governed rehydration: full ledger → eligibility → projection."""
+    try:
+        from .memory_projection import project_memories
+
+        will = store.get_setting(f"will_latest:{repo}", None) or {}
+        return project_memories(
+            store,
+            repo,
+            task=task,
+            session_id=session_id,
+            turn_id=turn_id,
+            body_epoch_id=body_epoch_id,
+            current_will=will if will.get("receipt_hash") else None,
+            will_secret=None,
+            max_memories=12,
+            persist=persist,
+        )
+    except Exception:
+        return None
+
+
 def open_symbiotic_session(
     store: Any,
     repo: str,
@@ -1099,6 +1129,30 @@ def open_symbiotic_session(
         restrictions.append("epoch_unverified_hold_adaptation")
 
     invocation_id = f"inv_{session_id}"
+    memory_projection = _memory_projection_for_task(
+        store,
+        repo,
+        task=task,
+        session_id=session_id,
+        turn_id=0,
+        body_epoch_id=body_epoch_id,
+        persist=persist,
+    )
+    memory_episodes = []
+    if memory_projection:
+        for item in memory_projection.get("selected") or ():
+            if isinstance(item, Mapping):
+                memory_episodes.append(
+                    {
+                        "memory_id": item.get("memory_id"),
+                        "candidate_type": item.get("candidate_type"),
+                        "summary": item.get("summary"),
+                        "support_level": item.get("support_level"),
+                        "current_state": item.get("current_state"),
+                        "why_selected": item.get("why_selected"),
+                        "receipt_hash": item.get("receipt_hash"),
+                    }
+                )
     context = cortex_context_receipt(
         repo=repo,
         repository_id=repository_id,
@@ -1113,11 +1167,15 @@ def open_symbiotic_session(
         ]
         if evidence
         else [],
-        memory_episodes=[],
+        memory_episodes=memory_episodes,
         graph_neighbors=[],
         predictions={
             "measured_event_present": bool(measured),
             "interlock_data_ready": bool(interlock.get("data_ready")),
+            "memory_projection_hash": (memory_projection or {}).get("receipt_hash"),
+            "memory_projection_id": (memory_projection or {}).get("projection_id"),
+            "selected_memory_ids": (memory_projection or {}).get("selected_memory_ids"),
+            "continuity_seed": (memory_projection or {}).get("continuity_seed"),
         },
         unresolved_contradictions=[
             item
@@ -1193,11 +1251,15 @@ def open_symbiotic_session(
         ]
         if evidence
         else [],
-        memory_episodes=[],
+        memory_episodes=memory_episodes,
         graph_neighbors=[],
         predictions={
             "measured_event_present": bool(measured),
             "interlock_data_ready": bool(interlock.get("data_ready")),
+            "memory_projection_hash": (memory_projection or {}).get("receipt_hash"),
+            "memory_projection_id": (memory_projection or {}).get("projection_id"),
+            "selected_memory_ids": (memory_projection or {}).get("selected_memory_ids"),
+            "continuity_seed": (memory_projection or {}).get("continuity_seed"),
         },
         unresolved_contradictions=[
             item
@@ -1270,17 +1332,24 @@ def open_symbiotic_session(
             "cortex_supplies": "persistent identity and disciplined memory",
             "will_supplies": "authenticated direction (v8.5 binding via membrane)",
             "membrane_supplies": "will-bound candidate admission under ΓΞWOS",
+            "memory_supplies": "governed rehydration + revision (v8.7)",
             "neither_complete_alone": True,
         },
         "receipts": {
             "agent_instantiation": instantiation,
             "cortex_context": context,
+            "memory_projection": memory_projection,
         },
         "turns": {},
         "chain": [
             instantiation["receipt_hash"],
             context["receipt_hash"],
-        ],
+        ]
+        + (
+            [memory_projection["receipt_hash"]]
+            if memory_projection and memory_projection.get("receipt_hash")
+            else []
+        ),
         "complementarity": complementarity_surplus(),
         "status": "open",
         "advisory_only": True,
@@ -1399,6 +1468,36 @@ def record_proposal(
                 outcome=dict(last_turn_payload.get("outcome") or {}),
             )
     # Reciprocal pulse: project turn-specific context C_k from frame + priors.
+    # v8.7: governed memory rehydration into C_k (not chronological dump).
+    task_text = str(
+        interpreted_objective
+        or session_body.get("task")
+        or "symbiotic turn"
+    )
+    memory_projection = _memory_projection_for_task(
+        store,
+        repo,
+        task=task_text,
+        session_id=str(session_body.get("session_id") or ""),
+        turn_id=turn_id,
+        body_epoch_id=str(session_body.get("body_epoch_id") or ""),
+        persist=persist,
+    )
+    memory_episodes = []
+    if memory_projection:
+        for item in memory_projection.get("selected") or ():
+            if isinstance(item, Mapping):
+                memory_episodes.append(
+                    {
+                        "memory_id": item.get("memory_id"),
+                        "candidate_type": item.get("candidate_type"),
+                        "summary": item.get("summary"),
+                        "support_level": item.get("support_level"),
+                        "current_state": item.get("current_state"),
+                        "why_selected": item.get("why_selected"),
+                        "receipt_hash": item.get("receipt_hash"),
+                    }
+                )
     context = cortex_context_receipt(
         repo=str(session_body.get("repo") or repo),
         repository_id=str(session_body.get("repository_id") or ""),
@@ -1411,7 +1510,7 @@ def record_proposal(
                 "digest": str(frame.get("receipt_hash") or "")[:24],
             }
         ],
-        memory_episodes=[],
+        memory_episodes=memory_episodes,
         graph_neighbors=[],
         predictions={
             "prior_outcome_hash": prior_outcome_hash,
@@ -1419,6 +1518,12 @@ def record_proposal(
             "measured_state_digest": frame.get("measured_state_digest"),
             "interconnect_frame_hash": frame.get("receipt_hash"),
             "interconnect_frame_id": frame.get("frame_id"),
+            "memory_projection_hash": (memory_projection or {}).get("receipt_hash"),
+            "memory_projection_id": (memory_projection or {}).get("projection_id"),
+            "selected_memory_ids": (memory_projection or {}).get(
+                "selected_memory_ids"
+            ),
+            "continuity_seed": (memory_projection or {}).get("continuity_seed"),
         },
         unresolved_contradictions=[
             key
@@ -1529,6 +1634,7 @@ def record_proposal(
         "turn_id": turn_id,
         "case_id": case_id,
         "interconnect_frame": frame,
+        "memory_projection": memory_projection,
         "cortex_context": context,
         "agent_proposal": proposal,
         "cortex_evaluation": evaluation,
@@ -1538,6 +1644,8 @@ def record_proposal(
         "distillation_candidates": distillation_batch,
     }
     turns[str(turn_id)] = turn_receipts
+    if memory_projection:
+        receipts["memory_projection"] = memory_projection
     if transition:
         receipts["interconnect_transition"] = transition
     if context_delta:
@@ -1553,6 +1661,8 @@ def record_proposal(
             evaluation["receipt_hash"],
         ]
     )
+    if memory_projection and memory_projection.get("receipt_hash"):
+        chain.append(str(memory_projection["receipt_hash"]))
     if transition:
         chain.append(transition["receipt_hash"])
     if distillation_batch:
@@ -1698,9 +1808,50 @@ def record_outcome(
     turns = dict(session_body.get("turns") or {})
     turn_bucket = dict(turns.get(str(turn_id)) or {})
     turn_bucket["outcome"] = outcome
+    # v8.7 memory-use binding: projection → citations → outcome
+    memory_use = None
+    try:
+        from .memory_credit import credit_projection_memories, record_memory_use
+
+        projection = dict(
+            turn_bucket.get("memory_projection")
+            or receipts.get("memory_projection")
+            or {}
+        )
+        if projection.get("receipt_hash"):
+            proposal = dict(
+                turn_bucket.get("agent_proposal")
+                or receipts.get("agent_proposal")
+                or {}
+            )
+            evaluation = dict(
+                turn_bucket.get("cortex_evaluation")
+                or receipts.get("cortex_evaluation")
+                or {}
+            )
+            memory_use = record_memory_use(
+                store,
+                repo,
+                projection=projection,
+                proposal=proposal,
+                evaluation=evaluation,
+                action=joint,
+                outcome=outcome,
+                memory_ids_cited=list(proposal.get("evidence_citations") or ()),
+                persist=persist,
+            )
+            credit_projection_memories(
+                store, repo, use_receipt=memory_use, persist=persist
+            )
+            turn_bucket["memory_use"] = memory_use
+            receipts["memory_use"] = memory_use
+    except Exception:
+        memory_use = None
     turns[str(turn_id)] = turn_bucket
     chain = list(session_body.get("chain") or [])
     chain.append(outcome["receipt_hash"])
+    if memory_use and memory_use.get("receipt_hash"):
+        chain.append(str(memory_use["receipt_hash"]))
     session_body.update(
         {
             "receipts": receipts,

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.6.0-0ea5e9?style=for-the-badge" alt="v8.6.0" />
+  <img src="https://img.shields.io/badge/version-8.7.0-0ea5e9?style=for-the-badge" alt="v8.7.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.6)
+## AI–Cortex symbiosis (v8.7)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -32,20 +32,19 @@ slow memory retains only what survives verification:
 Δc = 0 whenever Γ Ξ W O S = 0
 ```
 
-v8.6 writes **will-bound admitted memories** to an immutable ledger after membrane
-admission. Chat is never distilled. Host source is never mutated. Execution is never
-authorized by admission alone.
+v8.7 **rehydrates** admitted memories under eligibility gates into a task-bound
+projection, records memory use/credit against outcomes, and supports challenge /
+supersession without deleting history.
 
 ```powershell
-python -m cortex will issue --repo YourProject --principal op --secret S --json
-python -m cortex membrane admit --repo YourProject --secret S --constitutional --json
-python -m cortex admitted status --repo YourProject --json
+python -m cortex memory project --repo YourProject --task "..." --json
+python -m cortex memory verify --repo YourProject --deep --json
+python -m cortex memory challenge --repo YourProject --memory mem_x --candidate cand_y --json
 python -m cortex admitted list --repo YourProject --json
-python -m cortex symbiosis consolidate --repo YourProject --will-secret S --constitutional --json
 ```
 
-See [`docs/intelligence/PHASE_V8.6_ADMITTED_MEMORY_LEDGER.md`](docs/intelligence/PHASE_V8.6_ADMITTED_MEMORY_LEDGER.md)
-(and prior [`v8.5`](docs/intelligence/PHASE_V8.5_AUTHENTICATED_WILL_AND_MEMBRANE.md)).
+See [`docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md`](docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md)
+(and prior [`v8.6`](docs/intelligence/PHASE_V8.6_ADMITTED_MEMORY_LEDGER.md)).
 
 ## Interconnect mathematics (v8.3.4)
 

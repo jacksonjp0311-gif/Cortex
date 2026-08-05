@@ -1,3 +1,16 @@
+## 8.7.0 - Governed Memory Rehydration and Revision
+
+- Append-only memory state overlays (active/contested/superseded/epoch_stale/…).
+- Noncompensatory eligibility gates and deterministic task-bound memory projection
+  with continuity seed buckets.
+- Memory-use and credit receipts bind projection → citation → outcome.
+- Challenge and supersession preserve history; never auto-delete.
+- Deep admitted-memory verification (membrane/will ledger resolution).
+- Commit reloads membrane from immutable ledger before writing memories.
+- Symbiosis open/propose injects MemoryProjection into Cortex context.
+- CLI: `cortex memory status|project|inspect|challenge|supersede|verify|credit`.
+- Docs: `docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md`.
+
 ## 8.6.0 - Will-Bound Admitted Memory Ledger
 
 - After membrane admission under will ∧ ΓΞWOS, admitted candidates commit to an

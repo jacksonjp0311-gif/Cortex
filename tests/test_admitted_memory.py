@@ -142,15 +142,19 @@ class AdmittedMemoryTests(unittest.TestCase):
         batch = commit_admitted_memories(
             self.store, self.repo, admission=admission, will=will
         )
-        self.assertEqual(batch["status"], "blocked_gates_or_will")
+        # Fabricated mapping with hash not in ledger is independently fail-closed.
+        self.assertIn(
+            batch["status"],
+            {"blocked_gates_or_will", "blocked_membrane_not_in_ledger"},
+        )
         self.assertEqual(batch["committed_count"], 0)
 
+        # No receipt_hash → flag-based path still blocks invention.
         admission2 = {
             "durable_write_authorized": True,
             "will_verified": True,
             "invented_count": 1,
             "admitted": admission["admitted"],
-            "receipt_hash": "n" * 64,
         }
         batch2 = commit_admitted_memories(
             self.store, self.repo, admission=admission2, will=will

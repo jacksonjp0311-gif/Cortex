@@ -676,6 +676,149 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical admitted memories cannot be updated');
 END;
 
+-- v8.7 governed memory rehydration / revision ledgers
+CREATE TABLE IF NOT EXISTS memory_state_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    memory_id TEXT NOT NULL,
+    state TEXT NOT NULL,
+    state_sequence INTEGER NOT NULL,
+    prior_state_receipt_hash TEXT,
+    will_receipt_hash TEXT,
+    effective_epoch_id TEXT,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, memory_id, state_sequence),
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_state_memory
+ON memory_state_receipts(repo, memory_id, state_sequence);
+
+CREATE TABLE IF NOT EXISTS memory_projection_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    turn_id INTEGER NOT NULL DEFAULT 0,
+    projection_id TEXT NOT NULL,
+    task_hash TEXT NOT NULL,
+    body_epoch_id TEXT,
+    current_will_hash TEXT,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, session_id, turn_id, projection_id),
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_projection_session
+ON memory_projection_receipts(repo, session_id, turn_id);
+
+CREATE TABLE IF NOT EXISTS memory_use_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    projection_id TEXT NOT NULL,
+    outcome_hash TEXT,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, projection_id, outcome_hash),
+    UNIQUE(repository_id, event_id)
+);
+
+CREATE TABLE IF NOT EXISTS memory_credit_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    memory_id TEXT NOT NULL,
+    use_receipt_hash TEXT,
+    credit_status TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_credit_memory
+ON memory_credit_receipts(repo, memory_id, created_at);
+
+CREATE TABLE IF NOT EXISTS memory_challenge_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    challenged_memory_id TEXT NOT NULL,
+    challenger_candidate_id TEXT NOT NULL,
+    contradiction_kind TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, challenged_memory_id, challenger_candidate_id),
+    UNIQUE(repository_id, event_id)
+);
+
+CREATE TABLE IF NOT EXISTS memory_supersession_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    superseded_memory_id TEXT NOT NULL,
+    replacement_memory_id TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, superseded_memory_id, replacement_memory_id),
+    UNIQUE(repository_id, event_id)
+);
+
+CREATE TRIGGER IF NOT EXISTS memory_state_receipts_no_delete
+BEFORE DELETE ON memory_state_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory state receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_state_receipts_no_update
+BEFORE UPDATE ON memory_state_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory state receipts cannot be updated');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_projection_receipts_no_delete
+BEFORE DELETE ON memory_projection_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory projection receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_projection_receipts_no_update
+BEFORE UPDATE ON memory_projection_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory projection receipts cannot be updated');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_use_receipts_no_delete
+BEFORE DELETE ON memory_use_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory use receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_use_receipts_no_update
+BEFORE UPDATE ON memory_use_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory use receipts cannot be updated');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_credit_receipts_no_delete
+BEFORE DELETE ON memory_credit_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory credit receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_credit_receipts_no_update
+BEFORE UPDATE ON memory_credit_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory credit receipts cannot be updated');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_challenge_receipts_no_delete
+BEFORE DELETE ON memory_challenge_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory challenge receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_challenge_receipts_no_update
+BEFORE UPDATE ON memory_challenge_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory challenge receipts cannot be updated');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_supersession_receipts_no_delete
+BEFORE DELETE ON memory_supersession_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory supersession receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_supersession_receipts_no_update
+BEFORE UPDATE ON memory_supersession_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory supersession receipts cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -3827,6 +3970,331 @@ class Store:
             except (TypeError, ValueError, json.JSONDecodeError):
                 continue
         return out
+
+    def _repo_id(self, conn: sqlite3.Connection, repo: str) -> str:
+        repository = conn.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            raise ValueError(f"Unknown repository: {repo}")
+        return str(repository["repository_id"] or "")
+
+    def _append_json_receipt(
+        self,
+        repo: str,
+        table: str,
+        receipt: dict[str, Any],
+        *,
+        columns: list[str],
+        values: list[Any],
+        duplicate_query: str,
+        duplicate_params: tuple[Any, ...],
+    ) -> dict[str, Any]:
+        if not isinstance(receipt, dict):
+            raise TypeError(f"{table} receipt must be a dict")
+        receipt_hash = str(receipt.get("receipt_hash") or "").strip()
+        event_id = str(receipt.get("event_id") or "").strip()
+        if not receipt_hash or not event_id:
+            raise ValueError(f"{table} missing receipt_hash/event_id")
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            existing = conn.execute(duplicate_query, duplicate_params).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError(f"{table} identity already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            placeholders = ", ".join("?" for _ in columns)
+            col_sql = ", ".join(columns)
+            conn.execute(
+                f"INSERT INTO {table}({col_sql}) VALUES({placeholders})",
+                values,
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def append_memory_state_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        memory_id = str(receipt.get("memory_id") or "")
+        seq = int(receipt.get("state_sequence") or 0)
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            existing = conn.execute(
+                """SELECT * FROM memory_state_receipts
+                   WHERE repository_id=? AND memory_id=? AND state_sequence=?""",
+                (repository_id, memory_id, seq),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != str(receipt.get("receipt_hash")):
+                    raise ValueError("memory state sequence already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_state_receipts(
+                       receipt_hash, repository_id, repo, memory_id, state,
+                       state_sequence, prior_state_receipt_hash, will_receipt_hash,
+                       effective_epoch_id, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt["receipt_hash"],
+                    repository_id,
+                    repo,
+                    memory_id,
+                    str(receipt.get("state") or "active"),
+                    seq,
+                    receipt.get("prior_state_receipt_hash"),
+                    receipt.get("will_receipt_hash"),
+                    receipt.get("effective_epoch_id"),
+                    receipt["event_id"],
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def list_memory_state_receipts(
+        self, repo: str, memory_id: str
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        rows = self.db.execute(
+            """SELECT receipt_json FROM memory_state_receipts
+               WHERE repository_id=? AND memory_id=?
+               ORDER BY state_sequence ASC""",
+            (str(repository["repository_id"]), str(memory_id)),
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                out.append(json.loads(row["receipt_json"]))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+        return out
+
+    def append_memory_projection_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            session_id = str(receipt.get("session_id") or "")
+            turn_id = int(receipt.get("turn_id") or 0)
+            projection_id = str(receipt.get("projection_id") or "")
+            existing = conn.execute(
+                """SELECT * FROM memory_projection_receipts
+                   WHERE repository_id=? AND session_id=? AND turn_id=?
+                     AND projection_id=?""",
+                (repository_id, session_id, turn_id, projection_id),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != str(receipt.get("receipt_hash")):
+                    raise ValueError("projection identity already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_projection_receipts(
+                       receipt_hash, repository_id, repo, session_id, turn_id,
+                       projection_id, task_hash, body_epoch_id, current_will_hash,
+                       event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt["receipt_hash"],
+                    repository_id,
+                    repo,
+                    session_id,
+                    turn_id,
+                    projection_id,
+                    str(receipt.get("task_hash") or ""),
+                    receipt.get("body_epoch_id"),
+                    receipt.get("current_will_hash"),
+                    receipt["event_id"],
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def append_memory_use_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            projection_id = str(receipt.get("projection_id") or "")
+            outcome_hash = receipt.get("outcome_hash")
+            existing = conn.execute(
+                """SELECT * FROM memory_use_receipts
+                   WHERE repository_id=? AND projection_id=?
+                     AND ((outcome_hash IS NULL AND ? IS NULL) OR outcome_hash=?)""",
+                (repository_id, projection_id, outcome_hash, outcome_hash),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != str(receipt.get("receipt_hash")):
+                    raise ValueError("memory use identity already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_use_receipts(
+                       receipt_hash, repository_id, repo, projection_id,
+                       outcome_hash, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt["receipt_hash"],
+                    repository_id,
+                    repo,
+                    projection_id,
+                    outcome_hash,
+                    receipt["event_id"],
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def append_memory_credit_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            existing = conn.execute(
+                "SELECT * FROM memory_credit_receipts WHERE event_id=? AND repository_id=?",
+                (str(receipt.get("event_id")), repository_id),
+            ).fetchone()
+            if existing is not None:
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_credit_receipts(
+                       receipt_hash, repository_id, repo, memory_id,
+                       use_receipt_hash, credit_status, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt["receipt_hash"],
+                    repository_id,
+                    repo,
+                    str(receipt.get("memory_id") or ""),
+                    receipt.get("use_receipt_hash"),
+                    str(receipt.get("credit_status") or "unmeasured"),
+                    receipt["event_id"],
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def append_memory_challenge_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            challenged = str(receipt.get("challenged_memory_id") or "")
+            challenger = str(receipt.get("challenger_candidate_id") or "")
+            existing = conn.execute(
+                """SELECT * FROM memory_challenge_receipts
+                   WHERE repository_id=? AND challenged_memory_id=?
+                     AND challenger_candidate_id=?""",
+                (repository_id, challenged, challenger),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != str(receipt.get("receipt_hash")):
+                    raise ValueError("challenge identity already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_challenge_receipts(
+                       receipt_hash, repository_id, repo, challenged_memory_id,
+                       challenger_candidate_id, contradiction_kind, event_id,
+                       receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt["receipt_hash"],
+                    repository_id,
+                    repo,
+                    challenged,
+                    challenger,
+                    str(receipt.get("contradiction_kind") or "unresolved_conflict"),
+                    receipt["event_id"],
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def append_memory_supersession_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            old_id = str(receipt.get("superseded_memory_id") or "")
+            new_id = str(receipt.get("replacement_memory_id") or "")
+            existing = conn.execute(
+                """SELECT * FROM memory_supersession_receipts
+                   WHERE repository_id=? AND superseded_memory_id=?
+                     AND replacement_memory_id=?""",
+                (repository_id, old_id, new_id),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != str(receipt.get("receipt_hash")):
+                    raise ValueError("supersession identity already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_supersession_receipts(
+                       receipt_hash, repository_id, repo, superseded_memory_id,
+                       replacement_memory_id, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt["receipt_hash"],
+                    repository_id,
+                    repo,
+                    old_id,
+                    new_id,
+                    receipt["event_id"],
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
+
+    def get_membrane_admission_by_hash(
+        self, repo: str, receipt_hash: str
+    ) -> dict[str, Any] | None:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return None
+        row = self.db.execute(
+            """SELECT receipt_json FROM membrane_admissions
+               WHERE repository_id=? AND receipt_hash=?""",
+            (str(repository["repository_id"]), str(receipt_hash)),
+        ).fetchone()
+        if row is None:
+            return None
+        try:
+            return json.loads(row["receipt_json"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def get_will_receipt_by_hash(
+        self, repo: str, receipt_hash: str
+    ) -> dict[str, Any] | None:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return None
+        row = self.db.execute(
+            """SELECT receipt_json FROM will_receipts
+               WHERE repository_id=? AND receipt_hash=?""",
+            (str(repository["repository_id"]), str(receipt_hash)),
+        ).fetchone()
+        if row is None:
+            return None
+        try:
+            return json.loads(row["receipt_json"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
 
     def _verify_symbiotic_session_conn(
         self,
