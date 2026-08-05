@@ -1282,6 +1282,36 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ostt_p.add_argument("--json", action="store_true")
 
+    symbiosis_p = sub.add_parser(
+        "symbiosis",
+        help="AI–Cortex symbiotic runtime (☍): typed two-timescale receipts.",
+    )
+    symbiosis_p.add_argument(
+        "action",
+        choices=["status", "open", "propose", "action", "consolidate", "next"],
+        nargs="?",
+        default="status",
+        help="status | open session | propose | joint action | consolidate | next brief",
+    )
+    symbiosis_p.add_argument("--repo", required=True)
+    symbiosis_p.add_argument("--task", default="", help="Task for open/propose.")
+    symbiosis_p.add_argument("--provider", default="undeclared")
+    symbiosis_p.add_argument("--model", default="undeclared")
+    symbiosis_p.add_argument("--objective", default="", help="Interpreted objective.")
+    symbiosis_p.add_argument("--action-text", default="", help="Proposed action text.")
+    symbiosis_p.add_argument(
+        "--citations",
+        default="",
+        help="Comma-separated evidence citations for propose.",
+    )
+    symbiosis_p.add_argument(
+        "--uncertainty",
+        type=float,
+        default=0.5,
+        help="Declared uncertainty scalar in [0,1].",
+    )
+    symbiosis_p.add_argument("--json", action="store_true")
+
     prune_p = sub.add_parser(
         "prune",
         help="Prune weak unused synapses (organism-like); never deletes evidence.",
@@ -3356,6 +3386,94 @@ def main(argv: list[str] | None = None) -> None:
                 },
                 args.json,
             )
+
+        elif command == "symbiosis":
+            from .symbiosis import (
+                consolidate_session,
+                open_symbiotic_session,
+                record_joint_action,
+                record_proposal,
+                reconstruct_next_session_brief,
+                symbiotic_status,
+            )
+
+            if args.action == "status":
+                emit(symbiotic_status(store, args.repo), args.json)
+                return
+            if args.action == "next":
+                emit(reconstruct_next_session_brief(store, args.repo), args.json)
+                return
+            if args.action == "open":
+                task = str(args.task or "").strip() or "symbiotic session"
+                emit(
+                    open_symbiotic_session(
+                        store,
+                        args.repo,
+                        task=task,
+                        provider=str(args.provider),
+                        model_id=str(args.model),
+                    ),
+                    args.json,
+                )
+                return
+            latest = store.get_setting(f"symbiosis_latest:{args.repo}", None)
+            if not latest:
+                raise ValueError(
+                    "no symbiotic session; run: cortex symbiosis open --repo ..."
+                )
+            if args.action == "propose":
+                objective = str(args.objective or args.task or "").strip()
+                action_text = str(args.action_text or "").strip()
+                if not objective or not action_text:
+                    raise ValueError(
+                        "propose requires --objective and --action-text"
+                    )
+                citations = [
+                    part.strip()
+                    for part in str(args.citations or "").split(",")
+                    if part.strip()
+                ]
+                emit(
+                    record_proposal(
+                        store,
+                        args.repo,
+                        latest,
+                        interpreted_objective=objective,
+                        proposed_action=action_text,
+                        evidence_citations=citations,
+                        declared_uncertainty=float(args.uncertainty),
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "action":
+                emit(
+                    record_joint_action(
+                        store,
+                        args.repo,
+                        latest,
+                        tool_action={"executed": False, "source": "cli"},
+                        measured_result={},
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "consolidate":
+                emit(
+                    consolidate_session(
+                        store,
+                        args.repo,
+                        latest,
+                        candidates=[],
+                        constitutional_gate=False,
+                        witness_present=False,
+                        outcome_closed=False,
+                        stable_regime=False,
+                    ),
+                    args.json,
+                )
+                return
+            emit(symbiotic_status(store, args.repo), args.json)
 
         elif command == "interconnect":
             emit(mesh_status(store, args.repo, governor=governor, home=home), args.json)

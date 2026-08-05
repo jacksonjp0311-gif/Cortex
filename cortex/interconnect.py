@@ -403,6 +403,17 @@ def mesh_status(
         }
     binding_panel = _binding_field_panel(store, repo)
     try:
+        from .symbiosis import symbiotic_status
+
+        symbiosis_panel = symbiotic_status(store, repo)
+    except Exception as exc:
+        symbiosis_panel = {
+            "available": False,
+            "error": f"{type(exc).__name__}:{exc}",
+            "advisory_only": True,
+            "policy_effect": False,
+        }
+    try:
         latest_ostt_receipt = store.latest_activation_conformance_receipt(repo)
         if latest_ostt_receipt:
             from .ostt.conformance import verify_activation_receipt
@@ -483,6 +494,7 @@ def mesh_status(
         "geometric_echo": geometric_echo_panel,
         "rotated_echo": rotated_echo_panel,
         "ostt": ostt_panel,
+        "symbiosis": symbiosis_panel,
         "warm_in": {
             "command": f"python -m cortex warm-in status --repo {repo}",
             "run": f"python -m cortex warm-in run --repo {repo}",

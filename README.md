@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.3.4-0ea5e9?style=for-the-badge" alt="v8.3.4" />
+  <img src="https://img.shields.io/badge/version-8.4.0-0ea5e9?style=for-the-badge" alt="v8.4.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -20,6 +20,28 @@
 </p>
 
 # Cortex
+
+## AI–Cortex symbiosis (v8.4.0)
+
+The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
+is temporary working cortex; Cortex is the durable body. Fast cognition explores;
+slow memory retains only what survives verification:
+
+```text
+|Δq| ≫ |Δc|
+Δc = 0 whenever Γ Ξ W O S = 0
+```
+
+Typed receipts bind instantiation, context, proposal, evaluation, joint action,
+and consolidation. Inspect or drive the seam with:
+
+```powershell
+python -m cortex symbiosis status --repo YourProject --json
+python -m cortex symbiosis open --repo YourProject --task "..." --json
+python -m cortex symbiosis next --repo YourProject --json
+```
+
+See [`docs/intelligence/PHASE_V8.4.0_AI_CORTEX_SYMBIOSIS.md`](docs/intelligence/PHASE_V8.4.0_AI_CORTEX_SYMBIOSIS.md).
 
 ## Interconnect mathematics (v8.3.4)
 

@@ -1,3 +1,11 @@
+## 8.4.0 - AI–Cortex Symbiotic Runtime
+
+- Centered the architecture on the AI model ↔ Cortex bond: temporary working cortex + durable body, separable, neither host authority.
+- Added typed symbiotic receipt chain: agent instantiation, Cortex context, agent proposal, Cortex evaluation (`allow|constrain|ask|abstain|hold`), joint action, and slow consolidation under \(\Gamma\Xi WOS\).
+- Added `cortex symbiosis` CLI (`status|open|propose|action|consolidate|next`), interconnect/organism surfaces, and next-session reconstruction brief.
+- Complementarity surplus \(S_{AC}\) is declared but unmeasured without calibrated MI estimators. Consolidation never retains fluent claims when gates are closed.
+- Advisory only: no automatic execution, durable write, or policy promotion from model fluency.
+
 ## 8.3.4 - Interconnect Mathematics Alignment
 
 - Aligned geometric-echo observability with activation null-preserving metrology: gate masks distinguish unmeasured silence from measured zeros; echoes observe `y = P D_g x`.

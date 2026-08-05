@@ -63,7 +63,7 @@ jobs:
           tests/test_warm_in.py
           tests/test_binding_field.py
           -q --tb=line
-      - name: v8.3.3/v8.3.4 activation conformance and interconnect math gates
+      - name: v8.3.3–v8.4.0 activation, math, and symbiosis gates
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: >
@@ -75,6 +75,7 @@ jobs:
           tests/test_composition_law.py
           tests/test_geometric_echo.py
           tests/test_rotated_echo.py
+          tests/test_symbiosis.py
           -q --tb=line
       - name: Constitutional seal release receipt
         env:
