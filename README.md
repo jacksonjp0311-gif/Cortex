@@ -44,7 +44,9 @@ python -m cortex symbiosis verify --repo YourProject --json
 python -m cortex symbiosis next --repo YourProject --json
 ```
 
-See [`docs/intelligence/PHASE_V8.4.1_VERIFIED_SYMBIOTIC_CIRCULATION.md`](docs/intelligence/PHASE_V8.4.1_VERIFIED_SYMBIOTIC_CIRCULATION.md).
+See [`docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md`](docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md)
+(and prior phases [`v8.4.2`](docs/intelligence/PHASE_V8.4.2_RECURRENT_CIRCULATION.md),
+[`v8.4.1`](docs/intelligence/PHASE_V8.4.1_VERIFIED_SYMBIOTIC_CIRCULATION.md)).
 
 ## Interconnect mathematics (v8.3.4)
 
