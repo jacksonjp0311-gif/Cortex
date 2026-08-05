@@ -130,8 +130,16 @@ def _activation_probe() -> dict[str, Any]:
             count_before_duplicate = len(
                 store.activation_conformance_receipts("V833ReleaseHost", limit=4096)
             )
+            # Replay the stored scientific body (not the decorated live view) so
+            # exactly-once identity is exercised against the ledger authority.
+            stored = store.activation_conformance_receipt(receipt_hash) or {}
+            replay_body = dict(
+                stored.get("receipt_body")
+                or receipt.get("receipt_body")
+                or {}
+            )
             duplicate = store.append_activation_conformance_receipt(
-                "V833ReleaseHost", dict(receipt.get("receipt_body") or {})
+                "V833ReleaseHost", replay_body
             )
             count_after_duplicate = len(
                 store.activation_conformance_receipts("V833ReleaseHost", limit=4096)

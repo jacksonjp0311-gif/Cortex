@@ -1906,22 +1906,42 @@ class Store:
             )
 
         witness = promoted.get("measurement_witness")
-        marker = {
-            "schema_version": ACTIVATION_CONFORMANCE_ADMISSION_SCHEMA,
-            "admission_status": "verifier_bound",
-            "submitted_status": status,
-            "scientific_status": "conformance_measured",
-            "verifier_implementation_version": VERIFIER_IMPLEMENTATION_VERSION,
-            "verifier_digest": VERIFIER_DIGEST,
-            "measurement_subject_hash": str(
-                validation.get("measurement_subject_hash") or ""
-            ),
-            "measurement_witness_id": (
-                str(witness.get("witness_id") or "")
-                if isinstance(witness, dict)
-                else ""
-            ),
-        }
+        # Replays of already-admitted bodies must preserve the original
+        # admission marker.  Rewriting submitted_status from
+        # conformance_candidate → conformance_measured on every append would
+        # make exactly-once replay look like different content.
+        prior_admission = body.get("ledger_admission")
+        if (
+            status == "conformance_measured"
+            and isinstance(prior_admission, dict)
+            and prior_admission.get("admission_status") == "verifier_bound"
+            and prior_admission.get("verifier_digest") == VERIFIER_DIGEST
+        ):
+            marker = dict(prior_admission)
+            marker.setdefault("schema_version", ACTIVATION_CONFORMANCE_ADMISSION_SCHEMA)
+            marker["scientific_status"] = "conformance_measured"
+            marker["measurement_subject_hash"] = str(
+                validation.get("measurement_subject_hash")
+                or prior_admission.get("measurement_subject_hash")
+                or ""
+            )
+        else:
+            marker = {
+                "schema_version": ACTIVATION_CONFORMANCE_ADMISSION_SCHEMA,
+                "admission_status": "verifier_bound",
+                "submitted_status": status,
+                "scientific_status": "conformance_measured",
+                "verifier_implementation_version": VERIFIER_IMPLEMENTATION_VERSION,
+                "verifier_digest": VERIFIER_DIGEST,
+                "measurement_subject_hash": str(
+                    validation.get("measurement_subject_hash") or ""
+                ),
+                "measurement_witness_id": (
+                    str(witness.get("witness_id") or "")
+                    if isinstance(witness, dict)
+                    else ""
+                ),
+            }
         return promoted, marker
 
     @staticmethod
@@ -1961,6 +1981,9 @@ class Store:
         if not isinstance(receipt_body, dict):
             raise TypeError("activation conformance receipt body must be a dict")
         body = dict(receipt_body)
+        # Preserve prior admission for idempotent replay of measured bodies.
+        # Envelope fields are still stripped from the scientific subject.
+        prior_admission = body.get("ledger_admission")
         for key in (
             "receipt_hash",
             "subject_receipt_hash",
@@ -1974,6 +1997,8 @@ class Store:
             "ledger_admission",
         ):
             body.pop(key, None)
+        if isinstance(prior_admission, dict):
+            body["ledger_admission"] = prior_admission
 
         claimed_repo = str(body.get("repo") or repo).strip()
         claimed_repository_id = str(body.get("repository_id") or repository_id).strip()

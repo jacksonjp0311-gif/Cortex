@@ -12,20 +12,61 @@ sys.path.insert(0, str(ROOT))
 
 from cortex.cognitive.autobiography import append_episode  # noqa: E402
 from cortex.cognitive.lesion import run_lesion_benchmarks  # noqa: E402
-from cortex.cognitive.measured import METRICS, measured_delta  # noqa: E402
+from cortex.cognitive.measured import (  # noqa: E402
+    COORDINATE_SCHEMA_VERSION,
+    METRICS,
+    STATE_SCHEMA,
+    coordinate_schema_payload,
+    measured_delta,
+)
 from cortex.cognitive.model import predict_next_delta, score_and_update  # noqa: E402
 from cortex.cognitive.workspace import compete_and_broadcast  # noqa: E402
 from cortex.config import ensure_home  # noqa: E402
 from cortex.store import Store  # noqa: E402
 
 
-def _delta(event_id: str) -> dict:
-    before = {"state_hash": "b", "values": {name: 0.0 for name in METRICS}}
-    after = {
-        "state_hash": "a",
-        "values": {name: 0.2 * METRICS[name][2] for name in METRICS},
+def _snapshot(values: dict[str, float], *, repo: str, repository_id: str) -> dict:
+    """Build a complete null-preserving measured snapshot for synthetic workloads."""
+    import hashlib
+    import json
+
+    metadata = coordinate_schema_payload()
+    ordered = list(metadata["ordered_coordinate_names"])
+    material = {
+        "repo": repo,
+        "repository_id": repository_id,
+        "coordinate_schema_digest": metadata["coordinate_schema_digest"],
+        "values": {name: float(values[name]) for name in ordered},
+        "validity_mask": {name: True for name in ordered},
+        "failure_reasons": {name: None for name in ordered},
     }
-    return measured_delta(before, after, event_id=event_id)
+    state_hash = hashlib.sha256(
+        json.dumps(material, sort_keys=True, separators=(",", ":"), default=str).encode()
+    ).hexdigest()
+    return {
+        "schema_version": STATE_SCHEMA,
+        **material,
+        "coordinate_schema_version": COORDINATE_SCHEMA_VERSION,
+        "ordered_coordinate_names": ordered,
+        "ordered_shape_signature": list(metadata["ordered_shape_signature"]),
+        "scale_digest": metadata["scale_digest"],
+        "valid_count": len(ordered),
+        "required_count": len(ordered),
+        "valid_fraction": 1.0,
+        "state_hash": state_hash,
+    }
+
+
+def _delta(event_id: str, *, repo: str = "CognitiveLesion", repository_id: str = "rid-lesion") -> dict:
+    # Complete schema + validity masks so null-preserving metrology does not
+    # collapse synthetic workloads into unmeasured zeros.
+    before_values = {name: 0.0 for name in METRICS}
+    after_values = {name: 0.2 * METRICS[name][2] for name in METRICS}
+    return measured_delta(
+        _snapshot(before_values, repo=repo, repository_id=repository_id),
+        _snapshot(after_values, repo=repo, repository_id=repository_id),
+        event_id=event_id,
+    )
 
 
 def main() -> int:
