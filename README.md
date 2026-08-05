@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.8.0-0ea5e9?style=for-the-badge" alt="v8.8.0" />
+  <img src="https://img.shields.io/badge/version-8.9.0-0ea5e9?style=for-the-badge" alt="v8.9.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.8)
+## AI–Cortex symbiosis (v8.9)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -32,22 +32,23 @@ slow memory retains only what survives verification:
 Δc = 0 whenever Γ Ξ W O S = 0
 ```
 
-v8.8 runs **cross-instantiation memory trials** (arms A–E) measuring whether
-governed rehydration and use-feedback improve a new temporary cortex:
+v8.9 uses trial gains to refine **projection budgets** (shape only — never truth):
 
 ```text
 G_rehydration = U_D − U_A
 G_credit      = U_E − U_D
+→ budget tip → project_memories(max_memories, feedback, …)
 ```
 
 ```powershell
 python -m cortex memory trial --repo YourProject --task "..." --json
+python -m cortex memory budget-status --repo YourProject --json
+python -m cortex memory budget-apply --repo YourProject --i-authorize-budget --json
 python -m cortex memory project --repo YourProject --task "..." --json
-python -m cortex memory verify --repo YourProject --deep --json
 ```
 
-See [`docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md`](docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md)
-(and prior [`v8.7`](docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md)).
+See [`docs/intelligence/PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md`](docs/intelligence/PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md)
+(and prior [`v8.8`](docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md)).
 
 ## Interconnect mathematics (v8.3.4)
 

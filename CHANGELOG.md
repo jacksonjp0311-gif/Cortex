@@ -1,3 +1,16 @@
+## 8.9.0 - Trial-Guided Projection Budgets
+
+- Aggregate trial history into Ḡ_rehydration / Ḡ_credit with K_min fail-closed
+  measurement status.
+- Policy modes: DEFAULT, STRUCTURE_ONLY, EXPAND_CAUTIOUS, CONTRACT, FEEDBACK_ON,
+  FREEZE — refine projection shape only (max_memories, use-feedback, type mode).
+- Operator-authorized apply (`--i-authorize-budget`); never rewrites truth status,
+  will clauses, or host mutation bits.
+- Projections stamp `budget_policy_hash` / `budget_mode` from active tip.
+- Immutable `projection_budget_receipts` ledger + tips.
+- CLI: `memory budget-status|budget-propose|budget-apply`.
+- Docs: `docs/intelligence/PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md`.
+
 ## 8.8.0 - Cross-Instantiation Memory Trials
 
 - Matched arms A–E: raw repo, ordinary summary, unfiltered admitted memories,

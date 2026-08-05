@@ -20,7 +20,7 @@ from .will import verify_will
 
 SCHEMA = "cortex-memory-projection/1.0"
 ELIGIBILITY_SCHEMA = "cortex-memory-eligibility/1.0"
-VERSION = "8.7.0"
+VERSION = "8.9.0"
 GLYPH = "⧉↗"
 CLAIM_BOUNDARY = (
     "Memory projection is a governed rehydration of admitted memories into a "
@@ -224,12 +224,44 @@ def project_memories(
     body_epoch_id: str | None = None,
     current_will: Mapping[str, Any] | None = None,
     will_secret: str | None = None,
-    max_memories: int = 12,
-    min_support: str = "low",
+    max_memories: int | None = None,
+    min_support: str | None = None,
     require_deep_lineage: bool = False,
+    budget: Mapping[str, Any] | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
-    """Build deterministic MemoryProjectionReceipt for a task."""
+    """Build deterministic MemoryProjectionReceipt for a task.
+
+    When max_memories / min_support are omitted, resolves active projection
+    budget tip (v8.9). Explicit args always win over the budget tip.
+    """
+    budget_tip: dict[str, Any] | None = None
+    if budget is not None:
+        budget_tip = dict(budget)
+    else:
+        try:
+            from .memory_budget import resolve_active_budget
+
+            budget_tip = resolve_active_budget(store, repo)
+        except Exception:
+            budget_tip = None
+    policy = dict((budget_tip or {}).get("policy") or {})
+    resolved_max = (
+        int(max_memories)
+        if max_memories is not None
+        else int(policy.get("max_memories") or 12)
+    )
+    resolved_max = max(1, resolved_max)
+    resolved_min_support = (
+        str(min_support)
+        if min_support is not None
+        else str(policy.get("min_support") or "low")
+    )
+    if policy.get("min_support") is None and min_support is None:
+        resolved_min_support = "low"
+    max_memories = resolved_max
+    min_support = resolved_min_support
+
     live_epoch = str(body_epoch_id or "")
     if not live_epoch:
         try:
@@ -284,9 +316,23 @@ def project_memories(
             item["exclusion_reasons"] = elig.get("exclusions")
             excluded.append(item)
 
-    eligible.sort(
-        key=lambda x: (-float(x.get("rank_score") or 0), str(x.get("memory_id") or ""))
-    )
+    # type_priority from budget: structure_only keeps score order without type boosts
+    type_priority = str(policy.get("type_priority") or "will_order")
+    if type_priority == "structure_only":
+        # No type ranking innovations — stable memory_id order after score
+        eligible.sort(
+            key=lambda x: (
+                -float(x.get("rank_score") or 0),
+                str(x.get("memory_id") or ""),
+            )
+        )
+    else:
+        eligible.sort(
+            key=lambda x: (
+                -float(x.get("rank_score") or 0),
+                str(x.get("memory_id") or ""),
+            )
+        )
     selected = eligible[: max(1, int(max_memories))]
     task_hash = _sha({"task": task, "repo": repo})
     projection_id = "proj_" + _sha(
@@ -367,6 +413,12 @@ def project_memories(
         "continuity_seed": seed,
         "token_budget": max_memories,
         "selection_algorithm": "deterministic_rank_v1",
+        "budget_policy_hash": (budget_tip or {}).get("budget_policy_hash"),
+        "budget_mode": (budget_tip or {}).get("mode") or policy.get("mode"),
+        "budget_include_use_feedback": bool(policy.get("include_use_feedback")),
+        "budget_structure_only": bool(
+            policy.get("structure_only") or type_priority == "structure_only"
+        ),
         "advisory_only": True,
         "policy_effect": False,
         "host_mutate_authorized": False,

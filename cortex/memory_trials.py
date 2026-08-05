@@ -443,6 +443,12 @@ def run_cross_instantiation_trial(
             }
         )
         store.set_setting(f"memory_trial_history:{repo}", history[-32:])
+        try:
+            from .memory_budget import refresh_after_trial
+
+            refresh_after_trial(store, repo)
+        except Exception:
+            pass
     return receipt
 
 

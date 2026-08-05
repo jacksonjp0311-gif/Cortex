@@ -45,5 +45,6 @@ python -m cortex memory trial-status --repo R --json
 
 ## Next
 
-Operational use of trial feedback to refine projection budgets — still without
-letting utility rewrite truth status.
+v8.9 — trial-guided projection budgets (use G_* to refine projection shape,
+never truth status).  
+See `PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md`.

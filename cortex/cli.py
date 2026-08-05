@@ -1396,7 +1396,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     memory_p = sub.add_parser(
         "memory",
-        help="Governed memory rehydration and revision (v8.7).",
+        help="Governed memory rehydration, trials, and projection budgets (v8.9).",
     )
     memory_p.add_argument(
         "action",
@@ -1410,6 +1410,9 @@ def build_parser() -> argparse.ArgumentParser:
             "credit",
             "trial",
             "trial-status",
+            "budget-status",
+            "budget-propose",
+            "budget-apply",
         ],
         nargs="?",
         default="status",
@@ -1425,6 +1428,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--authorize-supersede",
         action="store_true",
         help="Apply supersession state change (review-only without this).",
+    )
+    memory_p.add_argument(
+        "--i-authorize-budget",
+        action="store_true",
+        help="Operator authorization to apply projection budget tip (v8.9).",
+    )
+    memory_p.add_argument(
+        "--force-unmeasured",
+        action="store_true",
+        help="Allow budget apply when trial aggregate K < K_min (explicit).",
     )
     memory_p.add_argument("--json", action="store_true")
 
@@ -3836,7 +3849,13 @@ def main(argv: list[str] | None = None) -> None:
             if args.action == "status":
                 base = admitted_memory_status(store, args.repo)
                 base["schema_version"] = "cortex-memory-status/1.0"
-                base["phase"] = "v8.7"
+                base["phase"] = "v8.9"
+                try:
+                    from .memory_budget import budget_status as _budget_status
+
+                    base["budget"] = _budget_status(store, args.repo)
+                except Exception:
+                    pass
                 emit(base, args.json)
                 return
             if args.action == "project":
@@ -3937,6 +3956,29 @@ def main(argv: list[str] | None = None) -> None:
                 from .memory_trials import memory_trial_status
 
                 emit(memory_trial_status(store, args.repo), args.json)
+                return
+            if args.action == "budget-status":
+                from .memory_budget import budget_status
+
+                emit(budget_status(store, args.repo), args.json)
+                return
+            if args.action == "budget-propose":
+                from .memory_budget import propose_budget
+
+                emit(propose_budget(store, args.repo, persist=True), args.json)
+                return
+            if args.action == "budget-apply":
+                from .memory_budget import apply_budget
+
+                emit(
+                    apply_budget(
+                        store,
+                        args.repo,
+                        authorized=bool(args.i_authorize_budget),
+                        force_unmeasured=bool(args.force_unmeasured),
+                    ),
+                    args.json,
+                )
                 return
             emit(admitted_memory_status(store, args.repo), args.json)
 
