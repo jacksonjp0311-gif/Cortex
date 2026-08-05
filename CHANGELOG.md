@@ -1,3 +1,11 @@
+## 8.4.3 - Turn-Bound Interconnect Frames
+
+- Added `InterconnectFrameReceipt` binding repo/epoch/session/turn digests so sensing panels share one operational heartbeat per turn.
+- Each symbiotic turn now regenerates context C_k from the frame (reciprocal pulse) before proposal; proposals cite `context_receipt_hash` and `interconnect_frame_hash`.
+- Split readiness into constitutional/continuity/measurement/circulation/temporal/distillation planes; `mesh_green` remains legacy constitutional path only.
+- Fixed unreachable assumption classification, turn-grouped structural verification, and consolidation stability (unknown ≠ stable).
+- Docs: `docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md`.
+
 ## 8.4.2 - Recurrent Circulation Hardening
 
 - Ledger uniqueness is now `(repository_id, session_id, turn_id, kind)` with immutable `event_id`, enabling repeated proposal→evaluation→action→outcome turns in one session.

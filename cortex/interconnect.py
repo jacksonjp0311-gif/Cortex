@@ -17,7 +17,7 @@ from .progress_glyphs import progress_glyph_registry
 from .ranker.model import ranker_status
 from .vectors.index import hnsw_status
 
-SCHEMA = "cortex-interconnect/1.1"
+SCHEMA = "cortex-interconnect/1.2"
 GLYPH = "⧉"
 
 
@@ -257,6 +257,8 @@ def mesh_status(
         (repo,),
     ).fetchone()["c"]
 
+    # Legacy mesh_green = constitutional/continuity path open only.
+    # It is NOT overall cognitive–symbiotic readiness.
     mesh_green = (
         not block
         and "host.mutate" not in ALLOWED_SCOPES
@@ -413,6 +415,20 @@ def mesh_status(
             "advisory_only": True,
             "policy_effect": False,
         }
+    latest_frame = None
+    try:
+        session = store.get_setting(f"symbiosis_latest:{repo}", None) or {}
+        receipts = dict(session.get("receipts") or {})
+        latest_frame = receipts.get("interconnect_frame")
+        if not latest_frame:
+            turns = dict(session.get("turns") or {})
+            if turns:
+                last_key = sorted(turns, key=lambda k: int(k) if str(k).isdigit() else 0)[
+                    -1
+                ]
+                latest_frame = (turns.get(last_key) or {}).get("interconnect_frame")
+    except Exception:
+        latest_frame = None
     try:
         latest_ostt_receipt = store.latest_activation_conformance_receipt(repo)
         if latest_ostt_receipt:
@@ -468,6 +484,28 @@ def mesh_status(
             "policy_effect": False,
         }
 
+    try:
+        from .interconnect_frame import readiness_panel
+
+        readiness = readiness_panel(
+            mesh_green_constitutional=mesh_green,
+            continuity=continuity,
+            symbiosis=symbiosis_panel,
+            self_sensing=self_sense_panel or {},
+            binding=binding_panel or {},
+            resonance=resonance_sweep_panel or {},
+            interlock=interlock_panel or {},
+            ostt=ostt_panel if isinstance(ostt_panel, dict) else {},
+            frame=latest_frame or {},
+        )
+    except Exception as exc:
+        readiness = {
+            "error": f"{type(exc).__name__}:{exc}",
+            "overall_ready": False,
+            "mesh_green_legacy": mesh_green,
+            "advisory_only": True,
+        }
+
     return {
         "schema_version": SCHEMA,
         "glyph": GLYPH,
@@ -483,6 +521,12 @@ def mesh_status(
             == "live_single_pass",
         },
         "mesh_green": mesh_green,
+        "mesh_green_meaning": (
+            "constitutional_and_continuity_path_open — not overall symbiotic readiness"
+        ),
+        "readiness": readiness,
+        "overall_ready": bool(readiness.get("overall_ready")),
+        "interconnect_frame_latest": latest_frame,
         "bottlenecks": bottlenecks,
         "realign": realign_advice,
         "self_sensing": self_sense_panel,

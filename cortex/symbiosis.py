@@ -21,9 +21,9 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.2"
+SCHEMA = "cortex-symbiosis/1.3"
 GLYPH = "☍"
-VERSION = "8.4.2"
+VERSION = "8.4.3"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
     "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "
@@ -56,6 +56,7 @@ CONSOLIDATION_KINDS = frozenset(
 RECEIPT_KINDS = (
     "agent_instantiation",
     "cortex_context",
+    "interconnect_frame",
     "agent_proposal",
     "cortex_evaluation",
     "joint_action",
@@ -350,6 +351,8 @@ def agent_proposal_receipt(
     event_id: str | None = None,
     case_id: str | None = None,
     invocation_id: str | None = None,
+    context_receipt_hash: str | None = None,
+    interconnect_frame_hash: str | None = None,
 ) -> dict[str, Any]:
     """Inspectable AI proposal — external rationale, not private chain-of-thought."""
     if isinstance(declared_uncertainty, Mapping):
@@ -392,6 +395,8 @@ def agent_proposal_receipt(
             or "proposal declared without extended private chain-of-thought"
         ),
         private_chain_of_thought_stored=False,
+        context_receipt_hash=context_receipt_hash,
+        interconnect_frame_hash=interconnect_frame_hash,
     )
 
 
@@ -1311,29 +1316,105 @@ def record_proposal(
 ) -> dict[str, Any]:
     """Append a proposal, evaluate it, and return the updated session.
 
-    Each call advances ``current_turn_id`` so recurrent
-    ``[proposal→evaluation→action→outcome]`` turns are independently ledgered.
+    Each call advances ``current_turn_id`` so recurrent turns are independently
+    ledgered.  Before the proposal, Cortex captures a turn-bound interconnect
+    frame and regenerates context C_k (reciprocal pulse).
     """
+    from .interconnect_frame import (
+        capture_interconnect_frame,
+        frame_compatible_with_proposal,
+    )
+
     session_body = dict(session)
-    context = dict((session_body.get("receipts") or {}).get("cortex_context") or {})
+    prior_context = dict(
+        (session_body.get("receipts") or {}).get("cortex_context") or {}
+    )
     turn_id = int(session_body.get("current_turn_id") or 0) + 1
     invocation_id = str(
         session_body.get("invocation_id")
         or f"inv_{session_body.get('session_id') or ''}"
     )
     case_id = f"case_{session_body.get('session_id')}_{turn_id}"
-    # Prefer latest turn tip as prior when multi-turn; else session context.
     turns = dict(session_body.get("turns") or {})
-    prior_hash = str(context.get("receipt_hash") or "")
+    prior_outcome_hash = None
+    prior_frame_hash = None
+    prior_hash = str(prior_context.get("receipt_hash") or "")
     if turns:
         last_turn = turns.get(str(turn_id - 1)) or turns.get(turn_id - 1) or {}
         if isinstance(last_turn, Mapping):
+            prior_outcome_hash = str(
+                (last_turn.get("outcome") or {}).get("receipt_hash") or ""
+            ) or None
+            prior_frame_hash = str(
+                (last_turn.get("interconnect_frame") or {}).get("receipt_hash") or ""
+            ) or None
             prior_hash = str(
-                (last_turn.get("outcome") or {}).get("receipt_hash")
+                (last_turn.get("cortex_context") or {}).get("receipt_hash")
+                or prior_outcome_hash
                 or (last_turn.get("joint_action") or {}).get("receipt_hash")
-                or (last_turn.get("cortex_evaluation") or {}).get("receipt_hash")
                 or prior_hash
             )
+
+    chain_tip = (session_body.get("chain") or [None])[-1]
+    frame = capture_interconnect_frame(
+        store,
+        repo,
+        session_id=str(session_body.get("session_id") or ""),
+        turn_id=turn_id,
+        body_epoch_id=str(session_body.get("body_epoch_id") or ""),
+        repository_id=str(session_body.get("repository_id") or ""),
+        case_id=case_id,
+        invocation_id=invocation_id,
+        prior_outcome_hash=prior_outcome_hash,
+        prior_frame_hash=prior_frame_hash,
+        symbiosis_chain_tip=str(chain_tip) if chain_tip else None,
+    )
+    # Reciprocal pulse: project turn-specific context C_k from frame + priors.
+    context = cortex_context_receipt(
+        repo=str(session_body.get("repo") or repo),
+        repository_id=str(session_body.get("repository_id") or ""),
+        session_id=str(session_body.get("session_id") or ""),
+        body_epoch_id=str(session_body.get("body_epoch_id") or ""),
+        evidence_items=[
+            {
+                "surface": "interconnect_frame",
+                "frame_id": frame.get("frame_id"),
+                "digest": str(frame.get("receipt_hash") or "")[:24],
+            }
+        ],
+        memory_episodes=[],
+        graph_neighbors=[],
+        predictions={
+            "prior_outcome_hash": prior_outcome_hash,
+            "frame_compatible": bool(frame.get("compatible")),
+            "measured_state_digest": frame.get("measured_state_digest"),
+            "interconnect_frame_hash": frame.get("receipt_hash"),
+            "interconnect_frame_id": frame.get("frame_id"),
+        },
+        unresolved_contradictions=[
+            key
+            for key, passed in (frame.get("compatibility_results") or {}).items()
+            if not passed
+        ],
+        operating_regime={
+            "frame_id": frame.get("frame_id"),
+            "self_sensing_digest": frame.get("self_sensing_digest"),
+            "binding_digest": frame.get("binding_digest"),
+            "resonance_digest": frame.get("resonance_digest"),
+        },
+        confidence={
+            "frame_compatible": 1.0 if frame.get("compatible") else 0.0,
+        },
+        constitutional_restrictions=list(
+            prior_context.get("constitutional_restrictions") or ()
+        ),
+        packet_hash=None,
+        prior_receipt_hash=str(frame.get("receipt_hash") or prior_hash or ""),
+        turn_id=turn_id,
+        invocation_id=invocation_id,
+        case_id=case_id,
+    )
+
     proposal = agent_proposal_receipt(
         repo=str(session_body.get("repo") or repo),
         repository_id=str(session_body.get("repository_id") or ""),
@@ -1349,14 +1430,22 @@ def record_proposal(
         requested_permissions=requested_permissions,
         predicted_state_transition=predicted_state_transition,
         rationale_public=rationale_public,
-        prior_receipt_hash=prior_hash,
+        prior_receipt_hash=str(context.get("receipt_hash") or ""),
         turn_id=turn_id,
         invocation_id=invocation_id,
         case_id=case_id,
+        context_receipt_hash=str(context.get("receipt_hash") or ""),
+        interconnect_frame_hash=str(frame.get("receipt_hash") or ""),
     )
+    frame_bind = frame_compatible_with_proposal(frame, proposal)
     measured_gates = measure_evaluation_gates(
         store, repo, proposal=proposal, context=context
     )
+    if not frame_bind.get("compatible"):
+        # Frame/proposal identity mismatch cannot open a gate.
+        gate_states = dict(measured_gates.get("gate_states") or {})
+        gate_states["context_bound"] = GATE_FAIL
+        measured_gates = {**measured_gates, "gate_states": gate_states}
     evaluation_panel = evaluate_proposal(
         proposal=proposal,
         context=context,
@@ -1378,17 +1467,29 @@ def record_proposal(
         case_id=case_id,
     )
     receipts = dict(session_body.get("receipts") or {})
+    receipts["cortex_context"] = context
+    receipts["interconnect_frame"] = frame
     receipts["agent_proposal"] = proposal
     receipts["cortex_evaluation"] = evaluation
     turn_receipts = {
         "turn_id": turn_id,
         "case_id": case_id,
+        "interconnect_frame": frame,
+        "cortex_context": context,
         "agent_proposal": proposal,
         "cortex_evaluation": evaluation,
+        "frame_proposal_compatible": frame_bind,
     }
     turns[str(turn_id)] = turn_receipts
     chain = list(session_body.get("chain") or [])
-    chain.extend([proposal["receipt_hash"], evaluation["receipt_hash"]])
+    chain.extend(
+        [
+            frame["receipt_hash"],
+            context["receipt_hash"],
+            proposal["receipt_hash"],
+            evaluation["receipt_hash"],
+        ]
+    )
     session_body.update(
         {
             "receipts": receipts,
@@ -1398,13 +1499,16 @@ def record_proposal(
             "turn_count": int(session_body.get("turn_count") or 0) + 1,
             "status": f"evaluated:{evaluation['decision']}",
             "latest_decision": evaluation["decision"],
+            "latest_frame_id": frame.get("frame_id"),
             "epoch_verified": measured_gates.get("gate_states", {}).get("epoch_current")
             == GATE_PASS,
             "updated_at": time.time(),
         }
     )
     if persist:
-        _ledger_commit_receipts(store, repo, [proposal, evaluation])
+        _ledger_commit_receipts(
+            store, repo, [frame, context, proposal, evaluation]
+        )
         _persist_session(store, repo, session_body)
     return session_body
 
@@ -1548,22 +1652,32 @@ def consolidate_session(
         },
         context=receipts.get("cortex_context"),
     )
+    gate_states = dict(measured.get("gate_states") or {})
     if epoch_compatible is None:
-        epoch_compatible = bool(measured["epoch_current"])
+        epoch_compatible = gate_states.get("epoch_current") == GATE_PASS
     if witness_present is None:
         witness_present = bool(outcome.get("witnessed"))
     if outcome_closed is None:
         outcome_closed = bool(outcome.get("closed"))
+    sources = dict(measured.get("measurement_sources") or {})
+    sensing = str(sources.get("self_sensing") or "").upper()
+    binding = str(sources.get("binding") or "").upper()
     if stable_regime is None:
-        sensing = str(
-            ((measured.get("measurement_sources") or {}).get("self_sensing") or "")
-        ).upper()
-        binding = str(
-            ((measured.get("measurement_sources") or {}).get("binding") or "")
-        ).upper()
-        stable_regime = sensing not in {"STRESSED", "UNBOUND"} and binding not in {
-            "DRIFT_REGIME"
-        }
+        # Tri-state stability: absence of evidence is unknown, not pass.
+        if sensing in {"STRESSED", "UNBOUND"} or binding == "DRIFT_REGIME":
+            stable_regime = False
+            stability_state = GATE_FAIL
+        elif not sensing and not binding:
+            stable_regime = False
+            stability_state = GATE_UNKNOWN
+        else:
+            stable_regime = True
+            stability_state = GATE_PASS
+    else:
+        stability_state = GATE_PASS if stable_regime else GATE_FAIL
+    # Canonical retention requires every factor; unknown stability blocks it.
+    if stability_state != GATE_PASS:
+        stable_regime = False
     prior = str(outcome.get("receipt_hash") or joint.get("receipt_hash") or "")
     seal_turn = int(session_body.get("current_turn_id") or 0)
     consolidation = symbiotic_consolidation_receipt(
@@ -1583,6 +1697,14 @@ def consolidate_session(
         invocation_id=str(session_body.get("invocation_id") or ""),
         case_id=f"case_{session_body.get('session_id')}_seal",
     )
+    consolidation["gate_states"] = {
+        **gate_states,
+        "stability": stability_state,
+        "witness": GATE_PASS if witness_present else GATE_FAIL,
+        "outcome_closure": GATE_PASS if outcome_closed else GATE_FAIL,
+        "epoch_compatible": GATE_PASS if epoch_compatible else GATE_FAIL,
+        "constitutional": GATE_PASS if constitutional_gate else GATE_FAIL,
+    }
     receipts["symbiotic_consolidation"] = consolidation
     chain = list(session_body.get("chain") or [])
     chain.append(consolidation["receipt_hash"])
@@ -1695,7 +1817,15 @@ def symbiotic_status(store: Any, repo: str) -> dict[str, Any]:
         },
         "complementarity": latest.get("complementarity")
         or complementarity_surplus(),
-        "session_count": len(history),
+        "session_count": len(
+            {
+                str(item.get("session_id") or "")
+                for item in history
+                if item.get("session_id")
+            }
+        ),
+        "history_transition_count": len(history),
+        "turn_count": latest.get("turn_count") or 0,
         "timescale": latest.get("timescale"),
         "symbiosis": latest.get("symbiosis"),
         "advisory_only": True,
@@ -1706,21 +1836,74 @@ def symbiotic_status(store: Any, repo: str) -> dict[str, Any]:
 
 
 def verify_session_circulation(store: Any, repo: str, session_id: str) -> dict[str, Any]:
-    """Independent verification of the canonical session receipt chain."""
+    """Independent verification of the canonical session receipt chain.
+
+    Structural checks are grouped by turn so recurrent proposals/evaluations
+    cannot collapse into one dictionary entry per kind.
+    """
     chain = store.verify_symbiotic_session(repo, session_id)
     rows = store.symbiotic_session_receipts(repo, session_id)
-    by_kind = {str(row.get("kind")): row for row in rows}
+    by_turn: dict[int, dict[str, dict[str, Any]]] = {}
+    for row in rows:
+        turn = int(row.get("turn_id") or 0)
+        kind = str(row.get("kind") or "")
+        by_turn.setdefault(turn, {})[kind] = row
+
+    open_kinds = by_turn.get(0, {})
     structural = {
-        "has_instantiation": "agent_instantiation" in by_kind,
-        "has_context": "cortex_context" in by_kind,
-        "proposal_before_evaluation": (
-            "agent_proposal" not in by_kind
-            or "cortex_evaluation" not in by_kind
-            or int(by_kind["agent_proposal"].get("chain_sequence") or 0)
-            < int(by_kind["cortex_evaluation"].get("chain_sequence") or 0)
-        ),
-        "outcome_witnessed": bool((by_kind.get("outcome") or {}).get("witnessed")),
+        "has_instantiation": "agent_instantiation" in open_kinds,
+        "has_context": "cortex_context" in open_kinds
+        or any("cortex_context" in kinds for kinds in by_turn.values()),
+        "turns": [],
+        "all_turns_well_ordered": True,
+        "outcome_witnessed_any": False,
     }
+    for turn_id in sorted(t for t in by_turn if t >= 1):
+        kinds = by_turn[turn_id]
+        seq = {
+            kind: int((kinds.get(kind) or {}).get("chain_sequence") or 0)
+            for kind in (
+                "cortex_context",
+                "interconnect_frame",
+                "agent_proposal",
+                "cortex_evaluation",
+                "joint_action",
+                "outcome",
+            )
+            if kind in kinds
+        }
+        proposal_seq = seq.get("agent_proposal")
+        evaluation_seq = seq.get("cortex_evaluation")
+        action_seq = seq.get("joint_action")
+        outcome_seq = seq.get("outcome")
+        ordered = True
+        if proposal_seq is not None and evaluation_seq is not None:
+            ordered = ordered and proposal_seq < evaluation_seq
+        if evaluation_seq is not None and action_seq is not None:
+            ordered = ordered and evaluation_seq < action_seq
+        if action_seq is not None and outcome_seq is not None:
+            ordered = ordered and action_seq < outcome_seq
+        if not ordered:
+            structural["all_turns_well_ordered"] = False
+        witnessed = bool((kinds.get("outcome") or {}).get("witnessed"))
+        if witnessed:
+            structural["outcome_witnessed_any"] = True
+        structural["turns"].append(
+            {
+                "turn_id": turn_id,
+                "kinds": sorted(kinds),
+                "well_ordered": ordered,
+                "outcome_witnessed": witnessed,
+                "sequences": seq,
+            }
+        )
+    structural["proposal_before_evaluation"] = structural["all_turns_well_ordered"]
+    structural["outcome_witnessed"] = structural["outcome_witnessed_any"]
+    structural_valid = bool(
+        structural["has_instantiation"]
+        and structural["has_context"]
+        and structural["all_turns_well_ordered"]
+    )
     return {
         "schema_version": SCHEMA,
         "version": VERSION,
@@ -1729,7 +1912,8 @@ def verify_session_circulation(store: Any, repo: str, session_id: str) -> dict[s
         "chain": chain,
         "structural": structural,
         "receipt_count": len(rows),
-        "valid": bool(chain.get("valid")),
+        "turn_count": len([t for t in by_turn if t >= 1]),
+        "valid": bool(chain.get("valid")) and structural_valid,
         "advisory_only": True,
         "policy_effect": False,
         "update_authorized": False,
@@ -1746,8 +1930,9 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
     proposal = dict(receipts.get("agent_proposal") or {})
     evaluation = dict(receipts.get("cortex_evaluation") or {})
     consolidation = dict(receipts.get("symbiotic_consolidation") or {})
-    return {
-        "schema_version": "cortex-symbiosis-next-session/1.0",
+    outcome = dict(receipts.get("outcome") or {})
+    brief = {
+        "schema_version": "cortex-symbiosis-next-session/1.1",
         "repo": repo,
         "what_the_project_is": {
             "repository_id": latest.get("repository_id"),
@@ -1765,6 +1950,7 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
         },
         "why_it_is_believed": {
             "context_packet_digest": context.get("context_packet_digest"),
+            "interconnect_frame_hash": context.get("interconnect_frame_hash"),
             "gates": consolidation.get("gates") or evaluation.get("gates"),
         },
         "assumptions": {
@@ -1796,7 +1982,6 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
         "claim_boundary": CLAIM_BOUNDARY,
         "status": status.get("status"),
     }
-    outcome = dict(receipts.get("outcome") or {})
     for assumption in list(proposal.get("assumptions") or ()):
         bucket = classify_assumption_status(
             evaluation_decision=str(evaluation.get("decision") or ""),
@@ -1808,6 +1993,7 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
     brief["which_assumptions_failed"] = list(
         brief["assumptions"]["assumptions_disconfirmed"]
     )
+    return brief
 
 
 __all__ = [

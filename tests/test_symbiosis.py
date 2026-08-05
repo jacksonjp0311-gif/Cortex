@@ -47,7 +47,7 @@ class SymbiosisTests(unittest.TestCase):
             provider="xai",
             model_id="grok-test",
         )
-        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.2")
+        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.3")
         self.assertIn("agent_instantiation", session["receipts"])
         self.assertIn("cortex_context", session["receipts"])
         self.assertFalse(session["policy_effect"])
@@ -233,14 +233,64 @@ class SymbiosisTests(unittest.TestCase):
         self.assertTrue(measured["complementary"])
 
     def test_next_session_brief_is_reconstructed(self) -> None:
-        open_symbiotic_session(self.store, self.repo, task="continue work")
+        session = open_symbiotic_session(self.store, self.repo, task="continue work")
+        session = record_proposal(
+            self.store,
+            self.repo,
+            session,
+            interpreted_objective="brief",
+            proposed_action="inspect",
+            evidence_citations=["a.md"],
+            assumptions=["A1"],
+            declared_uncertainty=0.2,
+        )
         brief = reconstruct_next_session_brief(self.store, self.repo)
         self.assertIn("what_is_currently_believed", brief)
         self.assertIn("forbidden_actions", brief)
         self.assertIn("assumptions", brief)
         self.assertIn("assumptions_blocked", brief["assumptions"])
+        # Held/ask path should classify A1 as blocked or unverified, not empty.
+        classified = sum(len(v) for v in brief["assumptions"].values())
+        self.assertEqual(classified, 1)
         self.assertFalse(brief["policy_effect"])
         self.assertFalse(brief["update_authorized"])
+
+    def test_turn_regenerates_context_and_frame(self) -> None:
+        session = open_symbiotic_session(self.store, self.repo, task="frame pulse")
+        session = record_proposal(
+            self.store,
+            self.repo,
+            session,
+            interpreted_objective="t1",
+            proposed_action="a1",
+            evidence_citations=["x"],
+            declared_uncertainty=0.2,
+        )
+        frame = session["receipts"]["interconnect_frame"]
+        context = session["receipts"]["cortex_context"]
+        proposal = session["receipts"]["agent_proposal"]
+        self.assertEqual(int(frame["turn_id"]), 1)
+        self.assertEqual(int(context["turn_id"]), 1)
+        self.assertEqual(
+            proposal.get("interconnect_frame_hash"), frame.get("receipt_hash")
+        )
+        self.assertEqual(
+            proposal.get("context_receipt_hash"), context.get("receipt_hash")
+        )
+        session = record_proposal(
+            self.store,
+            self.repo,
+            session,
+            interpreted_objective="t2",
+            proposed_action="a2",
+            evidence_citations=["y"],
+            declared_uncertainty=0.2,
+        )
+        self.assertEqual(int(session["receipts"]["interconnect_frame"]["turn_id"]), 2)
+        self.assertNotEqual(
+            session["receipts"]["cortex_context"]["receipt_hash"],
+            context["receipt_hash"],
+        )
 
     def test_recurrent_turns_are_independently_ledgered(self) -> None:
         session = open_symbiotic_session(self.store, self.repo, task="multi-turn")

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.4.2-0ea5e9?style=for-the-badge" alt="v8.4.2" />
+  <img src="https://img.shields.io/badge/version-8.4.3-0ea5e9?style=for-the-badge" alt="v8.4.3" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.4.2)
+## AI–Cortex symbiosis (v8.4.3)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -32,9 +32,10 @@ slow memory retains only what survives verification:
 Δc = 0 whenever Γ Ξ W O S = 0
 ```
 
-v8.4.2 hardens **recurrent** circulation (`turn_id` + immutable `event_id`),
-tri-state gates (`pass|fail|unknown`), mask-aware prediction, and typed
-assumption statuses. Authenticated will (direction) is deferred to v8.5.0.
+v8.4.3 binds each turn to an **InterconnectFrame** and regenerates context C_k
+before every proposal (reciprocal pulse). `mesh_green` means constitutional path
+open only; overall readiness is a non-compensatory multi-plane panel.
+Authenticated will remains deferred to v8.5.0.
 
 ```powershell
 python -m cortex symbiosis status --repo YourProject --json
