@@ -1,3 +1,11 @@
+## 8.4.4 - Atomic Interconnect Trajectories
+
+- Atomic interconnect frame capture under one DB snapshot when available, with per-surface digest/schema/age/freshness metadata.
+- Split frame validity into tri-state planes (structural/epoch/schema/cohort/freshness/measurement/chain/overall); `compatible` is structural-only.
+- Added `InterconnectTransitionReceipt`, context delta receipts, trajectory ledger tables, and trajectory verification across process restart.
+- Readiness panel planes are now tri-state (`pass|fail|unknown`). No frame/transition authorizes execution or learning.
+- Docs: `docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md`.
+
 ## 8.4.3 - Turn-Bound Interconnect Frames
 
 - Added `InterconnectFrameReceipt` binding repo/epoch/session/turn digests so sensing panels share one operational heartbeat per turn.

@@ -21,9 +21,9 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.3"
+SCHEMA = "cortex-symbiosis/1.4"
 GLYPH = "☍"
-VERSION = "8.4.3"
+VERSION = "8.4.4"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
     "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "
@@ -1321,7 +1321,9 @@ def record_proposal(
     frame and regenerates context C_k (reciprocal pulse).
     """
     from .interconnect_frame import (
-        capture_interconnect_frame,
+        build_context_delta,
+        build_interconnect_transition,
+        capture_atomic_interconnect_frame,
         frame_compatible_with_proposal,
     )
 
@@ -1356,7 +1358,7 @@ def record_proposal(
             )
 
     chain_tip = (session_body.get("chain") or [None])[-1]
-    frame = capture_interconnect_frame(
+    frame = capture_atomic_interconnect_frame(
         store,
         repo,
         session_id=str(session_body.get("session_id") or ""),
@@ -1369,6 +1371,24 @@ def record_proposal(
         prior_frame_hash=prior_frame_hash,
         symbiosis_chain_tip=str(chain_tip) if chain_tip else None,
     )
+    transition = None
+    context_delta = None
+    last_turn_payload: Mapping[str, Any] = {}
+    if turns:
+        last_turn_payload = (
+            turns.get(str(turn_id - 1)) or turns.get(turn_id - 1) or {}
+        )
+        if isinstance(last_turn_payload, Mapping) and last_turn_payload.get(
+            "interconnect_frame"
+        ):
+            transition = build_interconnect_transition(
+                prior_frame=dict(last_turn_payload.get("interconnect_frame") or {}),
+                next_frame=frame,
+                proposal=dict(last_turn_payload.get("agent_proposal") or {}),
+                evaluation=dict(last_turn_payload.get("cortex_evaluation") or {}),
+                joint_action=dict(last_turn_payload.get("joint_action") or {}),
+                outcome=dict(last_turn_payload.get("outcome") or {}),
+            )
     # Reciprocal pulse: project turn-specific context C_k from frame + priors.
     context = cortex_context_receipt(
         repo=str(session_body.get("repo") or repo),
@@ -1438,6 +1458,14 @@ def record_proposal(
         interconnect_frame_hash=str(frame.get("receipt_hash") or ""),
     )
     frame_bind = frame_compatible_with_proposal(frame, proposal)
+    if last_turn_payload and last_turn_payload.get("cortex_context"):
+        context_delta = build_context_delta(
+            prior_context=dict(last_turn_payload.get("cortex_context") or {}),
+            next_context=context,
+            prior_frame=dict(last_turn_payload.get("interconnect_frame") or {}),
+            next_frame=frame,
+            outcome=dict(last_turn_payload.get("outcome") or {}),
+        )
     measured_gates = measure_evaluation_gates(
         store, repo, proposal=proposal, context=context
     )
@@ -1446,6 +1474,12 @@ def record_proposal(
         gate_states = dict(measured_gates.get("gate_states") or {})
         gate_states["context_bound"] = GATE_FAIL
         measured_gates = {**measured_gates, "gate_states": gate_states}
+    # Incomplete measurement frame should not open gates either.
+    if str((frame.get("validity") or {}).get("measurement_state") or "") == GATE_UNKNOWN:
+        gate_states = dict(measured_gates.get("gate_states") or {})
+        if gate_states.get("measurement_complete") == GATE_PASS:
+            gate_states["measurement_complete"] = GATE_UNKNOWN
+            measured_gates = {**measured_gates, "gate_states": gate_states}
     evaluation_panel = evaluate_proposal(
         proposal=proposal,
         context=context,
@@ -1479,8 +1513,14 @@ def record_proposal(
         "agent_proposal": proposal,
         "cortex_evaluation": evaluation,
         "frame_proposal_compatible": frame_bind,
+        "interconnect_transition": transition,
+        "context_delta": context_delta,
     }
     turns[str(turn_id)] = turn_receipts
+    if transition:
+        receipts["interconnect_transition"] = transition
+    if context_delta:
+        receipts["context_delta"] = context_delta
     chain = list(session_body.get("chain") or [])
     chain.extend(
         [
@@ -1490,6 +1530,8 @@ def record_proposal(
             evaluation["receipt_hash"],
         ]
     )
+    if transition:
+        chain.append(transition["receipt_hash"])
     session_body.update(
         {
             "receipts": receipts,
@@ -1500,6 +1542,10 @@ def record_proposal(
             "status": f"evaluated:{evaluation['decision']}",
             "latest_decision": evaluation["decision"],
             "latest_frame_id": frame.get("frame_id"),
+            "latest_frame_overall_state": (frame.get("validity") or {}).get(
+                "overall_state"
+            ),
+            "latest_transition_class": (transition or {}).get("transition_class"),
             "epoch_verified": measured_gates.get("gate_states", {}).get("epoch_current")
             == GATE_PASS,
             "updated_at": time.time(),
@@ -1509,6 +1555,15 @@ def record_proposal(
         _ledger_commit_receipts(
             store, repo, [frame, context, proposal, evaluation]
         )
+        try:
+            store.append_interconnect_frame(repo, dict(frame))
+        except Exception:
+            pass
+        if transition:
+            try:
+                store.append_interconnect_transition(repo, dict(transition))
+            except Exception:
+                pass
         _persist_session(store, repo, session_body)
     return session_body
 

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.4.3-0ea5e9?style=for-the-badge" alt="v8.4.3" />
+  <img src="https://img.shields.io/badge/version-8.4.4-0ea5e9?style=for-the-badge" alt="v8.4.4" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.4.3)
+## AI–Cortex symbiosis (v8.4.4)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -32,9 +32,9 @@ slow memory retains only what survives verification:
 Δc = 0 whenever Γ Ξ W O S = 0
 ```
 
-v8.4.3 binds each turn to an **InterconnectFrame** and regenerates context C_k
-before every proposal (reciprocal pulse). `mesh_green` means constitutional path
-open only; overall readiness is a non-compensatory multi-plane panel.
+v8.4.4 adds **atomic interconnect trajectories**: snapshot frame capture,
+tri-state validity planes, frame transitions, trajectory ledger, context deltas,
+and tri-state readiness. `mesh_green` remains constitutional-path only.
 Authenticated will remains deferred to v8.5.0.
 
 ```powershell
@@ -44,9 +44,9 @@ python -m cortex symbiosis verify --repo YourProject --json
 python -m cortex symbiosis next --repo YourProject --json
 ```
 
-See [`docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md`](docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md)
-(and prior phases [`v8.4.2`](docs/intelligence/PHASE_V8.4.2_RECURRENT_CIRCULATION.md),
-[`v8.4.1`](docs/intelligence/PHASE_V8.4.1_VERIFIED_SYMBIOTIC_CIRCULATION.md)).
+See [`docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md`](docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md)
+(and prior phases [`v8.4.3`](docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md),
+[`v8.4.2`](docs/intelligence/PHASE_V8.4.2_RECURRENT_CIRCULATION.md)).
 
 ## Interconnect mathematics (v8.3.4)
 

@@ -464,6 +464,78 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical symbiotic circulation receipts cannot be updated');
 END;
 
+-- v8.4.4 interconnect trajectory ledger (frames + transitions)
+CREATE TABLE IF NOT EXISTS interconnect_frames(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    turn_id INTEGER NOT NULL,
+    body_epoch_id TEXT NOT NULL,
+    frame_id TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    overall_state TEXT NOT NULL DEFAULT 'unknown',
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, session_id, turn_id),
+    UNIQUE(repository_id, session_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_interconnect_frames_repo_session
+ON interconnect_frames(repo, session_id, turn_id);
+
+CREATE TABLE IF NOT EXISTS interconnect_transitions(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    turn_id INTEGER NOT NULL,
+    prior_frame_hash TEXT NOT NULL,
+    next_frame_hash TEXT NOT NULL,
+    outcome_hash TEXT,
+    transition_class TEXT NOT NULL,
+    causal_status TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(prior_frame_hash, next_frame_hash),
+    UNIQUE(repository_id, session_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_interconnect_transitions_session
+ON interconnect_transitions(repo, session_id, turn_id);
+
+CREATE TABLE IF NOT EXISTS interconnect_trajectory_tips(
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    tip_frame_hash TEXT NOT NULL,
+    tip_transition_hash TEXT,
+    frame_count INTEGER NOT NULL DEFAULT 0,
+    transition_count INTEGER NOT NULL DEFAULT 0,
+    updated_at REAL NOT NULL,
+    PRIMARY KEY(repository_id, session_id)
+);
+
+CREATE TRIGGER IF NOT EXISTS interconnect_frames_no_delete
+BEFORE DELETE ON interconnect_frames
+BEGIN
+    SELECT RAISE(ABORT, 'canonical interconnect frames cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS interconnect_frames_no_update
+BEFORE UPDATE ON interconnect_frames
+BEGIN
+    SELECT RAISE(ABORT, 'canonical interconnect frames cannot be updated');
+END;
+CREATE TRIGGER IF NOT EXISTS interconnect_transitions_no_delete
+BEFORE DELETE ON interconnect_transitions
+BEGIN
+    SELECT RAISE(ABORT, 'canonical interconnect transitions cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS interconnect_transitions_no_update
+BEFORE UPDATE ON interconnect_transitions
+BEGIN
+    SELECT RAISE(ABORT, 'canonical interconnect transitions cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -3142,6 +3214,197 @@ class Store:
             (str(repository["repository_id"]), str(repo), str(session_id)),
         ).fetchall()
         return [self._decode_symbiotic_row(row) for row in rows]
+
+    def append_interconnect_frame(
+        self, repo: str, frame: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Append one immutable interconnect frame (exactly-once per session/turn)."""
+        if not isinstance(frame, dict):
+            raise TypeError("interconnect frame must be a dict")
+        session_id = str(frame.get("session_id") or "").strip()
+        try:
+            turn_id = int(frame.get("turn_id", 0))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("interconnect frame requires turn_id") from exc
+        receipt_hash = str(frame.get("receipt_hash") or "").strip()
+        event_id = str(frame.get("event_id") or "").strip()
+        frame_id = str(frame.get("frame_id") or "").strip()
+        body_epoch_id = str(frame.get("body_epoch_id") or "").strip()
+        if not all([session_id, receipt_hash, event_id, frame_id, body_epoch_id]):
+            raise ValueError("interconnect frame missing required identity fields")
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "")
+            existing = conn.execute(
+                """SELECT * FROM interconnect_frames
+                   WHERE repository_id=? AND session_id=? AND turn_id=?""",
+                (repository_id, session_id, turn_id),
+            ).fetchone()
+            receipt_json = self._symbiotic_canonical_json(frame)
+            created_at = float(frame.get("captured_at") or time.time())
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError(
+                        "interconnect frame turn already has different content"
+                    )
+                return {**frame, "inserted": False, "duplicate": True}
+            overall = str(
+                (frame.get("validity") or {}).get("overall_state") or "unknown"
+            )
+            conn.execute(
+                """INSERT INTO interconnect_frames(
+                       receipt_hash, repository_id, repo, session_id, turn_id,
+                       body_epoch_id, frame_id, event_id, overall_state,
+                       receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    repository_id,
+                    repo,
+                    session_id,
+                    turn_id,
+                    body_epoch_id,
+                    frame_id,
+                    event_id,
+                    overall,
+                    receipt_json,
+                    created_at,
+                ),
+            )
+            tip = conn.execute(
+                """SELECT * FROM interconnect_trajectory_tips
+                   WHERE repository_id=? AND session_id=?""",
+                (repository_id, session_id),
+            ).fetchone()
+            if tip is None:
+                conn.execute(
+                    """INSERT INTO interconnect_trajectory_tips(
+                           repository_id, repo, session_id, tip_frame_hash,
+                           tip_transition_hash, frame_count, transition_count,
+                           updated_at
+                       ) VALUES(?, ?, ?, ?, NULL, 1, 0, ?)""",
+                    (repository_id, repo, session_id, receipt_hash, created_at),
+                )
+            else:
+                conn.execute(
+                    """UPDATE interconnect_trajectory_tips
+                       SET tip_frame_hash=?, frame_count=frame_count+1, updated_at=?
+                       WHERE repository_id=? AND session_id=?""",
+                    (receipt_hash, created_at, repository_id, session_id),
+                )
+            return {**frame, "inserted": True, "duplicate": False}
+
+    def append_interconnect_transition(
+        self, repo: str, transition: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Append one immutable frame transition (exactly-once prior→next)."""
+        if not isinstance(transition, dict):
+            raise TypeError("interconnect transition must be a dict")
+        prior_h = str(transition.get("prior_frame_hash") or "").strip()
+        next_h = str(transition.get("next_frame_hash") or "").strip()
+        receipt_hash = str(transition.get("receipt_hash") or "").strip()
+        event_id = str(transition.get("event_id") or "").strip()
+        session_id = str(transition.get("session_id") or "").strip()
+        if not all([prior_h, next_h, receipt_hash, event_id, session_id]):
+            raise ValueError("interconnect transition missing required fields")
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "")
+            existing = conn.execute(
+                """SELECT * FROM interconnect_transitions
+                   WHERE prior_frame_hash=? AND next_frame_hash=?""",
+                (prior_h, next_h),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError(
+                        "interconnect transition already has different content"
+                    )
+                return {**transition, "inserted": False, "duplicate": True}
+            created_at = float(transition.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO interconnect_transitions(
+                       receipt_hash, repository_id, repo, session_id, turn_id,
+                       prior_frame_hash, next_frame_hash, outcome_hash,
+                       transition_class, causal_status, event_id, receipt_json,
+                       created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    repository_id,
+                    repo,
+                    session_id,
+                    int(transition.get("turn_id") or 0),
+                    prior_h,
+                    next_h,
+                    transition.get("outcome_hash"),
+                    str(transition.get("transition_class") or "unknown_transition"),
+                    str(transition.get("causal_status") or "unmeasured"),
+                    event_id,
+                    self._symbiotic_canonical_json(transition),
+                    created_at,
+                ),
+            )
+            conn.execute(
+                """UPDATE interconnect_trajectory_tips
+                   SET tip_transition_hash=?, transition_count=transition_count+1,
+                       updated_at=?
+                   WHERE repository_id=? AND session_id=?""",
+                (receipt_hash, created_at, repository_id, session_id),
+            )
+            return {**transition, "inserted": True, "duplicate": False}
+
+    def interconnect_session_frames(
+        self, repo: str, session_id: str
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        rows = self.db.execute(
+            """SELECT receipt_json FROM interconnect_frames
+               WHERE repository_id=? AND repo=? AND session_id=?
+               ORDER BY turn_id ASC""",
+            (str(repository["repository_id"]), repo, session_id),
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                out.append(json.loads(row["receipt_json"]))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+        return out
+
+    def interconnect_session_transitions(
+        self, repo: str, session_id: str
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        rows = self.db.execute(
+            """SELECT receipt_json FROM interconnect_transitions
+               WHERE repository_id=? AND repo=? AND session_id=?
+               ORDER BY turn_id ASC""",
+            (str(repository["repository_id"]), repo, session_id),
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                out.append(json.loads(row["receipt_json"]))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+        return out
 
     def _verify_symbiotic_session_conn(
         self,
