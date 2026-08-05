@@ -1352,7 +1352,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     will_p.add_argument(
         "action",
-        choices=["status", "register", "issue", "verify"],
+        choices=["status", "register", "issue", "verify", "set-policy"],
         nargs="?",
         default="status",
     )
@@ -3714,6 +3714,46 @@ def main(argv: list[str] | None = None) -> None:
                         repository_id=str(latest.get("repository_id") or "") or None,
                         ttl_seconds=int(args.ttl),
                         intent_summary=str(args.intent or ""),
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "set-policy":
+                from .will import set_default_will_policy
+
+                principal = str(args.principal or "").strip()
+                if not principal:
+                    raise ValueError("will set-policy requires --principal")
+                admit = [
+                    p.strip()
+                    for p in str(args.admit_types or "").split(",")
+                    if p.strip()
+                ]
+                forbid = [
+                    p.strip()
+                    for p in str(args.forbid_types or "").split(",")
+                    if p.strip()
+                ]
+                emit(
+                    set_default_will_policy(
+                        store,
+                        args.repo,
+                        principal_id=principal,
+                        admit_types=admit
+                        or [
+                            "successful_procedure",
+                            "verified_fact",
+                            "useful_route",
+                            "persistent_constraint",
+                            "regime_warning",
+                        ],
+                        forbid_types=forbid or ["unresolved_ambiguity"],
+                        max_retain=args.max_retain
+                        if args.max_retain is not None
+                        else 8,
+                        min_support=str(args.min_support or "medium"),
+                        intent_summary=str(args.intent or "durable default will policy"),
+                        ttl_seconds=int(args.ttl),
                     ),
                     args.json,
                 )

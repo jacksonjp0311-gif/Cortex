@@ -93,7 +93,11 @@ def _evolution_stability_gate(store: Any, repo: str) -> dict[str, Any]:
     """
 
     reasons: list[str] = []
-    sense = store.get_setting(f"self_sense_latest:{repo}", {}) or {}
+    sense = (
+        store.get_setting(f"self_sensing_latest:{repo}", {})
+        or store.get_setting(f"self_sense_latest:{repo}", {})
+        or {}
+    )
     sense_class = str(sense.get("classification") or "").upper()
     if sense_class in {"UNBOUND", "STRESSED", "DRIFT"}:
         reasons.append(f"self_sensing_{sense_class.lower()}")

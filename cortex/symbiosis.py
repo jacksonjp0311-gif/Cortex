@@ -23,7 +23,7 @@ from . import __version__
 
 SCHEMA = "cortex-symbiosis/1.6"
 GLYPH = "☍"
-VERSION = "8.5.0"
+VERSION = "8.5.1"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
     "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "

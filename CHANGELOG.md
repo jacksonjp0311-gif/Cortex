@@ -1,3 +1,13 @@
+## 8.5.1 - Observer Cold-Start, Durable Will Policy, Surface Bind
+
+- Self-sensing cold-start can accumulate EMA under warm field even when the
+  latest resonant frame is `INDETERMINATE` (fixes permanent COLD at 0/16).
+- Observer latest surface key is `self_sensing_latest` (interconnect-bound),
+  with legacy `self_sense_latest` dual-write for cadence.
+- Durable default will policy (`will set-policy`) persists admit/forbid/cap/
+  support clauses; `issue` without clauses uses the default and signs HMAC.
+- Policy history tip for rotation audit (no secrets stored).
+
 ## 8.5.0 - Authenticated Will & Unified Distillation Membrane
 
 - Combined former 8.5.0 (authenticated principal will) and 8.5.1 (will-bound

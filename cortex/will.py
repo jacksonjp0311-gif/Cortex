@@ -19,7 +19,7 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-will/1.0"
-VERSION = "8.5.0"
+VERSION = "8.5.1"
 GLYPH = "⚖⟹"
 CLAIM_BOUNDARY = (
     "Authenticated will supplies direction only. It cannot invent facts, "
@@ -174,6 +174,139 @@ def _normalize_scopes(scopes: Sequence[str] | None) -> list[str]:
     return sorted(clean)
 
 
+def _policy_key(repo: str) -> str:
+    return f"will_default_policy:{repo}"
+
+
+def set_default_will_policy(
+    store: Any,
+    repo: str,
+    *,
+    principal_id: str,
+    clauses: Sequence[Mapping[str, Any]] | None = None,
+    scopes: Sequence[str] | None = None,
+    intent_summary: str = "",
+    max_retain: int | None = 8,
+    min_support: str = "medium",
+    admit_types: Sequence[str] | None = None,
+    forbid_types: Sequence[str] | None = None,
+    ttl_seconds: int = 86_400,
+) -> dict[str, Any]:
+    """Persist durable default admit policy (no secret; not a will receipt)."""
+    principal_id = str(principal_id or "").strip()
+    if not principal_id:
+        raise ValueError("principal_id required for default will policy")
+    clause_list = list(_normalize_clauses(clauses)) if clauses else []
+    if admit_types:
+        types = [str(t).strip() for t in admit_types if str(t).strip()]
+        clause_list.append(
+            {
+                "clause_id": "policy_admit_type",
+                "kind": "admit_type",
+                "candidate_types": types,
+                "candidate_ids": [],
+                "transition_classes": [],
+                "max_retain": None,
+                "min_support": None,
+                "priority": 1,
+                "notes": "durable_default",
+            }
+        )
+        clause_list.append(
+            {
+                "clause_id": "policy_prioritize_type",
+                "kind": "prioritize_type",
+                "candidate_types": types,
+                "candidate_ids": [],
+                "transition_classes": [],
+                "max_retain": None,
+                "min_support": None,
+                "priority": 2,
+                "notes": "durable_default",
+            }
+        )
+    if forbid_types:
+        clause_list.append(
+            {
+                "clause_id": "policy_forbid_type",
+                "kind": "forbid_type",
+                "candidate_types": [
+                    str(t).strip() for t in forbid_types if str(t).strip()
+                ],
+                "candidate_ids": [],
+                "transition_classes": [],
+                "max_retain": None,
+                "min_support": None,
+                "priority": 0,
+                "notes": "durable_default",
+            }
+        )
+    if max_retain is not None:
+        clause_list.append(
+            {
+                "clause_id": "policy_cap_retain",
+                "kind": "cap_retain",
+                "candidate_types": [],
+                "candidate_ids": [],
+                "transition_classes": [],
+                "max_retain": int(max_retain),
+                "min_support": None,
+                "priority": 0,
+                "notes": "durable_default",
+            }
+        )
+    if min_support:
+        clause_list.append(
+            {
+                "clause_id": "policy_min_support",
+                "kind": "prefer_support_min",
+                "candidate_types": [],
+                "candidate_ids": [],
+                "transition_classes": [],
+                "max_retain": None,
+                "min_support": str(min_support),
+                "priority": 0,
+                "notes": "durable_default",
+            }
+        )
+    # Re-normalize in case callers mixed shapes.
+    clause_list = _normalize_clauses(clause_list)
+    scope_list = _normalize_scopes(scopes)
+    policy = {
+        "schema_version": "cortex-will-default-policy/1.0",
+        "version": VERSION,
+        "repo": repo,
+        "principal_id": principal_id,
+        "scopes": scope_list,
+        "clauses": clause_list,
+        "intent_summary": str(intent_summary or "durable default will policy"),
+        "ttl_seconds": int(ttl_seconds),
+        "updated_at": time.time(),
+        "advisory_only": True,
+        "policy_effect": False,
+        "claim_boundary": CLAIM_BOUNDARY,
+    }
+    store.set_setting(_policy_key(repo), policy)
+    # Rotation tip — last N policies for audit, not secrets.
+    history = list(store.get_setting(f"will_default_policy_history:{repo}", []) or [])
+    history.append(
+        {
+            "principal_id": principal_id,
+            "updated_at": policy["updated_at"],
+            "clause_count": len(clause_list),
+            "scopes": scope_list,
+            "intent_summary": policy["intent_summary"],
+        }
+    )
+    store.set_setting(f"will_default_policy_history:{repo}", history[-32:])
+    return policy
+
+
+def get_default_will_policy(store: Any, repo: str) -> dict[str, Any] | None:
+    raw = store.get_setting(_policy_key(repo), None)
+    return dict(raw) if isinstance(raw, Mapping) else None
+
+
 def issue_will(
     store: Any,
     repo: str,
@@ -188,6 +321,7 @@ def issue_will(
     ttl_seconds: int = 86_400,
     intent_summary: str = "",
     persist: bool = True,
+    use_default_policy: bool = True,
 ) -> dict[str, Any]:
     """Mint a signed WillRoot. Secret must match the registered principal."""
     principal = _load_principal(store, repo, principal_id)
@@ -215,6 +349,18 @@ def issue_will(
             repository_id = ""
     repository_id = str(repository_id or "")
     now = time.time()
+    default_policy = get_default_will_policy(store, repo) if use_default_policy else None
+    used_default = False
+    if (not clauses or len(list(clauses)) == 0) and default_policy:
+        if str(default_policy.get("principal_id") or "") in {"", principal_id}:
+            clauses = list(default_policy.get("clauses") or ())
+            if scopes is None:
+                scopes = list(default_policy.get("scopes") or ())
+            if not intent_summary:
+                intent_summary = str(default_policy.get("intent_summary") or "")
+            if ttl_seconds == 86_400 and default_policy.get("ttl_seconds"):
+                ttl_seconds = int(default_policy.get("ttl_seconds") or ttl_seconds)
+            used_default = True
     not_after = now + max(60, int(ttl_seconds))
     clause_list = _normalize_clauses(clauses)
     scope_list = _normalize_scopes(scopes)
@@ -243,6 +389,7 @@ def issue_will(
         "scopes": scope_list,
         "clauses": clause_list,
         "intent_summary": str(intent_summary or ""),
+        "from_default_policy": used_default,
         "issued_at": now,
         "not_before": now,
         "not_after": not_after,
@@ -364,6 +511,7 @@ def verify_will(
             "scopes",
             "clauses",
             "intent_summary",
+            "from_default_policy",
             "issued_at",
             "not_before",
             "not_after",
@@ -463,14 +611,19 @@ def will_status(store: Any, repo: str) -> dict[str, Any]:
         "SELECT principal_id, display_name, created_at FROM will_principals WHERE repo=?",
         (repo,),
     ).fetchall()
+    policy = get_default_will_policy(store, repo)
+    history = list(store.get_setting(f"will_default_policy_history:{repo}", []) or [])
     return {
-        "schema_version": "cortex-will-status/1.0",
+        "schema_version": "cortex-will-status/1.1",
         "version": VERSION,
         "repo": repo,
         "principals": [dict(p) for p in principals],
         "latest_will_id": latest.get("will_id"),
         "latest_receipt_hash": latest.get("receipt_hash"),
         "latest_scopes": latest.get("scopes"),
+        "default_policy": policy,
+        "default_policy_history_len": len(history),
+        "default_policy_history_tip": history[-1] if history else None,
         "claim_boundary": CLAIM_BOUNDARY,
         "advisory_only": True,
         "policy_effect": False,
@@ -486,7 +639,9 @@ __all__ = [
     "SUPPORT_ORDER",
     "VERSION",
     "WILL_SCOPES",
+    "get_default_will_policy",
     "issue_will",
+    "set_default_will_policy",
     "register_will_principal",
     "verify_will",
     "will_status",

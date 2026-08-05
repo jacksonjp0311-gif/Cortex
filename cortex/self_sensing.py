@@ -119,7 +119,8 @@ def _state_key(repo: str) -> str:
 
 
 def _latest_key(repo: str) -> str:
-    return f"self_sense_latest:{repo}"
+    # Interconnect frames bind self_sensing_latest — keep one surface name.
+    return f"self_sensing_latest:{repo}"
 
 
 def _index_key(repo: str) -> str:
@@ -550,6 +551,13 @@ def observe_self_sensing(
 
     stable_frame_classes = {"QUIESCENT", "COHERENT_DIFFERENTIATED"}
     frame_class = str(sample.get("frame_classification") or "")
+    # Cold-start bootstrap: field can be 16/16 while closed frames stay
+    # INDETERMINATE (low activity). Observer EMA must still accumulate or the
+    # system is stuck COLD forever (chicken-and-egg with stable-frame gate).
+    cold_start = prior_n < BASELINE_MIN
+    field_ready = bool(
+        gates.get("field_frames_ready") or gates.get("baseline_warm")
+    )
     update_reasons: list[str] = []
     if not update:
         update_reasons.append("update_not_requested")
@@ -561,10 +569,18 @@ def observe_self_sensing(
         update_reasons.append("evidence_invalid")
     if not sample.get("frame_baseline_eligible", True):
         update_reasons.append("measurement_not_baseline_eligible")
-    if frame_class and frame_class not in stable_frame_classes:
-        update_reasons.append(f"frame_{frame_class.lower()}_not_stable")
-    if prior_n >= BASELINE_MIN and classification != SelfSenseClass.NOMINAL.value:
-        update_reasons.append(f"sense_{classification.lower()}_not_nominal")
+    if cold_start:
+        # Require a warm field before inventing an observer baseline, but do not
+        # demand QUIESCENT/COHERENT frames — those often appear only after the
+        # observer itself is warm and coupling is live.
+        if not field_ready:
+            update_reasons.append("field_not_ready_for_cold_start")
+        # Explicitly allow INDETERMINATE / missing frame class during cold-start.
+    else:
+        if frame_class and frame_class not in stable_frame_classes:
+            update_reasons.append(f"frame_{frame_class.lower()}_not_stable")
+        if classification != SelfSenseClass.NOMINAL.value:
+            update_reasons.append(f"sense_{classification.lower()}_not_nominal")
 
     may_update = not update_reasons
     state = prior_state
@@ -644,6 +660,8 @@ def observe_self_sensing(
 
     if persist:
         store.set_setting(_latest_key(repo), report)
+        # Legacy alias so older cadence readers stay continuous.
+        store.set_setting(f"self_sense_latest:{repo}", report)
         idx = list(store.get_setting(_index_key(repo), []) or [])
         idx.append(report["observation_id"])
         store.set_setting(_index_key(repo), idx[-HISTORY_CAP:])
