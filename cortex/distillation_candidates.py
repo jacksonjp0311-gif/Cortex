@@ -20,7 +20,7 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-distillation-candidates/1.0"
-VERSION = "8.5.1"
+VERSION = "8.6.0"
 GLYPH = "⧉◇"
 CLAIM_BOUNDARY = (
     "Distillation candidates are typed, trajectory-derived proposals for what "

@@ -22,7 +22,7 @@ from . import __version__
 SCHEMA = "cortex-interconnect-frame/1.1"
 TRANSITION_SCHEMA = "cortex-interconnect-transition/1.0"
 DELTA_SCHEMA = "cortex-context-delta/1.0"
-VERSION = "8.5.1"
+VERSION = "8.6.0"
 GLYPH = "⧉⤒"
 CLAIM_BOUNDARY = (
     "Interconnect frames and transitions are turn-bound compatibility and "

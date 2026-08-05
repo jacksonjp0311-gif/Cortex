@@ -21,16 +21,15 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.6"
+SCHEMA = "cortex-symbiosis/1.7"
 GLYPH = "☍"
-VERSION = "8.5.1"
+VERSION = "8.6.0"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
-    "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "
-    "provenance under independent verification — not consciousness, host authority, "
-    "or automatic learning. Distillation candidates are trajectory lessons; "
-    "authenticated will supplies direction only; the unified membrane admits "
-    "retention solely under will ∧ ΓΞWOS ∧ verified candidates — never invents facts."
+    "proposes meaning; Cortex preserves tested continuity. Distillation candidates "
+    "are trajectory lessons; authenticated will supplies direction; the membrane "
+    "admits under will ∧ ΓΞWOS; v8.6 writes admitted memories to an immutable "
+    "ledger only — never host mutation, never invents facts, never auto-executes."
 )
 GATE_PASS = "pass"
 GATE_FAIL = "fail"
@@ -1732,6 +1731,7 @@ def consolidate_session(
     will_secret: str | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
+    from .admitted_memory import commit_admitted_memories
     from .distillation_candidates import (
         extract_session_distillation_candidates,
         flatten_candidates,
@@ -1819,6 +1819,18 @@ def consolidate_session(
         receipts["will_root"] = dict(will)
         receipts["distillation_membrane_admission"] = membrane
 
+    memory_commit = None
+    if membrane is not None and will is not None:
+        memory_commit = commit_admitted_memories(
+            store,
+            repo,
+            admission=membrane,
+            will=will,
+            session=session_body,
+            persist=persist,
+        )
+        receipts["admitted_memory_commit"] = memory_commit
+
     prior = str(outcome.get("receipt_hash") or joint.get("receipt_hash") or "")
     seal_turn = int(session_body.get("current_turn_id") or 0)
     consolidation = symbiotic_consolidation_receipt(
@@ -1864,14 +1876,20 @@ def consolidate_session(
         consolidation["membrane_receipt_hash"] = membrane.get("receipt_hash")
         consolidation["will_receipt_hash"] = will.get("receipt_hash") if will else None
         consolidation["invented_count"] = membrane.get("invented_count", 0)
+    if memory_commit is not None:
+        consolidation["admitted_memory_commit_hash"] = memory_commit.get("receipt_hash")
+        consolidation["admitted_memory_count"] = memory_commit.get("committed_count")
     receipts["symbiotic_consolidation"] = consolidation
     chain = list(session_body.get("chain") or [])
     if will and will.get("receipt_hash"):
         chain.append(str(will["receipt_hash"]))
     if membrane:
         chain.append(membrane["receipt_hash"])
+    if memory_commit and memory_commit.get("receipt_hash"):
+        chain.append(str(memory_commit["receipt_hash"]))
     chain.append(consolidation["receipt_hash"])
     durable = bool(membrane and membrane.get("durable_write_authorized"))
+    memories_written = int((memory_commit or {}).get("committed_count") or 0)
     session_body.update(
         {
             "receipts": receipts,
@@ -1883,6 +1901,7 @@ def consolidate_session(
             # Durable write only when membrane admitted under will ∧ gates.
             "durable_write_authorized": durable,
             "memory_write_authorized": durable,
+            "admitted_memory_count": memories_written,
             "host_mutate_authorized": False,
             "execution_authorized": False,
         }
@@ -2127,6 +2146,15 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
             "retained": consolidation.get("retained") or [],
             "distillation_candidates": distill_candidates,
             "distillation_by_type": distill_batch.get("by_type") or {},
+            "admitted_memories": (
+                ((receipts.get("admitted_memory_commit") or {}).get("committed"))
+                or []
+            ),
+            "admitted_memory_count": (
+                (receipts.get("admitted_memory_commit") or {}).get("committed_count")
+                or latest.get("admitted_memory_count")
+                or 0
+            ),
         },
         "why_it_is_believed": {
             "context_packet_digest": context.get("context_packet_digest"),

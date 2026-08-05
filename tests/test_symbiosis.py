@@ -47,7 +47,7 @@ class SymbiosisTests(unittest.TestCase):
             provider="xai",
             model_id="grok-test",
         )
-        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.6")
+        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.7")
         self.assertIn("agent_instantiation", session["receipts"])
         self.assertIn("cortex_context", session["receipts"])
         self.assertFalse(session["policy_effect"])

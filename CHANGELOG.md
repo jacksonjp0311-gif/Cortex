@@ -1,3 +1,13 @@
+## 8.6.0 - Will-Bound Admitted Memory Ledger
+
+- After membrane admission under will ∧ ΓΞWOS, admitted candidates commit to an
+  immutable `admitted_memories` ledger (exactly-once per candidate_id).
+- Commit requires `durable_write_authorized`, verified will, and `invented_count=0`.
+- Never host mutation, never execution, never from chat text.
+- CLI: `cortex admitted status|list|verify`.
+- Next-session brief surfaces admitted memories.
+- Docs: `docs/intelligence/PHASE_V8.6_ADMITTED_MEMORY_LEDGER.md`.
+
 ## 8.5.2 - Observer Cold-Start Recovery (CI heal)
 
 - Cold-start no longer requires field 16/16 (restores bootstrap observer warm

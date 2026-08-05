@@ -112,11 +112,12 @@ direction ≠ invention
 durable_write ≠ host mutation
 ```
 
-## Sequence complete through 8.5
+## Sequence
 
 ```text
 8.4.3  shared heartbeat
 8.4.4  verified trajectory
 8.4.5  typed distillation candidates
 8.5    authenticated will + will-bound membrane
+8.6    admitted memory ledger
 ```

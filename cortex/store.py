@@ -637,6 +637,45 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical membrane admissions cannot be updated');
 END;
 
+-- v8.6 will-bound admitted memory ledger (durable lessons, not host mutation)
+CREATE TABLE IF NOT EXISTS admitted_memories(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    memory_id TEXT NOT NULL,
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    turn_id INTEGER NOT NULL DEFAULT 0,
+    body_epoch_id TEXT NOT NULL,
+    candidate_id TEXT NOT NULL,
+    candidate_type TEXT NOT NULL,
+    will_receipt_hash TEXT,
+    membrane_receipt_hash TEXT,
+    transition_hash TEXT,
+    outcome_hash TEXT,
+    support_level TEXT NOT NULL DEFAULT 'none',
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, candidate_id),
+    UNIQUE(repository_id, memory_id),
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_admitted_memories_session
+ON admitted_memories(repo, session_id, turn_id);
+CREATE INDEX IF NOT EXISTS idx_admitted_memories_type
+ON admitted_memories(repo, candidate_type);
+
+CREATE TRIGGER IF NOT EXISTS admitted_memories_no_delete
+BEFORE DELETE ON admitted_memories
+BEGIN
+    SELECT RAISE(ABORT, 'canonical admitted memories cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS admitted_memories_no_update
+BEFORE UPDATE ON admitted_memories
+BEGIN
+    SELECT RAISE(ABORT, 'canonical admitted memories cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -3687,6 +3726,107 @@ class Store:
                 ),
             )
             return {**admission, "inserted": True, "duplicate": False}
+
+    def append_admitted_memory(
+        self, repo: str, memory: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Append one immutable admitted memory (exactly-once per candidate_id)."""
+        if not isinstance(memory, dict):
+            raise TypeError("admitted memory must be a dict")
+        receipt_hash = str(memory.get("receipt_hash") or "").strip()
+        memory_id = str(memory.get("memory_id") or "").strip()
+        candidate_id = str(memory.get("candidate_id") or "").strip()
+        event_id = str(memory.get("event_id") or "").strip()
+        session_id = str(memory.get("session_id") or "").strip()
+        body_epoch_id = str(memory.get("body_epoch_id") or "").strip()
+        if not all(
+            [receipt_hash, memory_id, candidate_id, event_id, session_id, body_epoch_id]
+        ):
+            raise ValueError("admitted memory missing required identity fields")
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "")
+            existing = conn.execute(
+                """SELECT * FROM admitted_memories
+                   WHERE repository_id=? AND candidate_id=?""",
+                (repository_id, candidate_id),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError(
+                        "candidate_id already has different admitted memory"
+                    )
+                return {**memory, "inserted": False, "duplicate": True}
+            created_at = float(memory.get("created_at") or time.time())
+            source = dict(memory.get("source") or {})
+            conn.execute(
+                """INSERT INTO admitted_memories(
+                       receipt_hash, memory_id, repository_id, repo, session_id,
+                       turn_id, body_epoch_id, candidate_id, candidate_type,
+                       will_receipt_hash, membrane_receipt_hash, transition_hash,
+                       outcome_hash, support_level, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    memory_id,
+                    repository_id,
+                    repo,
+                    session_id,
+                    int(memory.get("turn_id") or 0),
+                    body_epoch_id,
+                    candidate_id,
+                    str(memory.get("candidate_type") or "unresolved_ambiguity"),
+                    memory.get("will_receipt_hash"),
+                    memory.get("membrane_receipt_hash"),
+                    source.get("transition_hash"),
+                    source.get("outcome_hash"),
+                    str(memory.get("support_level") or "none"),
+                    event_id,
+                    self._symbiotic_canonical_json(memory),
+                    created_at,
+                ),
+            )
+            return {**memory, "inserted": True, "duplicate": False}
+
+    def list_admitted_memories(
+        self,
+        repo: str,
+        *,
+        session_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        repository_id = str(repository["repository_id"] or "")
+        limit = max(1, min(int(limit or 100), 10_000))
+        if session_id:
+            rows = self.db.execute(
+                """SELECT receipt_json FROM admitted_memories
+                   WHERE repository_id=? AND repo=? AND session_id=?
+                   ORDER BY created_at ASC LIMIT ?""",
+                (repository_id, repo, str(session_id), limit),
+            ).fetchall()
+        else:
+            rows = self.db.execute(
+                """SELECT receipt_json FROM admitted_memories
+                   WHERE repository_id=? AND repo=?
+                   ORDER BY created_at ASC LIMIT ?""",
+                (repository_id, repo, limit),
+            ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                out.append(json.loads(row["receipt_json"]))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+        return out
 
     def _verify_symbiotic_session_conn(
         self,

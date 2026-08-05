@@ -1394,6 +1394,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     will_p.add_argument("--json", action="store_true")
 
+    admitted_p = sub.add_parser(
+        "admitted",
+        help="Will-bound admitted memory ledger (v8.6).",
+    )
+    admitted_p.add_argument(
+        "action",
+        choices=["status", "list", "verify"],
+        nargs="?",
+        default="status",
+    )
+    admitted_p.add_argument("--repo", required=True)
+    admitted_p.add_argument("--session", default="", help="Filter by session id.")
+    admitted_p.add_argument("--limit", type=int, default=50)
+    admitted_p.add_argument("--json", action="store_true")
+
     membrane_p = sub.add_parser(
         "membrane",
         help="Will-bound unified distillation membrane (v8.5).",
@@ -3773,6 +3788,39 @@ def main(argv: list[str] | None = None) -> None:
                 )
                 return
             emit(will_status(store, args.repo), args.json)
+
+        elif command == "admitted":
+            from .admitted_memory import (
+                admitted_memory_status,
+                list_admitted_memories,
+                verify_admitted_memories,
+            )
+
+            if args.action == "status":
+                emit(admitted_memory_status(store, args.repo), args.json)
+                return
+            if args.action == "list":
+                emit(
+                    list_admitted_memories(
+                        store,
+                        args.repo,
+                        session_id=str(args.session or "") or None,
+                        limit=int(args.limit or 50),
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "verify":
+                emit(
+                    verify_admitted_memories(
+                        store,
+                        args.repo,
+                        session_id=str(args.session or "") or None,
+                    ),
+                    args.json,
+                )
+                return
+            emit(admitted_memory_status(store, args.repo), args.json)
 
         elif command == "membrane":
             from .distillation_candidates import (

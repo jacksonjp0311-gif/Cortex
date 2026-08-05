@@ -26,7 +26,7 @@ from . import __version__
 from .will import SUPPORT_ORDER, verify_will
 
 SCHEMA = "cortex-distillation-membrane/1.0"
-VERSION = "8.5.1"
+VERSION = "8.6.0"
 GLYPH = "⧉⚖"
 CLAIM_BOUNDARY = (
     "The unified distillation membrane admits trajectory-derived candidates "
