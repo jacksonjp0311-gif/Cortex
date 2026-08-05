@@ -78,5 +78,5 @@ extraction ≠ authorization
 
 ## Next
 
-v8.5.0 — authenticated principal will / direction.  
-v8.5.1 — will-bound unified distillation membrane.
+v8.5 — authenticated principal will **and** will-bound unified membrane
+(combined; see `PHASE_V8.5_AUTHENTICATED_WILL_AND_MEMBRANE.md`).

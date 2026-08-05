@@ -568,6 +568,75 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical distillation candidate batches cannot be updated');
 END;
 
+-- v8.5 authenticated will + membrane admission ledgers
+CREATE TABLE IF NOT EXISTS will_principals(
+    repo TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    secret_hash TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    PRIMARY KEY(repo, principal_id),
+    FOREIGN KEY(repo) REFERENCES repositories(name) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS will_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    will_id TEXT NOT NULL,
+    session_id TEXT,
+    body_epoch_id TEXT,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, will_id),
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_will_receipts_repo
+ON will_receipts(repo, principal_id, created_at);
+
+CREATE TRIGGER IF NOT EXISTS will_receipts_no_delete
+BEFORE DELETE ON will_receipts
+BEGIN
+    SELECT RAISE(ABORT, 'canonical will receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS will_receipts_no_update
+BEFORE UPDATE ON will_receipts
+BEGIN
+    SELECT RAISE(ABORT, 'canonical will receipts cannot be updated');
+END;
+
+CREATE TABLE IF NOT EXISTS membrane_admissions(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    session_id TEXT,
+    will_id TEXT,
+    will_receipt_hash TEXT,
+    admitted_count INTEGER NOT NULL DEFAULT 0,
+    rejected_count INTEGER NOT NULL DEFAULT 0,
+    deferred_count INTEGER NOT NULL DEFAULT 0,
+    durable_write_authorized INTEGER NOT NULL DEFAULT 0,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_membrane_admissions_repo
+ON membrane_admissions(repo, session_id, created_at);
+
+CREATE TRIGGER IF NOT EXISTS membrane_admissions_no_delete
+BEFORE DELETE ON membrane_admissions
+BEGIN
+    SELECT RAISE(ABORT, 'canonical membrane admissions cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS membrane_admissions_no_update
+BEFORE UPDATE ON membrane_admissions
+BEGIN
+    SELECT RAISE(ABORT, 'canonical membrane admissions cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -3519,6 +3588,105 @@ class Store:
             except (TypeError, ValueError, json.JSONDecodeError):
                 continue
         return out
+
+    def append_will_receipt(
+        self, repo: str, will: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Append one immutable will receipt (exactly-once per will_id)."""
+        if not isinstance(will, dict):
+            raise TypeError("will receipt must be a dict")
+        receipt_hash = str(will.get("receipt_hash") or "").strip()
+        will_id = str(will.get("will_id") or "").strip()
+        event_id = str(will.get("event_id") or "").strip()
+        principal_id = str(will.get("principal_id") or "").strip()
+        if not all([receipt_hash, will_id, event_id, principal_id]):
+            raise ValueError("will receipt missing required identity fields")
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "")
+            existing = conn.execute(
+                """SELECT * FROM will_receipts
+                   WHERE repository_id=? AND will_id=?""",
+                (repository_id, will_id),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError("will_id already has different content")
+                return {**will, "inserted": False, "duplicate": True}
+            created_at = float(will.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO will_receipts(
+                       receipt_hash, repository_id, repo, principal_id, will_id,
+                       session_id, body_epoch_id, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    repository_id,
+                    repo,
+                    principal_id,
+                    will_id,
+                    will.get("session_id"),
+                    will.get("body_epoch_id"),
+                    event_id,
+                    self._symbiotic_canonical_json(will),
+                    created_at,
+                ),
+            )
+            return {**will, "inserted": True, "duplicate": False}
+
+    def append_membrane_admission(
+        self, repo: str, admission: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Append one immutable membrane admission receipt."""
+        if not isinstance(admission, dict):
+            raise TypeError("membrane admission must be a dict")
+        receipt_hash = str(admission.get("receipt_hash") or "").strip()
+        event_id = str(admission.get("event_id") or "").strip()
+        if not receipt_hash or not event_id:
+            raise ValueError("membrane admission missing receipt_hash/event_id")
+        with self.transaction() as conn:
+            repository = conn.execute(
+                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+            ).fetchone()
+            if repository is None:
+                raise ValueError(f"Unknown repository: {repo}")
+            repository_id = str(repository["repository_id"] or "")
+            existing = conn.execute(
+                """SELECT * FROM membrane_admissions
+                   WHERE receipt_hash=?""",
+                (receipt_hash,),
+            ).fetchone()
+            if existing is not None:
+                return {**admission, "inserted": False, "duplicate": True}
+            created_at = float(admission.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO membrane_admissions(
+                       receipt_hash, repository_id, repo, session_id, will_id,
+                       will_receipt_hash, admitted_count, rejected_count,
+                       deferred_count, durable_write_authorized, event_id,
+                       receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    repository_id,
+                    repo,
+                    admission.get("session_id"),
+                    admission.get("will_id"),
+                    admission.get("will_receipt_hash"),
+                    int(admission.get("admitted_count") or 0),
+                    int(admission.get("rejected_count") or 0),
+                    int(admission.get("deferred_count") or 0),
+                    1 if admission.get("durable_write_authorized") else 0,
+                    event_id,
+                    self._symbiotic_canonical_json(admission),
+                    created_at,
+                ),
+            )
+            return {**admission, "inserted": True, "duplicate": False}
 
     def _verify_symbiotic_session_conn(
         self,

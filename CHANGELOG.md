@@ -1,3 +1,17 @@
+## 8.5.0 - Authenticated Will & Unified Distillation Membrane
+
+- Combined former 8.5.0 (authenticated principal will) and 8.5.1 (will-bound
+  membrane) into one release.
+- `WillRoot` HMAC receipts: scopes `will.direct|prioritize|admit`; clauses for
+  admit/forbid/prioritize/cap/support; never invents facts, never host.mutate,
+  never auto-executes.
+- Unified distillation membrane admits trajectory candidates only when
+  `will.verified ∧ ΓΞWOS ∧ directed ∧ support_sufficient`; `invented_count≡0`.
+- Ledgers: `will_principals`, `will_receipts`, `membrane_admissions`.
+- CLI: `cortex will register|issue|verify|status`, `cortex membrane admit|status`;
+  `symbiosis consolidate --will-secret` runs the membrane.
+- Docs: `docs/intelligence/PHASE_V8.5_AUTHENTICATED_WILL_AND_MEMBRANE.md`.
+
 ## 8.4.5 - Distillation Candidate Extraction
 
 - Verified frame transitions produce typed `DistillationCandidateBatch` receipts:

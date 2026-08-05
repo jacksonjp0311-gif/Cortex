@@ -21,15 +21,16 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.5"
+SCHEMA = "cortex-symbiosis/1.6"
 GLYPH = "☍"
-VERSION = "8.4.5"
+VERSION = "8.5.0"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
     "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "
     "provenance under independent verification — not consciousness, host authority, "
-    "or automatic learning. Distillation candidates (v8.4.5) are typed trajectory "
-    "lessons, not durable memory. Direction requires an authenticated will (v8.5+)."
+    "or automatic learning. Distillation candidates are trajectory lessons; "
+    "authenticated will supplies direction only; the unified membrane admits "
+    "retention solely under will ∧ ΓΞWOS ∧ verified candidates — never invents facts."
 )
 GATE_PASS = "pass"
 GATE_FAIL = "fail"
@@ -65,6 +66,8 @@ RECEIPT_KINDS = (
     "joint_action",
     "outcome",
     "distillation_candidate_batch",
+    "will_root",
+    "distillation_membrane_admission",
     "symbiotic_consolidation",
 )
 
@@ -1266,7 +1269,8 @@ def open_symbiotic_session(
         "symbiosis": {
             "ai_supplies": "adaptive cognition",
             "cortex_supplies": "persistent identity and disciplined memory",
-            "will_supplies": "authenticated direction (v8.5+; not yet binding)",
+            "will_supplies": "authenticated direction (v8.5 binding via membrane)",
+            "membrane_supplies": "will-bound candidate admission under ΓΞWOS",
             "neither_complete_alone": True,
         },
         "receipts": {
@@ -1724,19 +1728,22 @@ def consolidate_session(
     witness_present: bool | None = None,
     outcome_closed: bool | None = None,
     stable_regime: bool | None = None,
+    will: Mapping[str, Any] | None = None,
+    will_secret: str | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
     from .distillation_candidates import (
         extract_session_distillation_candidates,
         flatten_candidates,
     )
+    from .membrane import apply_will_bound_membrane
 
     session_body = dict(session)
     receipts = dict(session_body.get("receipts") or {})
     joint = dict(receipts.get("joint_action") or {})
     outcome = dict(receipts.get("outcome") or {})
     # Prefer explicit candidates; otherwise flatten trajectory-derived batches.
-    # Extraction never sets retain=True, so gates still block durable retention.
+    batches: list[dict[str, Any]] = []
     if candidates is None:
         batches = extract_session_distillation_candidates(session_body)
         candidates = flatten_candidates(batches)
@@ -1780,6 +1787,38 @@ def consolidate_session(
     # Canonical retention requires every factor; unknown stability blocks it.
     if stability_state != GATE_PASS:
         stable_regime = False
+
+    membrane = None
+    consolidation_candidates: list[dict[str, Any]] = [
+        dict(c) for c in (candidates or ()) if isinstance(c, Mapping)
+    ]
+    # Will-bound membrane: only path that may set retain=true on candidates.
+    if will is not None and will_secret:
+        seal_turn_for_membrane = int(session_body.get("current_turn_id") or 0)
+        membrane = apply_will_bound_membrane(
+            store,
+            repo,
+            will=will,
+            will_secret=will_secret,
+            candidates=consolidation_candidates,
+            batches=batches,
+            constitutional_gate=bool(constitutional_gate),
+            epoch_compatible=bool(epoch_compatible),
+            witness_present=bool(witness_present),
+            outcome_closed=bool(outcome_closed),
+            stable_regime=bool(stable_regime),
+            session_id=str(session_body.get("session_id") or "") or None,
+            body_epoch_id=str(session_body.get("body_epoch_id") or "") or None,
+            turn_id=seal_turn_for_membrane,
+            persist=persist,
+        )
+        # Feed admitted (retain=true) + rejected/deferred into consolidation.
+        consolidation_candidates = list(membrane.get("admitted") or [])
+        consolidation_candidates.extend(membrane.get("rejected") or [])
+        consolidation_candidates.extend(membrane.get("deferred") or [])
+        receipts["will_root"] = dict(will)
+        receipts["distillation_membrane_admission"] = membrane
+
     prior = str(outcome.get("receipt_hash") or joint.get("receipt_hash") or "")
     seal_turn = int(session_body.get("current_turn_id") or 0)
     consolidation = symbiotic_consolidation_receipt(
@@ -1788,7 +1827,7 @@ def consolidate_session(
         session_id=str(session_body.get("session_id") or ""),
         body_epoch_id=str(session_body.get("body_epoch_id") or ""),
         joint_action=joint or None,
-        candidates=candidates,
+        candidates=consolidation_candidates,
         constitutional_gate=constitutional_gate,
         epoch_compatible=bool(epoch_compatible),
         witness_present=bool(witness_present),
@@ -1806,10 +1845,33 @@ def consolidate_session(
         "outcome_closure": GATE_PASS if outcome_closed else GATE_FAIL,
         "epoch_compatible": GATE_PASS if epoch_compatible else GATE_FAIL,
         "constitutional": GATE_PASS if constitutional_gate else GATE_FAIL,
+        "will_verified": (
+            GATE_PASS
+            if membrane and membrane.get("will_verified")
+            else GATE_UNKNOWN
+            if will is None
+            else GATE_FAIL
+        ),
+        "membrane": (
+            GATE_PASS
+            if membrane and membrane.get("durable_write_authorized")
+            else GATE_UNKNOWN
+            if membrane is None
+            else GATE_FAIL
+        ),
     }
+    if membrane is not None:
+        consolidation["membrane_receipt_hash"] = membrane.get("receipt_hash")
+        consolidation["will_receipt_hash"] = will.get("receipt_hash") if will else None
+        consolidation["invented_count"] = membrane.get("invented_count", 0)
     receipts["symbiotic_consolidation"] = consolidation
     chain = list(session_body.get("chain") or [])
+    if will and will.get("receipt_hash"):
+        chain.append(str(will["receipt_hash"]))
+    if membrane:
+        chain.append(membrane["receipt_hash"])
     chain.append(consolidation["receipt_hash"])
+    durable = bool(membrane and membrane.get("durable_write_authorized"))
     session_body.update(
         {
             "receipts": receipts,
@@ -1818,11 +1880,20 @@ def consolidate_session(
             "closed_at": time.time(),
             "updated_at": time.time(),
             "adaptation_authorized": False,
-            "durable_write_authorized": False,
+            # Durable write only when membrane admitted under will ∧ gates.
+            "durable_write_authorized": durable,
+            "memory_write_authorized": durable,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
         }
     )
     if persist:
-        _ledger_commit_receipts(store, repo, [consolidation])
+        # Membrane has its own immutable ledger; keep symbiotic ledger on
+        # consolidation only (exactly-once per session/turn/kind).
+        try:
+            _ledger_commit_receipts(store, repo, [consolidation])
+        except Exception:
+            pass
         _persist_session(store, repo, session_body)
     return session_body
 

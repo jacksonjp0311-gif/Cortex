@@ -1334,7 +1334,84 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.5,
         help="Declared uncertainty scalar in [0,1].",
     )
+    symbiosis_p.add_argument(
+        "--will-secret",
+        default="",
+        help="Principal secret for will-bound consolidate (v8.5 membrane).",
+    )
+    symbiosis_p.add_argument(
+        "--constitutional",
+        action="store_true",
+        help="Open constitutional gate for consolidate/membrane.",
+    )
     symbiosis_p.add_argument("--json", action="store_true")
+
+    will_p = sub.add_parser(
+        "will",
+        help="Authenticated principal will (v8.5): direction without invention.",
+    )
+    will_p.add_argument(
+        "action",
+        choices=["status", "register", "issue", "verify"],
+        nargs="?",
+        default="status",
+    )
+    will_p.add_argument("--repo", required=True)
+    will_p.add_argument("--principal", default="", help="Principal id.")
+    will_p.add_argument("--name", default="", help="Display name for register.")
+    will_p.add_argument("--secret", default="", help="Principal secret.")
+    will_p.add_argument(
+        "--admit-types",
+        default="",
+        help="Comma-separated candidate types to admit (issue).",
+    )
+    will_p.add_argument(
+        "--forbid-types",
+        default="",
+        help="Comma-separated candidate types to forbid (issue).",
+    )
+    will_p.add_argument(
+        "--max-retain",
+        type=int,
+        default=None,
+        help="Cap admitted retains (issue).",
+    )
+    will_p.add_argument(
+        "--min-support",
+        default="low",
+        help="Minimum support level: none|low|medium|high (issue).",
+    )
+    will_p.add_argument(
+        "--intent",
+        default="",
+        help="Human intent summary for the will receipt.",
+    )
+    will_p.add_argument(
+        "--ttl",
+        type=int,
+        default=86400,
+        help="Will TTL in seconds (default 1 day).",
+    )
+    will_p.add_argument("--json", action="store_true")
+
+    membrane_p = sub.add_parser(
+        "membrane",
+        help="Will-bound unified distillation membrane (v8.5).",
+    )
+    membrane_p.add_argument(
+        "action",
+        choices=["status", "admit"],
+        nargs="?",
+        default="status",
+    )
+    membrane_p.add_argument("--repo", required=True)
+    membrane_p.add_argument("--secret", default="", help="Will principal secret.")
+    membrane_p.add_argument("--constitutional", action="store_true")
+    membrane_p.add_argument("--epoch-ok", action="store_true")
+    membrane_p.add_argument("--witnessed", action="store_true")
+    membrane_p.add_argument("--outcome-closed", action="store_true")
+    membrane_p.add_argument("--stable", action="store_true")
+    membrane_p.add_argument("--json", action="store_true")
 
     prune_p = sub.add_parser(
         "prune",
@@ -3534,18 +3611,183 @@ def main(argv: list[str] | None = None) -> None:
                 )
                 return
             if args.action == "consolidate":
+                will_receipt = None
+                will_secret = str(getattr(args, "will_secret", "") or "")
+                if will_secret:
+                    will_receipt = store.get_setting(
+                        f"will_latest:{args.repo}", None
+                    )
                 emit(
                     consolidate_session(
                         store,
                         args.repo,
                         latest,
-                        candidates=[],
-                        constitutional_gate=False,
+                        constitutional_gate=bool(
+                            getattr(args, "constitutional", False)
+                        ),
+                        will=will_receipt,
+                        will_secret=will_secret or None,
                     ),
                     args.json,
                 )
                 return
             emit(symbiotic_status(store, args.repo), args.json)
+
+        elif command == "will":
+            from .will import (
+                issue_will,
+                register_will_principal,
+                verify_will,
+                will_status,
+            )
+
+            if args.action == "status":
+                emit(will_status(store, args.repo), args.json)
+                return
+            if args.action == "register":
+                principal = str(args.principal or "").strip()
+                if not principal:
+                    raise ValueError("will register requires --principal")
+                emit(
+                    register_will_principal(
+                        store,
+                        args.repo,
+                        principal,
+                        str(args.name or principal),
+                        secret=str(args.secret or ""),
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "issue":
+                principal = str(args.principal or "").strip()
+                secret = str(args.secret or "").strip()
+                if not principal or not secret:
+                    raise ValueError("will issue requires --principal and --secret")
+                clauses: list[dict[str, Any]] = []
+                admit = [
+                    p.strip()
+                    for p in str(args.admit_types or "").split(",")
+                    if p.strip()
+                ]
+                forbid = [
+                    p.strip()
+                    for p in str(args.forbid_types or "").split(",")
+                    if p.strip()
+                ]
+                if admit:
+                    clauses.append(
+                        {"kind": "admit_type", "candidate_types": admit, "priority": 1}
+                    )
+                    clauses.append(
+                        {
+                            "kind": "prioritize_type",
+                            "candidate_types": admit,
+                            "priority": 2,
+                        }
+                    )
+                if forbid:
+                    clauses.append(
+                        {"kind": "forbid_type", "candidate_types": forbid}
+                    )
+                if args.max_retain is not None:
+                    clauses.append(
+                        {"kind": "cap_retain", "max_retain": int(args.max_retain)}
+                    )
+                if args.min_support:
+                    clauses.append(
+                        {
+                            "kind": "prefer_support_min",
+                            "min_support": str(args.min_support),
+                        }
+                    )
+                latest = store.get_setting(f"symbiosis_latest:{args.repo}", None) or {}
+                emit(
+                    issue_will(
+                        store,
+                        args.repo,
+                        principal_id=principal,
+                        secret=secret,
+                        clauses=clauses,
+                        session_id=str(latest.get("session_id") or "") or None,
+                        body_epoch_id=str(latest.get("body_epoch_id") or "") or None,
+                        repository_id=str(latest.get("repository_id") or "") or None,
+                        ttl_seconds=int(args.ttl),
+                        intent_summary=str(args.intent or ""),
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "verify":
+                latest_will = store.get_setting(f"will_latest:{args.repo}", None) or {}
+                if not latest_will:
+                    raise ValueError("no will receipt; issue one first")
+                emit(
+                    verify_will(
+                        store,
+                        args.repo,
+                        latest_will,
+                        secret=str(args.secret or "") or None,
+                    ),
+                    args.json,
+                )
+                return
+            emit(will_status(store, args.repo), args.json)
+
+        elif command == "membrane":
+            from .distillation_candidates import (
+                extract_session_distillation_candidates,
+                flatten_candidates,
+            )
+            from .membrane import apply_will_bound_membrane
+
+            if args.action == "status":
+                emit(
+                    store.get_setting(f"membrane_latest:{args.repo}", None)
+                    or {
+                        "status": "cold",
+                        "repo": args.repo,
+                        "claim_boundary": (
+                            "No membrane admission yet. Run: cortex membrane admit"
+                        ),
+                    },
+                    args.json,
+                )
+                return
+            if args.action == "admit":
+                secret = str(args.secret or "").strip()
+                will_receipt = store.get_setting(f"will_latest:{args.repo}", None)
+                if not will_receipt:
+                    raise ValueError("no will; run cortex will issue first")
+                if not secret:
+                    raise ValueError("membrane admit requires --secret")
+                latest = store.get_setting(f"symbiosis_latest:{args.repo}", None) or {}
+                batches = extract_session_distillation_candidates(latest)
+                candidates = flatten_candidates(batches)
+                emit(
+                    apply_will_bound_membrane(
+                        store,
+                        args.repo,
+                        will=will_receipt,
+                        will_secret=secret,
+                        candidates=candidates,
+                        batches=batches,
+                        constitutional_gate=bool(args.constitutional),
+                        epoch_compatible=bool(args.epoch_ok),
+                        witness_present=bool(args.witnessed),
+                        outcome_closed=bool(args.outcome_closed),
+                        stable_regime=bool(args.stable),
+                        session_id=str(latest.get("session_id") or "") or None,
+                        body_epoch_id=str(latest.get("body_epoch_id") or "") or None,
+                        turn_id=int(latest.get("current_turn_id") or 0),
+                    ),
+                    args.json,
+                )
+                return
+            emit(
+                store.get_setting(f"membrane_latest:{args.repo}", None) or {},
+                args.json,
+            )
 
         elif command == "interconnect":
             emit(mesh_status(store, args.repo, governor=governor, home=home), args.json)

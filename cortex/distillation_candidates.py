@@ -20,13 +20,13 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-distillation-candidates/1.0"
-VERSION = "8.4.5"
+VERSION = "8.5.0"
 GLYPH = "⧉◇"
 CLAIM_BOUNDARY = (
     "Distillation candidates are typed, trajectory-derived proposals for what "
     "might later be retained. They are not memory writes, not facts by "
     "fluency, and not authority. retain defaults to false; durable_write and "
-    "memory_write remain unauthorized until a later gated membrane admits them."
+    "memory_write remain unauthorized until the v8.5 will-bound membrane admits them."
 )
 
 CANDIDATE_TYPES = frozenset(
