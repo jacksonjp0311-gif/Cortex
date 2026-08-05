@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.7.0-0ea5e9?style=for-the-badge" alt="v8.7.0" />
+  <img src="https://img.shields.io/badge/version-8.8.0-0ea5e9?style=for-the-badge" alt="v8.8.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,7 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.7)
+## AI–Cortex symbiosis (v8.8)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -32,19 +32,22 @@ slow memory retains only what survives verification:
 Δc = 0 whenever Γ Ξ W O S = 0
 ```
 
-v8.7 **rehydrates** admitted memories under eligibility gates into a task-bound
-projection, records memory use/credit against outcomes, and supports challenge /
-supersession without deleting history.
+v8.8 runs **cross-instantiation memory trials** (arms A–E) measuring whether
+governed rehydration and use-feedback improve a new temporary cortex:
 
-```powershell
-python -m cortex memory project --repo YourProject --task "..." --json
-python -m cortex memory verify --repo YourProject --deep --json
-python -m cortex memory challenge --repo YourProject --memory mem_x --candidate cand_y --json
-python -m cortex admitted list --repo YourProject --json
+```text
+G_rehydration = U_D − U_A
+G_credit      = U_E − U_D
 ```
 
-See [`docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md`](docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md)
-(and prior [`v8.6`](docs/intelligence/PHASE_V8.6_ADMITTED_MEMORY_LEDGER.md)).
+```powershell
+python -m cortex memory trial --repo YourProject --task "..." --json
+python -m cortex memory project --repo YourProject --task "..." --json
+python -m cortex memory verify --repo YourProject --deep --json
+```
+
+See [`docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md`](docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md)
+(and prior [`v8.7`](docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md)).
 
 ## Interconnect mathematics (v8.3.4)
 

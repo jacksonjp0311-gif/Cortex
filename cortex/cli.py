@@ -1408,6 +1408,8 @@ def build_parser() -> argparse.ArgumentParser:
             "supersede",
             "verify",
             "credit",
+            "trial",
+            "trial-status",
         ],
         nargs="?",
         default="status",
@@ -3916,6 +3918,25 @@ def main(argv: list[str] | None = None) -> None:
                     or {"status": "no_projection_yet", "repo": args.repo},
                     args.json,
                 )
+                return
+            if args.action == "trial":
+                from .memory_trials import run_cross_instantiation_trial
+
+                will = store.get_setting(f"will_latest:{args.repo}", None) or {}
+                emit(
+                    run_cross_instantiation_trial(
+                        store,
+                        args.repo,
+                        task=str(args.task or "") or None,
+                        current_will=will if will.get("receipt_hash") else None,
+                    ),
+                    args.json,
+                )
+                return
+            if args.action == "trial-status":
+                from .memory_trials import memory_trial_status
+
+                emit(memory_trial_status(store, args.repo), args.json)
                 return
             emit(admitted_memory_status(store, args.repo), args.json)
 

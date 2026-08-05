@@ -819,6 +819,31 @@ BEFORE UPDATE ON memory_supersession_receipts BEGIN
     SELECT RAISE(ABORT, 'canonical memory supersession receipts cannot be updated');
 END;
 
+-- v8.8 cross-instantiation memory trial receipts
+CREATE TABLE IF NOT EXISTS memory_trial_receipts(
+    receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+    repository_id TEXT NOT NULL,
+    repo TEXT NOT NULL,
+    task_hash TEXT NOT NULL,
+    g_rehydration REAL,
+    g_credit REAL,
+    event_id TEXT NOT NULL,
+    receipt_json TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    UNIQUE(repository_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_trial_repo
+ON memory_trial_receipts(repo, created_at);
+
+CREATE TRIGGER IF NOT EXISTS memory_trial_receipts_no_delete
+BEFORE DELETE ON memory_trial_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory trial receipts cannot be deleted');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_trial_receipts_no_update
+BEFORE UPDATE ON memory_trial_receipts BEGIN
+    SELECT RAISE(ABORT, 'canonical memory trial receipts cannot be updated');
+END;
+
 CREATE TABLE IF NOT EXISTS evidence_credit(
     outcome_id TEXT NOT NULL,
     memory_id INTEGER,
@@ -4295,6 +4320,46 @@ class Store:
             return json.loads(row["receipt_json"])
         except (TypeError, ValueError, json.JSONDecodeError):
             return None
+
+    def append_memory_trial_receipt(
+        self, repo: str, receipt: dict[str, Any]
+    ) -> dict[str, Any]:
+        if not isinstance(receipt, dict):
+            raise TypeError("memory trial receipt must be a dict")
+        receipt_hash = str(receipt.get("receipt_hash") or "").strip()
+        event_id = str(receipt.get("event_id") or "").strip()
+        if not receipt_hash or not event_id:
+            raise ValueError("memory trial missing receipt_hash/event_id")
+        with self.transaction() as conn:
+            repository_id = self._repo_id(conn, repo)
+            existing = conn.execute(
+                """SELECT * FROM memory_trial_receipts
+                   WHERE repository_id=? AND event_id=?""",
+                (repository_id, event_id),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["receipt_hash"]) != receipt_hash:
+                    raise ValueError("memory trial event already has different content")
+                return {**receipt, "inserted": False, "duplicate": True}
+            created_at = float(receipt.get("created_at") or time.time())
+            conn.execute(
+                """INSERT INTO memory_trial_receipts(
+                       receipt_hash, repository_id, repo, task_hash,
+                       g_rehydration, g_credit, event_id, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    receipt_hash,
+                    repository_id,
+                    repo,
+                    str(receipt.get("task_hash") or ""),
+                    receipt.get("G_rehydration"),
+                    receipt.get("G_credit"),
+                    event_id,
+                    self._symbiotic_canonical_json(receipt),
+                    created_at,
+                ),
+            )
+            return {**receipt, "inserted": True, "duplicate": False}
 
     def _verify_symbiotic_session_conn(
         self,

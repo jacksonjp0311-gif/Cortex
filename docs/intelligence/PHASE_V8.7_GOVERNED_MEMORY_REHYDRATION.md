@@ -66,4 +66,5 @@ Credit never rewrites truth status of an admitted memory.
 
 ## Next
 
-v8.8 — cross-instantiation memory trials (matched arms A–E).
+v8.8 — cross-instantiation memory trials (matched arms A–E).  
+See `PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md`.

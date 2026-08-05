@@ -1,3 +1,13 @@
+## 8.8.0 - Cross-Instantiation Memory Trials
+
+- Matched arms A–E: raw repo, ordinary summary, unfiltered admitted memories,
+  governed projection, projection + use-feedback.
+- Deterministic probe utilities and gains `G_rehydration = U_D−U_A`,
+  `G_credit = U_E−U_D`.
+- Immutable `memory_trial_receipts` ledger + history tip.
+- CLI: `cortex memory trial` / `trial-status`.
+- Docs: `docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md`.
+
 ## 8.7.0 - Governed Memory Rehydration and Revision
 
 - Append-only memory state overlays (active/contested/superseded/epoch_stale/…).
