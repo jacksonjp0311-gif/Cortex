@@ -37,22 +37,41 @@ def _finite_or_zero(value: Any) -> float:
 def classify_regime(measured: dict[str, Any]) -> str:
     """Classify the observed plant transition without granting it authority."""
     delta = dict(measured.get("normalized_delta") or {})
+    validity = dict(measured.get("coordinate_validity") or {})
+
+    def _valid_value(name: str) -> float | None:
+        if name in validity and validity.get(name) is not True:
+            return None
+        value = delta.get(name)
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        if number != number or number in (float("inf"), float("-inf")):
+            return None
+        return number
+
+    neural_synapses = _valid_value("neural_synapses")
+    synapse_mass = _valid_value("synapse_mass")
     if (
-        _finite_or_zero(delta.get("neural_synapses")) < -1e-12
-        or _finite_or_zero(delta.get("synapse_mass")) < -1e-12
-    ):
+        neural_synapses is not None
+        and neural_synapses < -1e-12
+    ) or (synapse_mass is not None and synapse_mass < -1e-12):
         return "scheduled_decay"
     if any(
-        abs(_finite_or_zero(delta.get(name))) > 1e-12
+        (value := _valid_value(name)) is not None and abs(value) > 1e-12
         for name in ("indexed_files", "neural_nodes", "neural_synapses")
     ):
         return "refresh_recompile"
     if any(
-        abs(_finite_or_zero(delta.get(name))) > 1e-12
+        (value := _valid_value(name)) is not None and abs(value) > 1e-12
         for name in ("ranker_train_count", "outcomes", "mean_reward")
     ):
         return "adaptive_learning"
-    if any(abs(_finite_or_zero(value)) > 1e-12 for value in delta.values()):
+    if any(
+        (value := _valid_value(name)) is not None and abs(value) > 1e-12
+        for name in delta
+    ):
         return "evidence_only"
     return "steady"
 
@@ -219,6 +238,26 @@ def predict_next_delta(store: Any, repo: str, *, action: str) -> dict[str, Any]:
     }
 
 
+def _coordinate_mask(measured: dict[str, Any], actual: dict[str, Any]) -> dict[str, bool]:
+    """Return m_i=1 only for valid finite coordinates (null is absent, not zero)."""
+    validity = dict(measured.get("coordinate_validity") or {})
+    mask: dict[str, bool] = {}
+    for name in METRICS:
+        if name in validity:
+            mask[name] = validity.get(name) is True
+            continue
+        value = actual.get(name)
+        try:
+            number = float(value)
+            mask[name] = number == number and number not in (
+                float("inf"),
+                float("-inf"),
+            )
+        except (TypeError, ValueError):
+            mask[name] = False
+    return mask
+
+
 def score_and_update(
     store: Any,
     repo: str,
@@ -228,12 +267,21 @@ def score_and_update(
     state = load_model(store, repo)
     predicted = dict(forecast.get("predicted_normalized_delta") or {})
     actual = dict(measured.get("normalized_delta") or {})
-    errors = {
-        name: _finite_or_zero(actual.get(name)) - _finite_or_zero(predicted.get(name))
-        for name in METRICS
-    }
-    mae = sum(abs(value) for value in errors.values()) / max(1, len(errors))
-    accurate = mae <= 0.20
+    mask = _coordinate_mask(measured, actual)
+    # Masked residual energy: null coordinates are excluded, never zero-filled.
+    errors: dict[str, float | None] = {}
+    weighted_abs = 0.0
+    weight_sum = 0.0
+    for name in METRICS:
+        if not mask.get(name):
+            errors[name] = None
+            continue
+        residual = float(actual[name]) - _finite_or_zero(predicted.get(name))
+        errors[name] = residual
+        weighted_abs += abs(residual)
+        weight_sum += 1.0
+    mae = weighted_abs / max(weight_sum, 1e-12) if weight_sum > 0 else 0.0
+    accurate = weight_sum > 0 and mae <= 0.20
     confidence = float(forecast.get("confidence") or 0.0)
     predicted_regime = str(forecast.get("predicted_regime") or "cold_start")
     observed_regime = classify_regime(measured)
@@ -241,6 +289,8 @@ def score_and_update(
         "forecast_id": forecast.get("forecast_id"),
         "event_id": measured.get("event_id"),
         "normalized_mae": round(mae, 6),
+        "masked_coordinate_count": int(weight_sum),
+        "valid_mask": mask,
         "accurate": accurate,
         "confidence": confidence,
         "confidence_definition": forecast.get("confidence_definition"),
@@ -250,12 +300,15 @@ def score_and_update(
         "regime_match": predicted_regime == observed_regime,
         "errors": errors,
         "scored_at": time.time(),
+        "null_imputation": False,
     }
     n = int(state.get("n_updates") or 0)
     mean = dict(state.get("mean_delta") or {})
     variance = dict(state.get("variance") or {})
     for name in METRICS:
-        x = _finite_or_zero(actual.get(name))
+        if not mask.get(name):
+            continue
+        x = float(actual[name])
         old = float(mean.get(name, 0.0))
         new = x if n == 0 else (1.0 - ALPHA) * old + ALPHA * x
         mean[name] = new
@@ -268,7 +321,9 @@ def score_and_update(
     regime_mean = dict(regime_state.get("mean_delta") or {})
     regime_variance = dict(regime_state.get("variance") or {})
     for name in METRICS:
-        x = _finite_or_zero(actual.get(name))
+        if not mask.get(name):
+            continue
+        x = float(actual[name])
         old = _finite_or_zero(regime_mean.get(name))
         new = x if regime_n == 0 else (1.0 - ALPHA) * old + ALPHA * x
         regime_mean[name] = new

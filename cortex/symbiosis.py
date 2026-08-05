@@ -21,15 +21,20 @@ from typing import Any
 
 from . import __version__
 
-SCHEMA = "cortex-symbiosis/1.1"
+SCHEMA = "cortex-symbiosis/1.2"
 GLYPH = "☍"
-VERSION = "8.4.1"
+VERSION = "8.4.2"
 CLAIM_BOUNDARY = (
     "AI–Cortex symbiotic circulation is a typed two-timescale ledger: the model "
     "proposes meaning; Cortex preserves tested continuity. Receipts are advisory "
     "provenance under independent verification — not consciousness, host authority, "
-    "or automatic learning."
+    "or automatic learning. Direction requires an authenticated will (v8.5+); "
+    "this release only hardens recurrent, verifiable circulation."
 )
+GATE_PASS = "pass"
+GATE_FAIL = "fail"
+GATE_UNKNOWN = "unknown"
+GATE_STATES = frozenset({GATE_PASS, GATE_FAIL, GATE_UNKNOWN})
 
 EVALUATION_DECISIONS = frozenset(
     {"allow", "constrain", "ask", "abstain", "hold"}
@@ -90,6 +95,25 @@ def _digest_list(items: Sequence[Any], *, limit: int = 32) -> list[str]:
     return digests
 
 
+def _event_id(
+    *,
+    session_id: str,
+    turn_id: int,
+    kind: str,
+    body_epoch_id: str,
+    salt: str = "",
+) -> str:
+    return "evt_" + _sha(
+        {
+            "session_id": session_id,
+            "turn_id": int(turn_id),
+            "kind": kind,
+            "body_epoch_id": body_epoch_id,
+            "salt": salt,
+        }
+    )[:24]
+
+
 def _base(
     *,
     kind: str,
@@ -97,14 +121,34 @@ def _base(
     repository_id: str,
     session_id: str,
     body_epoch_id: str,
+    turn_id: int = 0,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
     prior_receipt_hash: str | None = None,
     **fields: Any,
 ) -> dict[str, Any]:
+    turn = int(turn_id)
+    event = str(
+        event_id
+        or _event_id(
+            session_id=session_id,
+            turn_id=turn,
+            kind=kind,
+            body_epoch_id=body_epoch_id,
+        )
+    )
+    case = str(case_id or f"case_{session_id}_{turn}")
+    invocation = str(invocation_id or f"inv_{session_id}")
     material = {
         "kind": kind,
         "repo": repo,
         "repository_id": repository_id,
         "session_id": session_id,
+        "turn_id": turn,
+        "event_id": event,
+        "case_id": case,
+        "invocation_id": invocation,
         "body_epoch_id": body_epoch_id,
         "prior_receipt_hash": prior_receipt_hash,
         **fields,
@@ -118,6 +162,10 @@ def _base(
         "repo": repo,
         "repository_id": repository_id,
         "session_id": session_id,
+        "turn_id": turn,
+        "event_id": event,
+        "case_id": case,
+        "invocation_id": invocation,
         "body_epoch_id": body_epoch_id,
         "prior_receipt_hash": prior_receipt_hash,
         "receipt_hash": receipt_hash,
@@ -128,6 +176,32 @@ def _base(
         "claim_boundary": CLAIM_BOUNDARY,
         **fields,
     }
+
+
+def classify_assumption_status(
+    *,
+    evaluation_decision: str | None,
+    outcome_success: bool | None = None,
+    assumption: str = "",
+) -> str:
+    """Map a proposal assumption into a typed status bucket.
+
+    Held/asked proposals leave assumptions unverified or blocked — never
+    automatically "failed".
+    """
+    decision = str(evaluation_decision or "").strip().lower()
+    text = str(assumption or "")
+    if outcome_success is False and decision in {"allow", "constrain"}:
+        return "assumptions_disconfirmed"
+    if outcome_success is True and decision in {"allow", "constrain"}:
+        return "assumptions_supported"
+    if decision in {"hold", "abstain"}:
+        return "assumptions_blocked"
+    if decision == "ask":
+        return "assumptions_unverified"
+    if decision in {"allow", "constrain"} and outcome_success is None:
+        return "assumptions_unverified"
+    return "assumptions_unverified" if text else "assumptions_unverified"
 
 
 def agent_instantiation_receipt(
@@ -146,6 +220,10 @@ def agent_instantiation_receipt(
     context_packet_digest: str | None = None,
     cortex_version: str | None = None,
     prior_receipt_hash: str | None = None,
+    turn_id: int = 0,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Identify one bounded model instantiation — not a persistent self."""
     return _base(
@@ -154,6 +232,10 @@ def agent_instantiation_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=turn_id,
+        event_id=event_id,
+        case_id=case_id,
+        invocation_id=invocation_id,
         prior_receipt_hash=prior_receipt_hash,
         provider=str(provider or "undeclared"),
         model_id=str(model_id or "undeclared"),
@@ -193,6 +275,10 @@ def cortex_context_receipt(
     constitutional_restrictions: Sequence[str] | None = None,
     packet_hash: str | None = None,
     prior_receipt_hash: str | None = None,
+    turn_id: int = 0,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Record exactly what Cortex gave the AI for this turn."""
     evidence = [dict(item) for item in (evidence_items or ()) if isinstance(item, Mapping)]
@@ -221,6 +307,10 @@ def cortex_context_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=turn_id,
+        event_id=event_id,
+        case_id=case_id,
+        invocation_id=invocation_id,
         prior_receipt_hash=prior_receipt_hash,
         evidence_count=len(evidence),
         evidence_digests=packet_material["evidence_digests"],
@@ -256,6 +346,10 @@ def agent_proposal_receipt(
     predicted_state_transition: Mapping[str, Any] | None = None,
     rationale_public: str | None = None,
     prior_receipt_hash: str | None = None,
+    turn_id: int = 1,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Inspectable AI proposal — external rationale, not private chain-of-thought."""
     if isinstance(declared_uncertainty, Mapping):
@@ -276,6 +370,10 @@ def agent_proposal_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=turn_id,
+        event_id=event_id,
+        case_id=case_id,
+        invocation_id=invocation_id,
         prior_receipt_hash=prior_receipt_hash,
         interpreted_objective=str(interpreted_objective or ""),
         proposed_action=str(proposed_action or ""),
@@ -297,6 +395,15 @@ def agent_proposal_receipt(
     )
 
 
+def _tri(state: bool | None) -> str:
+    """Map boolean-or-missing evidence to pass|fail|unknown."""
+    if state is True:
+        return GATE_PASS
+    if state is False:
+        return GATE_FAIL
+    return GATE_UNKNOWN
+
+
 def measure_evaluation_gates(
     store: Any,
     repo: str,
@@ -304,25 +411,36 @@ def measure_evaluation_gates(
     proposal: Mapping[str, Any],
     context: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Bind evaluation gates to live Cortex measurements — not constants."""
+    """Bind evaluation gates to live Cortex measurements as pass|fail|unknown.
+
+    Unknown never inherits pass behavior.  Boolean convenience fields remain for
+    callers, but decision logic must prefer the tri-state panel.
+    """
     from .epoch import observe_current_epoch
 
     epoch = observe_current_epoch(store, repo)
-    epoch_current = bool(
-        epoch.get("present")
-        and epoch.get("verified")
-        and str(proposal.get("body_epoch_id") or "")
-        and str(proposal.get("body_epoch_id") or "")
-        == str(epoch.get("epoch_id") or epoch.get("live_epoch_id") or "")
-    )
+    claimed_epoch = str(proposal.get("body_epoch_id") or "")
+    live_epoch = str(epoch.get("epoch_id") or epoch.get("live_epoch_id") or "")
+    if not epoch.get("present"):
+        epoch_tri = GATE_UNKNOWN
+    elif not claimed_epoch or not live_epoch:
+        epoch_tri = GATE_UNKNOWN
+    elif bool(epoch.get("verified")) and claimed_epoch == live_epoch:
+        epoch_tri = GATE_PASS
+    else:
+        epoch_tri = GATE_FAIL
+
     measured = store.get_setting(f"measured_event_latest:{repo}", {}) or {}
-    measurement_complete = bool(
-        isinstance(measured, Mapping)
-        and (
-            measured.get("status") == "measured"
-            or float(measured.get("valid_fraction") or 0.0) == 1.0
-        )
-    )
+    if not isinstance(measured, Mapping) or not measured:
+        measurement_tri = GATE_UNKNOWN
+    elif (
+        measured.get("status") == "measured"
+        or float(measured.get("valid_fraction") or 0.0) == 1.0
+    ):
+        measurement_tri = GATE_PASS
+    else:
+        measurement_tri = GATE_FAIL
+
     residual = store.get_setting(f"ostt_residual_latest:{repo}", {}) or {}
     try:
         latest_conformance = store.latest_activation_conformance_receipt(repo)
@@ -330,11 +448,17 @@ def measure_evaluation_gates(
         latest_conformance = None
     if latest_conformance is None and isinstance(residual, Mapping):
         latest_conformance = residual if residual.get("status") else None
-    operator_contract_ready = bool(
-        isinstance(latest_conformance, Mapping)
-        and str(latest_conformance.get("status") or "")
-        in {"conformance_measured", "measured", "conformance_ready"}
-    )
+    if not isinstance(latest_conformance, Mapping) or not latest_conformance:
+        operator_tri = GATE_UNKNOWN
+    elif str(latest_conformance.get("status") or "") in {
+        "conformance_measured",
+        "measured",
+        "conformance_ready",
+    }:
+        operator_tri = GATE_PASS
+    else:
+        operator_tri = GATE_FAIL
+
     try:
         outcome_row = store.db.execute(
             "SELECT COUNT(*) AS n FROM task_outcomes WHERE repo=?",
@@ -343,7 +467,7 @@ def measure_evaluation_gates(
         outcome_count = int(outcome_row["n"]) if outcome_row else 0
     except Exception:
         outcome_count = 0
-    outcome_history_ready = outcome_count > 0
+    outcome_tri = GATE_PASS if outcome_count > 0 else GATE_UNKNOWN
 
     interlock = store.get_setting(f"interlock_shadow_latest:{repo}", {}) or {}
     self_sensing = store.get_setting(f"self_sensing_latest:{repo}", {}) or {}
@@ -358,53 +482,72 @@ def measure_evaluation_gates(
     binding_class = str(
         (binding.get("classification") if isinstance(binding, Mapping) else "") or ""
     ).upper()
-    invariants_ok = bool(
-        epoch_current
-        and sensing not in {"STRESSED", "UNBOUND"}
-        and binding_class not in {"DRIFT_REGIME"}
-        and (
-            not interlock
-            or interlock.get("data_ready") is True
-            or interlock.get("status") not in {"blocked", "failed"}
-        )
-    )
-    # Host immutability: prefer activation-conformance host projection when present.
-    host_immutable = True
+
+    if sensing in {"STRESSED", "UNBOUND"} or binding_class == "DRIFT_REGIME":
+        invariants_tri = GATE_FAIL
+    elif not sensing and not binding_class and not interlock:
+        invariants_tri = GATE_UNKNOWN
+    elif epoch_tri != GATE_PASS:
+        invariants_tri = GATE_FAIL if epoch_tri == GATE_FAIL else GATE_UNKNOWN
+    elif interlock and interlock.get("status") in {"blocked", "failed"}:
+        invariants_tri = GATE_FAIL
+    else:
+        invariants_tri = GATE_PASS
+
+    # Host immutability: never default to pass without evidence.
+    host_tri = GATE_UNKNOWN
     if isinstance(latest_conformance, Mapping):
         invariants = latest_conformance.get("invariant_results") or []
+        found = False
         if isinstance(invariants, list):
             for item in invariants:
                 if (
                     isinstance(item, Mapping)
                     and item.get("invariant_id") == "host_immutable"
                 ):
-                    host_immutable = item.get("passed") is True
+                    host_tri = GATE_PASS if item.get("passed") is True else GATE_FAIL
+                    found = True
                     break
-    authority_scope_ok = True
+        if not found and latest_conformance.get("status") == "conformance_measured":
+            host_tri = GATE_UNKNOWN
+
+    # Authority scope: unknown until an explicit scope witness exists.
+    authority_tri = GATE_UNKNOWN
+    if isinstance(latest_conformance, Mapping) and latest_conformance.get(
+        "comparison_arm"
+    ):
+        # Presence of a constrained comparison arm is weak evidence of scoped review.
+        authority_tri = GATE_PASS
+
     blast_radius = "bounded"
     if sensing in {"STRESSED", "UNBOUND"} or binding_class == "DRIFT_REGIME":
         blast_radius = "high"
     if str(resonance.get("status") or "") == "no_stable_peak":
-        # Temporal instability widens risk without inventing authority.
         if blast_radius == "bounded":
             blast_radius = "elevated"
-    context_bound = bool(
-        context is None
-        or (
-            context.get("session_id") == proposal.get("session_id")
-            and context.get("body_epoch_id") == proposal.get("body_epoch_id")
-        )
-    )
+
+    if context is None:
+        context_tri = GATE_UNKNOWN
+    elif (
+        context.get("session_id") == proposal.get("session_id")
+        and context.get("body_epoch_id") == proposal.get("body_epoch_id")
+    ):
+        context_tri = GATE_PASS
+    else:
+        context_tri = GATE_FAIL
+
     sources = {
         "epoch": {
             "verified": bool(epoch.get("verified")),
             "epoch_id": epoch.get("epoch_id") or epoch.get("live_epoch_id"),
+            "state": epoch_tri,
         },
         "measured_event": {
             "status": measured.get("status") if isinstance(measured, Mapping) else None,
             "valid_fraction": measured.get("valid_fraction")
             if isinstance(measured, Mapping)
             else None,
+            "state": measurement_tri,
         },
         "outcome_count": outcome_count,
         "operator_residual_status": (
@@ -422,16 +565,20 @@ def measure_evaluation_gates(
         if isinstance(interlock, Mapping)
         else None,
     }
+    tri = {
+        "epoch_current": epoch_tri,
+        "host_immutable": host_tri,
+        "invariants_ok": invariants_tri,
+        "authority_scope_ok": authority_tri,
+        "outcome_history_ready": outcome_tri,
+        "operator_contract_ready": operator_tri,
+        "measurement_complete": measurement_tri,
+        "context_bound": context_tri,
+    }
     return {
-        "epoch_current": epoch_current,
-        "host_immutable": host_immutable,
-        "invariants_ok": invariants_ok,
-        "authority_scope_ok": authority_scope_ok,
+        **{key: value == GATE_PASS for key, value in tri.items()},
+        "gate_states": tri,
         "blast_radius": blast_radius,
-        "outcome_history_ready": outcome_history_ready,
-        "operator_contract_ready": operator_contract_ready,
-        "measurement_complete": measurement_complete,
-        "context_bound": context_bound,
         "measurement_sources": sources,
     }
 
@@ -440,42 +587,74 @@ def evaluate_proposal(
     *,
     proposal: Mapping[str, Any],
     context: Mapping[str, Any] | None = None,
-    epoch_current: bool = False,
-    host_immutable: bool = True,
-    invariants_ok: bool = False,
-    authority_scope_ok: bool = True,
+    epoch_current: bool | str = False,
+    host_immutable: bool | str = GATE_UNKNOWN,
+    invariants_ok: bool | str = False,
+    authority_scope_ok: bool | str = GATE_UNKNOWN,
     blast_radius: str = "unknown",
-    outcome_history_ready: bool = False,
-    operator_contract_ready: bool = False,
-    measurement_complete: bool = False,
+    outcome_history_ready: bool | str = False,
+    operator_contract_ready: bool | str = False,
+    measurement_complete: bool | str = False,
+    context_bound: bool | str | None = None,
     forced_decision: str | None = None,
     measurement_sources: Mapping[str, Any] | None = None,
+    gate_states: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Cortex evaluation of an AI proposal against durable constraints.
 
     Returns one of: allow, constrain, ask, abstain, hold.
-    Default is fail-closed: missing gates produce hold/abstain, never silent allow.
+    Fail-closed: gate fail holds; gate unknown never allows.
     """
+
+    def _as_tri(value: Any, *, default: str = GATE_UNKNOWN) -> str:
+        if isinstance(value, str) and value in GATE_STATES:
+            return value
+        if value is True:
+            return GATE_PASS
+        if value is False:
+            return GATE_FAIL
+        return default
+
+    tri = {
+        "epoch_current": _as_tri(epoch_current),
+        "host_immutable": _as_tri(host_immutable, default=GATE_UNKNOWN),
+        "invariants_ok": _as_tri(invariants_ok),
+        "authority_scope_ok": _as_tri(authority_scope_ok, default=GATE_UNKNOWN),
+        "outcome_history_ready": _as_tri(outcome_history_ready, default=GATE_UNKNOWN),
+        "operator_contract_ready": _as_tri(operator_contract_ready, default=GATE_UNKNOWN),
+        "measurement_complete": _as_tri(measurement_complete),
+        "context_bound": _as_tri(
+            context_bound
+            if context_bound is not None
+            else (
+                True
+                if context is None
+                else (
+                    context.get("session_id") == proposal.get("session_id")
+                    and context.get("body_epoch_id") == proposal.get("body_epoch_id")
+                )
+            )
+        ),
+    }
+    if isinstance(gate_states, Mapping):
+        for key, value in gate_states.items():
+            if key in tri and str(value) in GATE_STATES:
+                tri[key] = str(value)
+
     gates = {
         "proposal_present": bool(proposal.get("receipt_hash")),
         "objective_declared": bool(str(proposal.get("interpreted_objective") or "").strip()),
         "action_declared": bool(str(proposal.get("proposed_action") or "").strip()),
-        "epoch_current": bool(epoch_current),
-        "host_immutable": bool(host_immutable),
-        "invariants_ok": bool(invariants_ok),
-        "authority_scope_ok": bool(authority_scope_ok),
-        "outcome_history_ready": bool(outcome_history_ready),
-        "operator_contract_ready": bool(operator_contract_ready),
-        "measurement_complete": bool(measurement_complete),
-        "context_bound": bool(
-            context is None
-            or (
-                context.get("session_id") == proposal.get("session_id")
-                and context.get("body_epoch_id") == proposal.get("body_epoch_id")
-            )
-        ),
+        **{key: value == GATE_PASS for key, value in tri.items()},
+        "gate_states": tri,
     }
-    missing = [name for name, passed in gates.items() if not passed]
+    missing = [
+        name
+        for name, value in gates.items()
+        if name not in {"gate_states"} and value is False
+    ]
+    unknown = [name for name, value in tri.items() if value == GATE_UNKNOWN]
+    failed = [name for name, value in tri.items() if value == GATE_FAIL]
     uncertainty = float(proposal.get("declared_uncertainty_scalar") or 1.0)
     citations = list(proposal.get("evidence_citations") or ())
     permissions = list(proposal.get("requested_permissions") or ())
@@ -487,33 +666,48 @@ def evaluate_proposal(
     if forced_decision and forced_decision in EVALUATION_DECISIONS:
         decision = forced_decision
         reason = f"forced_decision:{forced_decision}"
-    elif elevated or not gates["authority_scope_ok"]:
+    elif elevated or tri["authority_scope_ok"] == GATE_FAIL:
         decision = "hold"
         reason = "authority_or_forbidden_permission"
+    elif tri["authority_scope_ok"] == GATE_UNKNOWN:
+        decision = "hold"
+        reason = "authority_scope_unknown"
     elif not gates["proposal_present"] or not gates["action_declared"]:
         decision = "abstain"
         reason = "proposal_incomplete"
-    elif not gates["epoch_current"] or not gates["context_bound"]:
+    elif tri["epoch_current"] == GATE_FAIL or tri["context_bound"] == GATE_FAIL:
         decision = "hold"
         reason = "epoch_or_context_not_current"
-    elif not gates["host_immutable"]:
+    elif tri["epoch_current"] == GATE_UNKNOWN or tri["context_bound"] == GATE_UNKNOWN:
+        decision = "hold"
+        reason = "epoch_or_context_unknown"
+    elif tri["host_immutable"] == GATE_FAIL:
         decision = "hold"
         reason = "host_mutation_detected"
+    elif tri["host_immutable"] == GATE_UNKNOWN:
+        decision = "hold"
+        reason = "host_immutability_unknown"
     elif not citations:
         decision = "ask"
         reason = "evidence_citations_required"
     elif uncertainty >= 0.75:
         decision = "ask"
         reason = "declared_uncertainty_high"
-    elif not gates["invariants_ok"] or not gates["measurement_complete"]:
+    elif tri["invariants_ok"] == GATE_FAIL or tri["measurement_complete"] == GATE_FAIL:
         decision = "constrain"
         reason = "invariants_or_measurement_incomplete"
+    elif tri["invariants_ok"] == GATE_UNKNOWN or tri["measurement_complete"] == GATE_UNKNOWN:
+        decision = "constrain"
+        reason = "invariants_or_measurement_unknown"
     elif blast_radius in {"high", "unbounded", "elevated"}:
         decision = "constrain"
         reason = f"blast_radius:{blast_radius}"
-    elif not gates["outcome_history_ready"] or not gates["operator_contract_ready"]:
+    elif (
+        tri["outcome_history_ready"] != GATE_PASS
+        or tri["operator_contract_ready"] != GATE_PASS
+    ):
         decision = "constrain"
-        reason = "history_or_contract_incomplete"
+        reason = "history_or_contract_incomplete_or_unknown"
     else:
         decision = "allow"
         reason = "gates_satisfied_for_bounded_review"
@@ -524,6 +718,8 @@ def evaluate_proposal(
         "reason": reason,
         "gates": gates,
         "missing_gates": missing,
+        "unknown_gates": unknown,
+        "failed_gates": failed,
         "blast_radius": blast_radius,
         "measurement_sources": dict(measurement_sources or {}),
         "execution_authorized": False,
@@ -545,12 +741,19 @@ def outcome_receipt(
     external_reference: str | None = None,
     witness: Mapping[str, Any] | None = None,
     prior_receipt_hash: str | None = None,
+    turn_id: int | None = None,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Typed outcome with independent MEASUREMENT-or-OUTCOME witness material.
 
     The witness must cover the outcome subject; a missing or failed witness
     yields ``witnessed=false`` and cannot authorize consolidation.
     """
+    turn = int(
+        turn_id if turn_id is not None else (joint_action or {}).get("turn_id") or 1
+    )
     subject = {
         "outcome_kind": str(outcome_kind or "task_result"),
         "success": success,
@@ -558,6 +761,7 @@ def outcome_receipt(
         "external_reference": external_reference,
         "joint_action_receipt_hash": str((joint_action or {}).get("receipt_hash") or ""),
         "session_id": session_id,
+        "turn_id": turn,
         "body_epoch_id": body_epoch_id,
         "repository_id": repository_id,
         "repo": repo,
@@ -595,6 +799,10 @@ def outcome_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=turn,
+        event_id=event_id,
+        case_id=case_id or (joint_action or {}).get("case_id"),
+        invocation_id=invocation_id or (joint_action or {}).get("invocation_id"),
         prior_receipt_hash=prior_receipt_hash
         or str((joint_action or {}).get("receipt_hash") or ""),
         outcome_kind=subject["outcome_kind"],
@@ -620,6 +828,10 @@ def cortex_evaluation_receipt(
     evaluation: Mapping[str, Any],
     context_receipt_hash: str | None = None,
     prior_receipt_hash: str | None = None,
+    turn_id: int | None = None,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     decision = str(evaluation.get("decision") or "hold")
     if decision not in EVALUATION_DECISIONS:
@@ -630,6 +842,12 @@ def cortex_evaluation_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=int(
+            turn_id if turn_id is not None else proposal.get("turn_id") or 1
+        ),
+        event_id=event_id,
+        case_id=case_id or proposal.get("case_id"),
+        invocation_id=invocation_id or proposal.get("invocation_id"),
         prior_receipt_hash=prior_receipt_hash or str(proposal.get("receipt_hash") or ""),
         proposal_receipt_hash=str(proposal.get("receipt_hash") or ""),
         context_receipt_hash=context_receipt_hash,
@@ -657,6 +875,10 @@ def joint_action_receipt(
     tool_action: Mapping[str, Any] | None = None,
     measured_result: Mapping[str, Any] | None = None,
     prior_receipt_hash: str | None = None,
+    turn_id: int | None = None,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Bind AI proposal + Cortex evaluation + tool action + measured result."""
     decision = str(evaluation.get("decision") or "hold")
@@ -674,6 +896,14 @@ def joint_action_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=int(
+            turn_id
+            if turn_id is not None
+            else proposal.get("turn_id") or evaluation.get("turn_id") or 1
+        ),
+        event_id=event_id,
+        case_id=case_id or proposal.get("case_id"),
+        invocation_id=invocation_id or proposal.get("invocation_id"),
         prior_receipt_hash=prior_receipt_hash
         or str(evaluation.get("receipt_hash") or ""),
         proposal_receipt_hash=str(proposal.get("receipt_hash") or ""),
@@ -700,6 +930,10 @@ def symbiotic_consolidation_receipt(
     outcome_closed: bool = False,
     stable_regime: bool = False,
     prior_receipt_hash: str | None = None,
+    turn_id: int | None = None,
+    event_id: str | None = None,
+    case_id: str | None = None,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Slow-layer retention decision. Fluent generation is not durable memory."""
     gamma = 1 if constitutional_gate else 0
@@ -737,6 +971,12 @@ def symbiotic_consolidation_receipt(
         repository_id=repository_id,
         session_id=session_id,
         body_epoch_id=body_epoch_id,
+        turn_id=int(
+            turn_id if turn_id is not None else (joint_action or {}).get("turn_id") or 0
+        ),
+        event_id=event_id,
+        case_id=case_id or (joint_action or {}).get("case_id"),
+        invocation_id=invocation_id or (joint_action or {}).get("invocation_id"),
         prior_receipt_hash=prior_receipt_hash
         or str((joint_action or {}).get("receipt_hash") or ""),
         joint_action_receipt_hash=str((joint_action or {}).get("receipt_hash") or ""),
@@ -847,6 +1087,7 @@ def open_symbiotic_session(
     if not epoch.get("verified"):
         restrictions.append("epoch_unverified_hold_adaptation")
 
+    invocation_id = f"inv_{session_id}"
     context = cortex_context_receipt(
         repo=repo,
         repository_id=repository_id,
@@ -873,17 +1114,22 @@ def open_symbiotic_session(
                 "epoch_unverified" if not epoch.get("verified") else None,
                 "interlock_not_ready" if not interlock.get("data_ready") else None,
                 "no_stable_temporal_peak"
-                if str(resonance.get("status") or "") not in {"resonant_candidate", ""}
+                if str(resonance.get("status") or "")
+                not in {"resonant_candidate", ""}
                 and resonance
                 else None,
             )
             if item
         ],
         operating_regime={
-            "self_sensing": (self_sensing.get("status") if isinstance(self_sensing, Mapping) else None),
+            "self_sensing": (
+                self_sensing.get("status") if isinstance(self_sensing, Mapping) else None
+            ),
             "resonance": resonance.get("status"),
             "geometric_field": geometric.get("field_condition"),
-            "residual": (residual or {}).get("status") if isinstance(residual, Mapping) else None,
+            "residual": (residual or {}).get("status")
+            if isinstance(residual, Mapping)
+            else None,
             "epoch_verified": bool(epoch.get("verified")),
         },
         confidence={
@@ -899,6 +1145,10 @@ def open_symbiotic_session(
         },
         constitutional_restrictions=restrictions,
         packet_hash=None,
+        prior_receipt_hash=None,
+        turn_id=0,
+        invocation_id=invocation_id,
+        case_id=f"case_{session_id}_0",
     )
     instantiation = agent_instantiation_receipt(
         repo=repo,
@@ -912,27 +1162,74 @@ def open_symbiotic_session(
         tool_scopes=tool_scopes,
         context_packet_digest=str(context.get("context_packet_digest") or ""),
         prior_receipt_hash=None,
+        turn_id=0,
+        invocation_id=invocation_id,
+        case_id=f"case_{session_id}_0",
     )
-    # Re-link context after instantiation so the chain starts at the agent seat.
-    context = {
-        **context,
-        "prior_receipt_hash": instantiation["receipt_hash"],
-        "receipt_hash": _sha(
+    # Re-bind context prior hash after instantiation so the scientific chain starts
+    # at the agent seat while remaining turn-0 open receipts.
+    context = cortex_context_receipt(
+        repo=repo,
+        repository_id=repository_id,
+        session_id=session_id,
+        body_epoch_id=body_epoch_id,
+        evidence_items=[
             {
-                **{
-                    key: value
-                    for key, value in context.items()
-                    if key
-                    not in {
-                        "receipt_hash",
-                        "created_at",
-                        "prior_receipt_hash",
-                    }
-                },
-                "prior_receipt_hash": instantiation["receipt_hash"],
+                "surface": "source_admission",
+                "status": evidence.get("status"),
+                "digest": _sha(evidence)[:24],
             }
-        ),
-    }
+        ]
+        if evidence
+        else [],
+        memory_episodes=[],
+        graph_neighbors=[],
+        predictions={
+            "measured_event_present": bool(measured),
+            "interlock_data_ready": bool(interlock.get("data_ready")),
+        },
+        unresolved_contradictions=[
+            item
+            for item in (
+                "epoch_unverified" if not epoch.get("verified") else None,
+                "interlock_not_ready" if not interlock.get("data_ready") else None,
+                "no_stable_temporal_peak"
+                if str(resonance.get("status") or "")
+                not in {"resonant_candidate", ""}
+                and resonance
+                else None,
+            )
+            if item
+        ],
+        operating_regime={
+            "self_sensing": (
+                self_sensing.get("status") if isinstance(self_sensing, Mapping) else None
+            ),
+            "resonance": resonance.get("status"),
+            "geometric_field": geometric.get("field_condition"),
+            "residual": (residual or {}).get("status")
+            if isinstance(residual, Mapping)
+            else None,
+            "epoch_verified": bool(epoch.get("verified")),
+        },
+        confidence={
+            "epoch_verified": 1.0 if epoch.get("verified") else 0.0,
+            "context_surfaces": _clip01(
+                sum(
+                    1
+                    for surface in (evidence, interlock, resonance, geometric)
+                    if surface
+                )
+                / 4.0
+            ),
+        },
+        constitutional_restrictions=restrictions,
+        packet_hash=None,
+        prior_receipt_hash=instantiation["receipt_hash"],
+        turn_id=0,
+        invocation_id=invocation_id,
+        case_id=f"case_{session_id}_0",
+    )
 
     session = {
         "schema_version": SCHEMA,
@@ -941,10 +1238,17 @@ def open_symbiotic_session(
         "repo": repo,
         "repository_id": repository_id,
         "session_id": session_id,
+        "invocation_id": invocation_id,
+        "current_turn_id": 0,
+        "turn_count": 0,
         "task": task,
         "task_hash": _sha(task),
         "body_epoch_id": body_epoch_id,
         "epoch_verified": bool(epoch.get("verified")),
+        "grammar": (
+            "agent_instantiation → cortex_context → "
+            "[proposal → evaluation → joint_action → outcome]* → consolidation"
+        ),
         "timescale": {
             "q_t": "AI temporary working state",
             "c_t": "Cortex durable state",
@@ -953,12 +1257,14 @@ def open_symbiotic_session(
         "symbiosis": {
             "ai_supplies": "adaptive cognition",
             "cortex_supplies": "persistent identity and disciplined memory",
+            "will_supplies": "authenticated direction (v8.5+; not yet binding)",
             "neither_complete_alone": True,
         },
         "receipts": {
             "agent_instantiation": instantiation,
             "cortex_context": context,
         },
+        "turns": {},
         "chain": [
             instantiation["receipt_hash"],
             context["receipt_hash"],
@@ -1003,9 +1309,31 @@ def record_proposal(
     rationale_public: str | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
-    """Append a proposal, evaluate it, and return the updated session."""
+    """Append a proposal, evaluate it, and return the updated session.
+
+    Each call advances ``current_turn_id`` so recurrent
+    ``[proposal→evaluation→action→outcome]`` turns are independently ledgered.
+    """
     session_body = dict(session)
     context = dict((session_body.get("receipts") or {}).get("cortex_context") or {})
+    turn_id = int(session_body.get("current_turn_id") or 0) + 1
+    invocation_id = str(
+        session_body.get("invocation_id")
+        or f"inv_{session_body.get('session_id') or ''}"
+    )
+    case_id = f"case_{session_body.get('session_id')}_{turn_id}"
+    # Prefer latest turn tip as prior when multi-turn; else session context.
+    turns = dict(session_body.get("turns") or {})
+    prior_hash = str(context.get("receipt_hash") or "")
+    if turns:
+        last_turn = turns.get(str(turn_id - 1)) or turns.get(turn_id - 1) or {}
+        if isinstance(last_turn, Mapping):
+            prior_hash = str(
+                (last_turn.get("outcome") or {}).get("receipt_hash")
+                or (last_turn.get("joint_action") or {}).get("receipt_hash")
+                or (last_turn.get("cortex_evaluation") or {}).get("receipt_hash")
+                or prior_hash
+            )
     proposal = agent_proposal_receipt(
         repo=str(session_body.get("repo") or repo),
         repository_id=str(session_body.get("repository_id") or ""),
@@ -1021,7 +1349,10 @@ def record_proposal(
         requested_permissions=requested_permissions,
         predicted_state_transition=predicted_state_transition,
         rationale_public=rationale_public,
-        prior_receipt_hash=str(context.get("receipt_hash") or ""),
+        prior_receipt_hash=prior_hash,
+        turn_id=turn_id,
+        invocation_id=invocation_id,
+        case_id=case_id,
     )
     measured_gates = measure_evaluation_gates(
         store, repo, proposal=proposal, context=context
@@ -1029,14 +1360,8 @@ def record_proposal(
     evaluation_panel = evaluate_proposal(
         proposal=proposal,
         context=context,
-        epoch_current=bool(measured_gates["epoch_current"]),
-        host_immutable=bool(measured_gates["host_immutable"]),
-        invariants_ok=bool(measured_gates["invariants_ok"]),
-        authority_scope_ok=bool(measured_gates["authority_scope_ok"]),
+        gate_states=measured_gates.get("gate_states"),
         blast_radius=str(measured_gates["blast_radius"]),
-        outcome_history_ready=bool(measured_gates["outcome_history_ready"]),
-        operator_contract_ready=bool(measured_gates["operator_contract_ready"]),
-        measurement_complete=bool(measured_gates["measurement_complete"]),
         measurement_sources=measured_gates.get("measurement_sources"),
     )
     evaluation = cortex_evaluation_receipt(
@@ -1048,19 +1373,33 @@ def record_proposal(
         evaluation=evaluation_panel,
         context_receipt_hash=str(context.get("receipt_hash") or ""),
         prior_receipt_hash=proposal["receipt_hash"],
+        turn_id=turn_id,
+        invocation_id=invocation_id,
+        case_id=case_id,
     )
     receipts = dict(session_body.get("receipts") or {})
     receipts["agent_proposal"] = proposal
     receipts["cortex_evaluation"] = evaluation
+    turn_receipts = {
+        "turn_id": turn_id,
+        "case_id": case_id,
+        "agent_proposal": proposal,
+        "cortex_evaluation": evaluation,
+    }
+    turns[str(turn_id)] = turn_receipts
     chain = list(session_body.get("chain") or [])
     chain.extend([proposal["receipt_hash"], evaluation["receipt_hash"]])
     session_body.update(
         {
             "receipts": receipts,
+            "turns": turns,
             "chain": chain,
+            "current_turn_id": turn_id,
+            "turn_count": int(session_body.get("turn_count") or 0) + 1,
             "status": f"evaluated:{evaluation['decision']}",
             "latest_decision": evaluation["decision"],
-            "epoch_verified": bool(measured_gates["epoch_current"]),
+            "epoch_verified": measured_gates.get("gate_states", {}).get("epoch_current")
+            == GATE_PASS,
             "updated_at": time.time(),
         }
     )
@@ -1083,6 +1422,12 @@ def record_joint_action(
     receipts = dict(session_body.get("receipts") or {})
     proposal = dict(receipts.get("agent_proposal") or {})
     evaluation = dict(receipts.get("cortex_evaluation") or {})
+    turn_id = int(
+        proposal.get("turn_id")
+        or evaluation.get("turn_id")
+        or session_body.get("current_turn_id")
+        or 1
+    )
     joint = joint_action_receipt(
         repo=str(session_body.get("repo") or repo),
         repository_id=str(session_body.get("repository_id") or ""),
@@ -1093,13 +1438,21 @@ def record_joint_action(
         tool_action=tool_action,
         measured_result=measured_result,
         prior_receipt_hash=str(evaluation.get("receipt_hash") or ""),
+        turn_id=turn_id,
+        invocation_id=str(session_body.get("invocation_id") or ""),
+        case_id=str(proposal.get("case_id") or ""),
     )
     receipts["joint_action"] = joint
+    turns = dict(session_body.get("turns") or {})
+    turn_bucket = dict(turns.get(str(turn_id)) or {})
+    turn_bucket["joint_action"] = joint
+    turns[str(turn_id)] = turn_bucket
     chain = list(session_body.get("chain") or [])
     chain.append(joint["receipt_hash"])
     session_body.update(
         {
             "receipts": receipts,
+            "turns": turns,
             "chain": chain,
             "status": joint["binding_status"],
             "updated_at": time.time(),
@@ -1127,6 +1480,7 @@ def record_outcome(
     session_body = dict(session)
     receipts = dict(session_body.get("receipts") or {})
     joint = dict(receipts.get("joint_action") or {})
+    turn_id = int(joint.get("turn_id") or session_body.get("current_turn_id") or 1)
     outcome = outcome_receipt(
         repo=str(session_body.get("repo") or repo),
         repository_id=str(session_body.get("repository_id") or ""),
@@ -1139,13 +1493,21 @@ def record_outcome(
         external_reference=external_reference,
         witness=witness,
         prior_receipt_hash=str(joint.get("receipt_hash") or ""),
+        turn_id=turn_id,
+        invocation_id=str(session_body.get("invocation_id") or ""),
+        case_id=str(joint.get("case_id") or ""),
     )
     receipts["outcome"] = outcome
+    turns = dict(session_body.get("turns") or {})
+    turn_bucket = dict(turns.get(str(turn_id)) or {})
+    turn_bucket["outcome"] = outcome
+    turns[str(turn_id)] = turn_bucket
     chain = list(session_body.get("chain") or [])
     chain.append(outcome["receipt_hash"])
     session_body.update(
         {
             "receipts": receipts,
+            "turns": turns,
             "chain": chain,
             "status": f"outcome:{outcome['status']}",
             "updated_at": time.time(),
@@ -1203,6 +1565,7 @@ def consolidate_session(
             "DRIFT_REGIME"
         }
     prior = str(outcome.get("receipt_hash") or joint.get("receipt_hash") or "")
+    seal_turn = int(session_body.get("current_turn_id") or 0)
     consolidation = symbiotic_consolidation_receipt(
         repo=str(session_body.get("repo") or repo),
         repository_id=str(session_body.get("repository_id") or ""),
@@ -1216,6 +1579,9 @@ def consolidate_session(
         outcome_closed=bool(outcome_closed),
         stable_regime=bool(stable_regime),
         prior_receipt_hash=prior,
+        turn_id=seal_turn,
+        invocation_id=str(session_body.get("invocation_id") or ""),
+        case_id=f"case_{session_body.get('session_id')}_seal",
     )
     receipts["symbiotic_consolidation"] = consolidation
     chain = list(session_body.get("chain") or [])
@@ -1401,9 +1767,15 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
             "context_packet_digest": context.get("context_packet_digest"),
             "gates": consolidation.get("gates") or evaluation.get("gates"),
         },
-        "which_assumptions_failed": list(proposal.get("assumptions") or ())
-        if evaluation.get("decision") in {"hold", "abstain", "ask"}
-        else [],
+        "assumptions": {
+            bucket: []
+            for bucket in (
+                "assumptions_disconfirmed",
+                "assumptions_unverified",
+                "assumptions_blocked",
+                "assumptions_supported",
+            )
+        },
         "unresolved_questions": list(context.get("unresolved_contradictions") or ()),
         "forbidden_actions": list(
             (receipts.get("agent_instantiation") or {}).get("forbidden_operations")
@@ -1416,24 +1788,42 @@ def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
             "stable_regime_with_complementarity",
         ],
         "prior_decision": evaluation.get("decision"),
+        "turn_count": latest.get("turn_count") or 0,
+        "current_turn_id": latest.get("current_turn_id"),
         "advisory_only": True,
         "policy_effect": False,
         "update_authorized": False,
         "claim_boundary": CLAIM_BOUNDARY,
         "status": status.get("status"),
     }
+    outcome = dict(receipts.get("outcome") or {})
+    for assumption in list(proposal.get("assumptions") or ()):
+        bucket = classify_assumption_status(
+            evaluation_decision=str(evaluation.get("decision") or ""),
+            outcome_success=outcome.get("success") if outcome else None,
+            assumption=str(assumption),
+        )
+        brief["assumptions"][bucket].append(assumption)
+    # Backward-compatible alias: never treat blocked/unverified as failed.
+    brief["which_assumptions_failed"] = list(
+        brief["assumptions"]["assumptions_disconfirmed"]
+    )
 
 
 __all__ = [
     "CLAIM_BOUNDARY",
     "CONSOLIDATION_KINDS",
     "EVALUATION_DECISIONS",
+    "GATE_FAIL",
+    "GATE_PASS",
+    "GATE_UNKNOWN",
     "GLYPH",
     "RECEIPT_KINDS",
     "SCHEMA",
     "VERSION",
     "agent_instantiation_receipt",
     "agent_proposal_receipt",
+    "classify_assumption_status",
     "complementarity_surplus",
     "consolidate_session",
     "cortex_context_receipt",

@@ -185,6 +185,7 @@ class SymbiosisLedgerTests(unittest.TestCase):
             "external_reference": None,
             "joint_action_receipt_hash": joint2.get("receipt_hash") or "",
             "session_id": session2["session_id"],
+            "turn_id": int(joint2.get("turn_id") or 1),
             "body_epoch_id": session2["body_epoch_id"],
             "repository_id": session2["repository_id"],
             "repo": self.repo,

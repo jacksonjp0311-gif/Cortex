@@ -47,7 +47,7 @@ class SymbiosisTests(unittest.TestCase):
             provider="xai",
             model_id="grok-test",
         )
-        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.1")
+        self.assertEqual(session["schema_version"], "cortex-symbiosis/1.2")
         self.assertIn("agent_instantiation", session["receipts"])
         self.assertIn("cortex_context", session["receipts"])
         self.assertFalse(session["policy_effect"])
@@ -92,12 +92,16 @@ class SymbiosisTests(unittest.TestCase):
                 "body_epoch_id": "e",
             },
             context={"session_id": "s", "body_epoch_id": "e"},
-            epoch_current=True,
-            host_immutable=True,
-            invariants_ok=True,
-            measurement_complete=True,
-            outcome_history_ready=True,
-            operator_contract_ready=True,
+            gate_states={
+                "epoch_current": "pass",
+                "host_immutable": "pass",
+                "invariants_ok": "pass",
+                "authority_scope_ok": "pass",
+                "outcome_history_ready": "pass",
+                "operator_contract_ready": "pass",
+                "measurement_complete": "pass",
+                "context_bound": "pass",
+            },
         )
         self.assertEqual(no_citations["decision"], "ask")
 
@@ -176,19 +180,49 @@ class SymbiosisTests(unittest.TestCase):
         panel = evaluate_proposal(
             proposal=proposal,
             context={"session_id": "s", "body_epoch_id": "e"},
-            epoch_current=True,
-            host_immutable=True,
-            invariants_ok=True,
-            authority_scope_ok=True,
+            gate_states={
+                "epoch_current": "pass",
+                "host_immutable": "pass",
+                "invariants_ok": "pass",
+                "authority_scope_ok": "pass",
+                "outcome_history_ready": "pass",
+                "operator_contract_ready": "pass",
+                "measurement_complete": "pass",
+                "context_bound": "pass",
+            },
             blast_radius="bounded",
-            outcome_history_ready=True,
-            operator_contract_ready=True,
-            measurement_complete=True,
         )
         self.assertEqual(panel["decision"], "allow")
         self.assertTrue(panel["review_eligible"])
         self.assertFalse(panel["execution_authorized"])
         self.assertFalse(panel["learning_authorized"])
+
+    def test_unknown_gate_never_allows(self) -> None:
+        panel = evaluate_proposal(
+            proposal={
+                "receipt_hash": "abc",
+                "interpreted_objective": "x",
+                "proposed_action": "y",
+                "declared_uncertainty_scalar": 0.1,
+                "evidence_citations": ["a"],
+                "requested_permissions": [],
+                "session_id": "s",
+                "body_epoch_id": "e",
+            },
+            context={"session_id": "s", "body_epoch_id": "e"},
+            gate_states={
+                "epoch_current": "pass",
+                "host_immutable": "unknown",
+                "invariants_ok": "pass",
+                "authority_scope_ok": "pass",
+                "outcome_history_ready": "pass",
+                "operator_contract_ready": "pass",
+                "measurement_complete": "pass",
+                "context_bound": "pass",
+            },
+        )
+        self.assertEqual(panel["decision"], "hold")
+        self.assertIn("host_immutability_unknown", panel["reason"])
 
     def test_complementarity_unmeasured_without_estimators(self) -> None:
         report = complementarity_surplus()
@@ -203,8 +237,54 @@ class SymbiosisTests(unittest.TestCase):
         brief = reconstruct_next_session_brief(self.store, self.repo)
         self.assertIn("what_is_currently_believed", brief)
         self.assertIn("forbidden_actions", brief)
+        self.assertIn("assumptions", brief)
+        self.assertIn("assumptions_blocked", brief["assumptions"])
         self.assertFalse(brief["policy_effect"])
         self.assertFalse(brief["update_authorized"])
+
+    def test_recurrent_turns_are_independently_ledgered(self) -> None:
+        session = open_symbiotic_session(self.store, self.repo, task="multi-turn")
+        session = record_proposal(
+            self.store,
+            self.repo,
+            session,
+            interpreted_objective="first turn",
+            proposed_action="inspect a",
+            evidence_citations=["a.md"],
+            assumptions=["A1"],
+            declared_uncertainty=0.2,
+        )
+        session = record_joint_action(
+            self.store,
+            self.repo,
+            session,
+            tool_action={"executed": False},
+        )
+        session = record_proposal(
+            self.store,
+            self.repo,
+            session,
+            interpreted_objective="second turn",
+            proposed_action="inspect b",
+            evidence_citations=["b.md"],
+            assumptions=["A2"],
+            declared_uncertainty=0.2,
+        )
+        self.assertGreaterEqual(int(session["turn_count"]), 2)
+        self.assertEqual(int(session["current_turn_id"]), 2)
+        rows = self.store.symbiotic_session_receipts(
+            self.repo, session["session_id"]
+        )
+        proposal_turns = {
+            int(row["turn_id"])
+            for row in rows
+            if row.get("kind") == "agent_proposal"
+        }
+        self.assertEqual(proposal_turns, {1, 2})
+        chain = self.store.verify_symbiotic_session(
+            self.repo, session["session_id"]
+        )
+        self.assertTrue(chain["valid"])
 
 
 if __name__ == "__main__":

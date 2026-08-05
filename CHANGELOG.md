@@ -1,3 +1,11 @@
+## 8.4.2 - Recurrent Circulation Hardening
+
+- Ledger uniqueness is now `(repository_id, session_id, turn_id, kind)` with immutable `event_id`, enabling repeated proposal→evaluation→action→outcome turns in one session.
+- Evaluation gates are tri-state (`pass|fail|unknown`); unknown never allows. Host immutability and authority scope no longer default to pass.
+- Predictive self-model scoring is mask-aware: invalid/null coordinates are excluded from residual energy and mean updates rather than zero-imputed as authority.
+- Next-session brief separates disconfirmed, unverified, blocked, and supported assumptions.
+- Migration path rebuilds pre-v8.4.2 symbiotic tables. Authenticated will remains deferred to v8.5.0.
+
 ## 8.4.1 - Verified Symbiotic Circulation
 
 - Moved symbiotic receipts into an exactly-once canonical SQLite ledger per repository/session with immutable rows and hash-chained tips.

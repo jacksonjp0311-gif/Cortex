@@ -410,9 +410,9 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical activation conformance receipts cannot be updated');
 END;
 
--- v8.4.1 canonical symbiotic circulation ledger.  One append-only hash chain
--- per repository/session.  Exactly-once per repository/session/kind keeps the
--- six (+ outcome) receipt types from being silently replaced.
+-- v8.4.2 recurrent symbiotic circulation ledger.  Append-only hash chain per
+-- repository/session.  Exactly-once per (session, turn, kind) permits repeated
+-- [context→proposal→evaluation→action→outcome] turns; event_id is immutable.
 CREATE TABLE IF NOT EXISTS symbiotic_circulation_receipts(
     receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
     subject_receipt_hash TEXT NOT NULL CHECK(length(subject_receipt_hash) = 64),
@@ -421,18 +421,23 @@ CREATE TABLE IF NOT EXISTS symbiotic_circulation_receipts(
     repository_id TEXT NOT NULL,
     repo TEXT NOT NULL,
     session_id TEXT NOT NULL,
+    turn_id INTEGER NOT NULL DEFAULT 0,
+    event_id TEXT NOT NULL DEFAULT '',
     body_epoch_id TEXT NOT NULL,
     kind TEXT NOT NULL,
     status TEXT NOT NULL,
     receipt_json TEXT NOT NULL,
     created_at REAL NOT NULL,
-    UNIQUE(repository_id, session_id, kind),
-    UNIQUE(repository_id, session_id, chain_sequence)
+    UNIQUE(repository_id, session_id, turn_id, kind),
+    UNIQUE(repository_id, session_id, chain_sequence),
+    UNIQUE(repository_id, session_id, event_id)
 );
 CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_session
 ON symbiotic_circulation_receipts(repo, session_id, chain_sequence);
 CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_created
 ON symbiotic_circulation_receipts(repo, created_at DESC, receipt_hash);
+CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_turn
+ON symbiotic_circulation_receipts(repo, session_id, turn_id, kind);
 
 CREATE TABLE IF NOT EXISTS symbiotic_circulation_chain_tips(
     repository_id TEXT NOT NULL,
@@ -703,6 +708,81 @@ class Store:
         self.db.executescript(SCHEMA)
         self._ensure_v5_columns()
         self._ensure_v625_tables()
+        self._ensure_symbiotic_v842()
+
+    def _ensure_symbiotic_v842(self) -> None:
+        """Migrate v8.4.1 session/kind uniqueness to v8.4.2 turn-scoped uniqueness."""
+        row = self.db.execute(
+            """SELECT name FROM sqlite_master
+               WHERE type='table' AND name='symbiotic_circulation_receipts'"""
+        ).fetchone()
+        if row is None:
+            return
+        cols = {
+            item[1]
+            for item in self.db.execute(
+                "PRAGMA table_info(symbiotic_circulation_receipts)"
+            ).fetchall()
+        }
+        if "turn_id" in cols and "event_id" in cols:
+            return
+        # Rebuild: preserve rows with turn_id=0 and synthetic event_ids.
+        self.db.executescript(
+            """
+            ALTER TABLE symbiotic_circulation_receipts
+                RENAME TO symbiotic_circulation_receipts_pre_v842;
+            CREATE TABLE symbiotic_circulation_receipts(
+                receipt_hash TEXT PRIMARY KEY CHECK(length(receipt_hash) = 64),
+                subject_receipt_hash TEXT NOT NULL CHECK(length(subject_receipt_hash) = 64),
+                previous_receipt_hash TEXT NOT NULL CHECK(length(previous_receipt_hash) = 64),
+                chain_sequence INTEGER NOT NULL CHECK(chain_sequence >= 1),
+                repository_id TEXT NOT NULL,
+                repo TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                turn_id INTEGER NOT NULL DEFAULT 0,
+                event_id TEXT NOT NULL DEFAULT '',
+                body_epoch_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                status TEXT NOT NULL,
+                receipt_json TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                UNIQUE(repository_id, session_id, turn_id, kind),
+                UNIQUE(repository_id, session_id, chain_sequence),
+                UNIQUE(repository_id, session_id, event_id)
+            );
+            INSERT INTO symbiotic_circulation_receipts(
+                receipt_hash, subject_receipt_hash, previous_receipt_hash,
+                chain_sequence, repository_id, repo, session_id, turn_id, event_id,
+                body_epoch_id, kind, status, receipt_json, created_at
+            )
+            SELECT
+                receipt_hash, subject_receipt_hash, previous_receipt_hash,
+                chain_sequence, repository_id, repo, session_id, 0,
+                'evt_legacy_' || kind || '_' || printf('%04d', chain_sequence),
+                body_epoch_id, kind, status, receipt_json, created_at
+            FROM symbiotic_circulation_receipts_pre_v842;
+            DROP TABLE symbiotic_circulation_receipts_pre_v842;
+            CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_session
+            ON symbiotic_circulation_receipts(repo, session_id, chain_sequence);
+            CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_created
+            ON symbiotic_circulation_receipts(repo, created_at DESC, receipt_hash);
+            CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_turn
+            ON symbiotic_circulation_receipts(repo, session_id, turn_id, kind);
+            DROP TRIGGER IF EXISTS symbiotic_circulation_receipts_no_delete;
+            DROP TRIGGER IF EXISTS symbiotic_circulation_receipts_no_update;
+            CREATE TRIGGER symbiotic_circulation_receipts_no_delete
+            BEFORE DELETE ON symbiotic_circulation_receipts
+            BEGIN
+                SELECT RAISE(ABORT, 'canonical symbiotic circulation receipts cannot be deleted');
+            END;
+            CREATE TRIGGER symbiotic_circulation_receipts_no_update
+            BEFORE UPDATE ON symbiotic_circulation_receipts
+            BEGIN
+                SELECT RAISE(ABORT, 'canonical symbiotic circulation receipts cannot be updated');
+            END;
+            """
+        )
+        self.db.commit()
 
     def _ensure_v5_columns(self) -> None:
         """Additive columns on pre-v5 neural_nodes without rebuilding the table."""
@@ -2787,7 +2867,7 @@ class Store:
     # ------------------------------------------------------------------
 
     SYMBIOTIC_ZERO_HASH = "0" * 64
-    SYMBIOTIC_LEDGER_SCHEMA = "cortex-symbiotic-circulation-ledger/1.0"
+    SYMBIOTIC_LEDGER_SCHEMA = "cortex-symbiotic-circulation-ledger/1.1"
 
     @staticmethod
     def _symbiotic_canonical_json(body: dict[str, Any]) -> str:
@@ -2800,6 +2880,13 @@ class Store:
                 body = {}
         except (TypeError, ValueError, json.JSONDecodeError):
             body = {}
+        keys = row.keys()
+        turn_id = int(row["turn_id"]) if "turn_id" in keys else int(body.get("turn_id") or 0)
+        event_id = (
+            str(row["event_id"])
+            if "event_id" in keys
+            else str(body.get("event_id") or "")
+        )
         return {
             **body,
             "receipt_hash": row["receipt_hash"],
@@ -2809,6 +2896,8 @@ class Store:
             "repository_id": row["repository_id"],
             "repo": row["repo"],
             "session_id": row["session_id"],
+            "turn_id": turn_id,
+            "event_id": event_id,
             "body_epoch_id": row["body_epoch_id"],
             "kind": row["kind"],
             "status": row["status"],
@@ -2823,16 +2912,24 @@ class Store:
     ) -> dict[str, Any]:
         """Append one immutable symbiotic receipt and advance the session tip.
 
-        Exactly-once identity is ``(repository_id, session_id, kind)``.  Replaying
-        byte-equivalent content returns the existing row; different content fails.
+        Exactly-once identity is ``(repository_id, session_id, turn_id, kind)``.
+        Replaying byte-equivalent content returns the existing row; different
+        content fails closed.
         """
         if not isinstance(receipt_body, dict):
             raise TypeError("symbiotic receipt body must be a dict")
         kind = str(receipt_body.get("kind") or "").strip()
         session_id = str(receipt_body.get("session_id") or "").strip()
         body_epoch_id = str(receipt_body.get("body_epoch_id") or "").strip()
+        try:
+            turn_id = int(receipt_body.get("turn_id", 0))
+        except (TypeError, ValueError):
+            turn_id = 0
+        event_id = str(receipt_body.get("event_id") or "").strip()
         if not kind or not session_id or not body_epoch_id:
             raise ValueError("symbiotic receipt requires kind, session_id, body_epoch_id")
+        if not event_id:
+            raise ValueError("symbiotic receipt requires immutable event_id")
 
         with self.transaction() as conn:
             repository = conn.execute(
@@ -2861,6 +2958,8 @@ class Store:
                     "repository_id": repository_id,
                     "repo": repo,
                     "session_id": session_id,
+                    "turn_id": turn_id,
+                    "event_id": event_id,
                     "body_epoch_id": body_epoch_id,
                     "kind": kind,
                     "status": str(body.get("status") or kind),
@@ -2882,8 +2981,8 @@ class Store:
             subject_hash = sha256(subject_json.encode("utf-8")).hexdigest()
             existing = conn.execute(
                 """SELECT * FROM symbiotic_circulation_receipts
-                   WHERE repository_id=? AND session_id=? AND kind=?""",
-                (repository_id, session_id, kind),
+                   WHERE repository_id=? AND session_id=? AND turn_id=? AND kind=?""",
+                (repository_id, session_id, turn_id, kind),
             ).fetchone()
             created_at = float(existing["created_at"]) if existing else time.time()
             body["created_at"] = created_at
@@ -2896,7 +2995,7 @@ class Store:
                 ):
                     raise ValueError(
                         "symbiotic receipt kind already has different content "
-                        f"for session {session_id}"
+                        f"for session {session_id} turn {turn_id}"
                     )
                 decoded = self._decode_symbiotic_row(existing)
                 decoded.update({"inserted": False, "duplicate": True, "chain_valid": True})
@@ -2933,9 +3032,9 @@ class Store:
             conn.execute(
                 """INSERT INTO symbiotic_circulation_receipts(
                        receipt_hash, subject_receipt_hash, previous_receipt_hash,
-                       chain_sequence, repository_id, repo, session_id, body_epoch_id,
-                       kind, status, receipt_json, created_at
-                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       chain_sequence, repository_id, repo, session_id, turn_id,
+                       event_id, body_epoch_id, kind, status, receipt_json, created_at
+                   ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     receipt_hash,
                     subject_hash,
@@ -2944,6 +3043,8 @@ class Store:
                     repository_id,
                     repo,
                     session_id,
+                    turn_id,
+                    event_id,
                     body_epoch_id,
                     kind,
                     body["status"],
