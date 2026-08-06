@@ -1193,7 +1193,7 @@ First-party chart — no third-party hosts. Metrics come from the GitHub API (`s
 <p align="center">
   <a href="https://jacksonjp0311-gif.github.io/Cortex/">
     <img
-      src="assets/star-lattice.svg?v=15"
+      src="assets/star-lattice.svg?v=16"
       alt="Cortex star lattice — cumulative stargazers (CI snapshot; open live lattice for fetch-on-reload)"
       width="100%"
     />
