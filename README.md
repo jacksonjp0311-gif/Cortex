@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.9.0-0ea5e9?style=for-the-badge" alt="v8.9.0" />
+  <img src="https://img.shields.io/badge/version-8.9.1-0ea5e9?style=for-the-badge" alt="v8.9.1" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -21,7 +21,113 @@
 
 # Cortex
 
-## AI–Cortex symbiosis (v8.9)
+> **Cortex is the memory, continuity, and measurement layer for AI agents.**
+> It helps an agent return to the right evidence, carry forward what was
+> learned, and show what changed - while the human and the repository remain in
+> control.
+
+An AI coding session is fast, but it is also temporary. When the session ends,
+important context, decisions, and unfinished reasoning are easy to lose. Cortex
+gives that work a durable, local home without turning memory into authority.
+
+The central idea is simple:
+
+**Persistence without provenance becomes folklore. Intelligence without
+continuity repeats itself. Authority without a human gate is unsafe. Cortex
+connects persistence, evidence, and explicit boundaries.**
+
+## Cortex in plain English
+
+Think of Cortex as a disciplined companion around an AI coding agent:
+
+- The **AI model** explores, reasons, and acts during the current session.
+- **Cortex** keeps bounded memory of the repository, prior decisions, runtime
+  transitions, and verified evidence.
+- The **repository and the human** remain the source of truth and the authority
+  for changes.
+
+Cortex is not a second model, a replacement for Git, an autonomous developer, or
+a claim of consciousness. It is infrastructure for making agent context
+durable, inspectable, and safer to reuse.
+
+## What you get
+
+| Capability | What it means for you |
+|---|---|
+| **Continuity** | An agent can re-enter a project with bounded, relevant context instead of starting from zero. |
+| **Provenance** | Memories point back to source, tests, runtime evidence, and the task that produced them. |
+| **Measurement** | Cortex records and independently checks state transitions instead of treating predictions as facts. |
+| **Local-first privacy** | The durable body lives under `~/.cortex`; your project remains yours. |
+| **Human control** | Suggestions and telemetry never silently rewrite source, change policy, or grant execution authority. |
+
+## Start here: attach Cortex to a project
+
+You do not need to clone Cortex or move your project into this repository. Open a
+terminal in the project you want an agent to understand and attach Cortex once.
+
+**PowerShell**
+
+```powershell
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+```
+
+**macOS / Linux**
+
+```bash
+uvx --from "git+https://github.com/jacksonjp0311-gif/Cortex@main" cortex-attach .
+```
+
+If `uv` is not installed, use the Python fallback:
+
+```bash
+python -m pip install -q "git+https://github.com/jacksonjp0311-gif/Cortex@main"
+python -m cortex.attach_main .
+```
+
+The external attach keeps the host unchanged and stores the durable body under
+`~/.cortex`. More install options are in
+[`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md).
+
+### Your first useful loop
+
+After attaching, run Cortex when you begin a task and record the decisions that
+should survive the session:
+
+```bash
+python -m cortex activate --repo YourProject --task "Map the authentication flow" --json
+python -m cortex field report --repo YourProject --json
+python -m cortex remember --repo YourProject --kind decision \
+  --text "Token normalization is owned by the authentication middleware."
+python -m cortex consolidate --repo YourProject --json
+```
+
+In practice, the loop is **activate -> work -> remember -> consolidate**.
+
+### What happens when Cortex runs
+
+1. It identifies the project and checks whether its remembered view is current.
+2. It retrieves a bounded set of relevant source, tests, documentation, and
+   runtime evidence.
+3. It gives the agent a compact context packet with provenance and uncertainty.
+4. It records explicit decisions as durable, reviewable memory.
+
+When evidence is missing or stale, Cortex reports that state. It does not fill
+the gap with false certainty.
+
+### The trust boundary
+
+The trust order is:
+
+**host source and tests -> runtime evidence -> verified models -> consolidated
+memory -> learned associations -> inference**
+
+Every advanced surface is advisory until its evidence gates are satisfied. No
+coherence score, glyph, field, or memory receipt can authorize a host mutation.
+
+<details>
+<summary><b>For AI agents and researchers</b>: current implementation and math</summary>
+
+## AI–Cortex symbiosis (v8.9.1)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -115,6 +221,8 @@ measurement reconstruction from raw state; see
 not establish that Cortex improves task performance, reasoning quality,
 cognition, consciousness, agency, or authority.
 
+</details>
+
 ### Local memory for AI coding agents — attach once, keep the host sovereign
 
 Cortex is a **portable memory organ** for any repository.  
@@ -132,6 +240,11 @@ Your source stays yours. Agents get **bounded, provenance-backed context** — a
 **v8.2.8 — Evidence Runway** · **v8.2.7 Rotated Echo Alignment** · **v8.2.6 Four-Dimensional Geometric Echo** · **v8.2 Informational Interlocks**
 Spectral geometry measures *coupling quality*. Constitutional geometry governs *participation rights*. Resonant Frames measure *temporal coordination*. Self-sensing measures *own-regime residual*. Binding Field names *local coupling vs global readiness*.  
 Stable body epochs now accrue one exactly-once observation per durable activation event until a real temporal window can close. When the seal lags the living tree, **realign explicitly**. Open buffers **commit** to frames — they do not seize authority.
+### Evolution history (selected)
+
+<details>
+<summary>Implementation milestones for agents and researchers</summary>
+
 Each activation now records one measured pre/post state delta, predicts that delta before it occurs, scores the forecast afterward, simulates bounded alternatives, broadcasts four competing signals, and appends a hash-chained operational episode. Modeled event salience remains shadow-only.
 
 v8.1 binds each repository to an explicit durable Cortex home, refuses silent home rebinding, learns separate transition models for refresh, decay, adaptation, evidence-only, and steady regimes, calibration-weights workspace competition, preserves signed field direction, requires connected two-key seam activation for emergence, and reports confidence-bounded predictor lesions. See [`PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md`](docs/intelligence/PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md).
@@ -163,7 +276,12 @@ The first sealed run improved source-reserve pool recall from 64.06% to 71.88% a
 Inspect the functional self-model with `cortex self-model status --repo <name> --json`; run its falsification surface with `cortex self-model lesion --repo <name> --json`.
 **No temporal metric can move a constitutional bit.**
 
+</details>
+
 ---
+
+<details>
+<summary>Compatibility attach reference (advanced)</summary>
 
 ## Start here — Hermetic attach
 
@@ -201,7 +319,9 @@ python3 -m cortex.attach_main .
 Fallbacks (pipx / npx / scripts): [`docs/ATTACH_QUICKSTART.md`](docs/ATTACH_QUICKSTART.md)  
 Public classification demo (no personal paths): [`docs/demo/`](docs/demo/)
 
-### After attach
+</details>
+
+### Advanced surfaces after attach
 
 ```bash
 # daily loop — body under ~/.cortex, repo name = folder name
@@ -246,13 +366,6 @@ Learned relevance never becomes host authority. Topology: [`docs/intelligence/TO
 - Emergent math map: [`docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md)
 - Constitutional geometry: [`docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`](docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md)
 - Research index: [`docs/research/README.md`](docs/research/README.md)
-
-Dev clone of this engine (optional — not required to attach):
-
-```bash
-git clone https://github.com/jacksonjp0311-gif/Cortex.git
-cd Cortex && pip install -e .
-```
 
 </details>
 
@@ -1180,6 +1293,9 @@ See `docs/SECURITY.md` for the full threat model.
 - `docs/GCMT.md` — governed continuation, lifecycle, federation, evaluation, MCP
 - `docs/ARIA_META_LANGUAGE.md` — native ARIA semantic language over the Python core
 - `docs/STEADY_STATE.md` — post-alignment discipline
+
+For maintainer setup and version-control workflow, see
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ## Star Lattice
 
