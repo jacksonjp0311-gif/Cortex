@@ -572,66 +572,12 @@ class ResidualReceipt:
                 else {}
             )
             canonical_hash = str(self.canonical_receipt_hash or "").strip()
-            ledger_bound = bool(canonical_hash)
-            # In-memory residual receipts may assert structured Gate-B fields
-            # without a ledger envelope. Ledger-bound receipts require the full
-            # scientific subject plus canonical verification.
-            if ledger_bound:
-                if not conformance_payload:
-                    errors.append("conformance_payload_missing")
-                else:
-                    try:
-                        from .independent_verifier import validate_conformance_payload
-
-                        scientific = validate_conformance_payload(
-                            conformance_payload
-                        )
-                        errors.extend(
-                            f"scientific:{error}"
-                            for error in scientific.get("errors") or ()
-                        )
-                    except Exception as exc:
-                        errors.append(
-                            "scientific:validation_exception:"
-                            f"{type(exc).__name__}:{exc}"
-                        )
-                if (
-                    len(canonical_hash) != 64
-                    or any(
-                        character not in "0123456789abcdef"
-                        for character in canonical_hash
-                    )
-                    or str(conformance_payload.get("receipt_hash") or "")
-                    != canonical_hash
-                ):
-                    errors.append("canonical_receipt_hash_invalid")
-                verification = self.canonical_verification
-                if not isinstance(verification, Mapping) or not verification:
-                    errors.append("canonical_verification_missing")
-                else:
-                    required_verification = {
-                        "verification_status": "verified",
-                        "receipt_hash_valid": True,
-                        "chain_valid": True,
-                        "measurement_conformance_valid": True,
-                        "scientific_payload_valid": True,
-                        "independent_recomputation_matches": True,
-                        "reference_output_matches": True,
-                        "measurement_witness_valid": True,
-                        "measurement_subject_hash_valid": True,
-                        "host_projection_valid": True,
-                        "invariant_panel_valid": True,
-                        "repository_binding_valid": True,
-                        "epoch_current": True,
-                        "cohort_current": True,
-                        "exactly_once_event": True,
-                    }
-                    for name, expected in required_verification.items():
-                        if verification.get(name) != expected:
-                            errors.append(f"canonical_verification_failed:{name}")
-                    if verification.get("receipt_hash") != canonical_hash:
-                        errors.append("canonical_verification_hash_mismatch")
-            elif conformance_payload:
+            # Gate B is a ledger state, not a caller assertion. Every
+            # conformance-measured residual must carry the canonical scientific
+            # body and a fresh store/epoch verification result.
+            if not conformance_payload:
+                errors.append("conformance_payload_missing")
+            else:
                 try:
                     from .independent_verifier import validate_conformance_payload
 
@@ -645,6 +591,42 @@ class ResidualReceipt:
                         "scientific:validation_exception:"
                         f"{type(exc).__name__}:{exc}"
                     )
+            if (
+                len(canonical_hash) != 64
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in canonical_hash
+                )
+                or str(conformance_payload.get("receipt_hash") or "")
+                != canonical_hash
+            ):
+                errors.append("canonical_receipt_hash_invalid")
+            verification = self.canonical_verification
+            if not isinstance(verification, Mapping) or not verification:
+                errors.append("canonical_verification_missing")
+            else:
+                required_verification = {
+                    "verification_status": "verified",
+                    "receipt_hash_valid": True,
+                    "chain_valid": True,
+                    "measurement_conformance_valid": True,
+                    "scientific_payload_valid": True,
+                    "independent_recomputation_matches": True,
+                    "reference_output_matches": True,
+                    "measurement_witness_valid": True,
+                    "measurement_subject_hash_valid": True,
+                    "host_projection_valid": True,
+                    "invariant_panel_valid": True,
+                    "repository_binding_valid": True,
+                    "epoch_current": True,
+                    "cohort_current": True,
+                    "exactly_once_event": True,
+                }
+                for name, expected in required_verification.items():
+                    if verification.get(name) != expected:
+                        errors.append(f"canonical_verification_failed:{name}")
+                if verification.get("receipt_hash") != canonical_hash:
+                    errors.append("canonical_verification_hash_mismatch")
             return errors
         if self.known_output is None or self.observed_output is None:
             errors.append("output_pair_missing")

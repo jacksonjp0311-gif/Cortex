@@ -733,6 +733,31 @@ def activate_repository(
                 "error": f"{type(exc).__name__}:{exc}",
             }
 
+    # Open v8.3.3 metrology only after the repository identity, optional
+    # evidence refresh, body epoch, and epoch-scoped capability are bound. The
+    # predictive cognitive cycle is independent and may have opened earlier;
+    # it is not valid pre-state evidence for activation conformance.
+    try:
+        from .ostt.conformance import open_activation_observation
+
+        activation_observation_open = open_activation_observation(
+            store,
+            repo,
+            pre_epoch_id=str(epoch.epoch_id or ""),
+            host_manifest=str(current_manifest_hash(root, config) or ""),
+        )
+    except Exception as exc:
+        activation_observation_open = {
+            "schema_version": "cortex-activation-observation-opening/1.0",
+            "pre_epoch_id": str(epoch.epoch_id or ""),
+            "before_state": {},
+            "host_manifest_before": str(current_manifest_hash(root, config) or ""),
+            "error": f"{type(exc).__name__}:{exc}",
+            "policy_effect": False,
+            "update_authorized": False,
+            "advisory_only": True,
+        }
+
     # Phase 2a: sterile baseline — no adaptive machinery after optional evidence refresh
     if controller == "evidence_baseline":
         certificate = verify_repository(
@@ -806,9 +831,11 @@ def activate_repository(
                 controller=controller,
                 realized_action="evidence_only",
                 capability_id=str(cap.capability_id or ""),
-                pre_epoch_id=str(epoch.epoch_id or ""),
-                before_state=dict((cognitive_cycle_open or {}).get("before") or {}),
-                host_manifest_before=str(observed_manifest or ""),
+                pre_epoch_id=str(activation_observation_open.get("pre_epoch_id") or ""),
+                before_state=dict(activation_observation_open.get("before_state") or {}),
+                host_manifest_before=str(
+                    activation_observation_open.get("host_manifest_before") or ""
+                ),
                 host_manifest_after=str(current_manifest_hash(root, config) or ""),
             )
         except Exception as exc:
@@ -927,6 +954,42 @@ def activate_repository(
             write_certificate=False,
             observed_manifest=observed_manifest,
         )
+
+    # The advanced arm can take a fallback refresh path after the common
+    # opening above. Rebind the epoch/capability and reopen measurement after
+    # all refresh/preflight work so the receipt never names a stale identity.
+    epoch = ensure_current_epoch(
+        store, repo, reason="activation_advanced_observation_open"
+    )
+    cap = CapabilityIssuer("activation").issue(
+        repo=repo,
+        controller=controller,
+        reason=resolution.get("reason") or "activation_advanced_observation_open",
+        ttl_s=7200.0,
+        body_epoch_id=epoch.epoch_id,
+        evidence_root_hash=epoch.evidence_root_hash,
+        constitutional_config_hash=epoch.constitutional_config_hash,
+    )
+    resolution["capability"] = cap
+    resolution["body_epoch"] = epoch.to_dict()
+    try:
+        activation_observation_open = open_activation_observation(
+            store,
+            repo,
+            pre_epoch_id=str(epoch.epoch_id or ""),
+            host_manifest=str(current_manifest_hash(root, config) or ""),
+        )
+    except Exception as exc:
+        activation_observation_open = {
+            "schema_version": "cortex-activation-observation-opening/1.0",
+            "pre_epoch_id": str(epoch.epoch_id or ""),
+            "before_state": {},
+            "host_manifest_before": str(current_manifest_hash(root, config) or ""),
+            "error": f"{type(exc).__name__}:{exc}",
+            "policy_effect": False,
+            "update_authorized": False,
+            "advisory_only": True,
+        }
 
     out = activate_advanced(
         home,
@@ -1203,9 +1266,11 @@ def activate_repository(
             controller=controller,
             realized_action="bounded_adapt",
             capability_id=str(cap.capability_id or ""),
-            pre_epoch_id=str(epoch.epoch_id or ""),
-            before_state=dict((cognitive_cycle_open or {}).get("before") or {}),
-            host_manifest_before=str(observed_manifest or ""),
+            pre_epoch_id=str(activation_observation_open.get("pre_epoch_id") or ""),
+            before_state=dict(activation_observation_open.get("before_state") or {}),
+            host_manifest_before=str(
+                activation_observation_open.get("host_manifest_before") or ""
+            ),
             host_manifest_after=str(current_manifest_hash(root, config) or ""),
         )
     except Exception as exc:

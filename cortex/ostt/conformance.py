@@ -414,6 +414,32 @@ def capture_activation_transition(
     )
 
 
+def open_activation_observation(
+    store: Any,
+    repo: str,
+    *,
+    pre_epoch_id: str,
+    host_manifest: str,
+) -> dict[str, Any]:
+    """Capture the metrology opening after activation identity is bound.
+
+    This opening is deliberately independent of the predictive cognitive-cycle
+    opening.  The latter may begin before evidence refresh and epoch rebinding;
+    reusing it would make the conformance receipt describe a wider, stale
+    transition than the activation identity named by the receipt.
+    """
+    return {
+        "schema_version": "cortex-activation-observation-opening/1.0",
+        "pre_epoch_id": str(pre_epoch_id or ""),
+        "before_state": capture_measured_state(store, repo),
+        "host_manifest_before": str(host_manifest or ""),
+        "opened_at": time.time(),
+        "policy_effect": False,
+        "update_authorized": False,
+        "advisory_only": True,
+    }
+
+
 def finalize_activation_observation(
     store: Any,
     repo: str,
@@ -429,40 +455,42 @@ def finalize_activation_observation(
     host_manifest_after: str,
 ) -> dict[str, Any]:
     """Finalize either controller through one observation-only code path."""
-    measured = activation.get("measured_event_field")
-    if not isinstance(measured, Mapping) or not measured.get("before_state"):
-        repository = store.repo(repo)
-        repository_id = str(repository["repository_id"] or "") if repository else ""
-        provisional_event = _event_id(
-            repository_id=repository_id,
-            task_hash=hashlib.sha256(task.encode("utf-8")).hexdigest(),
-            controller=controller,
-            capability_id=capability_id,
-            before_hash=str(before_state.get("state_hash") or ""),
-            after_hash="pending",
-        )
-        measured = capture_activation_transition(
-            store,
-            repo,
-            before_state,
-            event_id=provisional_event,
-        )
-        final_event = _event_id(
-            repository_id=repository_id,
-            task_hash=hashlib.sha256(task.encode("utf-8")).hexdigest(),
-            controller=controller,
-            capability_id=capability_id,
-            before_hash=str(before_state.get("state_hash") or ""),
-            after_hash=str((measured.get("after_state") or {}).get("state_hash") or ""),
-        )
-        measured = measured_delta(
-            dict(before_state),
-            dict(measured.get("after_state") or {}),
-            event_id=final_event,
-            event_kind="activation_transaction",
-        )
-        activation["measured_event_field"] = measured
-        store.set_setting(f"measured_event_latest:{repo}", measured)
+    # Always reconstruct the conformance transition from the explicit
+    # post-binding opening.  ``activation["measured_event_field"]`` may be a
+    # predictive cognitive-cycle transition opened before refresh/epoch
+    # rebinding and is therefore not admissible as this receipt's pre-state.
+    repository = store.repo(repo)
+    repository_id = str(repository["repository_id"] or "") if repository else ""
+    provisional_event = _event_id(
+        repository_id=repository_id,
+        task_hash=hashlib.sha256(task.encode("utf-8")).hexdigest(),
+        controller=controller,
+        capability_id=capability_id,
+        before_hash=str(before_state.get("state_hash") or ""),
+        after_hash="pending",
+    )
+    measured = capture_activation_transition(
+        store,
+        repo,
+        before_state,
+        event_id=provisional_event,
+    )
+    final_event = _event_id(
+        repository_id=repository_id,
+        task_hash=hashlib.sha256(task.encode("utf-8")).hexdigest(),
+        controller=controller,
+        capability_id=capability_id,
+        before_hash=str(before_state.get("state_hash") or ""),
+        after_hash=str((measured.get("after_state") or {}).get("state_hash") or ""),
+    )
+    measured = measured_delta(
+        dict(before_state),
+        dict(measured.get("after_state") or {}),
+        event_id=final_event,
+        event_kind="activation_transaction",
+    )
+    activation["measured_event_field"] = measured
+    store.set_setting(f"measured_event_latest:{repo}", measured)
     body_epoch = dict(activation.get("body_epoch") or {})
     receipt = build_activation_conformance_receipt(
         store,
@@ -504,14 +532,24 @@ def finalize_activation_observation(
         limit=128,
     )
     cohort_count = len(cohort_rows)
+    cohort_rows_valid = True
+    for row in cohort_rows:
+        try:
+            row_valid = bool(
+                row.get("status") == "conformance_measured"
+                and float(row.get("valid_fraction") or 0.0) == 1.0
+                and validate_conformance_payload(row).get("valid") is True
+            )
+        except Exception:
+            row_valid = False
+        if not row_valid:
+            cohort_rows_valid = False
+            break
     canonical["cohort_count"] = cohort_count
     canonical["cohort_calibrated"] = bool(
         cohort_count >= 16
-        and all(
-            row.get("status") == "conformance_measured"
-            and float(row.get("valid_fraction") or 0.0) == 1.0
-            for row in cohort_rows
-        )
+        and chain.get("valid") is True
+        and cohort_rows_valid
     )
     canonical["gate_c_state"] = (
         "COHORT_CALIBRATED" if canonical["cohort_calibrated"] else "COLD"
@@ -779,5 +817,6 @@ __all__ = [
     "build_activation_conformance_receipt",
     "capture_activation_transition",
     "finalize_activation_observation",
+    "open_activation_observation",
     "verify_activation_receipt",
 ]

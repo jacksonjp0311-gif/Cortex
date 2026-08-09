@@ -24,6 +24,7 @@ from cortex.epoch import ensure_current_epoch
 from cortex.ostt.conformance import (
     activation_cohort_report,
     build_activation_conformance_receipt,
+    finalize_activation_observation,
     verify_activation_receipt,
 )
 from cortex.ostt.contracts import CORE_CONTRACTS
@@ -112,6 +113,7 @@ class ActivationConformanceTests(unittest.TestCase):
         event_id: str = "event-1",
         *,
         task: str | None = None,
+        controller: str = "advanced",
         body_epoch: dict | None = None,
         transition: dict | None = None,
         measurement_cohort_id: str | None = None,
@@ -122,8 +124,12 @@ class ActivationConformanceTests(unittest.TestCase):
             self.store,
             self.repo,
             task=task or f"task-{event_id}",
-            controller="advanced",
-            realized_action="bounded_adapt",
+            controller=controller,
+            realized_action=(
+                "evidence_only"
+                if controller == "evidence_baseline"
+                else "bounded_adapt"
+            ),
             capability_id="capability-test",
             pre_epoch_id=self.epoch.epoch_id,
             body_epoch=body_epoch or self.epoch.to_dict(),
@@ -131,6 +137,71 @@ class ActivationConformanceTests(unittest.TestCase):
             host_manifest_before=host_manifest_before,
             host_manifest_after=host_manifest_after,
             measurement_cohort_id=measurement_cohort_id,
+        )
+
+    def _verified_residual_receipt(
+        self,
+        *,
+        arm: str,
+        comparison_mode: str,
+        case_task: str = "paired-production-case",
+    ) -> ResidualReceipt:
+        event_id = f"verified-{arm}-{comparison_mode}"
+        candidate = self._build(
+            event_id,
+            task=case_task,
+            controller=arm,
+        )
+        candidate["comparison_mode"] = comparison_mode
+        canonical = self.store.append_activation_conformance_receipt(
+            self.repo, candidate
+        )
+        verification = verify_activation_receipt(
+            self.store, self.repo, canonical["receipt_hash"]
+        )
+        return ResidualReceipt.from_dict(
+            {**canonical, "canonical_verification": verification}
+        )
+
+    def test_finalizer_uses_bound_opening_not_stale_cognitive_transition(self) -> None:
+        stale_transition = self._transition("stale-cognitive-event")
+        stale_before_hash = stale_transition["before_state"]["state_hash"]
+        self.store.add_event(
+            None,
+            self.repo,
+            "activation_opening_boundary",
+            "advance measured state before the bound opening",
+        )
+        self.epoch = ensure_current_epoch(
+            self.store, self.repo, reason="bound_activation_opening_test"
+        )
+        bound_before = capture_measured_state(self.store, self.repo)
+        self.assertNotEqual(bound_before["state_hash"], stale_before_hash)
+        activation = {
+            "body_epoch": self.epoch.to_dict(),
+            "measured_event_field": stale_transition,
+        }
+
+        receipt = finalize_activation_observation(
+            self.store,
+            self.repo,
+            activation,
+            task="bound activation opening",
+            controller="advanced",
+            realized_action="bounded_adapt",
+            capability_id="capability-bound-opening",
+            pre_epoch_id=self.epoch.epoch_id,
+            before_state=bound_before,
+            host_manifest_before="host-manifest",
+            host_manifest_after="host-manifest",
+        )
+
+        observed_before = receipt["measured_transition"]["before_state"]
+        self.assertEqual(observed_before["state_hash"], bound_before["state_hash"])
+        self.assertNotEqual(observed_before["state_hash"], stale_before_hash)
+        self.assertEqual(
+            activation["measured_event_field"]["before_state"]["state_hash"],
+            bound_before["state_hash"],
         )
 
     @staticmethod
@@ -360,7 +431,7 @@ class ActivationConformanceTests(unittest.TestCase):
         self.assertEqual(first["receipt_hash"], duplicate["receipt_hash"])
         self.assertEqual(count, 1)
 
-    def test_canonical_receipt_rows_reject_every_update(self) -> None:
+    def test_canonical_receipt_rows_reject_every_update_and_delete(self) -> None:
         appended = self.store.append_activation_conformance_receipt(
             self.repo, self._build("immutable-event")
         )
@@ -371,6 +442,7 @@ class ActivationConformanceTests(unittest.TestCase):
             ).fetchall()
         }
         self.assertIn("activation_conformance_receipts_no_update", triggers)
+        self.assertIn("activation_conformance_receipts_no_delete", triggers)
         self.assertNotIn(
             "activation_conformance_receipt_identity_immutable", triggers
         )
@@ -381,6 +453,32 @@ class ActivationConformanceTests(unittest.TestCase):
             self.store.db.execute(
                 "UPDATE activation_conformance_receipts SET status=? WHERE receipt_hash=?",
                 ("observed_incomplete", appended["receipt_hash"]),
+            )
+        self.store.db.rollback()
+        with self.assertRaisesRegex(
+            sqlite3.IntegrityError,
+            "canonical activation conformance receipts cannot be deleted",
+        ):
+            self.store.db.execute(
+                "DELETE FROM activation_conformance_receipts WHERE receipt_hash=?",
+                (appended["receipt_hash"],),
+            )
+        self.store.db.rollback()
+
+    def test_chain_tip_partition_identity_is_immutable(self) -> None:
+        appended = self.store.append_activation_conformance_receipt(
+            self.repo, self._build("immutable-tip-event")
+        )
+        with self.assertRaisesRegex(
+            sqlite3.IntegrityError,
+            "activation conformance chain-tip identity cannot be updated",
+        ):
+            self.store.db.execute(
+                """
+                UPDATE activation_conformance_chain_tips
+                SET repo=? WHERE tip_receipt_hash=?
+                """,
+                ("wrong-repo", appended["receipt_hash"]),
             )
         self.store.db.rollback()
 
@@ -514,6 +612,11 @@ class ActivationConformanceTests(unittest.TestCase):
         self.store.db.execute(
             "DROP TRIGGER activation_conformance_receipts_no_update"
         )
+        # Explicit test-only bypass: production code cannot rewrite partition
+        # identity, but verification must still fail closed on offline damage.
+        self.store.db.execute(
+            "DROP TRIGGER activation_conformance_chain_tip_identity_immutable"
+        )
         self.store.db.execute(
             """
             UPDATE activation_conformance_receipts
@@ -549,6 +652,58 @@ class ActivationConformanceTests(unittest.TestCase):
         )
         self.assertIn("chain_tip_count_invalid", chain["errors"])
         self.assertIn("chain_tip_partition_mismatch:repo", chain["errors"])
+
+    def test_chain_verification_rejects_coercible_scalars_and_surrogate_json(self) -> None:
+        appended = self.store.append_activation_conformance_receipt(
+            self.repo, self._build("malformed-scalar-event")
+        )
+        self.store.db.execute(
+            "DROP TRIGGER activation_conformance_receipts_no_update"
+        )
+        # SQLite's numeric converters accept these BLOBs. Verification must
+        # require actual ledger scalar types and must not throw on a JSON lone
+        # surrogate that cannot be encoded as canonical UTF-8.
+        self.store.db.execute(
+            """
+            UPDATE activation_conformance_receipts
+            SET receipt_json=?, chain_sequence=?, created_at=?
+            WHERE receipt_hash=?
+            """,
+            (
+                '{"bad":"\\ud800"}',
+                sqlite3.Binary(b"1"),
+                sqlite3.Binary(b"1.0"),
+                appended["receipt_hash"],
+            ),
+        )
+        self.store.db.execute(
+            """
+            UPDATE activation_conformance_chain_tips
+            SET receipt_count=?, updated_at=?
+            WHERE tip_receipt_hash=?
+            """,
+            (
+                sqlite3.Binary(b"1"),
+                sqlite3.Binary(b"1.0"),
+                appended["receipt_hash"],
+            ),
+        )
+        self.store.db.commit()
+
+        chain = self.store.verify_activation_conformance_chain(
+            self.repo,
+            appended["operator_id"],
+            appended["body_epoch_id"],
+            appended["measurement_cohort_id"],
+            appended["coordinate_schema_digest"],
+        )
+        self.assertFalse(chain["valid"])
+        errors = chain["errors"]
+        self.assertTrue(any("receipt_json_invalid" in error for error in errors))
+        self.assertTrue(any("chain_sequence_invalid" in error for error in errors))
+        self.assertTrue(any("created_at_invalid" in error for error in errors))
+        self.assertIn("chain_tip_count_invalid", errors)
+        self.assertIn("chain_tip_updated_at_invalid", errors)
 
     def test_chain_verification_binds_exact_repository_name_and_identity(self) -> None:
         appended = self.store.append_activation_conformance_receipt(
@@ -629,7 +784,10 @@ class ActivationConformanceTests(unittest.TestCase):
 
     def test_one_ready_operator_does_not_claim_global_readiness(self) -> None:
         receipts = [
-            self._residual_receipt(arm=arm, comparison_mode=mode)
+            self._verified_residual_receipt(
+                arm=arm,
+                comparison_mode=mode,
+            )
             for arm in ("evidence_baseline", "advanced")
             for mode in sorted(REQUIRED_COMPARISON_MODES)
         ]
@@ -642,6 +800,18 @@ class ActivationConformanceTests(unittest.TestCase):
         self.assertFalse(report["gates"]["global_operator_evidence"])
         self.assertFalse(report["update_authorized"])
         self.assertEqual(_claim_flags(report), (False, False, True))
+
+    def test_asserted_unbound_conformance_never_becomes_ready(self) -> None:
+        forged = self._residual_receipt()
+        self.assertFalse(forged.evidence_ready)
+        self.assertIn("conformance_payload_missing", forged.validation_errors())
+        self.assertIn("canonical_verification_missing", forged.validation_errors())
+        report = residual_evidence_report(CORE_CONTRACTS, [forged])
+        self.assertEqual(
+            report["operator_statuses"]["activation_observation"]["status"],
+            "measured_incomplete",
+        )
+        self.assertEqual(report["ready_count"], 0)
 
 
 if __name__ == "__main__":

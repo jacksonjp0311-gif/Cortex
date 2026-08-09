@@ -410,6 +410,29 @@ BEGIN
     SELECT RAISE(ABORT, 'canonical activation conformance receipts cannot be updated');
 END;
 
+-- A tip advances, but its partition identity never changes.  In particular,
+-- the human-facing repository name remains bound to the repository identity
+-- used by the canonical receipt chain.
+DROP TRIGGER IF EXISTS activation_conformance_chain_tip_identity_immutable;
+CREATE TRIGGER activation_conformance_chain_tip_identity_immutable
+BEFORE UPDATE OF
+    repository_id,
+    repo,
+    operator_id,
+    body_epoch_id,
+    measurement_cohort_id,
+    coordinate_schema_digest
+ON activation_conformance_chain_tips
+WHEN OLD.repository_id IS NOT NEW.repository_id
+  OR OLD.repo IS NOT NEW.repo
+  OR OLD.operator_id IS NOT NEW.operator_id
+  OR OLD.body_epoch_id IS NOT NEW.body_epoch_id
+  OR OLD.measurement_cohort_id IS NOT NEW.measurement_cohort_id
+  OR OLD.coordinate_schema_digest IS NOT NEW.coordinate_schema_digest
+BEGIN
+    SELECT RAISE(ABORT, 'activation conformance chain-tip identity cannot be updated');
+END;
+
 -- v8.4.2 recurrent symbiotic circulation ledger.  Append-only hash chain per
 -- repository/session.  Exactly-once per (session, turn, kind) permits repeated
 -- [context→proposal→evaluation→action→outcome] turns; event_id is immutable.
@@ -2303,8 +2326,29 @@ class Store:
 
     @staticmethod
     def _activation_conformance_is_sha256(value: Any) -> bool:
-        text = str(value or "")
-        return len(text) == 64 and all(character in "0123456789abcdef" for character in text)
+        return (
+            isinstance(value, str)
+            and len(value) == 64
+            and all(character in "0123456789abcdef" for character in value)
+        )
+
+    @staticmethod
+    def _activation_conformance_ledger_integer(value: Any) -> int | None:
+        """Return a SQLite INTEGER without accepting coercible TEXT/BLOB/REAL."""
+        if isinstance(value, bool) or not isinstance(value, int):
+            return None
+        return value
+
+    @staticmethod
+    def _activation_conformance_ledger_real(value: Any) -> float | None:
+        """Return one finite SQLite numeric scalar without string coercion."""
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        try:
+            result = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return result if math.isfinite(result) else None
 
     @classmethod
     def _activation_conformance_admit_body(
@@ -2599,9 +2643,15 @@ class Store:
     def _decode_activation_conformance_row(row: sqlite3.Row) -> dict[str, Any]:
         decode_error: str | None = None
         try:
-            body = json.loads(row["receipt_json"])
+            receipt_json = row["receipt_json"]
+            if not isinstance(receipt_json, str):
+                raise TypeError("receipt_json_not_text")
+            body = json.loads(receipt_json)
             if not isinstance(body, dict):
                 raise ValueError("receipt_json_not_object")
+            # JSON permits escaped lone surrogates, while the canonical ledger
+            # explicitly requires UTF-8.  Validate that boundary on reads too.
+            Store._activation_conformance_canonical_json(body).encode("utf-8")
         except (
             TypeError,
             ValueError,
@@ -2612,17 +2662,13 @@ class Store:
         ) as exc:
             body = {}
             decode_error = f"{type(exc).__name__}:{exc}"
-        try:
-            chain_sequence: int | None = int(row["chain_sequence"])
-        except (TypeError, ValueError, OverflowError):
-            chain_sequence = None
+        chain_sequence = Store._activation_conformance_ledger_integer(
+            row["chain_sequence"]
+        )
+        if chain_sequence is None:
             decode_error = decode_error or "chain_sequence_invalid"
-        try:
-            created_at: float | None = float(row["created_at"])
-            if not math.isfinite(created_at):
-                raise ValueError("created_at_not_finite")
-        except (TypeError, ValueError, OverflowError):
-            created_at = None
+        created_at = Store._activation_conformance_ledger_real(row["created_at"])
+        if created_at is None:
             decode_error = decode_error or "created_at_invalid"
         envelope = {
             "ledger_schema_version": ACTIVATION_CONFORMANCE_LEDGER_SCHEMA,
@@ -2702,19 +2748,25 @@ class Store:
             "status",
         )
         for expected_sequence, row in enumerate(rows, start=1):
-            receipt_hash = str(row["receipt_hash"] or "")
+            receipt_hash = (
+                row["receipt_hash"] if isinstance(row["receipt_hash"], str) else ""
+            )
             prefix = f"receipt:{receipt_hash or expected_sequence}:"
             errors_before = len(errors)
             if not self._activation_conformance_is_sha256(receipt_hash):
                 errors.append(prefix + "receipt_hash_invalid")
-            try:
-                sequence = int(row["chain_sequence"])
-            except (TypeError, ValueError, OverflowError):
-                sequence = None
+            sequence = self._activation_conformance_ledger_integer(
+                row["chain_sequence"]
+            )
+            if sequence is None:
                 errors.append(prefix + "chain_sequence_invalid")
             if sequence != expected_sequence:
                 errors.append(prefix + "chain_sequence_mismatch")
-            previous_receipt_hash = str(row["previous_receipt_hash"] or "")
+            previous_receipt_hash = (
+                row["previous_receipt_hash"]
+                if isinstance(row["previous_receipt_hash"], str)
+                else ""
+            )
             if not self._activation_conformance_is_sha256(previous_receipt_hash):
                 errors.append(prefix + "previous_receipt_hash_invalid")
             if previous_receipt_hash != previous:
@@ -2727,13 +2779,19 @@ class Store:
                 "measurement_cohort_id",
                 "coordinate_schema_digest",
             ):
-                if str(row[field] or "") != str(partition[field]):
+                if not isinstance(row[field], str) or not row[field]:
+                    errors.append(prefix + f"partition_field_invalid:{field}")
+                if row[field] != partition[field]:
                     errors.append(prefix + f"partition_field_mismatch:{field}")
             try:
-                body = json.loads(row["receipt_json"])
+                raw_receipt_json = row["receipt_json"]
+                if not isinstance(raw_receipt_json, str):
+                    raise TypeError("receipt_json_not_text")
+                body = json.loads(raw_receipt_json)
                 if not isinstance(body, dict):
                     raise ValueError("not_object")
                 canonical_body = self._activation_conformance_canonical_json(body)
+                canonical_body_bytes = canonical_body.encode("utf-8")
             except (
                 TypeError,
                 ValueError,
@@ -2744,29 +2802,29 @@ class Store:
             ):
                 body = {}
                 canonical_body = ""
+                canonical_body_bytes = b""
                 errors.append(prefix + "receipt_json_invalid")
-            if canonical_body and canonical_body != str(row["receipt_json"]):
+            if canonical_body and canonical_body != row["receipt_json"]:
                 errors.append(prefix + "receipt_json_not_canonical")
             for field in indexed_body_fields:
-                if str(body.get(field) or "") != str(row[field]):
+                body_value = body.get(field)
+                if not isinstance(body_value, str) or not body_value:
+                    errors.append(prefix + f"body_field_invalid:{field}")
+                if body_value != row[field]:
                     errors.append(prefix + f"indexed_field_mismatch:{field}")
-            try:
-                body_created_at = float(body.get("created_at"))
-                row_created_at = float(row["created_at"])
-                created_at_valid = math.isfinite(body_created_at) and math.isfinite(
-                    row_created_at
-                )
-            except (TypeError, ValueError, OverflowError):
-                body_created_at = None
-                row_created_at = None
-                created_at_valid = False
-            if not created_at_valid:
+            body_created_at = self._activation_conformance_ledger_real(
+                body.get("created_at")
+            )
+            row_created_at = self._activation_conformance_ledger_real(
+                row["created_at"]
+            )
+            if body_created_at is None or row_created_at is None:
                 errors.append(prefix + "created_at_invalid")
             elif body_created_at != row_created_at:
                 errors.append(prefix + "indexed_field_mismatch:created_at")
             expected_subject = (
-                sha256(canonical_body.encode("utf-8")).hexdigest()
-                if canonical_body
+                sha256(canonical_body_bytes).hexdigest()
+                if canonical_body_bytes
                 else ""
             )
             if not self._activation_conformance_is_sha256(
@@ -2777,18 +2835,21 @@ class Store:
                 errors.append(prefix + "subject_receipt_hash_mismatch")
             try:
                 expected_receipt_hash = self._activation_conformance_final_hash(row)
-            except (TypeError, ValueError, OverflowError, KeyError) as exc:
+            except (
+                TypeError,
+                ValueError,
+                OverflowError,
+                KeyError,
+                UnicodeError,
+                RecursionError,
+            ) as exc:
                 expected_receipt_hash = ""
                 errors.append(
                     prefix + f"receipt_hash_material_invalid:{type(exc).__name__}"
                 )
             if expected_receipt_hash != receipt_hash:
                 errors.append(prefix + "receipt_hash_mismatch")
-            event_key = (
-                str(row["repository_id"]),
-                str(row["operator_id"]),
-                str(row["event_id"]),
-            )
+            event_key = (row["repository_id"], row["operator_id"], row["event_id"])
             if event_key in seen_events:
                 errors.append(prefix + "duplicate_operator_event")
             seen_events.add(event_key)
@@ -2805,21 +2866,38 @@ class Store:
                 "measurement_cohort_id",
                 "coordinate_schema_digest",
             ):
-                if str(tip[field]) != partition[field]:
+                if not isinstance(tip[field], str) or not tip[field]:
+                    errors.append(f"chain_tip_partition_invalid:{field}")
+                if tip[field] != partition[field]:
                     errors.append(f"chain_tip_partition_mismatch:{field}")
-            try:
-                tip_count = int(tip["receipt_count"])
-            except (TypeError, ValueError, OverflowError):
-                tip_count = None
+            tip_count = self._activation_conformance_ledger_integer(
+                tip["receipt_count"]
+            )
+            if tip_count is None:
                 errors.append("chain_tip_count_invalid")
             if tip_count != len(rows):
                 errors.append("chain_tip_count_mismatch")
             expected_tip = str(rows[-1]["receipt_hash"]) if rows else ""
-            tip_receipt_hash = str(tip["tip_receipt_hash"] or "")
+            tip_receipt_hash = (
+                tip["tip_receipt_hash"]
+                if isinstance(tip["tip_receipt_hash"], str)
+                else ""
+            )
             if not self._activation_conformance_is_sha256(tip_receipt_hash):
                 errors.append("chain_tip_hash_invalid")
             if tip_receipt_hash != expected_tip:
                 errors.append("chain_tip_hash_mismatch")
+            tip_updated_at = self._activation_conformance_ledger_real(
+                tip["updated_at"]
+            )
+            if tip_updated_at is None:
+                errors.append("chain_tip_updated_at_invalid")
+            elif rows:
+                expected_updated_at = self._activation_conformance_ledger_real(
+                    rows[-1]["created_at"]
+                )
+                if expected_updated_at is None or tip_updated_at != expected_updated_at:
+                    errors.append("chain_tip_updated_at_mismatch")
         return {
             "valid": not errors,
             "chain_valid": not errors,
@@ -2920,16 +2998,16 @@ class Store:
             )
             tip = conn.execute(
                 """SELECT * FROM activation_conformance_chain_tips
-                   WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                   WHERE repository_id=? AND repo=? AND operator_id=? AND body_epoch_id=?
                      AND measurement_cohort_id=? AND coordinate_schema_digest=?""",
-                partition_args,
+                (repository_id, repo, *partition_args[1:]),
             ).fetchone()
             partition_count = int(
                 conn.execute(
                     """SELECT COUNT(*) AS n FROM activation_conformance_receipts
-                       WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                       WHERE repository_id=? AND repo=? AND operator_id=? AND body_epoch_id=?
                          AND measurement_cohort_id=? AND coordinate_schema_digest=?""",
-                    partition_args,
+                    (repository_id, repo, *partition_args[1:]),
                 ).fetchone()["n"]
             )
             if tip is None and partition_count:
@@ -3018,14 +3096,16 @@ class Store:
                 cursor = conn.execute(
                     """UPDATE activation_conformance_chain_tips
                        SET tip_receipt_hash=?, receipt_count=?, updated_at=?
-                       WHERE repository_id=? AND operator_id=? AND body_epoch_id=?
+                       WHERE repository_id=? AND repo=? AND operator_id=? AND body_epoch_id=?
                          AND measurement_cohort_id=? AND coordinate_schema_digest=?
                          AND tip_receipt_hash=? AND receipt_count=?""",
                     (
                         receipt_hash,
                         chain_sequence,
                         created_at,
-                        *partition_args,
+                        repository_id,
+                        repo,
+                        *partition_args[1:],
                         previous_hash,
                         chain_sequence - 1,
                     ),
@@ -4046,7 +4126,7 @@ class Store:
         if not receipt_hash or not event_id:
             raise ValueError(f"{table} missing receipt_hash/event_id")
         with self.transaction() as conn:
-            repository_id = self._repo_id(conn, repo)
+            self._repo_id(conn, repo)
             existing = conn.execute(duplicate_query, duplicate_params).fetchone()
             if existing is not None:
                 if str(existing["receipt_hash"]) != receipt_hash:
