@@ -55,6 +55,7 @@ class ObservationNonmutationTests(unittest.TestCase):
 
     def test_diagnostics_do_not_create_epochs(self) -> None:
         before = _epoch_fingerprint(self.store, "ObsHost")
+        binding_before = self.store.get_setting("binding_field_latest:ObsHost", None)
         for _ in range(3):
             observe_current_epoch(self.store, "ObsHost")
             continuity_report(self.store, "ObsHost")
@@ -66,6 +67,10 @@ class ObservationNonmutationTests(unittest.TestCase):
         self.assertEqual(before["ids"], after["ids"])
         self.assertEqual(before["hash"], after["hash"])
         self.assertEqual(before["phase"], after["phase"])
+        self.assertEqual(
+            self.store.get_setting("binding_field_latest:ObsHost", None),
+            binding_before,
+        )
 
 
 if __name__ == "__main__":

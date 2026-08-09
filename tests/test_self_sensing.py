@@ -35,6 +35,15 @@ class SelfSensingMathTests(unittest.TestCase):
         r = residual_mahalanobis(z, mu, var)
         self.assertAlmostEqual(r, 0.0, places=6)
 
+    def test_residual_can_exclude_unknown_axes(self) -> None:
+        z = [1.0] * 13
+        mu = [0.0] * 13
+        var = [0.01] * 13
+        full = residual_mahalanobis(z, mu, var)
+        partial = residual_mahalanobis(z, mu, var, valid_indices=[0, 1])
+        self.assertIsNotNone(partial)
+        self.assertLess(partial or 0.0, full or 0.0)
+
     def test_baseline_ema(self) -> None:
         st: dict = {}
         st = update_baseline(st, [1.0] * 13, alpha=0.5)

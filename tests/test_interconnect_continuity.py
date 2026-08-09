@@ -52,6 +52,21 @@ class InterconnectContinuityTests(unittest.TestCase):
         self.assertEqual(dash.get("runtime_phase"), cont.get("runtime_phase"))
         self.assertEqual((dash.get("ostt") or {}).get("schema_version"), "cortex-ostt/1.0")
 
+    def test_stale_cached_panels_are_epoch_marked(self) -> None:
+        initial = mesh_status(self.store, "ICHost", governor=self.gov, home=self.home)
+        self.assertTrue((initial.get("continuity") or {}).get("body_epoch_id"))
+        self.store.set_setting(
+            "resonance_sweep_latest:ICHost",
+            {"body_epoch_id": "stale-cached-epoch", "status": "no_stable_peak"},
+        )
+        observed = mesh_status(self.store, "ICHost", governor=self.gov, home=self.home)
+        alignment = observed.get("epoch_alignment") or {}
+        self.assertIn("geometric_echo", alignment)
+        self.assertIn(
+            (alignment.get("geometric_echo") or {}).get("status"),
+            {"stale", "unbound"},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

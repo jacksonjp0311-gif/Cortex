@@ -67,6 +67,20 @@ clock ≠ memory ≠ decision
 Full plan: [`docs/EVOLUTION_SPECTRAL.md`](../EVOLUTION_SPECTRAL.md).  
 Teaching packet: `examples/memory-packets/spectral-memory.packet.json`.
 
+## Epoch-converged status (v8.9.1)
+
+Interconnect status is an inspection surface. It must not persist a projection
+while reading it. A measured frame is complete only when its coordinate schema
+and measurement cohort are both bound; unknown is not complete. Cached panels
+must expose their declared body epoch and are marked stale when they do not
+match the live report epoch. Temporal candidates, cold observers, and
+indeterminate frames remain non-ready telemetry.
+
+Self-sensing `residual_r` is a distance from the recent verified regime. It is
+not a directional health score. Unknown coordinates are excluded from the
+residual calculation and listed explicitly. See
+[`PHASE_V8.9.1_EPOCH_CONVERGED_INTERCONNECT.md`](PHASE_V8.9.1_EPOCH_CONVERGED_INTERCONNECT.md).
+
 ## Distill intelligence (v6.3)
 
 Periodic self-observation of the lattice → durable claims:

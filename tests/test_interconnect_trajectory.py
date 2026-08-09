@@ -12,6 +12,7 @@ from cortex.interconnect_frame import (
     GATE_FAIL,
     GATE_PASS,
     GATE_UNKNOWN,
+    _frame_validity_planes,
     build_context_delta,
     build_interconnect_transition,
     capture_atomic_interconnect_frame,
@@ -249,6 +250,47 @@ class InterconnectTrajectoryTests(unittest.TestCase):
         self.assertNotEqual(frame["validity"]["measurement_state"], GATE_PASS)
         self.assertNotEqual(frame["validity"]["overall_state"], GATE_PASS)
 
+    def test_measurement_complete_requires_schema_and_cohort(self) -> None:
+        surfaces = {
+            "measured_state": {"present": True},
+        }
+        validity = _frame_validity_planes(
+            repo=self.repo,
+            repository_id="rid",
+            session_id="session",
+            turn_id=0,
+            body_epoch_id="epoch",
+            epoch={"live_epoch_id": "epoch", "present": True, "verified": True},
+            surfaces=surfaces,
+            coordinate_schema_digest="",
+            measurement_cohort_id="",
+            symbiosis_chain_tip=None,
+        )
+        self.assertEqual(validity["measurement_state"], GATE_PASS)
+        self.assertEqual(validity["schema_state"], GATE_UNKNOWN)
+        self.assertEqual(validity["cohort_state"], GATE_UNKNOWN)
+
+        # A measured payload without typed partition bindings is not complete.
+        self.assertFalse(
+            validity["measurement_state"] == GATE_PASS
+            and validity["schema_state"] == GATE_PASS
+            and validity["cohort_state"] == GATE_PASS
+        )
+
+    def test_non_ready_temporal_states_do_not_fall_through_to_pass(self) -> None:
+        panel = readiness_panel(
+            mesh_green_constitutional=True,
+            continuity={"epoch_verified": True},
+            symbiosis={"status": "cold"},
+            self_sensing={"classification": "COLD"},
+            binding={},
+            resonance={},
+            interlock={},
+            ostt={},
+            frame={},
+        )
+        self.assertEqual(panel["temporal_ready"], GATE_UNKNOWN)
+
     def test_unrelated_outcome_does_not_bind(self) -> None:
         a = capture_atomic_interconnect_frame(
             self.store,
@@ -298,6 +340,41 @@ class InterconnectTrajectoryTests(unittest.TestCase):
         self.assertNotEqual(panel["overall_state"], GATE_PASS)
         self.assertTrue(panel["advisory_only"])
         self.assertFalse(panel["policy_effect"])
+
+    def test_verified_activation_receipt_drives_measurement_plane(self) -> None:
+        panel = readiness_panel(
+            mesh_green_constitutional=True,
+            continuity={"epoch_verified": True},
+            symbiosis={"status": "cold"},
+            self_sensing={},
+            binding={},
+            resonance={},
+            interlock={},
+            ostt={
+                "residual_evidence": {
+                    "operator_statuses": {
+                        "activation_observation": {"status": "conformance_ready"}
+                    },
+                    "receipts": [
+                        {
+                            "operator_id": "activation_observation",
+                            "canonical_verification": {
+                                "receipt_hash_valid": True,
+                                "chain_valid": True,
+                                "measurement_conformance_valid": True,
+                                "measurement_witness_valid": True,
+                                "epoch_current": True,
+                                "cohort_current": True,
+                                "exactly_once_event": True,
+                            },
+                        }
+                    ],
+                }
+            },
+            frame={},
+        )
+        self.assertEqual(panel["measurement_ready"], GATE_PASS)
+        self.assertFalse(panel["overall_ready"])
 
 
 if __name__ == "__main__":

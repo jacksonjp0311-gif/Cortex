@@ -421,9 +421,11 @@ def capture_atomic_interconnect_frame(
             "session_present",
         )
     )
-    # Measurement complete requires measured surface + schema
+    # Measurement complete requires a typed measured surface with both
+    # coordinate-schema and cohort bindings.  Presence alone is not evidence.
     measurement_complete = validity["measurement_state"] == GATE_PASS and (
-        validity["schema_state"] in {GATE_PASS, GATE_UNKNOWN}
+        validity["schema_state"] == GATE_PASS
+        and validity["cohort_state"] == GATE_PASS
     )
     temporally_coherent = (
         validity["epoch_state"] == GATE_PASS
@@ -820,14 +822,40 @@ def readiness_panel(
     else:
         continuity_state = GATE_UNKNOWN
 
-    measurement_state = validity.get("measurement_state") or (
+    conformance = ostt.get("residual_evidence") or {}
+    activation_operator = (conformance.get("operator_statuses") or {}).get(
+        "activation_observation"
+    ) or {}
+    verified_activation = False
+    for receipt in conformance.get("receipts") or []:
+        if str(receipt.get("operator_id") or "") != "activation_observation":
+            continue
+        verification = receipt.get("canonical_verification") or {}
+        verified_activation = bool(
+            activation_operator.get("status") == "conformance_ready"
+            and verification.get("receipt_hash_valid") is True
+            and verification.get("chain_valid") is True
+            and verification.get("measurement_conformance_valid") is True
+            and verification.get("measurement_witness_valid") is True
+            and verification.get("epoch_current") is True
+            and verification.get("cohort_current") is True
+            and verification.get("exactly_once_event") is True
+        )
+        if verified_activation:
+            break
+    measurement_state = (
         GATE_PASS
-        if frame.get("measurement_complete")
-        else GATE_UNKNOWN
-        if not frame
-        else GATE_FAIL
-        if frame.get("structurally_valid") and not frame.get("measured_state_digest")
-        else GATE_UNKNOWN
+        if verified_activation
+        else validity.get("measurement_state")
+        or (
+            GATE_PASS
+            if frame.get("measurement_complete")
+            else GATE_UNKNOWN
+            if not frame
+            else GATE_FAIL
+            if frame.get("structurally_valid") and not frame.get("measured_state_digest")
+            else GATE_UNKNOWN
+        )
     )
     if (symbiosis.get("status") or "cold") in {"cold", None}:
         circulation_state = GATE_UNKNOWN
@@ -848,10 +876,27 @@ def readiness_panel(
         temporal_state = GATE_FAIL
     elif str(resonance.get("status") or "") == "no_stable_peak":
         temporal_state = GATE_FAIL
+    elif sensing in {"COLD", "INDETERMINATE"} or bind in {
+        "BINDING_GAP",
+        "BUFFER_PENDING",
+        "COLD_FIELD",
+        "INDETERMINATE",
+        "TRANSITION_REGIME",
+    }:
+        # Non-ready observer states must not fall through to temporal pass.
+        temporal_state = GATE_UNKNOWN
+    elif str(resonance.get("status") or "") != "stable_peak":
+        # A candidate or missing resonance is not a verified temporal field.
+        temporal_state = GATE_UNKNOWN
     else:
         temporal_state = GATE_PASS
 
-    if interlock.get("data_ready") is True or str(ostt.get("status") or "") in {
+    ostt_status = str(
+        ostt.get("status")
+        or (ostt.get("residual_evidence") or {}).get("status")
+        or ""
+    )
+    if interlock.get("data_ready") is True or ostt_status in {
         "conformance_measured",
         "measured",
     }:

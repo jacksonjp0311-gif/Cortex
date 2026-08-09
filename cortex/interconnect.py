@@ -22,11 +22,14 @@ GLYPH = "⧉"
 
 
 def _binding_field_panel(store: Any, repo: str) -> dict[str, Any]:
-    """v7.7 compact binding field (observe; persist latest)."""
+    """v7.7 compact binding field (strictly observe; never persist)."""
     try:
         from .binding_field import observe_binding_field
 
-        b = observe_binding_field(store, repo, persist=True)
+        # The interconnect command is an inspection surface.  Persisting a
+        # binding-field projection here made a status read change the state it
+        # was reporting and broke the read-only contract.
+        b = observe_binding_field(store, repo, persist=False)
         return {
             "classification": b.get("classification"),
             "reasons": b.get("reasons"),
@@ -263,7 +266,6 @@ def mesh_status(
         not block
         and "host.mutate" not in ALLOWED_SCOPES
         and "host.mutate" in FORBIDDEN_SCOPES
-        and not frozen
         and continuity.get("epoch_verified") is not False
         and continuity.get("phase_bound") is not False
         and not continuity.get("error")
@@ -404,6 +406,37 @@ def mesh_status(
             "advisory_only": True,
         }
     binding_panel = _binding_field_panel(store, repo)
+
+    # A mesh report can combine live probes with cached advisory surfaces. Make
+    # that temporal boundary explicit and quarantine any cached panel whose
+    # body epoch is not the one used for this report.
+    live_body_epoch = str(continuity.get("body_epoch_id") or "")
+    epoch_alignment: dict[str, dict[str, Any]] = {}
+    for name, panel in (
+        ("resonance_sweep", resonance_sweep_panel),
+        ("geometric_echo", geometric_echo_panel),
+        ("rotated_echo", rotated_echo_panel),
+        ("informational_interlock", interlock_panel),
+    ):
+        if not isinstance(panel, dict):
+            epoch_alignment[name] = {"status": "unavailable", "current": False}
+            continue
+        declared = str(
+            panel.get("body_epoch_id")
+            or panel.get("current_body_epoch_id")
+            or ""
+        )
+        current = bool(live_body_epoch and declared and declared == live_body_epoch)
+        status = "current" if current else "stale" if declared else "unbound"
+        epoch_alignment[name] = {
+            "status": status,
+            "current": current,
+            "declared_body_epoch_id": declared or None,
+            "current_body_epoch_id": live_body_epoch or None,
+        }
+        if declared and not current:
+            panel["epoch_current"] = False
+            panel["stale_reason"] = "declared_body_epoch_not_current"
     try:
         from .symbiosis import symbiotic_status
 
@@ -519,6 +552,7 @@ def mesh_status(
             "mesh_green": mesh_green,
             "atomic_control_read": control_snapshot.get("verification")
             == "live_single_pass",
+            "epoch_alignment": epoch_alignment,
         },
         "mesh_green": mesh_green,
         "mesh_green_meaning": (
@@ -548,6 +582,7 @@ def mesh_status(
         "binding_field": binding_panel,
         "cognitive_field": _cognitive_field_panel(store, repo),
         "continuity": continuity,
+        "epoch_alignment": epoch_alignment,
         "planes": {
             "E": "evidence",
             "A": "adaptation",

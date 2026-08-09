@@ -1,3 +1,16 @@
+## 8.9.1 - Epoch-Converged Interconnect Telemetry
+
+- Interconnect status reads no longer persist binding-field projections.
+- Measurement completeness now requires both a coordinate-schema digest and a
+  measurement-cohort binding; unknown bindings cannot become complete.
+- Temporal readiness fails closed for cold, indeterminate, transitional, and
+  candidate-only states.
+- Mesh readiness no longer labels a frozen ranker as constitutional failure;
+  the frozen ranker remains an explicit operational bottleneck.
+- Mixed cached/live panels expose epoch alignment and stale-panel quarantine.
+- Self-sensing residuals exclude unknown coordinates and identify the value as
+  regime deviation rather than directional health evidence.
+
 ## 8.9.0 - Trial-Guided Projection Budgets
 
 - Aggregate trial history into Ḡ_rehydration / Ḡ_credit with K_min fail-closed

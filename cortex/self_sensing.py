@@ -460,10 +460,18 @@ def residual_mahalanobis(
     var: list[float],
     *,
     ridge: float = LAMBDA_RIDGE,
-) -> float:
+    valid_indices: list[int] | None = None,
+) -> float | None:
     """r_t = sqrt( (z-μ)^T (diag(var)+λI)^{-1} (z-μ) ) — diagonal Mahalanobis."""
+    indices = (
+        range(len(z_vec))
+        if valid_indices is None
+        else [index for index in valid_indices if 0 <= index < len(z_vec)]
+    )
+    if not indices:
+        return None
     s = 0.0
-    for i in range(len(z_vec)):
+    for i in indices:
         d = float(z_vec[i]) - float(mu[i])
         s += (d * d) / (float(var[i]) + ridge)
     return math.sqrt(max(0.0, s))
@@ -530,9 +538,20 @@ def observe_self_sensing(
     prior_n = int(prior_state.get("n_updates") or 0)
 
     # Truth-recovery invariant: the current sample cannot move its own reference.
-    residual = residual_mahalanobis(z_vec, prior_mu, prior_var)
+    missing_components = set(sample.get("missing_components") or [])
+    valid_indices = [
+        index for index, key in enumerate(Z_KEYS) if key not in missing_components
+    ]
+    residual = residual_mahalanobis(
+        z_vec,
+        prior_mu,
+        prior_var,
+        valid_indices=valid_indices,
+    )
     # normalize residual display to softer scale (not authority)
-    residual_norm = _clip01(residual / 6.0)  # ~6 ≈ high multi-dim distance
+    residual_norm = (
+        _clip01(residual / 6.0) if residual is not None else None
+    )  # ~6 ≈ high multi-dim distance
 
     classification, reasons = classify_self_sense(
         gates=gates,
@@ -597,7 +616,12 @@ def observe_self_sensing(
         "z_keys": list(Z_KEYS),
         "missing_components": sample.get("missing_components"),
         "mu": prior_mu,
-        "residual_r": round(residual, 6),
+        # Preserve the legacy name while stating the scientific meaning: this
+        # is distance from the prior regime, not a directional health score.
+        "residual_r": round(residual, 6) if residual is not None else None,
+        "regime_deviation_r": round(residual, 6) if residual is not None else None,
+        "residual_axes": [Z_KEYS[index] for index in valid_indices],
+        "residual_excluded_components": sorted(missing_components),
         "residual_norm": residual_norm,
         "F_t": sample.get("F_t"),
         "F_spec_literal": sample.get("F_spec_literal"),
@@ -665,7 +689,7 @@ def observe_self_sensing(
 def _advisory_for(
     classification: str,
     gates: dict[str, Any],
-    residual: float,
+    residual: float | None,
     f_t: float | None,
 ) -> dict[str, Any]:
     recs: list[str] = []
