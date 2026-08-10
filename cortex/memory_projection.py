@@ -6,21 +6,19 @@ import hashlib
 import json
 import re
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
 
 from . import __version__
 from .admitted_memory import list_admitted_memories
 from .memory_state import (
     current_memory_state,
-    ensure_active_state,
-    mark_epoch_stale_if_needed,
 )
 from .will import verify_will
 
 SCHEMA = "cortex-memory-projection/1.0"
 ELIGIBILITY_SCHEMA = "cortex-memory-eligibility/1.0"
-VERSION = "8.9.0"
+VERSION = "8.9.2"
 GLYPH = "⧉↗"
 CLAIM_BOUNDARY = (
     "Memory projection is a governed rehydration of admitted memories into a "
@@ -56,17 +54,15 @@ def evaluate_memory_eligibility(
     will_secret: str | None = None,
     task: str = "",
     min_support: str = "low",
-    require_deep_lineage: bool = False,
+    require_deep_lineage: bool = True,
+    structural_inspection: bool = False,
 ) -> dict[str, Any]:
     """Noncompensatory gates G_M. G_M=0 excludes from active guidance."""
     from .admitted_memory import deep_verify_admitted_memory
 
     memory_id = str(memory.get("memory_id") or "")
-    ensure_active_state(store, repo, memory, persist=True)
-    if live_epoch_id:
-        mark_epoch_stale_if_needed(
-            store, repo, memory, live_epoch_id=str(live_epoch_id), persist=True
-        )
+    # Eligibility is observational.  In particular, it must never seed an
+    # overlay or append ``epoch_stale`` merely because the caller read a row.
     tip = current_memory_state(store, repo, memory_id)
     state = str(tip.get("state") or "active")
     gates = {
@@ -119,10 +115,8 @@ def evaluate_memory_eligibility(
 
     # will: if current will forbids this type, exclude from active projection
     if current_will:
-        v = verify_will(
-            store, repo, current_will, secret=will_secret
-        ) if will_secret else {"verified": bool(current_will.get("receipt_hash"))}
-        if will_secret and not v.get("verified"):
+        v = verify_will(store, repo, current_will, secret=will_secret)
+        if not v.get("verified"):
             gates["will"] = False
             exclusions.append("current_will_forbids")
         else:
@@ -226,9 +220,10 @@ def project_memories(
     will_secret: str | None = None,
     max_memories: int | None = None,
     min_support: str | None = None,
-    require_deep_lineage: bool = False,
+    require_deep_lineage: bool = True,
+    structural_inspection: bool = False,
     budget: Mapping[str, Any] | None = None,
-    persist: bool = True,
+    persist: bool = False,
 ) -> dict[str, Any]:
     """Build deterministic MemoryProjectionReceipt for a task.
 
@@ -273,9 +268,12 @@ def project_memories(
             live_epoch = ""
 
     memories = list_admitted_memories(store, repo, limit=5000)
-    # seed states for any memories missing overlays
-    for mem in memories:
-        ensure_active_state(store, repo, mem, persist=True)
+    state_before: dict[str, list[dict[str, Any]]] = {
+        str(mem.get("memory_id") or ""): list(
+            store.list_memory_state_receipts(repo, str(mem.get("memory_id") or ""))
+        )
+        for mem in memories
+    }
 
     eligible: list[dict[str, Any]] = []
     excluded: list[dict[str, Any]] = []
@@ -290,7 +288,9 @@ def project_memories(
             will_secret=will_secret,
             task=task,
             min_support=min_support,
-            require_deep_lineage=require_deep_lineage,
+            # Structural inspection can describe a shallow row, but it can
+            # never make that row active model guidance.
+            require_deep_lineage=(not structural_inspection) or require_deep_lineage,
         )
         item = {
             "memory_id": mem.get("memory_id"),
@@ -301,10 +301,15 @@ def project_memories(
             "source": mem.get("source"),
             "receipt_hash": mem.get("receipt_hash"),
             "eligibility": elig,
+            "historically_admitted": True,
+            "admission_was_authorized": bool(mem.get("memory_write_authorized") or mem.get("durable_write_authorized")),
+            "current_memory_write_authorized": False,
+            "current_host_mutate_authorized": False,
+            "current_execution_authorized": False,
         }
         if elig.get("contested_visible"):
             contested.append(item)
-        if elig.get("eligible"):
+        if elig.get("eligible") and not structural_inspection:
             score = _rank_score(mem, task=task)
             item["rank_score"] = round(score, 6)
             item["why_selected"] = (
@@ -334,6 +339,14 @@ def project_memories(
             )
         )
     selected = eligible[: max(1, int(max_memories))]
+    # Historical evidence remains inspectable even when it is not active
+    # guidance.  It is never promoted by ranking.
+    historical_memory_ids = [str(mem.get("memory_id") or "") for mem in memories]
+    counterevidence_memory_ids = [
+        str(mem.get("memory_id") or "")
+        for mem in memories
+        if str(mem.get("candidate_type") or "") in {"counterevidence", "failed_hypothesis"}
+    ]
     task_hash = _sha({"task": task, "repo": repo})
     projection_id = "proj_" + _sha(
         {
@@ -400,6 +413,8 @@ def project_memories(
         "query_terms": sorted(_tokens(task)),
         "eligible_memory_ids": [e.get("memory_id") for e in eligible],
         "selected_memory_ids": [s.get("memory_id") for s in selected],
+        "historical_memory_ids": historical_memory_ids,
+        "counterevidence_memory_ids": counterevidence_memory_ids,
         "selected": selected,
         "excluded_memory_ids_with_reasons": [
             {
@@ -439,12 +454,35 @@ def project_memories(
         "receipt_hash": receipt_hash,
         "created_at": time.time(),
     }
+    state_after: dict[str, list[dict[str, Any]]] = {
+        str(mem.get("memory_id") or ""): list(
+            store.list_memory_state_receipts(repo, str(mem.get("memory_id") or ""))
+        )
+        for mem in memories
+    }
+    receipt["durable_state_before"] = _sha(state_before)
+    receipt["durable_state_after"] = _sha(state_after)
+    receipt["durable_state_unchanged"] = state_before == state_after
+    receipt["projection_write_scope"] = "receipt_only" if persist else "none"
     if persist:
         try:
-            store.append_memory_projection_receipt(repo, receipt)
-        except Exception:
-            pass
+            append_result = store.append_memory_projection_receipt(repo, receipt)
+        except Exception as exc:
+            return {
+                **receipt,
+                "canonical_persistence": "failed",
+                "canonical_persistence_error": f"{type(exc).__name__}:{exc}",
+                "persisted": False,
+            }
+        receipt = {
+            **receipt,
+            "canonical_persistence": "duplicate" if append_result.get("duplicate") else "committed",
+            "persisted": True,
+        }
         store.set_setting(f"memory_projection_latest:{repo}", receipt)
+    else:
+        receipt["canonical_persistence"] = "not_requested"
+        receipt["persisted"] = False
     return receipt
 
 

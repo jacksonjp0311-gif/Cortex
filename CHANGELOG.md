@@ -1,3 +1,18 @@
+## 8.9.2 - Canonical Provenance & Admission Integrity
+
+- Candidate admission now requires canonical trajectory provenance rather than
+  a caller-supplied candidate or gate Boolean.
+- Gate authority is derived from typed canonical evidence; unknown never
+  promotes to pass and caller `True` cannot open a gate.
+- Principal will verification is bound to its immutable receipt, principal,
+  time window, and canonical ledger row.
+- Deep admitted-memory verification fails immutable receipt mismatches and
+  unresolved membrane, batch, transition, or frame lineage.
+- Eligibility and projection are observationally pure; state overlays are not
+  appended while reading, and `persist=True` permits only a projection receipt.
+- Canonical persistence failures are explicit and never promoted by mutable
+  latest-setting tips. Host mutation and execution remain unauthorized.
+
 ## 8.9.1 - Epoch-Converged Interconnect Telemetry
 
 - Interconnect status reads no longer persist binding-field projections.

@@ -207,15 +207,15 @@ class WillMembraneTests(unittest.TestCase):
             stable_regime=True,
         )
         self.assertTrue(admission["will_verified"])
-        self.assertTrue(admission["gates"]["open"])
+        # v8.9.2 caller booleans cannot manufacture canonical witness,
+        # outcome, stability, or trajectory evidence.
+        self.assertNotEqual(admission["gates"]["overall"], "pass")
         self.assertEqual(admission["invented_count"], 0)
         types = {c["candidate_type"] for c in admission["admitted"]}
-        self.assertIn("successful_procedure", types)
+        self.assertNotIn("successful_procedure", types)
         self.assertNotIn("unresolved_ambiguity", types)  # not directed
-        self.assertTrue(admission["durable_write_authorized"])
-        for c in admission["admitted"]:
-            self.assertTrue(c["retain"])
-            self.assertTrue(c["memory_write_authorized"])
+        self.assertFalse(admission["durable_write_authorized"])
+        self.assertEqual(admission["admitted_count"], 0)
 
     def test_membrane_rejects_unverified_will(self) -> None:
         will = self._issue()

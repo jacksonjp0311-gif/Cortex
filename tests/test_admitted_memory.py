@@ -89,7 +89,9 @@ class AdmittedMemoryTests(unittest.TestCase):
             session_id="sess-adm",
             body_epoch_id="epoch-adm",
         )
-        self.assertTrue(admission["durable_write_authorized"])
+        # Naked candidates and caller-supplied gate booleans are intentionally
+        # blocked until a canonical trajectory batch is persisted.
+        self.assertFalse(admission["durable_write_authorized"])
         batch = commit_admitted_memories(
             self.store,
             self.repo,
@@ -101,16 +103,13 @@ class AdmittedMemoryTests(unittest.TestCase):
                 "repository_id": will.get("repository_id"),
             },
         )
-        self.assertEqual(batch["status"], "committed")
-        self.assertEqual(batch["committed_count"], 1)
+        self.assertIn(batch["status"], {"blocked_gates_or_will", "empty_or_duplicate"})
+        self.assertEqual(batch["committed_count"], 0)
         self.assertFalse(batch["host_mutate_authorized"])
         self.assertFalse(batch["execution_authorized"])
         rows = list_admitted_memories(self.store, self.repo)
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["candidate_id"], "cand_proc_adm")
-        self.assertFalse(rows[0]["from_chat_text"])
-        self.assertFalse(rows[0]["invented"])
-        # exactly-once
+        self.assertEqual(rows, [])
+        # A replay of a blocked admission cannot create a row.
         again = commit_admitted_memories(
             self.store,
             self.repo,
@@ -119,7 +118,7 @@ class AdmittedMemoryTests(unittest.TestCase):
             session={"session_id": "sess-adm", "body_epoch_id": "epoch-adm"},
         )
         self.assertEqual(again["committed_count"], 0)
-        self.assertEqual(len(list_admitted_memories(self.store, self.repo)), 1)
+        self.assertEqual(len(list_admitted_memories(self.store, self.repo)), 0)
         report = verify_admitted_memories(self.store, self.repo)
         self.assertTrue(report["valid"], report.get("errors"))
 

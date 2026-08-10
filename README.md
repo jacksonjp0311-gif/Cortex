@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.9.1-0ea5e9?style=for-the-badge" alt="v8.9.1" />
+  <img src="https://img.shields.io/badge/version-8.9.2-0ea5e9?style=for-the-badge" alt="v8.9.2" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -127,7 +127,7 @@ coherence score, glyph, field, or memory receipt can authorize a host mutation.
 <details>
 <summary><b>For AI agents and researchers</b>: current implementation and math</summary>
 
-## AI–Cortex symbiosis (v8.9.1)
+## AI–Cortex symbiosis (v8.9.2)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -155,6 +155,14 @@ python -m cortex memory project --repo YourProject --task "..." --json
 
 See [`docs/intelligence/PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md`](docs/intelligence/PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md)
 (and prior [`v8.8`](docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md)).
+
+v8.9.2 adds the canonical provenance boundary: a memory is model-facing only
+when Cortex can resolve its immutable membrane, candidate batch, transition,
+frames, epoch, and authenticated will. Eligibility and projection are
+read-only by default; `persist=True` writes only an explicit projection
+receipt. Unknown evidence stays unknown, and caller-supplied `True` values do
+not open a gate. See
+[`PHASE_V8.9.2_CANONICAL_PROVENANCE_ADMISSION_INTEGRITY.md`](docs/intelligence/PHASE_V8.9.2_CANONICAL_PROVENANCE_ADMISSION_INTEGRITY.md).
 
 ## Interconnect mathematics (v8.3.4)
 

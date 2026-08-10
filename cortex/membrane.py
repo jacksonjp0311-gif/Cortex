@@ -23,10 +23,11 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from . import __version__
+from .provenance import derive_gate_state
 from .will import SUPPORT_ORDER, verify_will
 
 SCHEMA = "cortex-distillation-membrane/1.0"
-VERSION = "8.6.0"
+VERSION = "8.9.2"
 GLYPH = "⧉⚖"
 CLAIM_BOUNDARY = (
     "The unified distillation membrane admits trajectory-derived candidates "
@@ -193,6 +194,10 @@ def apply_will_bound_membrane(
     witness_present: bool = False,
     outcome_closed: bool = False,
     stable_regime: bool = False,
+    witness: Mapping[str, Any] | None = None,
+    outcome: Mapping[str, Any] | None = None,
+    gate_evidence: Mapping[str, Any] | None = None,
+    caller_constraints: Mapping[str, Any] | None = None,
     session_id: str | None = None,
     body_epoch_id: str | None = None,
     turn_id: int | None = None,
@@ -210,13 +215,36 @@ def apply_will_bound_membrane(
         require_session_id=session_id,
         require_body_epoch_id=body_epoch_id,
     )
-    gates = _gate_product(
+    derived = derive_gate_state(
+        store,
+        repo,
+        will=will,
+        will_secret=will_secret,
+        session_id=session_id,
+        body_epoch_id=body_epoch_id,
         constitutional_gate=constitutional_gate,
         epoch_compatible=epoch_compatible,
         witness_present=witness_present,
         outcome_closed=outcome_closed,
         stable_regime=stable_regime,
+        witness=witness,
+        outcome=outcome,
+        gate_evidence=gate_evidence,
+        caller_constraints=caller_constraints,
     )
+    # Keep the historical numeric projection for callers, but derive it only
+    # from canonical gate planes.  A caller True is never evidence.
+    gates = {
+        "constitutional_admissibility": int(derived["constitutional"]["state"] == "pass"),
+        "epoch_cohort_compatibility": int(derived["epoch_cohort"]["state"] == "pass"),
+        "witness": int(derived["witness"]["state"] == "pass"),
+        "outcome_closure": int(derived["outcome"]["state"] == "pass"),
+        "stability": int(derived["stability"]["state"] == "pass"),
+        "planes": {k: dict(v) for k, v in derived.items() if k in {"constitutional", "epoch_cohort", "witness", "outcome", "stability", "will"}},
+        "overall": derived.get("overall"),
+        "product": 1 if derived.get("overall") == "pass" else 0,
+        "open": derived.get("overall") == "pass",
+    }
     pool = _collect_candidates(candidates, batches)
     directives = _will_directives(will)
     scopes = set(str(s) for s in (will.get("scopes") or ()))
@@ -295,6 +323,35 @@ def apply_will_bound_membrane(
             deferred.append(item)
             continue
 
+        # Direct/naked candidates are not canonical trajectory evidence.  The
+        # candidate batch must already be persisted and contain the exact
+        # candidate body; source links must resolve to the same repository.
+        batch_hash = str(item.get("batch_receipt_hash") or "")
+        batch_row = None
+        if batch_hash and hasattr(store, "get_distillation_candidate_batch_by_hash"):
+            batch_row = store.get_distillation_candidate_batch_by_hash(repo, batch_hash)
+        canonical_candidate = None
+        if batch_row:
+            for candidate in batch_row.get("candidates") or ():
+                if isinstance(candidate, Mapping) and str(candidate.get("candidate_id") or "") == cid:
+                    canonical_candidate = candidate
+                    break
+        if canonical_candidate is None:
+            item["rejection_reason"] = "canonical_trajectory_unresolved"
+            rejected.append(item)
+            continue
+        for field in ("candidate_type", "summary", "support_level", "source", "evidence"):
+            if field in canonical_candidate and (
+                field not in item
+                or _canonical(canonical_candidate.get(field)) != _canonical(item.get(field))
+            ):
+                canonical_candidate = None
+                break
+        if canonical_candidate is None:
+            item["rejection_reason"] = "canonical_candidate_mismatch"
+            rejected.append(item)
+            continue
+
         if retain_budget is not None and len(admitted) >= retain_budget:
             item["rejection_reason"] = "will_cap_retain"
             rejected.append(item)
@@ -332,6 +389,7 @@ def apply_will_bound_membrane(
             "has_admit_scope": verification.get("has_admit_scope"),
         },
         "gates": gates,
+        "gate_derivation": derived,
         "directives": {
             "forbid_types": sorted(directives["forbid_types"]),
             "admit_types": sorted(directives["admit_types"]),
@@ -382,10 +440,22 @@ def apply_will_bound_membrane(
     }
     if persist:
         try:
-            store.append_membrane_admission(repo, receipt)
-        except Exception:
-            pass
+            append_result = store.append_membrane_admission(repo, receipt)
+        except Exception as exc:
+            receipt = {
+                **receipt,
+                "canonical_persistence": "failed",
+                "canonical_persistence_error": f"{type(exc).__name__}:{exc}",
+                "persisted": False,
+                "durable_write_authorized": False,
+                "memory_write_authorized": False,
+                "advisory_only": True,
+            }
+            return receipt
+        receipt = {**receipt, "canonical_persistence": "duplicate" if append_result.get("duplicate") else "committed", "persisted": True}
         store.set_setting(f"membrane_latest:{repo}", receipt)
+    else:
+        receipt = {**receipt, "canonical_persistence": "not_requested", "persisted": False}
     return receipt
 
 

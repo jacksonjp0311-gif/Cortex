@@ -20,7 +20,7 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-distillation-candidates/1.0"
-VERSION = "8.6.0"
+VERSION = "8.9.2"
 GLYPH = "⧉◇"
 CLAIM_BOUNDARY = (
     "Distillation candidates are typed, trajectory-derived proposals for what "
@@ -193,6 +193,10 @@ def extract_distillation_candidates(
             or prior_frame.get("repository_id"),
             "session_id": session_id,
             "turn_id": turn_id,
+            "body_epoch_id": next_frame.get("body_epoch_id")
+            or prior_frame.get("body_epoch_id")
+            or transition.get("body_epoch_id")
+            or "",
             "extraction_status": "blocked",
             "trajectory_verified": False,
             "link_errors": link_errors,
@@ -444,6 +448,10 @@ def extract_distillation_candidates(
         or prior_frame.get("repository_id"),
         "session_id": session_id,
         "turn_id": turn_id,
+        "body_epoch_id": next_frame.get("body_epoch_id")
+        or prior_frame.get("body_epoch_id")
+        or transition.get("body_epoch_id")
+        or "",
         "extraction_status": "extracted" if candidates else "empty",
         "trajectory_verified": True,
         "link_errors": [],

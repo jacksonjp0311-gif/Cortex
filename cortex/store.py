@@ -3900,6 +3900,27 @@ class Store:
                 continue
         return out
 
+    def get_distillation_candidate_batch_by_hash(
+        self, repo: str, receipt_hash: str
+    ) -> dict[str, Any] | None:
+        """Resolve one candidate batch without crossing repository identity."""
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return None
+        row = self.db.execute(
+            """SELECT receipt_json FROM distillation_candidate_batches
+               WHERE repository_id=? AND repo=? AND receipt_hash=?""",
+            (str(repository["repository_id"] or ""), repo, str(receipt_hash)),
+        ).fetchone()
+        if row is None:
+            return None
+        try:
+            return json.loads(row["receipt_json"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+
     def append_will_receipt(
         self, repo: str, will: dict[str, Any]
     ) -> dict[str, Any]:
@@ -4417,6 +4438,46 @@ class Store:
             """SELECT receipt_json FROM will_receipts
                WHERE repository_id=? AND receipt_hash=?""",
             (str(repository["repository_id"]), str(receipt_hash)),
+        ).fetchone()
+        if row is None:
+            return None
+        try:
+            return json.loads(row["receipt_json"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def get_interconnect_frame_by_hash(
+        self, repo: str, receipt_hash: str
+    ) -> dict[str, Any] | None:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return None
+        row = self.db.execute(
+            """SELECT receipt_json FROM interconnect_frames
+               WHERE repository_id=? AND repo=? AND receipt_hash=?""",
+            (str(repository["repository_id"] or ""), repo, str(receipt_hash)),
+        ).fetchone()
+        if row is None:
+            return None
+        try:
+            return json.loads(row["receipt_json"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+
+    def get_interconnect_transition_by_hash(
+        self, repo: str, receipt_hash: str
+    ) -> dict[str, Any] | None:
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return None
+        row = self.db.execute(
+            """SELECT receipt_json FROM interconnect_transitions
+               WHERE repository_id=? AND repo=? AND receipt_hash=?""",
+            (str(repository["repository_id"] or ""), repo, str(receipt_hash)),
         ).fetchone()
         if row is None:
             return None
