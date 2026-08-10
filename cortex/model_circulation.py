@@ -774,7 +774,7 @@ def run_model_circulation(
     *,
     adapter: ModelAdapter,
     task_contract: TaskEvaluationContract,
-    observed_result: Mapping[str, Any],
+    observed_result: Mapping[str, Any] | None = None,
     tool_scopes: Sequence[str] | None = None,
     configuration: Mapping[str, Any] | None = None,
     persist: bool = True,
@@ -849,7 +849,13 @@ def run_model_circulation(
     )
     raw_result = adapter.invoke(request)
     invocation_result = ModelInvocationResult.from_adapter(request, raw_result)
-    observed = _sanitize_observed_result(observed_result)
+    # A caller may provide an independently observed external result.  For
+    # deterministic fixture/trial adapters, omitting it uses only the adapter's
+    # sanitized public output; hidden reasoning and provider-native fields are
+    # never used as evidence.
+    observed = _sanitize_observed_result(
+        observed_result if observed_result is not None else invocation_result.public_output
+    )
     evaluation = evaluate_task_result(task_contract, observed)
     proposal_fields = {
         "response_hash": invocation_result.response_hash,

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.1.0-0ea5e9?style=for-the-badge" alt="v9.1.0" />
+  <img src="https://img.shields.io/badge/version-9.2.0-0ea5e9?style=for-the-badge" alt="v9.2.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -189,6 +189,15 @@ transfer. Semantic identity excludes model name and public prose, while model
 identity and counterevidence remain provenance. Candidates stay advisory and
 non-authorizing until a later transfer-verification phase. See
 [`PHASE_V9.1_TRANSFERABLE_COMPETENCE_DISTILLATION.md`](docs/intelligence/PHASE_V9.1_TRANSFERABLE_COMPETENCE_DISTILLATION.md).
+
+v9.2 measures whether a distilled competence helps fresh model instances under
+matched, frozen trial arms. The A–E experiment compares ordinary context, raw
+origin history, unfiltered memory, competence, and competence plus verified
+usage feedback. It records task, cost, latency, safety, applicability, and
+counterevidence metrics in an append-only trial ledger. A positive result is
+classified by the declared policy; it never distributes competence or changes
+the candidate automatically. See
+[`PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md`](docs/intelligence/PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md).
 
 ## Interconnect mathematics (v8.3.4)
 

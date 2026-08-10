@@ -1248,6 +1248,7 @@ class Store:
             from .ranker.model import ensure_training_events
             from .witness import ensure_witness_tables
             from .competence import ensure_competence_tables
+            from .competence_transfer import ensure_transfer_tables
 
             ensure_lineage_tables(self)
             ensure_quarantine_tables(self)
@@ -1257,6 +1258,7 @@ class Store:
             ensure_training_events(self)
             ensure_witness_tables(self)
             ensure_competence_tables(self)
+            ensure_transfer_tables(self)
             from .epoch import ensure_epoch_tables
             from .phases import ensure_phase_tables
 
@@ -3945,6 +3947,23 @@ class Store:
         from .competence import list_competence_candidates
 
         return list_competence_candidates(self, repo)
+
+    def append_transfer_trial(
+        self, repo: str, trial: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from .competence_transfer import append_transfer_trial
+
+        return append_transfer_trial(self, repo, trial)
+
+    def get_transfer_trial(self, repo: str, trial_id: str) -> dict[str, Any] | None:
+        from .competence_transfer import get_transfer_trial
+
+        return get_transfer_trial(self, repo, trial_id)
+
+    def list_transfer_trials(self, repo: str) -> list[dict[str, Any]]:
+        from .competence_transfer import list_transfer_trials
+
+        return list_transfer_trials(self, repo)
 
     def append_will_receipt(
         self, repo: str, will: dict[str, Any]

@@ -1,3 +1,18 @@
+## 9.2.0 - Cross-Model Competence Transfer
+
+- Added frozen A–E cross-model transfer trials for independently verified
+  competence candidates.
+- Fresh adapter instances are isolated by arm; the originating model is not
+  invoked during transfer evaluation.
+- Trial contracts freeze task/evaluation, tools, budgets, repository snapshot,
+  Cortex epoch, competence identity, model configuration, and policy.
+- Trial receipts report matched-control gains (`G_continuity`,
+  `G_distillation`, `G_governance`, `G_credit`) plus cost, latency, safety,
+  applicability, abstention, correction, and counterevidence metrics.
+- Portability is classified as model-specific, capability-class-specific,
+  cross-model, cross-family, unresolved, or incompatible. No trial promotes or
+  distributes competence automatically.
+
 ## 9.1.0 - Transferable Competence Distillation
 
 - Added a separate immutable competence-candidate ledger; admitted memories
