@@ -274,6 +274,7 @@ def verify_candidate_provenance(
     )
     modern_fields = bool(batch_hash and transition_hash and prior_hash and next_hash)
     legacy_missing = {
+        "memory_repository_id_missing",
         "candidate_batch_hash_missing",
         "trajectory_provenance_missing",
     }
