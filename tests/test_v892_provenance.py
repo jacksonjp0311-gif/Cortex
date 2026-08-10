@@ -14,6 +14,7 @@ from cortex.admitted_memory import (
 )
 from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
+from cortex.cognitive.measured import capture_measured_state, measured_delta
 from cortex.distillation_candidates import extract_distillation_candidates
 from cortex.epoch import ensure_current_epoch
 from cortex.interconnect_frame import (
@@ -23,8 +24,10 @@ from cortex.interconnect_frame import (
 from cortex.membrane import apply_will_bound_membrane
 from cortex.memory_projection import evaluate_memory_eligibility, project_memories
 from cortex.store import Store
+from cortex.ostt.conformance import build_activation_conformance_receipt
+from cortex.provenance import sha
 from cortex.will import issue_will, register_will_principal
-from cortex.witness import commit_manifest
+from cortex.witness import commit_manifest, run_witness
 
 
 class V892ProvenanceTests(unittest.TestCase):
@@ -53,18 +56,6 @@ class V892ProvenanceTests(unittest.TestCase):
             session_id,
             {"activation_id": "v892-activation", "task_hash": "task", "state_hash": "state"},
         )
-        self.store.record_outcome(
-            self.repo,
-            outcome_id="v892-outcome",
-            activation_id="v892-activation",
-            status="success",
-            reward=1.0,
-            verification_type="independent",
-            verification_payload={},
-            credits=[],
-            updates=[],
-            apply_updates=False,
-        )
         outcome = {
             "outcome_id": "v892-outcome",
             "receipt_hash": "o" * 64,
@@ -72,6 +63,7 @@ class V892ProvenanceTests(unittest.TestCase):
             "repo": self.repo,
             "session_id": session_id,
             "turn_id": 1,
+            "activation_id": "v892-activation",
         }
         will = issue_will(
             self.store,
@@ -85,6 +77,65 @@ class V892ProvenanceTests(unittest.TestCase):
                 {"kind": "prefer_support_min", "min_support": "none"},
             ],
         )
+        # Build actual canonical constitutional/cohort evidence.  The old
+        # fixture used random hashes plus booleans; those are intentionally no
+        # longer capable of opening a membrane gate.
+        before_state = capture_measured_state(self.store, self.repo)
+        after_state = capture_measured_state(self.store, self.repo)
+        measured = measured_delta(before_state, after_state, event_id="v892-measurement")
+        manifest_hash = str(self.store.repo(self.repo)["manifest_hash"])
+        conformance_candidate = build_activation_conformance_receipt(
+            self.store,
+            self.repo,
+            task="v892 canonical evidence",
+            controller="evidence_baseline",
+            realized_action="bounded_observe",
+            capability_id="v892-capability",
+            pre_epoch_id=epoch_id,
+            body_epoch=self.epoch.to_dict(),
+            measured_transition=measured,
+            host_manifest_before=manifest_hash,
+            host_manifest_after=manifest_hash,
+        )
+        conformance_append = self.store.append_activation_conformance_receipt(
+            self.repo, conformance_candidate
+        )
+        conformance = dict(conformance_append.get("receipt") or conformance_append)
+        cohort_id = str(conformance["measurement_cohort_id"])
+        self.store.set_setting(f"measurement_cohort:{self.repo}", cohort_id)
+        measured["measurement_cohort_id"] = cohort_id
+        self.store.set_setting(f"measured_event_latest:{self.repo}", measured)
+        # Canonical stable telemetry fixture: hashes cover the declared
+        # observation material and all regime/binding conditions are explicit.
+        sense = {
+            "repo": self.repo,
+            "classification": "NOMINAL",
+            "reasons": ["within_verified_regime"],
+            "z_vector": [0.0],
+            "residual_r": 0.0,
+            "F_t": 1.0,
+            "gates": {"epoch_current": True, "phase_bound": True},
+            "baseline_n_updates": 16,
+            "version": __import__("cortex").__version__,
+            "observation_id": "sense_v892",
+        }
+        sense["observation_hash"] = sha(
+            {key: sense[key] for key in ("repo", "classification", "reasons", "z_vector", "residual_r", "F_t", "gates", "baseline_n_updates", "version")}
+        )
+        binding = {
+            "repo": self.repo,
+            "classification": "VERIFIED_REGIME",
+            "reasons": ["bound_and_warm"],
+            "field_vector": {"binding_ok": 1.0},
+            "version": __import__("cortex").__version__,
+            "signals": {"last_frame_classification": "QUIESCENT"},
+            "observation_id": "bind_v892",
+        }
+        binding["observation_hash"] = sha(
+            {key: binding[key] for key in ("repo", "classification", "reasons", "field_vector", "version")}
+        )
+        self.store.set_setting(f"self_sensing_latest:{self.repo}", sense)
+        self.store.set_setting(f"binding_field_latest:{self.repo}", binding)
         prior = capture_atomic_interconnect_frame(
             self.store, self.repo, session_id=session_id, turn_id=1,
             body_epoch_id=epoch_id, repository_id=will["repository_id"],
@@ -100,19 +151,46 @@ class V892ProvenanceTests(unittest.TestCase):
             prior_frame=prior, next_frame=nxt, outcome=outcome
         )
         self.store.append_interconnect_transition(self.repo, transition)
+        self.store.record_outcome(
+            self.repo,
+            outcome_id="v892-outcome",
+            activation_id="v892-activation",
+            status="success",
+            reward=1.0,
+            verification_type="independent",
+            verification_payload={"transition_hash": transition["receipt_hash"]},
+            credits=[],
+            updates=[],
+            apply_updates=False,
+        )
+        witness = commit_manifest(
+            [{"id": "v892-case", "query": "README provenance", "expected_substrings": ["README"]}],
+            store=self.store,
+        )
+        witness_result = run_witness(
+            self.store,
+            self.repo,
+            commitment=witness,
+            revealed_cases=[{"id": "v892-case", "query": "README provenance", "expected_substrings": ["README"]}],
+            controller="evidence_baseline",
+            body_epoch_id=epoch_id,
+            session_id=session_id,
+            outcome_id=outcome["outcome_id"],
+            activation_id=outcome["activation_id"],
+            transition_hash=transition["receipt_hash"],
+        )
+        self.assertTrue(witness_result.get("canonical_persistence") in {"committed", "duplicate"}, witness_result)
+        outcome["witness_result_hash"] = witness_result["witness_result_hash"]
         batch = extract_distillation_candidates(
             prior_frame=prior, next_frame=nxt, transition=transition, outcome=outcome
         )
         self.store.append_distillation_candidate_batch(self.repo, batch)
-        witness = commit_manifest(
-            [{"id": "v892-case", "query": "test", "expected_substrings": ["test"]}],
-            store=self.store,
-        )
         gate_evidence = {
-            "constitutional_receipt_hash": "c" * 64,
-            "constitutional_verified": True,
-            "stability_receipt_hash": "s" * 64,
-            "stability_verified": True,
+            "constitutional_receipt_hash": conformance["receipt_hash"],
+            "stability_receipt_hash": sense["observation_hash"],
+            "measurement_cohort_id": cohort_id,
+            "transition_hash": transition["receipt_hash"],
+            "witness_result_hash": witness_result["witness_result_hash"],
         }
         admission = apply_will_bound_membrane(
             self.store,
@@ -125,7 +203,7 @@ class V892ProvenanceTests(unittest.TestCase):
             witness_present=True,
             outcome_closed=True,
             stable_regime=True,
-            witness={"witness_id": witness["witness_id"], "passed": True},
+            witness={"witness_result_hash": witness_result["witness_result_hash"], "controller": "evidence_baseline"},
             outcome=outcome,
             gate_evidence=gate_evidence,
             session_id=session_id,

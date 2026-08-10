@@ -11,7 +11,7 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-memory-state/1.0"
-VERSION = "8.9.2"
+VERSION = "8.9.3"
 GLYPH = "⧉◇"
 CLAIM_BOUNDARY = (
     "Memory state overlays never mutate admitted memory rows. Immutability of "

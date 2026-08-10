@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.9.2-0ea5e9?style=for-the-badge" alt="v8.9.2" />
+  <img src="https://img.shields.io/badge/version-8.9.3-0ea5e9?style=for-the-badge" alt="v8.9.3" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -127,7 +127,7 @@ coherence score, glyph, field, or memory receipt can authorize a host mutation.
 <details>
 <summary><b>For AI agents and researchers</b>: current implementation and math</summary>
 
-## AI–Cortex symbiosis (v8.9.2)
+## AI–Cortex symbiosis (v8.9.3)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -163,6 +163,13 @@ read-only by default; `persist=True` writes only an explicit projection
 receipt. Unknown evidence stays unknown, and caller-supplied `True` values do
 not open a gate. See
 [`PHASE_V8.9.2_CANONICAL_PROVENANCE_ADMISSION_INTEGRITY.md`](docs/intelligence/PHASE_V8.9.2_CANONICAL_PROVENANCE_ADMISSION_INTEGRITY.md).
+
+v8.9.3 closes the evidence side of that boundary. Gate passes now resolve
+canonical constitutional, stability, witness-result, outcome, cohort, and will
+objects and verify their identity, bindings, content, and required semantic
+property. A commitment, hash-shaped reference, or caller-supplied `verified`
+flag is not proof. See
+[`PHASE_V8.9.3_CANONICAL_EVIDENCE_WITNESS_CLOSURE.md`](docs/intelligence/PHASE_V8.9.3_CANONICAL_EVIDENCE_WITNESS_CLOSURE.md).
 
 ## Interconnect mathematics (v8.3.4)
 

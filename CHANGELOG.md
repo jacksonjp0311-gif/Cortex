@@ -1,3 +1,16 @@
+## 8.9.3 - Canonical Evidence & Witness Closure
+
+- Gate passes resolve canonical evidence objects and independently verify their
+  identity, content, bindings, and required semantic property.
+- Witness commitments remain pre-reveal promises; immutable witness-result rows
+  now provide the evaluable proof surface.
+- Outcome verification, cohort compatibility, and principal-secret matching are
+  derived from canonical rows rather than caller booleans.
+- Candidate provenance now reports pass, fail, unknown, legacy-partial, and
+  noncanonical counts; unresolved candidates cannot become durable memory.
+- Host mutation and execution authority remain false; no model invocation or
+  adaptive policy is added in this release.
+
 ## 8.9.2 - Canonical Provenance & Admission Integrity
 
 - Candidate admission now requires canonical trajectory provenance rather than

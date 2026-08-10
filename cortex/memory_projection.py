@@ -18,7 +18,7 @@ from .will import verify_will
 
 SCHEMA = "cortex-memory-projection/1.0"
 ELIGIBILITY_SCHEMA = "cortex-memory-eligibility/1.0"
-VERSION = "8.9.2"
+VERSION = "8.9.3"
 GLYPH = "⧉↗"
 CLAIM_BOUNDARY = (
     "Memory projection is a governed rehydration of admitted memories into a "

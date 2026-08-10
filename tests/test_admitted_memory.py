@@ -103,7 +103,15 @@ class AdmittedMemoryTests(unittest.TestCase):
                 "repository_id": will.get("repository_id"),
             },
         )
-        self.assertIn(batch["status"], {"blocked_gates_or_will", "empty_or_duplicate"})
+        self.assertIn(
+            batch["status"],
+            {
+                "blocked_gates_or_will",
+                "empty_or_duplicate",
+                "blocked_unresolved_or_noncanonical_candidates",
+                "blocked_canonical_membrane_missing",
+            },
+        )
         self.assertEqual(batch["committed_count"], 0)
         self.assertFalse(batch["host_mutate_authorized"])
         self.assertFalse(batch["execution_authorized"])
@@ -144,7 +152,12 @@ class AdmittedMemoryTests(unittest.TestCase):
         # Fabricated mapping with hash not in ledger is independently fail-closed.
         self.assertIn(
             batch["status"],
-            {"blocked_gates_or_will", "blocked_membrane_not_in_ledger"},
+            {
+                "blocked_gates_or_will",
+                "blocked_membrane_not_in_ledger",
+                "blocked_unresolved_or_noncanonical_candidates",
+                "blocked_canonical_membrane_missing",
+            },
         )
         self.assertEqual(batch["committed_count"], 0)
 
@@ -158,7 +171,13 @@ class AdmittedMemoryTests(unittest.TestCase):
         batch2 = commit_admitted_memories(
             self.store, self.repo, admission=admission2, will=will
         )
-        self.assertEqual(batch2["status"], "blocked_invented_candidates")
+        self.assertIn(
+            batch2["status"],
+            {
+                "blocked_unresolved_or_noncanonical_candidates",
+                "blocked_canonical_membrane_missing",
+            },
+        )
 
 
 if __name__ == "__main__":
