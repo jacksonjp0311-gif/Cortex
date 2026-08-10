@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.2.0-0ea5e9?style=for-the-badge" alt="v9.2.0" />
+  <img src="https://img.shields.io/badge/version-9.3.0-0ea5e9?style=for-the-badge" alt="v9.3.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -198,6 +198,52 @@ counterevidence metrics in an append-only trial ledger. A positive result is
 classified by the declared policy; it never distributes competence or changes
 the candidate automatically. See
 [`PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md`](docs/intelligence/PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md).
+
+v9.3 adds the governed distribution fabric. A transfer-verified competence can
+be projected into more than one heterogeneous internal system as a separate,
+target-bound package. Each target supplies its own compatibility profile; each
+package carries provenance roots, applicability and compatibility proofs,
+counterevidence, freshness, and an immutable distribution identity.
+
+```text
+                         CORTEX
+              canonical competence + evidence
+                              │
+                     governed projection
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+          System A        System B        System C
+          profile A       profile B       profile C
+          package A       package B       package C
+```
+
+Revocation, quarantine, supersession, and rollback are append-only events;
+feedback returns through an evidence-aware ledger and cannot rewrite canonical
+competence or self-promote. A package is active guidance only while every hard
+gate passes. Unknown compatibility, stale freshness, or a blocking event stops
+projection. Consumers receive a portable advisory package—not authority,
+execution permission, or a broadcast update.
+
+```python
+profile = store.register_target_profile("YourProject", {
+    "target_id": "agent-a",
+    "profile_version": "1",
+    "model_capability": {"class": "your-model-class"},
+    "available_tools": ["repo.read"],
+    "authority_scope": {"propose": True, "execute": False},
+    "body_epoch_id": "<target-epoch>",
+    "required_competence_types": ["successful_procedure"],
+})
+package = store.project_competence(
+    "YourProject",
+    competence_id="<transfer-verified-competence>",
+    profile_id=profile["profile_id"],
+)
+```
+
+See [`PHASE_V9.3_GOVERNED_COMPETENCE_DISTRIBUTION.md`](docs/intelligence/PHASE_V9.3_GOVERNED_COMPETENCE_DISTRIBUTION.md)
+for the package, revocation, rollback, and feedback contracts.
 
 ## Interconnect mathematics (v8.3.4)
 

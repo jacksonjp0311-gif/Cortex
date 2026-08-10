@@ -1249,6 +1249,7 @@ class Store:
             from .witness import ensure_witness_tables
             from .competence import ensure_competence_tables
             from .competence_transfer import ensure_transfer_tables
+            from .competence_distribution import ensure_distribution_tables
 
             ensure_lineage_tables(self)
             ensure_quarantine_tables(self)
@@ -1259,6 +1260,7 @@ class Store:
             ensure_witness_tables(self)
             ensure_competence_tables(self)
             ensure_transfer_tables(self)
+            ensure_distribution_tables(self)
             from .epoch import ensure_epoch_tables
             from .phases import ensure_phase_tables
 
@@ -3964,6 +3966,119 @@ class Store:
         from .competence_transfer import list_transfer_trials
 
         return list_transfer_trials(self, repo)
+
+    # v9.3 governed competence distribution remains a consumer projection over
+    # the immutable competence/transfer ledgers.  Store exposes the fabric
+    # without making consumers a second authority surface.
+    def register_target_profile(
+        self, repo: str, profile: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from .competence_distribution import register_target_profile
+
+        return register_target_profile(self, repo, profile)
+
+    def get_target_profile(self, repo: str, profile_id: str) -> dict[str, Any] | None:
+        from .competence_distribution import get_target_profile
+
+        return get_target_profile(self, repo, profile_id)
+
+    def list_target_profiles(
+        self, repo: str, target_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        from .competence_distribution import list_target_profiles
+
+        return list_target_profiles(self, repo, target_id)
+
+    def project_competence(
+        self,
+        repo: str,
+        *,
+        competence_id: str,
+        profile_id: str,
+        previous_package_id: str | None = None,
+        persist: bool = True,
+    ) -> dict[str, Any]:
+        from .competence_distribution import project_competence
+
+        return project_competence(
+            self,
+            repo,
+            competence_id=competence_id,
+            profile_id=profile_id,
+            previous_package_id=previous_package_id,
+            persist=persist,
+        )
+
+    def verify_distribution_package(
+        self, repo: str, package_id: str
+    ) -> dict[str, Any]:
+        from .competence_distribution import verify_distribution_package
+
+        return verify_distribution_package(self, repo, package_id)
+
+    def list_distribution_packages(
+        self, repo: str, target_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        from .competence_distribution import list_distribution_packages
+
+        return list_distribution_packages(self, repo, target_id)
+
+    def append_distribution_event(
+        self,
+        repo: str,
+        *,
+        package_id: str,
+        event_type: str,
+        reason: str,
+        replacement_package_id: str | None = None,
+        scope: str = "target",
+    ) -> dict[str, Any]:
+        from .competence_distribution import append_distribution_event
+
+        return append_distribution_event(
+            self,
+            repo,
+            package_id=package_id,
+            event_type=event_type,
+            reason=reason,
+            replacement_package_id=replacement_package_id,
+            scope=scope,
+        )
+
+    def submit_distribution_feedback(
+        self,
+        repo: str,
+        *,
+        package_id: str,
+        kind: str,
+        context: Mapping[str, Any] | None = None,
+        result: Mapping[str, Any] | None = None,
+        outcome: Mapping[str, Any] | None = None,
+        evidence: Mapping[str, Any] | None = None,
+        circulation_session_id: str | None = None,
+        turn_id: int = 1,
+    ) -> dict[str, Any]:
+        from .competence_distribution import submit_distribution_feedback
+
+        return submit_distribution_feedback(
+            self,
+            repo,
+            package_id=package_id,
+            kind=kind,
+            context=context,
+            result=result,
+            outcome=outcome,
+            evidence=evidence,
+            circulation_session_id=circulation_session_id,
+            turn_id=turn_id,
+        )
+
+    def list_distribution_feedback(
+        self, repo: str, package_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        from .competence_distribution import list_distribution_feedback
+
+        return list_distribution_feedback(self, repo, package_id)
 
     def append_will_receipt(
         self, repo: str, will: dict[str, Any]

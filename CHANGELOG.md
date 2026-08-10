@@ -1,3 +1,19 @@
+## 9.3.0 - Governed Competence Distribution Fabric
+
+- Added immutable target compatibility profiles and target-bound competence
+  packages over the canonical competence and transfer ledgers.
+- Distribution requires valid candidate provenance, a verified v9.2 transfer
+  trial, local applicability, environment/tool compatibility, authority-scope
+  compatibility, and freshness. Unknown or failed gates block active guidance.
+- Added append-only challenge, quarantine, revocation, supersession, and
+  rollback events; package validity is resolved from those events without
+  rewriting historical evidence.
+- Added append-only target usage feedback. Feedback may carry independently
+  verified v9.0 circulation evidence, but cannot self-promote or rewrite
+  canonical competence.
+- Consumers remain advisory and non-authorizing: host mutation, execution,
+  policy change, memory admission, and automatic broadcast remain false.
+
 ## 9.2.0 - Cross-Model Competence Transfer
 
 - Added frozen A–E cross-model transfer trials for independently verified
