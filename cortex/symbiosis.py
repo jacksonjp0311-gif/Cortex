@@ -2264,6 +2264,40 @@ def verify_session_circulation(store: Any, repo: str, session_id: str) -> dict[s
     }
 
 
+def run_model_circulation(
+    store: Any,
+    repo: str,
+    session: Mapping[str, Any],
+    *,
+    adapter: Any,
+    task_contract: Any,
+    observed_result: Mapping[str, Any],
+    tool_scopes: Sequence[str] | None = None,
+    configuration: Mapping[str, Any] | None = None,
+    persist: bool = True,
+) -> dict[str, Any]:
+    """Run the v9.0 provider-neutral model loop from the symbiosis surface.
+
+    The implementation lives in its own boundary so legacy retrieval and
+    symbiosis receipt constructors remain compatible.  This wrapper makes the
+    actual model invocation available where callers already enter circulation.
+    """
+
+    from .model_circulation import run_model_circulation as _run_model_circulation
+
+    return _run_model_circulation(
+        store,
+        repo,
+        session,
+        adapter=adapter,
+        task_contract=task_contract,
+        observed_result=observed_result,
+        tool_scopes=tool_scopes,
+        configuration=configuration,
+        persist=persist,
+    )
+
+
 def reconstruct_next_session_brief(store: Any, repo: str) -> dict[str, Any]:
     """Reconstruct the cognitive environment for the next model invocation."""
     status = symbiotic_status(store, repo)
@@ -2384,6 +2418,7 @@ __all__ = [
     "record_outcome",
     "record_proposal",
     "reconstruct_next_session_brief",
+    "run_model_circulation",
     "symbiotic_consolidation_receipt",
     "symbiotic_status",
     "verify_session_circulation",

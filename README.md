@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-8.9.3-0ea5e9?style=for-the-badge" alt="v8.9.3" />
+  <img src="https://img.shields.io/badge/version-9.0.0-0ea5e9?style=for-the-badge" alt="v9.0.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -127,7 +127,7 @@ coherence score, glyph, field, or memory receipt can authorize a host mutation.
 <details>
 <summary><b>For AI agents and researchers</b>: current implementation and math</summary>
 
-## AI–Cortex symbiosis (v8.9.3)
+## AI–Cortex symbiosis (v9.0)
 
 The architectural center is **AI model ↔ Cortex**, not human ↔ Cortex. The model
 is temporary working cortex; Cortex is the durable body. Fast cognition explores;
@@ -170,6 +170,17 @@ objects and verify their identity, bindings, content, and required semantic
 property. A commitment, hash-shaped reference, or caller-supplied `verified`
 flag is not proof. See
 [`PHASE_V8.9.3_CANONICAL_EVIDENCE_WITNESS_CLOSURE.md`](docs/intelligence/PHASE_V8.9.3_CANONICAL_EVIDENCE_WITNESS_CLOSURE.md).
+
+v9.0 closes the first real model-circulation seam without making a model part
+of Cortex. A replaceable provider-neutral `ModelAdapter` receives a verified,
+task-bound context projection and returns only a public structured proposal.
+Cortex independently evaluates the externally observed result, records the
+outcome, persists a commit-before-reveal task witness, and binds the complete
+trajectory. Provider identity is provenance, never authority; malformed or
+provider-specific response fields fail closed or are discarded, and model
+output cannot authorize execution, host mutation, policy change, or memory
+admission. See
+[`PHASE_V9.0_MODEL_AGNOSTIC_COGNITIVE_CIRCULATION.md`](docs/intelligence/PHASE_V9.0_MODEL_AGNOSTIC_COGNITIVE_CIRCULATION.md).
 
 ## Interconnect mathematics (v8.3.4)
 

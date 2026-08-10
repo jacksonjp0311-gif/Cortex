@@ -1,3 +1,16 @@
+## 9.0.0 - Model-Agnostic Cognitive Circulation
+
+- Added a provider-neutral `ModelAdapter` contract with canonical request and
+  sanitized public response identities.
+- Added typed task/evaluation contracts whose metrics are selected before model
+  invocation and computed from externally observed results.
+- Added a deterministic fixture adapter and a canonical invocation → proposal →
+  evaluation → outcome → witness → trajectory ledger path.
+- Added independent task witness commitments/results without changing the
+  existing retrieval witness suite.
+- Provider identity remains provenance only; model output cannot authorize host
+  mutation, execution, policy mutation, or durable memory admission.
+
 ## 8.9.3 - Canonical Evidence & Witness Closure
 
 - Gate passes resolve canonical evidence objects and independently verify their
