@@ -109,6 +109,7 @@ class AdmittedMemoryTests(unittest.TestCase):
                 "blocked_gates_or_will",
                 "empty_or_duplicate",
                 "blocked_unresolved_or_noncanonical_candidates",
+                "blocked_canonical_membrane_missing",
             },
         )
         self.assertEqual(batch["committed_count"], 0)
@@ -155,6 +156,7 @@ class AdmittedMemoryTests(unittest.TestCase):
                 "blocked_gates_or_will",
                 "blocked_membrane_not_in_ledger",
                 "blocked_unresolved_or_noncanonical_candidates",
+                "blocked_canonical_membrane_missing",
             },
         )
         self.assertEqual(batch["committed_count"], 0)
@@ -169,7 +171,13 @@ class AdmittedMemoryTests(unittest.TestCase):
         batch2 = commit_admitted_memories(
             self.store, self.repo, admission=admission2, will=will
         )
-        self.assertEqual(batch2["status"], "blocked_unresolved_or_noncanonical_candidates")
+        self.assertIn(
+            batch2["status"],
+            {
+                "blocked_unresolved_or_noncanonical_candidates",
+                "blocked_canonical_membrane_missing",
+            },
+        )
 
 
 if __name__ == "__main__":

@@ -70,7 +70,22 @@ def commit_admitted_memories(
     session = dict(session or {})
     # Independent re-load of membrane receipt when hash is known.
     membrane_hash = str(admission.get("receipt_hash") or "")
-    if membrane_hash and hasattr(store, "get_membrane_admission_by_hash"):
+    if not membrane_hash:
+        return {
+            "schema_version": SCHEMA,
+            "version": VERSION,
+            "kind": "admitted_memory_commit_batch",
+            "repo": repo,
+            "committed": [],
+            "committed_count": 0,
+            "skipped_count": 0,
+            "status": "blocked_canonical_membrane_missing",
+            "durable_write_authorized": False,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "claim_boundary": CLAIM_BOUNDARY,
+        }
+    if hasattr(store, "get_membrane_admission_by_hash"):
         canonical = store.get_membrane_admission_by_hash(repo, membrane_hash)
         if canonical is None:
             return {
