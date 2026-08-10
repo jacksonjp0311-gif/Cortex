@@ -1,4 +1,4 @@
-"""v9.2 controlled cross-model competence transfer trials.
+"""v9.4 evidence-typed cross-model competence transfer trials.
 
 This module is an experiment surface, not a promotion surface.  It freezes a
 task contract and environment, runs fresh model instances through matched arms,
@@ -27,10 +27,18 @@ from .model_circulation import (
     run_model_circulation,
     verify_model_circulation,
 )
+from .adapter_provenance import (
+    EVIDENCE_ATTESTED,
+    EVIDENCE_LEGACY,
+    EVIDENCE_LIVE,
+    EVIDENCE_SIMULATED,
+    EVIDENCE_SYNTHETIC,
+    EVIDENCE_UNKNOWN,
+)
 from .symbiosis import agent_instantiation_receipt, cortex_context_receipt
 
-SCHEMA = "cortex-competence-transfer/1.0"
-VERSION = "9.2.0"
+SCHEMA = "cortex-competence-transfer/1.1"
+VERSION = "9.4.0"
 GLYPH = "⟡◇⇄"
 ARMS = ("A", "B", "C", "D", "E")
 PORTABILITY_STATES = frozenset(
@@ -39,13 +47,18 @@ PORTABILITY_STATES = frozenset(
         "capability_class_specific",
         "cross_model_verified",
         "cross_family_verified",
+        "structural_cross_model_pass",
+        "structural_cross_family_pass",
+        "empirical_cross_model_verified",
+        "empirical_cross_family_verified",
         "unresolved",
         "incompatible",
     }
 )
 CLAIM_BOUNDARY = (
     "Cross-model transfer trials estimate utility and failure surfaces under "
-    "declared matched arms. They do not prove universal competence, cognition, "
+    "declared matched arms. Synthetic trials prove mechanism behavior, not "
+    "empirical transfer. No trial proves universal competence, cognition, "
     "authority, or automatic distribution."
 )
 
@@ -54,7 +67,7 @@ DEFAULT_POLICY: dict[str, Any] = {
     "max_cost_ratio": 1.5,
     "min_repetitions": 1,
     "required_arms": list(ARMS),
-    "target_portability": "cross_model_verified",
+    "target_portability": "unresolved",
     "utility_weights": {
         "task_success": 0.65,
         "abstention_quality": 0.05,
@@ -329,6 +342,13 @@ def append_transfer_trial(store: Any, repo: str, trial: Mapping[str, Any]) -> di
         raise TransferTrialError("trial receipt hash is invalid")
     if body.get("distribution_authorized") is not False or body.get("execution_authorized") is not False:
         raise TransferTrialError("transfer trials cannot carry authority")
+    if str(body.get("schema_version") or "") == SCHEMA:
+        conformance = _validate_transfer_body(store, repo, body)
+        if conformance.get("valid") is not True:
+            raise TransferTrialError(
+                "trial claims are not independently reproducible: "
+                + ",".join(str(item) for item in conformance.get("errors") or ())
+            )
     with store.transaction() as conn:
         existing = conn.execute(
             "SELECT * FROM competence_transfer_trials WHERE repository_id=? AND trial_id=?",
@@ -462,8 +482,11 @@ def _classify(
     policy: Mapping[str, Any],
     fresh_identities: Sequence[Mapping[str, Any]],
     origin_identity: Mapping[str, Any],
+    arm_evidence_classes: Sequence[str],
+    origin_evidence_class: str,
     incompatible: bool,
     repetition_ready: bool,
+    persisted: bool,
 ) -> tuple[str, list[str]]:
     if incompatible:
         return "incompatible", ["required_context_or_prerequisite_incompatible"]
@@ -486,14 +509,237 @@ def _classify(
         return "unresolved", ["declared_cost_ratio_exceeded"]
     families = {str(item.get("provider_family") or "") for item in fresh_identities}
     origin_family = str(origin_identity.get("provider_family") or "")
-    if len(families) > 1 and origin_family not in families:
-        observed = "cross_family_verified"
+    cross_family = len(families) > 1 and origin_family not in families
+    empirical_classes = {EVIDENCE_LIVE, EVIDENCE_ATTESTED}
+    structural_classes = {
+        EVIDENCE_SYNTHETIC,
+        EVIDENCE_SIMULATED,
+        EVIDENCE_LIVE,
+        EVIDENCE_ATTESTED,
+    }
+    if (
+        persisted
+        and origin_evidence_class in empirical_classes
+        and arm_evidence_classes
+        and all(item in empirical_classes for item in arm_evidence_classes)
+    ):
+        observed = (
+            "empirical_cross_family_verified"
+            if cross_family
+            else "empirical_cross_model_verified"
+        )
+    elif (
+        origin_evidence_class in structural_classes
+        and arm_evidence_classes
+        and all(item in structural_classes for item in arm_evidence_classes)
+    ):
+        observed = (
+            "structural_cross_family_pass"
+            if cross_family
+            else "structural_cross_model_pass"
+        )
     else:
-        observed = "cross_model_verified"
-    target = str(policy.get("target_portability") or "cross_model_verified")
+        return "unresolved", ["adapter_evidence_class_unknown_or_legacy"]
+    target = str(policy.get("target_portability") or "unresolved")
     if target not in {"unresolved", observed}:
         return "unresolved", ["declared_portability_target_not_met"]
     return observed, []
+
+
+def _validate_transfer_body(
+    store: Any, repo: str, trial: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Reconstruct transfer claims from canonical arm circulations."""
+    errors: list[str] = []
+    arm_scores: dict[str, dict[str, Any]] = {}
+    arm_classes: dict[str, str] = {}
+    budgets = trial.get("budgets") if isinstance(trial.get("budgets"), Mapping) else {}
+    policy = trial.get("policy") if isinstance(trial.get("policy"), Mapping) else {}
+    weights = policy.get("utility_weights") if isinstance(policy.get("utility_weights"), Mapping) else {}
+    stored_arms = trial.get("arm_results") if isinstance(trial.get("arm_results"), Mapping) else {}
+    identity_keys = (
+        "schema_version",
+        "version",
+        "repo",
+        "repository_id",
+        "competence_id",
+        "competence_receipt_hash",
+        "task",
+        "task_contract",
+        "task_contract_hash",
+        "environment",
+        "tools",
+        "budgets",
+        "model_configuration",
+        "policy",
+        "arms",
+        "origin_model",
+        "trial_nonce",
+        "fresh_model_identities",
+    )
+    if _sha({key: trial.get(key) for key in identity_keys}) != str(
+        trial.get("trial_id") or ""
+    ):
+        errors.append("trial_identity_not_recomputed")
+    candidate = get_competence_candidate(
+        store, repo, str(trial.get("competence_id") or "")
+    )
+    if candidate is None:
+        errors.append("competence_candidate_missing")
+    else:
+        candidate_check = verify_competence_candidate(
+            store, repo, str(trial.get("competence_id") or "")
+        )
+        if candidate_check.get("valid") is not True:
+            errors.append("competence_candidate_invalid")
+        if str(candidate.get("receipt_hash") or "") != str(
+            trial.get("competence_receipt_hash") or ""
+        ):
+            errors.append("competence_receipt_binding_invalid")
+        canonical_origin = (
+            candidate.get("evidence_lineage", {}).get("model_origin", {})
+            if isinstance(candidate.get("evidence_lineage"), Mapping)
+            else {}
+        )
+        if dict(canonical_origin or {}) != dict(trial.get("origin_model") or {}):
+            errors.append("origin_model_binding_invalid")
+        canonical_origin_class = str(
+            (canonical_origin or {}).get("evidence_class") or EVIDENCE_LEGACY
+        )
+        if canonical_origin_class != str(
+            trial.get("origin_evidence_class") or EVIDENCE_LEGACY
+        ):
+            errors.append("origin_evidence_class_binding_invalid")
+    for arm in ARMS:
+        item = stored_arms.get(arm)
+        if not isinstance(item, Mapping):
+            errors.append(f"arm_{arm}_missing")
+            continue
+        session_id = str(item.get("session_id") or "")
+        circulation = verify_model_circulation(store, repo, session_id, turn_id=1)
+        if circulation.get("valid") is not True:
+            errors.append(f"arm_{arm}_circulation_invalid")
+            continue
+        rows = store.symbiotic_session_receipts(repo, session_id)
+        by_kind = {str(row.get("kind") or ""): row for row in rows}
+        contexts = [row for row in rows if row.get("kind") == "cortex_context"]
+        invocation = by_kind.get("model_invocation") or {}
+        proposal = by_kind.get("model_proposal") or {}
+        evaluation = by_kind.get("model_evaluation") or {}
+        if not contexts:
+            errors.append(f"arm_{arm}_context_missing")
+            continue
+        context_package = (
+            (contexts[-1].get("predictions") or {}).get("transfer_context")
+            if isinstance(contexts[-1].get("predictions"), Mapping)
+            else None
+        )
+        if not isinstance(context_package, Mapping):
+            errors.append(f"arm_{arm}_transfer_context_missing")
+            continue
+        reconstructed = {
+            "evaluation": evaluation.get("evaluation") or {},
+            "invocation_result": invocation.get("response") or {},
+            "receipts": {"model_proposal": proposal},
+            "request": invocation.get("request") or {},
+        }
+        metrics = _arm_metrics(
+            reconstructed,
+            context_package=context_package,
+            token_budget=int(budgets.get("token_budget") or 4096),
+            latency_budget_ms=int(budgets.get("latency_budget_ms") or 30000),
+            feedback_available=bool(context_package.get("usage_feedback")) if arm == "E" else False,
+        )
+        score = _utility(metrics, weights)
+        evidence_class = str(circulation.get("evidence_class") or EVIDENCE_UNKNOWN)
+        expected_identity = dict(circulation.get("model_identity") or {})
+        expected_provenance = dict(circulation.get("adapter_provenance") or {})
+        expected_bindings = dict(circulation.get("receipt_bindings") or {})
+        comparisons = {
+            "model_identity": expected_identity,
+            "adapter_provenance": expected_provenance,
+            "evidence_class": evidence_class,
+            "context_hash": _sha(context_package),
+            "context_projection_hash": circulation.get("context_projection_hash"),
+            "task_contract_hash": circulation.get("task_contract_hash"),
+            "circulation_receipts": expected_bindings,
+            "metrics": metrics,
+            "U": score,
+            "evaluation_state": evaluation.get("evaluation", {}).get("state"),
+            "witness_result_hash": circulation.get("witness"),
+        }
+        for key, expected in comparisons.items():
+            if item.get(key) != expected:
+                errors.append(f"arm_{arm}_{key}_binding_invalid")
+        arm_scores[arm] = {"U": score, "metrics": metrics}
+        arm_classes[arm] = evidence_class
+    expected_fresh_identities = [
+        dict(stored_arms[arm].get("model_identity") or {})
+        for arm in ARMS
+        if isinstance(stored_arms.get(arm), Mapping)
+    ]
+    if list(trial.get("fresh_model_identities") or ()) != expected_fresh_identities:
+        errors.append("fresh_model_identities_not_reconstructed")
+    gains = {
+        "G_continuity": round(float(arm_scores.get("D", {}).get("U") or 0.0) - float(arm_scores.get("A", {}).get("U") or 0.0), 6),
+        "G_distillation": round(float(arm_scores.get("D", {}).get("U") or 0.0) - float(arm_scores.get("B", {}).get("U") or 0.0), 6),
+        "G_governance": round(float(arm_scores.get("D", {}).get("U") or 0.0) - float(arm_scores.get("C", {}).get("U") or 0.0), 6),
+        "G_credit": round(float(arm_scores.get("E", {}).get("U") or 0.0) - float(arm_scores.get("D", {}).get("U") or 0.0), 6),
+    }
+    if dict(trial.get("gains") or {}) != gains:
+        errors.append("transfer_gains_not_recomputed")
+    origin = trial.get("origin_model") if isinstance(trial.get("origin_model"), Mapping) else {}
+    status, reasons = _classify(
+        arm_scores,
+        policy=policy,
+        fresh_identities=list(trial.get("fresh_model_identities") or ()),
+        origin_identity=origin,
+        arm_evidence_classes=[arm_classes.get(arm, EVIDENCE_UNKNOWN) for arm in ARMS],
+        origin_evidence_class=str(trial.get("origin_evidence_class") or EVIDENCE_LEGACY),
+        incompatible=bool(
+            trial.get("arm_errors")
+            or trial.get("feedback_errors")
+            or trial.get("applicability_reasons")
+        ),
+        repetition_ready=(int(trial.get("feedback_reference_count") or 0) + 1)
+        >= int(policy.get("min_repetitions") or 1),
+        persisted=True,
+    )
+    if str(trial.get("portability_status") or "") != status:
+        errors.append("portability_status_not_recomputed")
+    if list(trial.get("classification_reasons") or ()) != reasons:
+        errors.append("classification_reasons_not_recomputed")
+    if dict(trial.get("arm_evidence_classes") or {}) != arm_classes:
+        errors.append("arm_evidence_classes_not_recomputed")
+    expected_aggregate = (
+        EVIDENCE_LIVE
+        if status.startswith("empirical_")
+        else EVIDENCE_SYNTHETIC
+        if arm_classes and all(item == EVIDENCE_SYNTHETIC for item in arm_classes.values())
+        else EVIDENCE_SIMULATED
+        if arm_classes and all(item in {EVIDENCE_SYNTHETIC, EVIDENCE_SIMULATED} for item in arm_classes.values())
+        else EVIDENCE_UNKNOWN
+    )
+    if str(trial.get("evidence_class") or EVIDENCE_LEGACY) != expected_aggregate:
+        errors.append("trial_evidence_class_not_recomputed")
+    if status in {"incompatible", "unresolved"} and trial.get("arm_errors"):
+        # Unsuccessful and incomplete experiments are canonical evidence too.
+        # Their missing arms cannot authorize transfer because the derived
+        # status is non-promotable, but the failed trial must remain durable.
+        errors = [
+            error
+            for error in errors
+            if not (error.startswith("arm_") and error.endswith("_missing"))
+        ]
+    return {
+        "valid": not errors,
+        "errors": sorted(set(errors)),
+        "portability_status": status,
+        "classification_reasons": reasons,
+        "evidence_class": expected_aggregate,
+        "arm_evidence_classes": arm_classes,
+        "gains": gains,
+    }
 
 
 def run_cross_model_transfer_trial(
@@ -530,6 +776,7 @@ def run_cross_model_transfer_trial(
     epoch = observe_current_epoch(store, repo)
     current_epoch_id = str(epoch.get("epoch_id") or epoch.get("live_epoch_id") or "")
     origin = candidate.get("evidence_lineage", {}).get("model_origin", {})
+    origin_evidence_class = str(origin.get("evidence_class") or EVIDENCE_LEGACY)
     origin_epoch = str(
         (candidate.get("evidence_lineage", {}).get("originating_trajectories") or [{}])[0].get("body_epoch_id")
         or ""
@@ -634,6 +881,7 @@ def run_cross_model_transfer_trial(
     fresh_identities: list[dict[str, str]] = []
     adapters: dict[str, ModelAdapter] = {}
     arm_errors: list[str] = []
+    arm_evidence_classes: dict[str, str] = {}
     seen_adapter_objects: set[int] = set()
     for arm in ARMS:
         try:
@@ -679,6 +927,11 @@ def run_cross_model_transfer_trial(
                 configuration={**configuration, "transfer_trial_id": trial_id, "transfer_arm": arm},
                 persist=persist,
             )
+            verified: Mapping[str, Any] = {
+                "valid": False,
+                "evidence_class": result.get("evidence_class"),
+                "receipt_bindings": {},
+            }
             if persist:
                 verified = verify_model_circulation(store, repo, session_id, turn_id=1)
                 if not verified.get("valid"):
@@ -691,11 +944,22 @@ def run_cross_model_transfer_trial(
                 feedback_available=bool(feedback_items) if arm == "E" else False,
             )
             score = _utility(metrics, frozen_policy["utility_weights"])
+            arm_evidence_class = str(
+                verified.get("evidence_class")
+                or result.get("evidence_class")
+                or EVIDENCE_UNKNOWN
+            )
+            arm_evidence_classes[arm] = arm_evidence_class
             arm_results[arm] = {
                 "arm": arm,
                 "session_id": session_id,
                 "model_identity": identity,
+                "adapter_provenance": dict(result.get("adapter_provenance") or {}),
+                "evidence_class": arm_evidence_class,
                 "context_hash": _sha(packages[arm]),
+                "context_projection_hash": result.get("request", {}).get("context_projection_hash"),
+                "task_contract_hash": task_contract.contract_hash,
+                "circulation_receipts": dict(verified.get("receipt_bindings") or {}),
                 "metrics": metrics,
                 "U": score,
                 "evaluation_state": (result.get("evaluation") or {}).get("state"),
@@ -717,8 +981,20 @@ def run_cross_model_transfer_trial(
         policy=frozen_policy,
         fresh_identities=fresh_identities,
         origin_identity=origin,
+        arm_evidence_classes=[arm_evidence_classes.get(arm, EVIDENCE_UNKNOWN) for arm in ARMS],
+        origin_evidence_class=origin_evidence_class,
         incompatible=bool(arm_errors or feedback_errors or applicability_reasons),
         repetition_ready=(len(feedback_items) + 1) >= int(frozen_policy.get("min_repetitions") or 1),
+        persisted=persist,
+    )
+    aggregate_evidence_class = (
+        EVIDENCE_LIVE
+        if status.startswith("empirical_")
+        else EVIDENCE_SYNTHETIC
+        if arm_evidence_classes and all(item == EVIDENCE_SYNTHETIC for item in arm_evidence_classes.values())
+        else EVIDENCE_SIMULATED
+        if arm_evidence_classes and all(item in {EVIDENCE_SYNTHETIC, EVIDENCE_SIMULATED} for item in arm_evidence_classes.values())
+        else EVIDENCE_UNKNOWN
     )
     trial = {
         **trial_material,
@@ -729,8 +1005,15 @@ def run_cross_model_transfer_trial(
         "arm_results": arm_results,
         "arm_errors": arm_errors,
         "feedback_errors": feedback_errors,
+        "feedback_reference_count": len(feedback_items),
+        "applicability_reasons": list(applicability_reasons),
         "gains": gains,
         "portability_status": status,
+        "evidence_class": aggregate_evidence_class,
+        "origin_evidence_class": origin_evidence_class,
+        "arm_evidence_classes": dict(arm_evidence_classes),
+        "empirical_transfer_established": status.startswith("empirical_"),
+        "structural_transfer_established": status.startswith("structural_"),
         "classification_reasons": classification_reasons,
         "evidence": {
             "candidate_verification": candidate_check,
@@ -769,11 +1052,14 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
         if key not in {"receipt_hash", "created_at", "inserted", "duplicate"}
     }
     errors: list[str] = []
+    modern = str(trial.get("schema_version") or "") == SCHEMA
     if _sha(material) != str(trial.get("receipt_hash") or ""):
         errors.append("trial_receipt_hash_invalid")
     if trial.get("distribution_authorized") is not False or trial.get("execution_authorized") is not False:
         errors.append("trial_authority_flags_invalid")
     for arm in ARMS:
+        if modern:
+            continue
         item = trial.get("arm_results", {}).get(arm)
         if not isinstance(item, Mapping):
             errors.append(f"arm_{arm}_missing")
@@ -815,11 +1101,49 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
             )
             if observed != float((trial.get("gains") or {}).get(name)):
                 errors.append(f"{name}_mismatch")
+    conformance = (
+        _validate_transfer_body(store, repo, trial)
+        if modern
+        else {
+            "valid": True,
+            "errors": [],
+            "portability_status": "unresolved",
+            "classification_reasons": ["legacy_trial_has_no_evidence_class"],
+            "evidence_class": EVIDENCE_LEGACY,
+            "arm_evidence_classes": {},
+            "gains": dict(trial.get("gains") or {}),
+        }
+    )
+    errors.extend(str(item) for item in conformance.get("errors") or ())
     return {
         "valid": not errors,
         "errors": sorted(set(errors)),
         "trial_id": trial_id,
-        "portability_status": trial.get("portability_status"),
+        "receipt_hash": trial.get("receipt_hash"),
+        "portability_status": conformance.get("portability_status"),
+        "stored_portability_status": trial.get("portability_status"),
+        "evidence_class": conformance.get("evidence_class"),
+        "empirical_transfer_established": bool(
+            modern
+            and not errors
+            and str(conformance.get("portability_status") or "").startswith(
+                "empirical_"
+            )
+        ),
+        "structural_transfer_established": bool(
+            modern
+            and not errors
+            and str(conformance.get("portability_status") or "").startswith(
+                "structural_"
+            )
+        ),
+        "classification_reasons": list(
+            conformance.get("classification_reasons") or ()
+        ),
+        "arm_evidence_classes": dict(
+            conformance.get("arm_evidence_classes") or {}
+        ),
+        "legacy_partial": not modern,
         "distribution_authorized": False,
         "execution_authorized": False,
         "advisory_only": True,

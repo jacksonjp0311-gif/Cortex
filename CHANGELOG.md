@@ -1,3 +1,30 @@
+## 9.4.0 - Empirical Transfer Seal & Package-Use Binding
+
+- Added a host-controlled adapter-provenance registry with an irrevocable
+  synthetic ceiling for `FixtureAdapter` lineage. Unregistered adapters remain
+  unknown, and locally registered live boundaries are explicitly not described
+  as cryptographic provider attestation.
+- Split structural transfer passes from empirical cross-model and cross-family
+  verification. New trial verification reconstructs arm circulations, metrics,
+  gains, evidence classes, and portability status from canonical receipts.
+- Production distribution now requires empirical transfer evidence. Explicit
+  sandbox targets may consume synthetic structural evidence, but their packages
+  remain sandbox-only, synthetic, non-promotable, and ineligible for empirical
+  feedback aggregation.
+- Added an optional immutable `competence_package_use` receipt to the existing
+  circulation ledger. The receipt binds the exact package projection shown to
+  the adapter with target, profile, competence, request, invocation, outcome,
+  witness, and trajectory evidence.
+- Distribution feedback now requires that exact package-use receipt for
+  verification. A valid unrelated circulation, caller assertion, or model
+  payload cannot establish package feedback.
+- Added separate target, environment, epoch, authority, current-profile, and
+  freshness diagnostics. Historical receipts remain inspectable and resolve as
+  legacy/unknown for empirical promotion rather than being rewritten.
+- No real empirical cross-model trial was executed as part of this release;
+  fixture trials prove architecture behavior only. Host mutation, execution,
+  memory admission, and policy effects remain false.
+
 ## 9.3.0 - Governed Competence Distribution Fabric
 
 - Added immutable target compatibility profiles and target-bound competence

@@ -105,6 +105,7 @@ class V93DistributionTests(unittest.TestCase):
             "required_competence_types": ["successful_procedure"],
             "prohibited_competence_types": [],
             "freshness_ttl_seconds": 86400,
+            "distribution_mode": "sandbox",
         }
         body.update(overrides)
         return register_target_profile(self.store, self.repo, body)
@@ -183,8 +184,15 @@ class V93DistributionTests(unittest.TestCase):
         self.assertEqual(before["receipt_hash"], after["receipt_hash"])
 
     def test_rollback_restores_previous_valid_projection(self) -> None:
-        first, _ = self.package("system-a", "1")
-        second, _ = self.package("system-a", "2", previous_package_id=first["package_id"])
+        first, profile = self.package("system-a", "1")
+        second = project_competence(
+            self.store,
+            self.repo,
+            competence_id=self.candidate["competence_id"],
+            profile_id=profile["profile_id"],
+            previous_package_id=first["package_id"],
+        )
+        self.assertEqual(second["status"], "active", second)
         # The second package is a new immutable version, and only its event
         # state changes during rollback; the first package remains untouched.
         event = rollback_distribution(self.store, self.repo, second["package_id"], reason="restore prior")

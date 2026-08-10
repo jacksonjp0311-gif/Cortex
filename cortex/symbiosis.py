@@ -2274,6 +2274,7 @@ def run_model_circulation(
     observed_result: Mapping[str, Any],
     tool_scopes: Sequence[str] | None = None,
     configuration: Mapping[str, Any] | None = None,
+    competence_package_id: str | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
     """Run the v9.0 provider-neutral model loop from the symbiosis surface.
@@ -2294,6 +2295,7 @@ def run_model_circulation(
         observed_result=observed_result,
         tool_scopes=tool_scopes,
         configuration=configuration,
+        competence_package_id=competence_package_id,
         persist=persist,
     )
 

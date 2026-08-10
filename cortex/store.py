@@ -1250,6 +1250,7 @@ class Store:
             from .competence import ensure_competence_tables
             from .competence_transfer import ensure_transfer_tables
             from .competence_distribution import ensure_distribution_tables
+            from .adapter_provenance import ensure_adapter_provenance_tables
 
             ensure_lineage_tables(self)
             ensure_quarantine_tables(self)
@@ -1261,6 +1262,7 @@ class Store:
             ensure_competence_tables(self)
             ensure_transfer_tables(self)
             ensure_distribution_tables(self)
+            ensure_adapter_provenance_tables(self)
             from .epoch import ensure_epoch_tables
             from .phases import ensure_phase_tables
 
@@ -4055,6 +4057,7 @@ class Store:
         result: Mapping[str, Any] | None = None,
         outcome: Mapping[str, Any] | None = None,
         evidence: Mapping[str, Any] | None = None,
+        package_use_receipt_hash: str | None = None,
         circulation_session_id: str | None = None,
         turn_id: int = 1,
     ) -> dict[str, Any]:
@@ -4069,6 +4072,7 @@ class Store:
             result=result,
             outcome=outcome,
             evidence=evidence,
+            package_use_receipt_hash=package_use_receipt_hash,
             circulation_session_id=circulation_session_id,
             turn_id=turn_id,
         )
@@ -4079,6 +4083,51 @@ class Store:
         from .competence_distribution import list_distribution_feedback
 
         return list_distribution_feedback(self, repo, package_id)
+
+    def verify_package_use(
+        self,
+        repo: str,
+        package_use_receipt_hash: str,
+        *,
+        expected_package_id: str | None = None,
+    ) -> dict[str, Any]:
+        from .competence_distribution import verify_package_use
+
+        return verify_package_use(
+            self,
+            repo,
+            package_use_receipt_hash,
+            expected_package_id=expected_package_id,
+        )
+
+    def verify_distribution_feedback(
+        self, repo: str, feedback_id: str
+    ) -> dict[str, Any]:
+        from .competence_distribution import verify_distribution_feedback
+
+        return verify_distribution_feedback(self, repo, feedback_id)
+
+    def register_adapter_provenance(
+        self,
+        repo: str,
+        adapter: Any,
+        *,
+        boundary_kind: str,
+        principal_id: str,
+        principal_secret: str,
+        endpoint_descriptor: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        from .adapter_provenance import register_adapter_provenance
+
+        return register_adapter_provenance(
+            self,
+            repo,
+            adapter,
+            boundary_kind=boundary_kind,
+            principal_id=principal_id,
+            principal_secret=principal_secret,
+            endpoint_descriptor=endpoint_descriptor,
+        )
 
     def append_will_receipt(
         self, repo: str, will: dict[str, Any]

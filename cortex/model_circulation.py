@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -27,16 +28,23 @@ from .evaluation import (
     TaskEvaluationContract,
     evaluate_task_result,
 )
-from .witness import ensure_witness_tables, get_witness_result, _result_hash
+from .adapter_provenance import (
+    EVIDENCE_LEGACY,
+    FIXTURE_LINEAGE_MARKER,
+    resolve_adapter_provenance,
+    verify_adapter_provenance,
+)
+from .witness import _result_hash, ensure_witness_tables, get_witness_result
 
-SCHEMA = "cortex-model-circulation/1.0"
-VERSION = "9.0.0"
+SCHEMA = "cortex-model-circulation/1.1"
+VERSION = "9.4.0"
 GLYPH = "◎"
 CLAIM_BOUNDARY = (
     "v9.0 model circulation binds a replaceable provider-neutral adapter to a "
     "task context, public proposal, independently selected evaluation, observed "
-    "outcome, witness, and trajectory. It is not competence, consciousness, "
-    "authority, host mutation, or durable memory admission."
+    "outcome, witness, and trajectory. v9.4 may additionally bind exact "
+    "competence-package exposure; exposure is not causal benefit, competence, "
+    "consciousness, authority, host mutation, or durable memory admission."
 )
 RECEIPT_KINDS = (
     "model_invocation",
@@ -51,6 +59,13 @@ FORBIDDEN_AUTHORITY = (
     "execution_authorized",
     "memory_admission_authorized",
     "policy_mutation_authorized",
+)
+_SECRET_CONFIGURATION_KEY = re.compile(
+    r"(?:^|_)(?:api_?key|token|secret|password|credential|authorization|private_?key)(?:$|_)",
+    re.IGNORECASE,
+)
+_SECRET_CONFIGURATION_TEXT = re.compile(
+    r"(?i)\bbearer\s+\S+|://[^/\s:@]+:[^/\s@]+@|[?&](?:api_?key|token|secret|password)="
 )
 
 
@@ -104,6 +119,32 @@ def _nonempty(value: Any, field: str) -> str:
     if not text:
         raise ModelAdapterError(f"{field} is required")
     return text
+
+
+def _public_configuration(value: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Reject credential-shaped material from canonical model requests."""
+
+    safe = _json_safe(dict(value or {}))
+
+    def inspect(item: Any, path: str = "configuration") -> None:
+        if isinstance(item, Mapping):
+            for key, nested in item.items():
+                normalized = re.sub(r"[^a-z0-9]+", "_", str(key).lower())
+                if _SECRET_CONFIGURATION_KEY.search(normalized):
+                    raise ModelAdapterError(
+                        f"credential-shaped model configuration is forbidden: {path}.{key}"
+                    )
+                inspect(nested, f"{path}.{key}")
+        elif isinstance(item, list):
+            for index, nested in enumerate(item):
+                inspect(nested, f"{path}[{index}]")
+        elif isinstance(item, str) and _SECRET_CONFIGURATION_TEXT.search(item):
+            raise ModelAdapterError(
+                f"credential-shaped model configuration text is forbidden: {path}"
+            )
+
+    inspect(safe)
+    return dict(safe)
 
 
 def _adapter_identity(adapter: ModelAdapter) -> dict[str, str]:
@@ -177,10 +218,12 @@ class ModelInvocationRequest:
     adapter_version: str
     configuration: Mapping[str, Any]
     requested_at: float
+    adapter_provenance: Mapping[str, Any] | None = None
+    schema_version: str = SCHEMA
 
     def material(self) -> dict[str, Any]:
-        return {
-            "schema_version": SCHEMA,
+        material = {
+            "schema_version": self.schema_version,
             "repo": self.repo,
             "repository_id": self.repository_id,
             "session_id": self.session_id,
@@ -199,6 +242,14 @@ class ModelInvocationRequest:
             "configuration": _json_safe(dict(self.configuration)),
             "requested_at": float(self.requested_at),
         }
+        # v9.0 receipts predate adapter provenance.  Omitting this key is part
+        # of their canonical request identity; verification must never inject
+        # a new field and silently rewrite historical evidence.
+        if isinstance(self.adapter_provenance, Mapping):
+            material["adapter_provenance"] = _json_safe(
+                dict(self.adapter_provenance)
+            )
+        return material
 
     @property
     def request_hash(self) -> str:
@@ -348,6 +399,7 @@ class FixtureAdapter:
     provider_family = "fixture"
     adapter_id = "cortex.fixture"
     adapter_version = "1"
+    _cortex_evidence_marker = FIXTURE_LINEAGE_MARKER
 
     def __init__(
         self,
@@ -654,6 +706,7 @@ def verify_task_witness_result(
     expected_outcome_hash: str,
     expected_session_id: str,
     expected_body_epoch_id: str,
+    expected_invocation_id: str | None = None,
 ) -> dict[str, Any]:
     """Verify generic task witness identity/binding without retrieval semantics."""
 
@@ -716,6 +769,10 @@ def verify_task_witness_result(
         errors.append("witness_session_mismatch")
     if str(result.get("body_epoch_id") or "") != str(expected_body_epoch_id):
         errors.append("witness_epoch_mismatch")
+    if expected_invocation_id is not None and str(
+        result.get("invocation_id") or ""
+    ) != str(expected_invocation_id):
+        errors.append("witness_invocation_mismatch")
     state = str(result.get("result_state") or "unknown")
     if state not in {"verified_success", "verified_failure"}:
         errors.append("witness_result_semantics_unknown")
@@ -777,6 +834,7 @@ def run_model_circulation(
     observed_result: Mapping[str, Any] | None = None,
     tool_scopes: Sequence[str] | None = None,
     configuration: Mapping[str, Any] | None = None,
+    competence_package_id: str | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
     """Run one replaceable-model loop through canonical Cortex receipts."""
@@ -798,10 +856,44 @@ def run_model_circulation(
     if canonical_contexts:
         context = canonical_contexts[-1]
     projection = project_task_context(context)
+    package_projection: dict[str, Any] | None = None
+    if competence_package_id:
+        # The package is resolved by Cortex before invocation.  An adapter or
+        # caller cannot retroactively claim that an unrelated circulation used
+        # a competence package.
+        try:
+            from .competence_distribution import build_competence_package_projection
+
+            package_projection = build_competence_package_projection(
+                store,
+                repo,
+                str(competence_package_id),
+                require_current=True,
+            )
+        except Exception as exc:
+            raise ModelAdapterError(
+                f"competence package cannot be projected: {type(exc).__name__}"
+            ) from exc
+        projection = {
+            **projection,
+            "competence_package": package_projection,
+        }
+        projection["projection_hash"] = _sha(
+            {
+                key: value
+                for key, value in projection.items()
+                if key != "projection_hash"
+            }
+        )
     session_id = _nonempty(session.get("session_id"), "session_id")
     repository_id = _nonempty(session.get("repository_id"), "repository_id")
     body_epoch_id = _nonempty(session.get("body_epoch_id"), "body_epoch_id")
+    if package_projection is not None and str(
+        package_projection.get("target_body_epoch_id") or ""
+    ) != body_epoch_id:
+        raise ModelAdapterError("competence package target epoch does not match session")
     identity = _adapter_identity(adapter)
+    adapter_provenance = resolve_adapter_provenance(store, repo, adapter)
     turn_id = int(session.get("current_turn_id") or 0) + 1
     invocation_id = f"model_{session_id}_{turn_id}_{_sha(identity)[:12]}"
     request = ModelInvocationRequest(
@@ -815,7 +907,8 @@ def run_model_circulation(
         context_projection=projection,
         context_projection_hash=str(projection["projection_hash"]),
         tool_scopes=tuple(str(x) for x in tool_scopes or ()),
-        configuration=dict(configuration or {}),
+        adapter_provenance=adapter_provenance,
+        configuration=_public_configuration(configuration),
         requested_at=time.time(),
         **identity,
     )
@@ -887,6 +980,8 @@ def run_model_circulation(
             "model_version": identity["model_version"],
             "adapter_id": identity["adapter_id"],
             "adapter_version": identity["adapter_version"],
+            "adapter_provenance": adapter_provenance,
+            "evidence_class": adapter_provenance["evidence_class"],
             "configuration": dict(request.configuration),
             "context_projection_hash": request.context_projection_hash,
             "task_contract_hash": task_contract.contract_hash,
@@ -991,6 +1086,59 @@ def run_model_circulation(
             "independent": True,
         },
     )
+    package_use = None
+    if package_projection is not None:
+        package_use = _receipt(
+            kind="competence_package_use",
+            repo=str(repo),
+            repository_id=repository_id,
+            session_id=session_id,
+            turn_id=turn_id,
+            body_epoch_id=body_epoch_id,
+            invocation_id=invocation_id,
+            fields={
+                "package_id": package_projection["package_id"],
+                "package_hash": package_projection["package_hash"],
+                "package_projection_hash": package_projection[
+                    "package_projection_hash"
+                ],
+                "competence_id": package_projection["competence_id"],
+                "competence_receipt_hash": package_projection[
+                    "competence_receipt_hash"
+                ],
+                "profile_id": package_projection["profile_id"],
+                "profile_hash": package_projection["profile_hash"],
+                "target_id": package_projection["target_id"],
+                "target_environment_hash": package_projection[
+                    "target_environment_hash"
+                ],
+                "target_body_epoch_id": package_projection[
+                    "target_body_epoch_id"
+                ],
+                "request_hash": request.request_hash,
+                "context_projection_hash": request.context_projection_hash,
+                "task_contract_hash": task_contract.contract_hash,
+                "tool_scopes": list(request.tool_scopes),
+                "model_invocation_content_hash": invocation["content_hash"],
+                "model_outcome_content_hash": outcome["content_hash"],
+                "model_witness_content_hash": witness["content_hash"],
+                "witness_result_hash": witness_result.get(
+                    "witness_result_hash"
+                ),
+                "adapter_provenance": adapter_provenance,
+                "evidence_class": adapter_provenance["evidence_class"],
+                "sandbox_only": bool(package_projection["sandbox_only"]),
+                "synthetic_evidence": bool(
+                    package_projection["synthetic_evidence"]
+                ),
+                "non_promotable": bool(package_projection["non_promotable"]),
+                "empirical_feedback_eligible": bool(
+                    package_projection["empirical_feedback_eligible"]
+                ),
+                "exposure_observed": True,
+                "causal_effect_established": False,
+            },
+        )
     trajectory = _receipt(
         kind="model_trajectory",
         repo=str(repo),
@@ -1006,11 +1154,17 @@ def run_model_circulation(
             "evaluation_content_hash": evaluation_receipt["content_hash"],
             "outcome_content_hash": outcome["content_hash"],
             "witness_content_hash": witness["content_hash"],
+            "package_use_content_hash": (
+                package_use["content_hash"] if package_use is not None else None
+            ),
             "transition_class": "model_circulation_observation",
             "evaluation_state": evaluation["state"],
         },
     )
-    receipts = [invocation, proposal, evaluation_receipt, outcome, witness, trajectory]
+    receipts = [invocation, proposal, evaluation_receipt, outcome, witness]
+    if package_use is not None:
+        receipts.append(package_use)
+    receipts.append(trajectory)
     committed: list[dict[str, Any]] = []
     persistence_status = "advisory_only"
     persistence_error = None
@@ -1030,6 +1184,8 @@ def run_model_circulation(
         "turn_id": turn_id,
         "body_epoch_id": body_epoch_id,
         "invocation_id": invocation_id,
+        "adapter_provenance": adapter_provenance,
+        "evidence_class": adapter_provenance["evidence_class"],
         "request": request.to_dict(),
         "invocation_result": invocation_result.to_dict(),
         "task_contract": task_contract.to_dict(),
@@ -1041,6 +1197,11 @@ def run_model_circulation(
             "model_outcome": outcome,
             "model_witness": witness,
             "model_trajectory": trajectory,
+            **(
+                {"competence_package_use": package_use}
+                if package_use is not None
+                else {}
+            ),
         },
         "witness_result": witness_result,
         "evaluation": evaluation,
@@ -1074,6 +1235,12 @@ def verify_model_circulation(
         if row.get("kind") in RECEIPT_KINDS
         and (turn_id is None or int(row.get("turn_id") or -1) == int(turn_id))
     ]
+    package_use_rows = [
+        row
+        for row in rows
+        if row.get("kind") == "competence_package_use"
+        and (turn_id is None or int(row.get("turn_id") or -1) == int(turn_id))
+    ]
     errors: list[str] = []
     by_kind = {str(row.get("kind")): row for row in model_rows}
     missing = [kind for kind in RECEIPT_KINDS if kind not in by_kind]
@@ -1082,7 +1249,11 @@ def verify_model_circulation(
     chain = store.verify_symbiotic_session(repo, session_id)
     if not chain.get("valid"):
         errors.append("symbiotic_chain_invalid")
-    for kind, row in by_kind.items():
+    inspected_rows = [*by_kind.items()]
+    inspected_rows.extend(
+        ("competence_package_use", row) for row in package_use_rows
+    )
+    for kind, row in inspected_rows:
         if not _verify_receipt_content(row):
             errors.append(f"{kind}_content_hash_invalid")
         if row.get("policy_effect") is not False or row.get("update_authorized") is not False:
@@ -1106,6 +1277,7 @@ def verify_model_circulation(
     trajectory = by_kind["model_trajectory"]
     try:
         request_fields = {
+            "schema_version",
             "repo",
             "repository_id",
             "session_id",
@@ -1121,20 +1293,79 @@ def verify_model_circulation(
             "model_version",
             "adapter_id",
             "adapter_version",
+            "adapter_provenance",
             "configuration",
             "requested_at",
         }
-        request = ModelInvocationRequest(
-            **{
-                key: value
-                for key, value in invocation["request"].items()
-                if key in request_fields
-            }
-        )
+        request_data = {
+            key: value
+            for key, value in invocation["request"].items()
+            if key in request_fields
+        }
+        request = ModelInvocationRequest(**request_data)
     except (KeyError, TypeError, ValueError) as exc:
         errors.append(f"request_invalid:{type(exc).__name__}")
         request = None
+    provenance_check: dict[str, Any] = {
+        "valid": True,
+        "evidence_class": EVIDENCE_LEGACY,
+        "evidence_state": "legacy_partial",
+        "empirical": False,
+        "errors": [],
+    }
     if request is not None:
+        if isinstance(request.adapter_provenance, Mapping):
+            provenance_check = verify_adapter_provenance(
+                store, repo, request.adapter_provenance
+            )
+            if provenance_check.get("valid") is not True:
+                errors.extend(
+                    f"adapter_provenance_{error}"
+                    for error in provenance_check.get("errors") or ()
+                )
+        if "adapter_provenance" in invocation and dict(
+            invocation.get("adapter_provenance") or {}
+        ) != dict(request.adapter_provenance or {}):
+            errors.append("invocation_adapter_provenance_binding_invalid")
+        if "evidence_class" in invocation and str(
+            invocation.get("evidence_class") or EVIDENCE_LEGACY
+        ) != str(
+            provenance_check.get("evidence_class") or EVIDENCE_LEGACY
+        ):
+            errors.append("invocation_evidence_class_binding_invalid")
+        for identity_field in (
+            "provider_family",
+            "model_id",
+            "model_version",
+            "adapter_id",
+            "adapter_version",
+        ):
+            if str(invocation.get(identity_field) or "") != str(
+                getattr(request, identity_field) or ""
+            ):
+                errors.append(
+                    f"invocation_{identity_field}_request_binding_invalid"
+                )
+        registered_identity = (
+            request.adapter_provenance.get("host_identity")
+            if isinstance(request.adapter_provenance, Mapping)
+            and isinstance(request.adapter_provenance.get("host_identity"), Mapping)
+            else None
+        )
+        if registered_identity is not None:
+            for identity_field in (
+                "provider_family",
+                "model_id",
+                "model_version",
+                "adapter_id",
+                "adapter_version",
+            ):
+                if str(registered_identity.get(identity_field) or "") != str(
+                    getattr(request, identity_field) or ""
+                ):
+                    errors.append(
+                        f"request_{identity_field}_registration_binding_invalid"
+                    )
         if request.verify()["valid"] is False:
             errors.extend(f"request_{error}" for error in request.verify()["errors"])
         if str(invocation.get("request_hash") or "") != request.request_hash:
@@ -1177,12 +1408,42 @@ def verify_model_circulation(
         ]
         if not canonical_contexts:
             errors.append("canonical_context_missing")
-        else:
+        elif request is not None:
             try:
                 canonical_projection = project_task_context(canonical_contexts[-1])
+                stored_package_projection = request.context_projection.get(
+                    "competence_package"
+                )
+                if isinstance(stored_package_projection, Mapping):
+                    from .competence_distribution import (
+                        build_competence_package_projection,
+                    )
+
+                    recomputed_package_projection = (
+                        build_competence_package_projection(
+                            store,
+                            repo,
+                            str(stored_package_projection.get("package_id") or ""),
+                            require_current=False,
+                        )
+                    )
+                    if recomputed_package_projection != dict(
+                        stored_package_projection
+                    ):
+                        errors.append("package_projection_not_canonical")
+                    canonical_projection["competence_package"] = (
+                        recomputed_package_projection
+                    )
+                    canonical_projection["projection_hash"] = _sha(
+                        {
+                            key: value
+                            for key, value in canonical_projection.items()
+                            if key != "projection_hash"
+                        }
+                    )
                 if canonical_projection != dict(request.context_projection):
                     errors.append("context_projection_not_canonical")
-            except ModelAdapterError as exc:
+            except Exception as exc:
                 errors.append(f"canonical_context_invalid:{type(exc).__name__}")
         witness_check = verify_task_witness_result(
             store,
@@ -1192,6 +1453,7 @@ def verify_model_circulation(
             expected_outcome_hash=str(outcome.get("content_hash") or ""),
             expected_session_id=str(session_id),
             expected_body_epoch_id=str(outcome.get("body_epoch_id") or ""),
+            expected_invocation_id=str(invocation.get("invocation_id") or ""),
         )
         if not witness_check.get("valid"):
             errors.extend(f"witness_{error}" for error in witness_check.get("errors") or ())
@@ -1214,6 +1476,83 @@ def verify_model_circulation(
         errors.append("outcome_proposal_binding_invalid")
     if outcome.get("invocation_content_hash") != invocation.get("content_hash"):
         errors.append("outcome_invocation_binding_invalid")
+    package_projection = (
+        request.context_projection.get("competence_package")
+        if request is not None
+        and isinstance(request.context_projection.get("competence_package"), Mapping)
+        else None
+    )
+    package_use: Mapping[str, Any] | None = None
+    if package_projection is not None:
+        if len(package_use_rows) != 1:
+            errors.append("package_use_receipt_missing_or_ambiguous")
+        else:
+            package_use = package_use_rows[0]
+            ledger_check = store.verify_symbiotic_receipt(
+                repo, str(package_use.get("receipt_hash") or "")
+            )
+            if ledger_check.get("valid") is not True:
+                errors.append("package_use_ledger_invalid")
+            expected_use = {
+                "package_id": package_projection.get("package_id"),
+                "package_hash": package_projection.get("package_hash"),
+                "package_projection_hash": package_projection.get(
+                    "package_projection_hash"
+                ),
+                "competence_id": package_projection.get("competence_id"),
+                "competence_receipt_hash": package_projection.get(
+                    "competence_receipt_hash"
+                ),
+                "profile_id": package_projection.get("profile_id"),
+                "profile_hash": package_projection.get("profile_hash"),
+                "target_id": package_projection.get("target_id"),
+                "target_environment_hash": package_projection.get(
+                    "target_environment_hash"
+                ),
+                "target_body_epoch_id": package_projection.get(
+                    "target_body_epoch_id"
+                ),
+                "request_hash": request.request_hash if request else None,
+                "context_projection_hash": (
+                    request.context_projection_hash if request else None
+                ),
+                "task_contract_hash": contract.contract_hash if contract else None,
+                "tool_scopes": list(request.tool_scopes) if request else [],
+                "model_invocation_content_hash": invocation.get("content_hash"),
+                "model_outcome_content_hash": outcome.get("content_hash"),
+                "model_witness_content_hash": witness.get("content_hash"),
+                "witness_result_hash": witness.get("witness_result_hash"),
+                "adapter_provenance": dict(
+                    invocation.get("adapter_provenance") or {}
+                ),
+                "evidence_class": provenance_check.get("evidence_class"),
+                "sandbox_only": bool(package_projection.get("sandbox_only")),
+                "synthetic_evidence": bool(
+                    package_projection.get("synthetic_evidence")
+                ),
+                "non_promotable": bool(package_projection.get("non_promotable")),
+                "empirical_feedback_eligible": bool(
+                    package_projection.get("empirical_feedback_eligible")
+                ),
+            }
+            for key, expected in expected_use.items():
+                if package_use.get(key) != expected:
+                    errors.append(f"package_use_{key}_binding_invalid")
+            if package_use.get("exposure_observed") is not True:
+                errors.append("package_use_exposure_not_observed")
+            if package_use.get("causal_effect_established") is not False:
+                errors.append("package_use_causal_claim_invalid")
+            if trajectory.get("package_use_content_hash") != package_use.get(
+                "content_hash"
+            ):
+                errors.append("trajectory_package_use_binding_invalid")
+    elif package_use_rows:
+        errors.append("package_use_without_projected_package")
+    elif trajectory.get("package_use_content_hash") not in {None, ""}:
+        errors.append("trajectory_package_use_without_receipt")
+    receipt_rows = dict(by_kind)
+    if package_use is not None:
+        receipt_rows["competence_package_use"] = package_use
     return {
         "valid": not errors,
         "errors": sorted(set(errors)),
@@ -1231,7 +1570,36 @@ def verify_model_circulation(
                 "adapter_version",
             )
         },
+        "adapter_provenance": dict(invocation.get("adapter_provenance") or {}),
+        "evidence_class": (
+            provenance_check.get("evidence_class")
+            if request is not None
+            else EVIDENCE_LEGACY
+        ),
+        "evidence_state": (
+            provenance_check.get("evidence_state")
+            if request is not None
+            else "legacy_partial"
+        ),
+        "body_epoch_id": invocation.get("body_epoch_id"),
+        "task_contract_hash": invocation.get("task_contract_hash"),
+        "context_projection_hash": invocation.get("context_projection_hash"),
+        "tool_scopes": list(invocation.get("tool_scopes") or []),
+        "receipt_bindings": {
+            kind: {
+                "receipt_hash": row.get("receipt_hash"),
+                "content_hash": row.get("content_hash"),
+            }
+            for kind, row in receipt_rows.items()
+        },
+        "outcome_status": outcome.get("status"),
+        "outcome_success": outcome.get("success"),
         "witness": witness.get("witness_result_hash"),
+        "witness_result_hash": witness.get("witness_result_hash"),
+        "package_use_receipt_hash": (
+            package_use.get("receipt_hash") if package_use is not None else None
+        ),
+        "package_use": dict(package_use or {}),
         "policy_effect": False,
         "update_authorized": False,
         "host_mutate_authorized": False,

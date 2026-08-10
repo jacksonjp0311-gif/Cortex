@@ -99,7 +99,12 @@ class V92CompetenceTransferTests(unittest.TestCase):
             task="apply the transferred procedure",
             trial_nonce="matched-1",
         )
-        self.assertEqual(trial["portability_status"], "cross_model_verified")
+        self.assertEqual(
+            trial["portability_status"], "structural_cross_model_pass"
+        )
+        self.assertEqual(trial["evidence_class"], "synthetic")
+        self.assertTrue(trial["structural_transfer_established"])
+        self.assertFalse(trial["empirical_transfer_established"])
         self.assertEqual(set(trial["arm_results"]), {"A", "B", "C", "D", "E"})
         self.assertGreater(trial["gains"]["G_continuity"], 0.0)
         self.assertGreater(trial["gains"]["G_distillation"], 0.0)

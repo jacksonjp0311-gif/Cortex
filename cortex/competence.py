@@ -263,6 +263,22 @@ def _canonical_origin(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     outcome = by_kind["model_outcome"]
     witness = by_kind["model_witness"]
     trajectory = by_kind["model_trajectory"]
+    model_origin = {
+        key: invocation.get(key)
+        for key in (
+            "provider_family",
+            "model_id",
+            "model_version",
+            "adapter_id",
+            "adapter_version",
+        )
+    }
+    # Evidence-class fields were introduced in v9.4.  Preserve the exact
+    # model-origin body of older immutable candidates instead of injecting
+    # modern fields during lineage reconstruction.
+    for key in ("evidence_class", "adapter_provenance"):
+        if key in invocation:
+            model_origin[key] = invocation.get(key)
     return {
         "repository_id": str(trajectory.get("repository_id") or ""),
         "repo": str(trajectory.get("repo") or ""),
@@ -280,16 +296,7 @@ def _canonical_origin(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "evaluation_state": str(outcome.get("evaluation_state") or "unknown"),
         "outcome_status": str(outcome.get("status") or "unknown"),
         "outcome_success": outcome.get("success"),
-        "model_origin": {
-            key: invocation.get(key)
-            for key in (
-                "provider_family",
-                "model_id",
-                "model_version",
-                "adapter_id",
-                "adapter_version",
-            )
-        },
+        "model_origin": model_origin,
     }
 
 

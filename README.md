@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.3.0-0ea5e9?style=for-the-badge" alt="v9.3.0" />
+  <img src="https://img.shields.io/badge/version-9.4.0-0ea5e9?style=for-the-badge" alt="v9.4.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -194,9 +194,10 @@ v9.2 measures whether a distilled competence helps fresh model instances under
 matched, frozen trial arms. The A–E experiment compares ordinary context, raw
 origin history, unfiltered memory, competence, and competence plus verified
 usage feedback. It records task, cost, latency, safety, applicability, and
-counterevidence metrics in an append-only trial ledger. A positive result is
-classified by the declared policy; it never distributes competence or changes
-the candidate automatically. See
+counterevidence metrics in an append-only trial ledger. v9.4 types fixture and
+simulator results as structural evidence only; empirical transfer requires a
+host-registered live inference boundary. A positive result never distributes
+competence or changes the candidate automatically. See
 [`PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md`](docs/intelligence/PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md).
 
 v9.3 adds the governed distribution fabric. A transfer-verified competence can
@@ -234,6 +235,7 @@ profile = store.register_target_profile("YourProject", {
     "authority_scope": {"propose": True, "execute": False},
     "body_epoch_id": "<target-epoch>",
     "required_competence_types": ["successful_procedure"],
+    "distribution_mode": "production",  # empirical transfer required
 })
 package = store.project_competence(
     "YourProject",
@@ -244,6 +246,19 @@ package = store.project_competence(
 
 See [`PHASE_V9.3_GOVERNED_COMPETENCE_DISTRIBUTION.md`](docs/intelligence/PHASE_V9.3_GOVERNED_COMPETENCE_DISTRIBUTION.md)
 for the package, revocation, rollback, and feedback contracts.
+
+v9.4 seals the difference between a working simulation and empirical evidence.
+Fixture lineage stays synthetic even if it claims a realistic provider or
+model name; production packages require empirically classified transfer, while
+explicit sandbox packages remain synthetic and non-promotable. A model can use
+a competence only through an exact package projection embedded in its request.
+Cortex then records a same-turn package-use receipt binding the package,
+target, profile, competence, invocation, outcome, witness, and trajectory.
+Feedback without that root, including feedback attached to an unrelated valid
+model session, cannot verify. This establishes exposure binding, not
+counterfactual causation or universal transfer. No real empirical cross-model
+trial is bundled or claimed. See
+[`PHASE_V9.4_EMPIRICAL_TRANSFER_PACKAGE_USE_BINDING.md`](docs/intelligence/PHASE_V9.4_EMPIRICAL_TRANSFER_PACKAGE_USE_BINDING.md).
 
 ## Interconnect mathematics (v8.3.4)
 
