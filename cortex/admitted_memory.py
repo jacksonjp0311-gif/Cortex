@@ -24,7 +24,7 @@ from . import __version__
 from .provenance import verify_candidate_provenance
 
 SCHEMA = "cortex-admitted-memory/1.0"
-VERSION = "8.9.2"
+VERSION = "8.9.3"
 GLYPH = "⧉◆"
 CLAIM_BOUNDARY = (
     "Admitted memories are will-bound, trajectory-derived durable lessons. "
@@ -60,7 +60,7 @@ def commit_admitted_memories(
     """Persist each membrane-admitted candidate as an immutable memory row.
 
     No-op (and no authority) when admission.durable_write_authorized is false
-    or invented_count is non-zero.
+    or any canonical provenance/invention counter is non-zero.
 
     Prefer reloading the membrane admission from the immutable ledger by hash
     when present — do not trust a fabricated in-memory mapping alone.
@@ -89,9 +89,13 @@ def commit_admitted_memories(
             }
         admission = dict(canonical)
     invented = int(admission.get("invented_count") or 0)
+    provenance_fail = int(admission.get("provenance_fail_count") or 0)
+    provenance_unknown = int(admission.get("provenance_unknown_count") or 0)
+    provenance_legacy = int(admission.get("provenance_legacy_partial_count") or 0)
+    noncanonical = int(admission.get("noncanonical_candidate_count") or 0)
     durable = bool(admission.get("durable_write_authorized"))
     will_ok = bool(admission.get("will_verified"))
-    if invented != 0:
+    if any(value != 0 for value in (invented, provenance_fail, provenance_unknown, provenance_legacy, noncanonical)):
         return {
             "schema_version": SCHEMA,
             "version": VERSION,
@@ -100,7 +104,7 @@ def commit_admitted_memories(
             "committed": [],
             "committed_count": 0,
             "skipped_count": 0,
-            "status": "blocked_invented_candidates",
+            "status": "blocked_unresolved_or_noncanonical_candidates",
             "durable_write_authorized": False,
             "host_mutate_authorized": False,
             "execution_authorized": False,
@@ -188,7 +192,12 @@ def commit_admitted_memories(
                 "prior_frame_hash": source.get("prior_frame_hash"),
                 "next_frame_hash": source.get("next_frame_hash"),
                 "transition_hash": source.get("transition_hash"),
+                "measurement_cohort_id": source.get("measurement_cohort_id"),
+                "coordinate_schema_digest": source.get("coordinate_schema_digest"),
                 "outcome_hash": source.get("outcome_hash"),
+                "outcome_id": source.get("outcome_id"),
+                "activation_id": source.get("activation_id"),
+                "witness_result_hash": source.get("witness_result_hash"),
                 "proposal_hash": source.get("proposal_hash"),
                 "evaluation_hash": source.get("evaluation_hash"),
                 "joint_action_hash": source.get("joint_action_hash"),

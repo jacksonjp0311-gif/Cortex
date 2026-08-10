@@ -20,7 +20,7 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-distillation-candidates/1.0"
-VERSION = "8.9.2"
+VERSION = "8.9.3"
 GLYPH = "⧉◇"
 CLAIM_BOUNDARY = (
     "Distillation candidates are typed, trajectory-derived proposals for what "
@@ -173,7 +173,17 @@ def extract_distillation_candidates(
         "prior_frame_hash": prior_frame.get("receipt_hash"),
         "next_frame_hash": next_frame.get("receipt_hash"),
         "transition_hash": transition.get("receipt_hash"),
+        "measurement_cohort_id": next_frame.get("measurement_cohort_id")
+        or prior_frame.get("measurement_cohort_id")
+        or transition.get("measurement_cohort_id"),
+        "coordinate_schema_digest": next_frame.get("coordinate_schema_digest")
+        or prior_frame.get("coordinate_schema_digest")
+        or transition.get("coordinate_schema_digest"),
         "outcome_hash": transition.get("outcome_hash") or outcome.get("receipt_hash"),
+        "outcome_id": outcome.get("outcome_id"),
+        "activation_id": outcome.get("activation_id"),
+        "witness_result_hash": outcome.get("witness_result_hash")
+        or outcome.get("witness_result_id"),
         "proposal_hash": transition.get("proposal_hash") or proposal.get("receipt_hash"),
         "evaluation_hash": transition.get("evaluation_hash")
         or evaluation.get("receipt_hash"),
@@ -193,9 +203,17 @@ def extract_distillation_candidates(
             or prior_frame.get("repository_id"),
             "session_id": session_id,
             "turn_id": turn_id,
-            "body_epoch_id": next_frame.get("body_epoch_id")
+        "body_epoch_id": next_frame.get("body_epoch_id")
             or prior_frame.get("body_epoch_id")
             or transition.get("body_epoch_id")
+            or "",
+        "measurement_cohort_id": next_frame.get("measurement_cohort_id")
+            or prior_frame.get("measurement_cohort_id")
+            or transition.get("measurement_cohort_id")
+            or "",
+        "coordinate_schema_digest": next_frame.get("coordinate_schema_digest")
+            or prior_frame.get("coordinate_schema_digest")
+            or transition.get("coordinate_schema_digest")
             or "",
             "extraction_status": "blocked",
             "trajectory_verified": False,
@@ -449,9 +467,17 @@ def extract_distillation_candidates(
         "session_id": session_id,
         "turn_id": turn_id,
         "body_epoch_id": next_frame.get("body_epoch_id")
-        or prior_frame.get("body_epoch_id")
-        or transition.get("body_epoch_id")
-        or "",
+            or prior_frame.get("body_epoch_id")
+            or transition.get("body_epoch_id")
+            or "",
+        "measurement_cohort_id": next_frame.get("measurement_cohort_id")
+            or prior_frame.get("measurement_cohort_id")
+            or transition.get("measurement_cohort_id")
+            or "",
+        "coordinate_schema_digest": next_frame.get("coordinate_schema_digest")
+            or prior_frame.get("coordinate_schema_digest")
+            or transition.get("coordinate_schema_digest")
+            or "",
         "extraction_status": "extracted" if candidates else "empty",
         "trajectory_verified": True,
         "link_errors": [],

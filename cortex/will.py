@@ -20,7 +20,7 @@ from typing import Any
 from . import __version__
 
 SCHEMA = "cortex-will/1.0"
-VERSION = "8.9.2"
+VERSION = "8.9.3"
 GLYPH = "⚖⟹"
 CLAIM_BOUNDARY = (
     "Authenticated will supplies direction only. It cannot invent facts, "
@@ -467,6 +467,7 @@ def verify_will(
     checks["principal_id"] = bool(will.get("principal_id"))
     checks["scopes_present"] = bool(will.get("scopes"))
     checks["signature_present"] = bool(will.get("signature") and will.get("payload_hash"))
+    checks["principal_secret_match"] = False
     checks["no_host_mutate"] = not bool(will.get("host_mutate_authorized"))
     checks["no_execution"] = not bool(will.get("execution_authorized"))
     checks["no_invent"] = will.get("invents_facts") is False
@@ -572,10 +573,36 @@ def verify_will(
     else:
         checks["canonical_body"] = False
 
+    # Will receipts use an explicit schema law: the receipt hash covers the
+    # signed material and event id, but not the non-identity envelope fields.
+    receipt_material = {
+        key: value
+        for key, value in will.items()
+        if key
+        not in {
+            "receipt_hash",
+            "issued",
+            "created_at",
+            "persisted",
+            "canonical_persistence",
+            "canonical_persistence_error",
+        }
+    }
+    try:
+        checks["receipt_hash_valid"] = bool(
+            len(receipt_hash) == 64 and _sha(receipt_material) == receipt_hash
+        )
+    except (TypeError, ValueError, OverflowError):
+        checks["receipt_hash_valid"] = False
+
     signature_ok = False
     principal = _load_principal(store, repo, str(will.get("principal_id") or ""))
     checks["principal_registered"] = principal is not None
-    if secret is not None and checks["payload_hash"]:
+    if secret is not None and principal is not None:
+        checks["principal_secret_match"] = hmac.compare_digest(
+            _secret_hash(secret), str(principal["secret_hash"] or "")
+        )
+    if secret is not None and checks["payload_hash"] and checks["principal_secret_match"]:
         expected_sig = hmac.new(
             secret.encode("utf-8"),
             expected_hash.encode("utf-8"),
@@ -612,12 +639,14 @@ def verify_will(
             "session_bound",
             "epoch_bound",
             "principal_registered",
+            "principal_secret_match",
             "no_host_mutate",
             "no_execution",
             "no_invent",
             "no_alter_evidence",
             "signature",
             "receipt_hash_present",
+            "receipt_hash_valid",
             "canonical_receipt",
             "canonical_identity",
             "canonical_body",
@@ -641,7 +670,11 @@ def verify_will(
         "scopes": scopes,
         "has_admit_scope": "will.admit" in scopes,
         "has_prioritize_scope": "will.prioritize" in scopes,
-        "receipt_hash_valid": checks.get("canonical_identity", False) and checks.get("canonical_body", False),
+        "receipt_hash_valid": checks.get("receipt_hash_valid", False)
+        and checks.get("canonical_identity", False)
+        and checks.get("canonical_body", False),
+        "principal_secret_match": checks.get("principal_secret_match", False),
+        "signature_valid": checks.get("signature", False),
         "principal_bound": checks.get("canonical_identity", False) and bool(principal),
         "will_state": "current_verified" if verified else ("expired" if not checks.get("time_window") else "unverified"),
         "claim_boundary": CLAIM_BOUNDARY,

@@ -162,7 +162,8 @@ class WillMembraneTests(unittest.TestCase):
             session_id="s",
             body_epoch_id="e",
         )
-        self.assertEqual(admission["invented_count"], 0)
+        self.assertGreater(admission["noncanonical_candidate_count"], 0)
+        self.assertGreater(admission["invented_or_unresolved_count"], 0)
         self.assertTrue(admission["sources_only_from_candidates"])
         self.assertFalse(admission["host_mutate_authorized"])
         self.assertFalse(admission["execution_authorized"])
@@ -210,7 +211,8 @@ class WillMembraneTests(unittest.TestCase):
         # v8.9.2 caller booleans cannot manufacture canonical witness,
         # outcome, stability, or trajectory evidence.
         self.assertNotEqual(admission["gates"]["overall"], "pass")
-        self.assertEqual(admission["invented_count"], 0)
+        self.assertGreater(admission["noncanonical_candidate_count"], 0)
+        self.assertGreater(admission["invented_or_unresolved_count"], 0)
         types = {c["candidate_type"] for c in admission["admitted"]}
         self.assertNotIn("successful_procedure", types)
         self.assertNotIn("unresolved_ambiguity", types)  # not directed
@@ -343,7 +345,8 @@ class WillMembraneTests(unittest.TestCase):
                 sealed_open["receipts"]["symbiotic_consolidation"]["retained_count"], 0
             )
         self.assertFalse(sealed_open["execution_authorized"])
-        self.assertEqual(membrane["invented_count"], 0)
+        self.assertGreater(membrane["noncanonical_candidate_count"], 0)
+        self.assertGreater(membrane["invented_or_unresolved_count"], 0)
 
     def test_will_does_not_alter_evidence_claim(self) -> None:
         will = self._issue()

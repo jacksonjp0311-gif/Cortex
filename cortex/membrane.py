@@ -27,7 +27,7 @@ from .provenance import derive_gate_state
 from .will import SUPPORT_ORDER, verify_will
 
 SCHEMA = "cortex-distillation-membrane/1.0"
-VERSION = "8.9.2"
+VERSION = "8.9.3"
 GLYPH = "⧉⚖"
 CLAIM_BOUNDARY = (
     "The unified distillation membrane admits trajectory-derived candidates "
@@ -215,6 +215,15 @@ def apply_will_bound_membrane(
         require_session_id=session_id,
         require_body_epoch_id=body_epoch_id,
     )
+    pool = _collect_candidates(candidates, batches)
+    pool_types = {
+        str(item.get("candidate_type") or item.get("kind") or "")
+        for item in pool
+        if isinstance(item, Mapping)
+    }
+    derived_evidence = dict(gate_evidence or {})
+    if len(pool_types) == 1:
+        derived_evidence.setdefault("candidate_type", next(iter(pool_types)))
     derived = derive_gate_state(
         store,
         repo,
@@ -229,7 +238,7 @@ def apply_will_bound_membrane(
         stable_regime=stable_regime,
         witness=witness,
         outcome=outcome,
-        gate_evidence=gate_evidence,
+        gate_evidence=derived_evidence,
         caller_constraints=caller_constraints,
     )
     # Keep the historical numeric projection for callers, but derive it only
@@ -245,7 +254,6 @@ def apply_will_bound_membrane(
         "product": 1 if derived.get("overall") == "pass" else 0,
         "open": derived.get("overall") == "pass",
     }
-    pool = _collect_candidates(candidates, batches)
     directives = _will_directives(will)
     scopes = set(str(s) for s in (will.get("scopes") or ()))
     has_admit = "will.admit" in scopes and verification.get("verified") is True
@@ -253,7 +261,13 @@ def apply_will_bound_membrane(
     admitted: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     deferred: list[dict[str, Any]] = []
-    invented_count = 0  # invariant: always 0
+    # Provenance accounting is derived from the supplied candidate pool.  The
+    # old ``invented_count = 0`` invariant hid unresolved/naked candidates.
+    provenance_pass_count = 0
+    provenance_fail_count = 0
+    provenance_unknown_count = 0
+    provenance_legacy_partial_count = 0
+    noncanonical_candidate_count = 0
 
     # Sort: prioritize directed types first, then higher support.
     def sort_key(c: Mapping[str, Any]) -> tuple[int, int, str]:
@@ -281,6 +295,45 @@ def apply_will_bound_membrane(
             "policy_effect": False,
             "update_authorized": False,
         }
+
+        # A will-level prohibition is itself sufficient to reject a candidate;
+        # retain the precise policy reason before provenance accounting.
+        if ctype in directives["forbid_types"]:
+            item["rejection_reason"] = "will_forbid_type"
+            rejected.append(item)
+            continue
+
+        # A candidate without a canonical batch/body is unresolved evidence,
+        # not an invented fact and not a candidate that may merely wait for
+        # gates.  Count it explicitly and close it before any caller gates.
+        batch_hash = str(item.get("batch_receipt_hash") or "")
+        canonical_candidate = None
+        batch_row = None
+        if batch_hash and hasattr(store, "get_distillation_candidate_batch_by_hash"):
+            batch_row = store.get_distillation_candidate_batch_by_hash(repo, batch_hash)
+            for canonical in (batch_row or {}).get("candidates") or ():
+                if isinstance(canonical, Mapping) and str(canonical.get("candidate_id") or "") == cid:
+                    canonical_candidate = canonical
+                    break
+        if canonical_candidate is None:
+            noncanonical_candidate_count += 1
+            provenance_unknown_count += 1
+            item["provenance_state"] = "unknown"
+            item["rejection_reason"] = "canonical_trajectory_unresolved"
+            rejected.append(item)
+            continue
+        if any(
+            field in canonical_candidate
+            and (field not in item or _canonical(canonical_candidate.get(field)) != _canonical(item.get(field)))
+            for field in ("candidate_type", "summary", "support_level", "source", "evidence")
+        ):
+            provenance_fail_count += 1
+            item["provenance_state"] = "fail"
+            item["rejection_reason"] = "canonical_candidate_mismatch"
+            rejected.append(item)
+            continue
+        provenance_pass_count += 1
+        item["provenance_state"] = "pass"
 
         if ctype in directives["forbid_types"]:
             item["rejection_reason"] = "will_forbid_type"
@@ -323,35 +376,6 @@ def apply_will_bound_membrane(
             deferred.append(item)
             continue
 
-        # Direct/naked candidates are not canonical trajectory evidence.  The
-        # candidate batch must already be persisted and contain the exact
-        # candidate body; source links must resolve to the same repository.
-        batch_hash = str(item.get("batch_receipt_hash") or "")
-        batch_row = None
-        if batch_hash and hasattr(store, "get_distillation_candidate_batch_by_hash"):
-            batch_row = store.get_distillation_candidate_batch_by_hash(repo, batch_hash)
-        canonical_candidate = None
-        if batch_row:
-            for candidate in batch_row.get("candidates") or ():
-                if isinstance(candidate, Mapping) and str(candidate.get("candidate_id") or "") == cid:
-                    canonical_candidate = candidate
-                    break
-        if canonical_candidate is None:
-            item["rejection_reason"] = "canonical_trajectory_unresolved"
-            rejected.append(item)
-            continue
-        for field in ("candidate_type", "summary", "support_level", "source", "evidence"):
-            if field in canonical_candidate and (
-                field not in item
-                or _canonical(canonical_candidate.get(field)) != _canonical(item.get(field))
-            ):
-                canonical_candidate = None
-                break
-        if canonical_candidate is None:
-            item["rejection_reason"] = "canonical_candidate_mismatch"
-            rejected.append(item)
-            continue
-
         if retain_budget is not None and len(admitted) >= retain_budget:
             item["rejection_reason"] = "will_cap_retain"
             rejected.append(item)
@@ -369,7 +393,18 @@ def apply_will_bound_membrane(
         }
         admitted.append(admitted_item)
 
-    durable = bool(admitted) and gates["open"] and verification.get("verified") is True
+    provenance_closed = (
+        provenance_fail_count == 0
+        and provenance_unknown_count == 0
+        and provenance_legacy_partial_count == 0
+        and noncanonical_candidate_count == 0
+    )
+    durable = (
+        bool(admitted)
+        and gates["open"]
+        and verification.get("verified") is True
+        and provenance_closed
+    )
     material = {
         "schema_version": SCHEMA,
         "version": VERSION,
@@ -406,7 +441,18 @@ def apply_will_bound_membrane(
         "admitted_count": len(admitted),
         "rejected_count": len(rejected),
         "deferred_count": len(deferred),
-        "invented_count": invented_count,
+        "provenance_pass_count": provenance_pass_count,
+        "provenance_fail_count": provenance_fail_count,
+        "provenance_unknown_count": provenance_unknown_count,
+        "provenance_legacy_partial_count": provenance_legacy_partial_count,
+        "noncanonical_candidate_count": noncanonical_candidate_count,
+        "invented_or_unresolved_count": (
+            provenance_fail_count
+            + provenance_unknown_count
+            + provenance_legacy_partial_count
+        ),
+        # Compatibility alias; unlike v8.9.2 this is derived, not invariant.
+        "invented_count": noncanonical_candidate_count,
         "sources_only_from_candidates": True,
         "durable_write_authorized": durable,
         "memory_write_authorized": durable,

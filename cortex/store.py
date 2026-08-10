@@ -4446,6 +4446,17 @@ class Store:
         except (TypeError, ValueError, json.JSONDecodeError):
             return None
 
+    def get_witness_result_by_hash(
+        self, repo: str, witness_result_hash: str
+    ) -> dict[str, Any] | None:
+        """Resolve the immutable witness-result ledger in repository scope."""
+        try:
+            from .witness import get_witness_result
+
+            return get_witness_result(self, repo, witness_result_hash)
+        except Exception:
+            return None
+
     def get_interconnect_frame_by_hash(
         self, repo: str, receipt_hash: str
     ) -> dict[str, Any] | None:
