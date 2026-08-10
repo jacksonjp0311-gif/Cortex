@@ -691,7 +691,15 @@ def verify_candidate_provenance(
         or (m.get("outcome") or {}).get("outcome_id")
         or ""
     )
-    outcome_ref = dict(m.get("outcome") or {}) if isinstance(m.get("outcome"), Mapping) else {"outcome_id": outcome_id}
+    outcome_ref = (
+        dict(m.get("outcome") or {})
+        if isinstance(m.get("outcome"), Mapping)
+        else {
+            "outcome_id": outcome_id,
+            "activation_id": source.get("activation_id")
+            or canonical_source.get("activation_id"),
+        }
+    )
     if requirements["outcome"] == "not_applicable":
         outcome_plane = {
             "requirement": "not_applicable",
@@ -734,6 +742,7 @@ def verify_candidate_provenance(
             expected_controller=str(m.get("controller") or "evidence_baseline") or None,
             expected_witness_id=str(m.get("witness_id") or "") or None,
             expected_outcome_id=outcome_id or None,
+            expected_activation_id=str(outcome_ref.get("activation_id") or "") or None,
             expected_transition_hash=transition_hash or None,
             expected_body_epoch_id=str(m.get("body_epoch_id") or "") or None,
             expected_session_id=str(m.get("session_id") or "") or None,

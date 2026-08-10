@@ -216,6 +216,9 @@ def verify_witness_result(
         and isinstance(result.get("hits"), int)
         and isinstance(result.get("success"), bool)
         and bool(result.get("chronology_ok"))
+        and isinstance(result.get("results"), list)
+        and int(result.get("cases") or 0) > 0
+        and 0 <= int(result.get("hits") or 0) <= int(result.get("cases") or 0)
     )
     if not content_valid:
         errors.append("witness_result_content_invalid")
@@ -245,6 +248,36 @@ def verify_witness_result(
             and str(commitment.get("cortex_commit_hash") or "")
             == str(result.get("cortex_commit_hash") or "")
         )
+        # The immutable result retains one commitment digest per revealed
+        # case.  Re-resolve the committed manifest and compare every digest;
+        # a commitment root alone does not prove that the revealed cases were
+        # the cases actually evaluated.
+        try:
+            committed_cases = json.loads(
+                str(commitment.get("case_commitments_json") or "[]")
+            )
+        except (TypeError, ValueError, json.JSONDecodeError):
+            committed_cases = []
+        committed_by_id = {
+            str(item.get("id")): str(item.get("commitment"))
+            for item in committed_cases
+            if isinstance(item, dict) and item.get("id") is not None
+        }
+        revealed_cases = result.get("results")
+        reveal_matches = bool(
+            isinstance(revealed_cases, list)
+            and len(revealed_cases) == len(committed_by_id)
+            and all(
+                isinstance(item, dict)
+                and str(item.get("id") or "") in committed_by_id
+                and str(item.get("commitment") or "")
+                == committed_by_id[str(item.get("id") or "")]
+                for item in revealed_cases
+            )
+        )
+        if not reveal_matches:
+            binding_valid = False
+            errors.append("witness_reveal_commitment_mismatch")
         snapshot = str(commitment.get("repository_snapshot_hash") or "")
         if snapshot and snapshot != str(result.get("repository_snapshot_hash") or ""):
             binding_valid = False
