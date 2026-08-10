@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from collections.abc import Mapping
 from hashlib import sha256
 import json
 import math
@@ -1246,6 +1247,7 @@ class Store:
             from .state_transition import ensure_transition_tables
             from .ranker.model import ensure_training_events
             from .witness import ensure_witness_tables
+            from .competence import ensure_competence_tables
 
             ensure_lineage_tables(self)
             ensure_quarantine_tables(self)
@@ -1254,6 +1256,7 @@ class Store:
             ensure_transition_tables(self)
             ensure_training_events(self)
             ensure_witness_tables(self)
+            ensure_competence_tables(self)
             from .epoch import ensure_epoch_tables
             from .phases import ensure_phase_tables
 
@@ -3920,6 +3923,28 @@ class Store:
             return json.loads(row["receipt_json"])
         except (TypeError, ValueError, json.JSONDecodeError):
             return None
+
+    # v9.1 transferable competence is deliberately separate from admitted
+    # memory.  These wrappers keep the canonical ledger behind Store while the
+    # architecture-native verifier remains in cortex.competence.
+    def append_competence_candidate(
+        self, repo: str, candidate: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        from .competence import append_competence_candidate
+
+        return append_competence_candidate(self, repo, candidate)
+
+    def get_competence_candidate(
+        self, repo: str, competence_id: str
+    ) -> dict[str, Any] | None:
+        from .competence import get_competence_candidate
+
+        return get_competence_candidate(self, repo, competence_id)
+
+    def list_competence_candidates(self, repo: str) -> list[dict[str, Any]]:
+        from .competence import list_competence_candidates
+
+        return list_competence_candidates(self, repo)
 
     def append_will_receipt(
         self, repo: str, will: dict[str, Any]

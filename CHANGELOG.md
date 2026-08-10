@@ -1,3 +1,19 @@
+## 9.1.0 - Transferable Competence Distillation
+
+- Added a separate immutable competence-candidate ledger; admitted memories
+  remain distinct from competence.
+- Candidates can be derived only from an independently verified v9.0 model
+  trajectory. Model identity is retained as provenance and is not required to
+  verify the canonical candidate.
+- Semantic identity is structural and excludes model origin and public prose;
+  counterevidence, failure conditions, uncertainty, applicability, and origin
+  lineage are preserved in the candidate.
+- Added model-independent verification, read-only applicability projection, and
+  explicit lifecycle/portability states. No candidate authorizes distribution,
+  execution, host mutation, policy change, or memory admission.
+- v9.1 does not claim universal transfer; independent transfer evidence remains
+  a future phase.
+
 ## 9.0.0 - Model-Agnostic Cognitive Circulation
 
 - Added a provider-neutral `ModelAdapter` contract with canonical request and
