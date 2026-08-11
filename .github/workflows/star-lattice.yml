@@ -5,8 +5,9 @@ name: Star lattice refresh
 
 on:
   schedule:
-    # Hourly — README markdown cannot run JS on view; this is the embed refresh path.
-    - cron: "17 * * * *"
+    # Daily (every 24h) — README markdown cannot run JS on view; this is the embed refresh path.
+    # Star events still refresh immediately via `watch` below.
+    - cron: "17 0 * * *"
   watch:
     types: [started]
   workflow_dispatch:

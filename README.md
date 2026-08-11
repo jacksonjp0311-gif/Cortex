@@ -1422,7 +1422,7 @@ First-party chart — no third-party hosts. Metrics come from the GitHub API (`s
 | Surface | Behavior |
 |--------|----------|
 | **Live lattice** | On every page load (+ optional 60s auto-refresh) fetches first-party `star-metrics.json` (published by CLI/Actions with `gh`) and redraws the HUD |
-| **README SVG** | Snapshot at `assets/star-lattice.svg`, rebuilt by first-party Actions on **star events**, **hourly**, and manual dispatch |
+| **README SVG** | Snapshot at `assets/star-lattice.svg`, rebuilt by first-party Actions on **star events**, **daily (24h)**, and manual dispatch |
 
 <p align="center">
   <a href="https://jacksonjp0311-gif.github.io/Cortex/">
