@@ -23,7 +23,11 @@ from .adapter_provenance import (
     EVIDENCE_UNKNOWN,
     evidence_satisfies,
 )
-from .competence import get_competence_candidate, verify_competence_candidate
+from .competence import (
+    evaluate_revision_evidence_freshness,
+    get_competence_candidate,
+    verify_competence_candidate,
+)
 from .competence_transfer import (
     get_transfer_trial,
     list_transfer_trials,
@@ -618,6 +622,25 @@ def _verify_bound_transfer_proof(
     }
 
 
+def _profile_target_class(profile: Mapping[str, Any]) -> str:
+    identity = profile.get("identity")
+    identity = identity if isinstance(identity, Mapping) else {}
+    for key in ("target_class", "class", "type"):
+        if identity.get(key):
+            return str(identity[key])
+    return str(profile.get("target_class") or "")
+
+
+def _profile_model_family(profile: Mapping[str, Any]) -> str:
+    capability = profile.get("model_capability")
+    if isinstance(capability, Mapping):
+        # Only the host-declared family axis can satisfy a family-bound
+        # successor constraint. A generic capability class or model ID is a
+        # different proposition and must not be promoted by aliasing.
+        return str(capability.get("model_family") or "")
+    return ""
+
+
 def _compatibility(candidate: Mapping[str, Any], profile: Mapping[str, Any]) -> dict[str, Any]:
     target_errors: list[str] = []
     target_unknown: list[str] = []
@@ -659,6 +682,64 @@ def _compatibility(candidate: Mapping[str, Any], profile: Mapping[str, Any]) -> 
                     environment_unknown.append(f"environment_missing:{key}")
                 elif environment[key] != expected:
                     environment_errors.append(f"environment_mismatch:{key}")
+    constraint_results: list[dict[str, Any]] = []
+    constraints = _list(candidate.get("applicability_constraints"))
+    if (
+        str(candidate.get("schema_version") or "") == "cortex-competence/1.1"
+        and not constraints
+    ):
+        environment_unknown.append("successor_applicability_constraints_missing")
+    dimension_values = {
+        "target_id": str(profile.get("target_id") or ""),
+        "target_class": _profile_target_class(profile),
+        # The empty environment is still a canonical environment value.  It
+        # must hash identically to assimilation's discriminator surface rather
+        # than become a missing/unknown sentinel.
+        "environment_fingerprint": _sha(environment),
+        "model_family": _profile_model_family(profile),
+    }
+    for raw_constraint in constraints:
+        if not isinstance(raw_constraint, Mapping):
+            target_unknown.append("applicability_constraint_malformed")
+            continue
+        dimension = str(raw_constraint.get("dimension") or "")
+        operator = str(raw_constraint.get("operator") or "")
+        allowed_values = {
+            str(item) for item in _list(raw_constraint.get("values")) if str(item)
+        }
+        actual = dimension_values.get(dimension)
+        plane_errors = (
+            environment_errors
+            if dimension == "environment_fingerprint"
+            else target_errors
+        )
+        plane_unknown = (
+            environment_unknown
+            if dimension == "environment_fingerprint"
+            else target_unknown
+        )
+        result = {
+            "dimension": dimension,
+            "operator": operator,
+            "values": sorted(allowed_values),
+            "observed": actual,
+            "state": "unknown",
+        }
+        if dimension not in dimension_values or operator not in {"exclude", "allow_only"}:
+            plane_unknown.append("applicability_constraint_schema_unknown")
+        elif not allowed_values:
+            plane_unknown.append(f"applicability_constraint_values_missing:{dimension}")
+        elif not actual:
+            plane_unknown.append(f"applicability_dimension_missing:{dimension}")
+        elif operator == "exclude" and actual in allowed_values:
+            plane_errors.append(f"applicability_excluded:{dimension}")
+            result["state"] = "fail"
+        elif operator == "allow_only" and actual not in allowed_values:
+            plane_errors.append(f"applicability_not_allowed:{dimension}")
+            result["state"] = "fail"
+        else:
+            result["state"] = "pass"
+        constraint_results.append(result)
     if not profile.get("body_epoch_id"):
         epoch_unknown.append("target_epoch_missing")
     if not profile.get("model_capability"):
@@ -689,6 +770,7 @@ def _compatibility(candidate: Mapping[str, Any], profile: Mapping[str, Any]) -> 
         "candidate_type": candidate_type,
         "required_tools": sorted(needed_tools),
         "available_tools": sorted(tools),
+        "applicability_constraint_results": constraint_results,
         "planes": planes,
     }
 
@@ -752,6 +834,23 @@ def _freshness(
             "max_age_seconds": limit,
             "expires_at": created + limit,
         }
+    revision_freshness = evaluate_revision_evidence_freshness(
+        candidate, as_of=now
+    )
+    if revision_freshness.get("state") != "not_applicable":
+        planes["revision_evidence"] = {
+            "state": str(revision_freshness.get("state") or "unknown"),
+            "age_seconds": None,
+            "max_age_seconds": None,
+            "expires_at": revision_freshness.get("evidence_expiry_at"),
+            "reason": revision_freshness.get("reason"),
+            "seconds_until_expiry": revision_freshness.get(
+                "seconds_until_expiry"
+            ),
+            "freshness_authority": revision_freshness.get(
+                "freshness_authority"
+            ),
+        }
     states = [item["state"] for item in planes.values()]
     state = "fail" if "fail" in states else "unknown" if "unknown" in states else "pass"
     return {"state": state, "planes": planes, "errors": []}
@@ -770,7 +869,11 @@ def _profile_currentness(
     if not profiles:
         return {"state": "unknown", "reason": "target_profile_not_resolvable"}
     latest = sorted(
-        profiles, key=lambda item: float(item.get("created_at") or 0.0)
+        profiles,
+        key=lambda item: (
+            float(item.get("created_at") or 0.0),
+            str(item.get("profile_id") or ""),
+        ),
     )[-1]
     if str(latest.get("profile_id") or "") != str(profile.get("profile_id") or ""):
         return {
@@ -807,7 +910,12 @@ def project_competence(
     persist: bool = True,
 ) -> dict[str, Any]:
     """Create a target-bound package only when every required distribution gate passes."""
-    ensure_distribution_tables(store)
+    # Store migration owns schema creation.  A dry-run projection is an
+    # observational operation and must never execute DDL (SQLite executescript
+    # would otherwise commit a caller-owned transaction).  The explicit write
+    # path may retain the compatibility setup for older Store implementations.
+    if persist:
+        ensure_distribution_tables(store)
     profile = get_target_profile(store, repo, profile_id)
     candidate = get_competence_candidate(store, repo, competence_id)
     if profile is None or candidate is None:
@@ -820,6 +928,9 @@ def project_competence(
             "advisory_only": True,
         }
     candidate_check = verify_competence_candidate(store, repo, competence_id)
+    from .competence_revision import competence_successor_state
+
+    successor_state = competence_successor_state(store, repo, competence_id)
     transfer = _transfer_gate(store, repo, competence_id, profile)
     applicability = _compatibility(candidate, profile)
     freshness = _freshness(profile, candidate, transfer=transfer)
@@ -831,6 +942,13 @@ def project_competence(
         "provenance": "pass" if candidate_check.get("valid") is True else "fail",
         "transfer": transfer["state"],
         "competence_active": "fail" if str(candidate.get("revision_state") or candidate.get("ledger_state") or "") in {"revoked", "superseded", "contested"} else "pass",
+        "competence_current": (
+            "pass"
+            if successor_state.get("state") == "current"
+            else "fail"
+            if successor_state.get("state") == "superseded"
+            else "unknown"
+        ),
         "target_compatible": applicability["planes"]["target"]["state"],
         "environment_compatible": applicability["planes"]["environment"]["state"],
         "epoch_compatible": applicability["planes"]["epoch"]["state"],
@@ -849,6 +967,17 @@ def project_competence(
             + ([str(profile_currentness.get("reason"))] if profile_currentness["state"] != "pass" else [])
             + previous_blocks
             + (["global_competence_event"] if global_events else [])
+            + list(successor_state.get("errors") or ())
+            + (
+                ["competence_superseded_by_verified_revision"]
+                if successor_state.get("state") == "superseded"
+                else []
+            )
+            + (
+                ["competence_revision_currentness_unknown"]
+                if successor_state.get("state") == "unknown"
+                else []
+            )
         )
     )
     if overall != "pass":
@@ -862,6 +991,7 @@ def project_competence(
             "applicability": applicability,
             "freshness": freshness,
             "profile_currentness": profile_currentness,
+            "competence_successor_state": successor_state,
             "package_persisted": False,
             "policy_effect": False,
             "distribution_authorized": False,
@@ -992,6 +1122,141 @@ def list_distribution_packages(store: Any, repo: str, target_id: str | None = No
     return [parsed for row in rows if (parsed := _json(row["package_json"])) is not None]
 
 
+def verify_distribution_package_structure(
+    store: Any, repo: str, package_id: str
+) -> dict[str, Any]:
+    """Verify immutable package/profile bodies without present-time policy.
+
+    This surface is intentionally narrower than ``verify_distribution_package``.
+    It proves schema-specific hashes, ledger indexes, repository bindings, and
+    the exact package-to-profile/competence bindings. It does not claim that
+    the package, target profile, transfer proof, or competence is current now.
+    """
+
+    repository_id, _ = _repo_identity(store, repo)
+    row = store.db.execute(
+        """SELECT * FROM competence_distribution_packages
+           WHERE repository_id=? AND repo=? AND package_id=?""",
+        (repository_id, repo, str(package_id)),
+    ).fetchone()
+    if row is None:
+        return {
+            "valid": False,
+            "state": "unknown",
+            "errors": ["package_missing"],
+            "present_currentness_established": False,
+            "advisory_only": True,
+        }
+    package = _json(row["package_json"])
+    errors: list[str] = []
+    if package is None:
+        return {
+            "valid": False,
+            "state": "fail",
+            "errors": ["package_json_invalid"],
+            "present_currentness_established": False,
+            "advisory_only": True,
+        }
+    expected_package_hash = _package_receipt(package)
+    if (
+        str(package.get("package_id") or "") != expected_package_hash
+        or str(package.get("package_hash") or "") != expected_package_hash
+    ):
+        errors.append("package_hash_invalid")
+    package_indexes = {
+        "package_id": row["package_id"],
+        "package_hash": row["package_hash"],
+        "repository_id": row["repository_id"],
+        "repo": row["repo"],
+        "target_id": row["target_id"],
+        "profile_id": row["profile_id"],
+        "competence_id": row["competence_id"],
+        "competence_receipt_hash": row["competence_receipt_hash"],
+    }
+    for field, indexed in package_indexes.items():
+        if str(package.get(field) or "") != str(indexed or ""):
+            errors.append(f"package_{field}_index_mismatch")
+    if float(package.get("created_at") or 0.0) != float(
+        row["created_at"] or 0.0
+    ):
+        errors.append("package_created_at_index_mismatch")
+
+    profile_row = store.db.execute(
+        """SELECT * FROM competence_target_profiles
+           WHERE repository_id=? AND repo=? AND profile_id=?""",
+        (repository_id, repo, str(package.get("profile_id") or "")),
+    ).fetchone()
+    profile: dict[str, Any] | None = None
+    if profile_row is None:
+        errors.append("profile_missing")
+    else:
+        profile = _json(profile_row["profile_json"])
+        if profile is None:
+            errors.append("profile_json_invalid")
+        else:
+            expected_profile_hash = _sha(_profile_material(profile))
+            if (
+                str(profile.get("profile_id") or "") != expected_profile_hash
+                or str(profile.get("profile_hash") or "")
+                != expected_profile_hash
+            ):
+                errors.append("profile_hash_invalid")
+            profile_indexes = {
+                "profile_id": profile_row["profile_id"],
+                "repository_id": profile_row["repository_id"],
+                "repo": profile_row["repo"],
+                "target_id": profile_row["target_id"],
+                "profile_version": profile_row["profile_version"],
+                "profile_hash": profile_row["profile_hash"],
+            }
+            for field, indexed in profile_indexes.items():
+                if str(profile.get(field) or "") != str(indexed or ""):
+                    errors.append(f"profile_{field}_index_mismatch")
+            if float(profile.get("created_at") or 0.0) != float(
+                profile_row["created_at"] or 0.0
+            ):
+                errors.append("profile_created_at_index_mismatch")
+            if (
+                str(package.get("profile_hash") or "")
+                != str(profile.get("profile_hash") or "")
+                or str(package.get("target_id") or "")
+                != str(profile.get("target_id") or "")
+            ):
+                errors.append("package_profile_binding_invalid")
+
+    candidate = get_competence_candidate(
+        store, repo, str(package.get("competence_id") or "")
+    )
+    candidate_check = (
+        verify_competence_candidate(
+            store, repo, str(package.get("competence_id") or "")
+        )
+        if candidate is not None
+        else {"valid": False}
+    )
+    if candidate_check.get("valid") is not True:
+        errors.append("candidate_verification_invalid")
+    elif str(package.get("competence_receipt_hash") or "") != str(
+        candidate.get("receipt_hash") or ""
+    ):
+        errors.append("package_competence_binding_invalid")
+    return {
+        "valid": not errors,
+        "state": "pass" if not errors else "fail",
+        "errors": sorted(set(errors)),
+        "package_id": package_id,
+        "package": package,
+        "profile": profile,
+        "candidate_verification": candidate_check,
+        "present_currentness_established": False,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+        "advisory_only": True,
+    }
+
+
 def verify_distribution_package(store: Any, repo: str, package_id: str) -> dict[str, Any]:
     package = get_distribution_package(store, repo, package_id)
     if package is None:
@@ -1029,6 +1294,16 @@ def verify_distribution_package(store: Any, repo: str, package_id: str) -> dict[
         errors.append("candidate_verification_invalid")
     elif str(package.get("competence_receipt_hash") or "") != str((candidate or {}).get("receipt_hash") or ""):
         errors.append("package_competence_binding_invalid")
+    from .competence_revision import competence_successor_state
+
+    successor_state = competence_successor_state(
+        store, repo, str(package.get("competence_id") or "")
+    )
+    if successor_state.get("state") == "superseded":
+        errors.append("competence_superseded_by_verified_revision")
+    elif successor_state.get("state") != "current":
+        errors.append("competence_revision_currentness_unknown")
+    errors.extend(str(item) for item in successor_state.get("errors") or ())
     transfer = (
         _verify_bound_transfer_proof(store, repo, package, profile)
         if candidate and profile
@@ -1057,9 +1332,14 @@ def verify_distribution_package(store: Any, repo: str, package_id: str) -> dict[
     )
     if freshness.get("state") != "pass":
         errors.append("package_stale")
+    resolved_state = (
+        "superseded"
+        if successor_state.get("state") == "superseded"
+        else state if errors and state != "active" else "active" if not errors else "stale"
+    )
     return {
         "valid": not errors,
-        "state": state if errors and state != "active" else "active" if not errors else "stale",
+        "state": resolved_state,
         "errors": sorted(set(errors)),
         "package_id": package_id,
         "target_id": package.get("target_id"),
@@ -1070,6 +1350,7 @@ def verify_distribution_package(store: Any, repo: str, package_id: str) -> dict[
         "global_events": global_events,
         "freshness": freshness,
         "profile_currentness": currentness,
+        "competence_successor_state": successor_state,
         "distribution_authorized": False,
         "host_mutate_authorized": False,
         "execution_authorized": False,
@@ -1295,8 +1576,15 @@ def verify_package_use(
     package_use_receipt_hash: str,
     *,
     expected_package_id: str | None = None,
+    resolve_current_package: bool = True,
 ) -> dict[str, Any]:
-    """Verify exact package exposure and its same-turn canonical circulation."""
+    """Verify exact package exposure and its same-turn canonical circulation.
+
+    ``resolve_current_package=False`` is the historical-verification surface.
+    It leaves present package currentness explicitly unresolved so callers can
+    reconstruct currentness at a declared evidence cutoff from immutable
+    ledgers.  It never upgrades the package-use validity result.
+    """
 
     receipt_check = store.verify_symbiotic_receipt(repo, package_use_receipt_hash)
     errors: list[str] = []
@@ -1316,6 +1604,14 @@ def verify_package_use(
     if expected_package_id is not None and package_id != str(expected_package_id):
         errors.append("package_use_package_mismatch")
     package = get_distribution_package(store, repo, package_id)
+    package_structure = verify_distribution_package_structure(
+        store, repo, package_id
+    )
+    if package_structure.get("valid") is not True:
+        errors.extend(
+            f"package_use_structure_{item}"
+            for item in package_structure.get("errors") or ()
+        )
     if package is None:
         errors.append("package_use_package_missing")
     else:
@@ -1374,11 +1670,23 @@ def verify_package_use(
             errors.append(f"package_use_{key}_mismatch")
     if trajectory.get("package_use_content_hash") != use.get("content_hash"):
         errors.append("trajectory_package_use_content_mismatch")
-    current_package = (
-        verify_distribution_package(store, repo, package_id)
-        if package is not None
-        else {"valid": False, "state": "unknown", "errors": ["package_missing"]}
-    )
+    if resolve_current_package:
+        current_package = (
+            verify_distribution_package(store, repo, package_id)
+            if package is not None
+            else {
+                "valid": False,
+                "state": "unknown",
+                "errors": ["package_missing"],
+            }
+        )
+    else:
+        current_package = {
+            "valid": False,
+            "state": "not_resolved_historical_mode",
+            "errors": [],
+            "observational_only": True,
+        }
     evidence_class = str(use.get("evidence_class") or EVIDENCE_UNKNOWN)
     return {
         "valid": not errors,
@@ -1387,6 +1695,7 @@ def verify_package_use(
         "package_use_receipt_hash": package_use_receipt_hash,
         "package_id": package_id,
         "package": package,
+        "package_structure_verification": package_structure,
         "target_id": use.get("target_id"),
         "profile_id": use.get("profile_id"),
         "competence_id": use.get("competence_id"),
@@ -1403,6 +1712,7 @@ def verify_package_use(
         ),
         "current_package_valid": current_package.get("valid") is True,
         "current_package_verification": current_package,
+        "current_package_resolved": bool(resolve_current_package),
         "canonical_outcome": dict(outcome),
         "canonical_witness": dict(witness),
         "canonical_trajectory": dict(trajectory),
@@ -1633,7 +1943,11 @@ def list_distribution_feedback(store: Any, repo: str, package_id: str | None = N
 
 
 def verify_distribution_feedback(
-    store: Any, repo: str, feedback_id: str
+    store: Any,
+    repo: str,
+    feedback_id: str,
+    *,
+    resolve_current_package: bool = True,
 ) -> dict[str, Any]:
     repository_id, _ = _repo_identity(store, repo)
     row = store.db.execute(
@@ -1679,6 +1993,7 @@ def verify_distribution_feedback(
             repo,
             use_hash,
             expected_package_id=str(feedback.get("package_id") or ""),
+            resolve_current_package=resolve_current_package,
         )
         if use_check.get("valid") is not True:
             errors.extend(str(item) for item in use_check.get("errors") or ())
@@ -1766,12 +2081,12 @@ def verify_distribution_feedback(
 __all__ = [
     "BLOCKING_EVENTS",
     "CLAIM_BOUNDARY",
-    "DistributionError",
     "EVENT_TYPES",
     "FEEDBACK_KINDS",
     "GLYPH",
     "SCHEMA",
     "VERSION",
+    "DistributionError",
     "append_distribution_event",
     "build_competence_package_projection",
     "ensure_distribution_tables",
@@ -1787,7 +2102,8 @@ __all__ = [
     "rollback_distribution",
     "submit_distribution_feedback",
     "supersede_distribution",
-    "verify_distribution_package",
     "verify_distribution_feedback",
+    "verify_distribution_package",
+    "verify_distribution_package_structure",
     "verify_package_use",
 ]

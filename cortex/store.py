@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from collections.abc import Mapping
-from hashlib import sha256
 import json
 import math
 import sqlite3
 import time
+from collections.abc import Iterable, Mapping, Sequence
+from contextlib import contextmanager
+from hashlib import sha256
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .embeddings import VECTOR_MAGIC, deserialize_vector, vector_bucket, vector_to_bytes
 
@@ -1240,17 +1240,19 @@ class Store:
     def _ensure_v625_tables(self) -> None:
         """Constitutional Immunity + Seal tables."""
         try:
+            from .adapter_provenance import ensure_adapter_provenance_tables
+            from .competence import ensure_competence_tables
+            from .competence_assimilation import ensure_assimilation_tables
+            from .competence_distribution import ensure_distribution_tables
+            from .competence_revision import ensure_revision_tables
+            from .competence_transfer import ensure_transfer_tables
+            from .immunity import ensure_immunity_tables
             from .lineage import ensure_lineage_tables
             from .quarantine import ensure_quarantine_tables
-            from .unlearning import ensure_unlearning_tables
-            from .immunity import ensure_immunity_tables
-            from .state_transition import ensure_transition_tables
             from .ranker.model import ensure_training_events
+            from .state_transition import ensure_transition_tables
+            from .unlearning import ensure_unlearning_tables
             from .witness import ensure_witness_tables
-            from .competence import ensure_competence_tables
-            from .competence_transfer import ensure_transfer_tables
-            from .competence_distribution import ensure_distribution_tables
-            from .adapter_provenance import ensure_adapter_provenance_tables
 
             ensure_lineage_tables(self)
             ensure_quarantine_tables(self)
@@ -1263,6 +1265,8 @@ class Store:
             ensure_transfer_tables(self)
             ensure_distribution_tables(self)
             ensure_adapter_provenance_tables(self)
+            ensure_assimilation_tables(self)
+            ensure_revision_tables(self)
             from .epoch import ensure_epoch_tables
             from .phases import ensure_phase_tables
 
@@ -4107,6 +4111,171 @@ class Store:
 
         return verify_distribution_feedback(self, repo, feedback_id)
 
+    # v9.5 freezes exact v9.4 package-use observations before interpretation.
+    # Analysis and verification are observational by default; only explicit
+    # ``persist=True`` calls append cohort, analysis, or verification evidence.
+    def freeze_evidence_cohort(
+        self,
+        repo: str,
+        *,
+        competence_id: str,
+        feedback_ids: Sequence[str] | None = None,
+        selection_policy: Mapping[str, Any] | None = None,
+        analysis_policy: Mapping[str, Any] | None = None,
+        evidence_cutoff: float | None = None,
+        persist: bool = False,
+    ) -> dict[str, Any]:
+        from .competence_assimilation import freeze_evidence_cohort
+
+        return freeze_evidence_cohort(
+            self,
+            repo,
+            competence_id=competence_id,
+            feedback_ids=feedback_ids,
+            selection_policy=selection_policy,
+            analysis_policy=analysis_policy,
+            evidence_cutoff=evidence_cutoff,
+            persist=persist,
+        )
+
+    def get_evidence_cohort(
+        self, repo: str, cohort_id: str
+    ) -> dict[str, Any] | None:
+        from .competence_assimilation import get_evidence_cohort
+
+        return get_evidence_cohort(self, repo, cohort_id)
+
+    def verify_evidence_cohort(
+        self, repo: str, cohort_id: str
+    ) -> dict[str, Any]:
+        from .competence_assimilation import verify_evidence_cohort
+
+        return verify_evidence_cohort(self, repo, cohort_id)
+
+    def analyze_evidence_cohort(
+        self, repo: str, cohort_id: str, *, persist: bool = False
+    ) -> dict[str, Any]:
+        from .competence_assimilation import analyze_evidence_cohort
+
+        return analyze_evidence_cohort(self, repo, cohort_id, persist=persist)
+
+    def get_assimilation_analysis(
+        self, repo: str, analysis_id: str
+    ) -> dict[str, Any] | None:
+        from .competence_assimilation import get_assimilation_analysis
+
+        return get_assimilation_analysis(self, repo, analysis_id)
+
+    def verify_assimilation_analysis(
+        self, repo: str, analysis_id: str
+    ) -> dict[str, Any]:
+        from .competence_assimilation import verify_assimilation_analysis
+
+        return verify_assimilation_analysis(self, repo, analysis_id)
+
+    def build_revision_candidate(
+        self,
+        repo: str,
+        *,
+        analysis_id: str,
+        public_rationale: str = "",
+        persist: bool = False,
+    ) -> dict[str, Any]:
+        from .competence_revision import build_revision_candidate
+
+        return build_revision_candidate(
+            self,
+            repo,
+            analysis_id=analysis_id,
+            public_rationale=public_rationale,
+            persist=persist,
+        )
+
+    def get_revision_candidate(
+        self, repo: str, revision_candidate_id: str
+    ) -> dict[str, Any] | None:
+        from .competence_revision import get_revision_candidate
+
+        return get_revision_candidate(self, repo, revision_candidate_id)
+
+    def verify_revision_candidate(
+        self,
+        repo: str,
+        revision_candidate_id: str,
+        *,
+        persist: bool = False,
+    ) -> dict[str, Any]:
+        from .competence_revision import verify_revision_candidate
+
+        return verify_revision_candidate(
+            self,
+            repo,
+            revision_candidate_id,
+            persist=persist,
+        )
+
+    def get_revision_verification(
+        self, repo: str, verification_receipt_hash: str
+    ) -> dict[str, Any] | None:
+        from .competence_revision import get_revision_verification
+
+        return get_revision_verification(self, repo, verification_receipt_hash)
+
+    def promote_revision_candidate(
+        self,
+        repo: str,
+        revision_candidate_id: str,
+        *,
+        verification_receipt_hash: str,
+        promotion_reason: str,
+        persist: bool = False,
+    ) -> dict[str, Any]:
+        from .competence_revision import promote_revision_candidate
+
+        return promote_revision_candidate(
+            self,
+            repo,
+            revision_candidate_id,
+            verification_receipt_hash=verification_receipt_hash,
+            promotion_reason=promotion_reason,
+            persist=persist,
+        )
+
+    def get_revision_promotion(
+        self, repo: str, promotion_receipt_hash: str
+    ) -> dict[str, Any] | None:
+        from .competence_revision import get_revision_promotion
+
+        return get_revision_promotion(self, repo, promotion_receipt_hash)
+
+    def verify_revision_promotion(
+        self, repo: str, promotion_receipt_hash: str
+    ) -> dict[str, Any]:
+        from .competence_revision import verify_revision_promotion
+
+        return verify_revision_promotion(self, repo, promotion_receipt_hash)
+
+    def list_revision_promotions(
+        self, repo: str, source_competence_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        from .competence_revision import list_revision_promotions
+
+        return list_revision_promotions(self, repo, source_competence_id)
+
+    def competence_successor_state(
+        self, repo: str, competence_id: str
+    ) -> dict[str, Any]:
+        from .competence_revision import competence_successor_state
+
+        return competence_successor_state(self, repo, competence_id)
+
+    def verify_successor_lineage(
+        self, repo: str, competence_id: str
+    ) -> dict[str, Any]:
+        from .competence_revision import verify_successor_lineage
+
+        return verify_successor_lineage(self, repo, competence_id)
+
     def register_adapter_provenance(
         self,
         repo: str,
@@ -4116,6 +4285,8 @@ class Store:
         principal_id: str,
         principal_secret: str,
         endpoint_descriptor: Mapping[str, Any] | None = None,
+        model_family: str | None = None,
+        capability_class: str | None = None,
     ) -> dict[str, Any]:
         from .adapter_provenance import register_adapter_provenance
 
@@ -4127,6 +4298,8 @@ class Store:
             principal_id=principal_id,
             principal_secret=principal_secret,
             endpoint_descriptor=endpoint_descriptor,
+            model_family=model_family,
+            capability_class=capability_class,
         )
 
     def append_will_receipt(
@@ -4892,28 +5065,32 @@ class Store:
     def verify_symbiotic_session(
         self, repo: str, session_id: str
     ) -> dict[str, Any]:
-        with self.transaction() as conn:
-            repository = conn.execute(
-                "SELECT repository_id FROM repositories WHERE name=?", (repo,)
-            ).fetchone()
-            if repository is None:
-                return {
-                    "valid": False,
-                    "chain_valid": False,
-                    "repo": repo,
-                    "session_id": session_id,
-                    "receipt_count": 0,
-                    "errors": ["repository_missing"],
-                    "advisory_only": True,
-                    "policy_effect": False,
-                    "update_authorized": False,
-                }
-            return self._verify_symbiotic_session_conn(
-                conn,
-                str(repository["repository_id"]),
-                str(repo),
-                str(session_id),
-            )
+        # Verification is observational.  Starting a nested ``BEGIN
+        # IMMEDIATE`` here used to roll back a caller-owned transaction when
+        # this verifier was reached through competence/provenance inspection.
+        # Read through the existing connection/snapshot without committing or
+        # ending any ambient transaction.
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return {
+                "valid": False,
+                "chain_valid": False,
+                "repo": repo,
+                "session_id": session_id,
+                "receipt_count": 0,
+                "errors": ["repository_missing"],
+                "advisory_only": True,
+                "policy_effect": False,
+                "update_authorized": False,
+            }
+        return self._verify_symbiotic_session_conn(
+            self.db,
+            str(repository["repository_id"]),
+            str(repo),
+            str(session_id),
+        )
 
     def verify_symbiotic_receipt(
         self, repo: str, receipt_hash: str

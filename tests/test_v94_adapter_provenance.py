@@ -8,11 +8,11 @@ import unittest
 from pathlib import Path
 
 from cortex.adapter_provenance import (
-    AdapterProvenanceError,
     EVIDENCE_LIVE,
     EVIDENCE_SIMULATED,
     EVIDENCE_SYNTHETIC,
     EVIDENCE_UNKNOWN,
+    AdapterProvenanceError,
     register_adapter_provenance,
     resolve_adapter_provenance,
     verify_adapter_provenance,
@@ -27,6 +27,10 @@ class HostAdapter:
     provider_family = "host-provider"
     adapter_id = "tests.host-adapter"
     adapter_version = "1"
+    # These adapter-owned labels are deliberately non-authorizing. A separate
+    # host-principal registration surface supplies canonical classification.
+    model_family = "adapter-claimed-family"
+    capability_class = "adapter-claimed-capability"
 
     def __init__(
         self,
@@ -95,6 +99,8 @@ class V94AdapterProvenanceTests(unittest.TestCase):
         boundary: str = "external_api",
         secret: str = "principal-secret-v1",
         endpoint: dict[str, object] | None = None,
+        model_family: str | None = None,
+        capability_class: str | None = None,
     ) -> dict[str, object]:
         return register_adapter_provenance(
             self.store,
@@ -104,6 +110,8 @@ class V94AdapterProvenanceTests(unittest.TestCase):
             principal_id="operator",
             principal_secret=secret,
             endpoint_descriptor=endpoint or {"region": "test-east"},
+            model_family=model_family,
+            capability_class=capability_class,
         )
 
     def test_fixture_lineage_can_never_register_or_upgrade(self) -> None:
@@ -305,6 +313,90 @@ class V94AdapterProvenanceTests(unittest.TestCase):
         self.assertFalse(provenance["empirical"])
         check = verify_adapter_provenance(self.store, self.repo, provenance)
         self.assertTrue(check["valid"], check["errors"])
+
+    def test_model_family_is_host_classified_not_adapter_asserted(self) -> None:
+        legacy = HostAdapter(model_id="legacy-model")
+        self._register(legacy)
+        legacy_provenance = resolve_adapter_provenance(
+            self.store, self.repo, legacy
+        )
+        self.assertEqual(
+            legacy_provenance["host_model_classification"]["state"],
+            "legacy_partial",
+        )
+        self.assertEqual(
+            legacy_provenance["host_model_classification"]["model_family"],
+            "",
+        )
+        historical_provenance = dict(legacy_provenance)
+        historical_provenance.pop("host_model_classification", None)
+        historical_provenance.pop("host_model_classification_digest", None)
+        historical_provenance.pop("principal_id", None)
+        historical_check = verify_adapter_provenance(
+            self.store, self.repo, historical_provenance
+        )
+        self.assertTrue(historical_check["valid"], historical_check)
+        self.assertEqual(
+            historical_check["host_model_classification"]["state"],
+            "legacy_partial",
+        )
+        self.assertTrue(historical_check["empirical"])
+
+        classified = HostAdapter(model_id="classified-model")
+        registration = self._register(
+            classified,
+            model_family="host-family-a",
+            capability_class="reasoning-medium",
+        )
+        resolved = resolve_adapter_provenance(
+            self.store, self.repo, classified
+        )
+        self.assertEqual(resolved["principal_id"], "operator")
+        classification = resolved["host_model_classification"]
+        self.assertEqual(classification["state"], "host_registered")
+        self.assertEqual(classification["model_family"], "host-family-a")
+        self.assertEqual(
+            classification["capability_class"], "reasoning-medium"
+        )
+        self.assertNotEqual(
+            classification["model_family"], classified.model_family
+        )
+        self.assertTrue(
+            verify_adapter_registration(
+                self.store, self.repo, str(registration["registration_id"])
+            )["valid"]
+        )
+
+        forged = dict(resolved)
+        forged["host_model_classification"] = {
+            **classification,
+            "model_family": "model-forged-family",
+        }
+        forged_check = verify_adapter_provenance(
+            self.store, self.repo, forged
+        )
+        self.assertFalse(forged_check["valid"])
+        self.assertIn(
+            "adapter_model_classification_material_mismatch",
+            forged_check["errors"],
+        )
+        forged_principal = {**resolved, "principal_id": "attacker"}
+        principal_check = verify_adapter_provenance(
+            self.store, self.repo, forged_principal
+        )
+        self.assertFalse(principal_check["valid"])
+        self.assertIn(
+            "adapter_principal_registration_mismatch",
+            principal_check["errors"],
+        )
+        with self.assertRaisesRegex(
+            AdapterProvenanceError, "immutable host model classification"
+        ):
+            self._register(
+                classified,
+                model_family="host-family-b",
+                capability_class="reasoning-medium",
+            )
 
 
 if __name__ == "__main__":

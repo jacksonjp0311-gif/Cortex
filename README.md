@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.4.0-0ea5e9?style=for-the-badge" alt="v9.4.0" />
+  <img src="https://img.shields.io/badge/version-9.5.0-0ea5e9?style=for-the-badge" alt="v9.5.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -259,6 +259,20 @@ model session, cannot verify. This establishes exposure binding, not
 counterfactual causation or universal transfer. No real empirical cross-model
 trial is bundled or claimed. See
 [`PHASE_V9.4_EMPIRICAL_TRANSFER_PACKAGE_USE_BINDING.md`](docs/intelligence/PHASE_V9.4_EMPIRICAL_TRANSFER_PACKAGE_USE_BINDING.md).
+
+v9.5 closes the governed return path from exact package-use feedback to a
+competence-revision candidate. Cortex freezes evidence before interpretation,
+deduplicates repeated canonical observations, exposes dependence and diversity,
+and derives local, class, environment, model, specialization, or explicitly
+policy-gated global scope. Revision candidates cannot certify themselves.
+Only a separate verifier and explicit promotion can create an immutable
+successor, and the parent, its counterevidence, and its existing packages remain
+historically intact. Caller-selected subsets and retroactive cutoffs remain
+structural only; correlated observations cannot impersonate replication.
+Promotion separately proves that frozen evidence is still current, and typed
+successor constraints remain binding through transfer and local projection.
+Distributed feedback remains observational rather than causal proof. See
+[`PHASE_V9.5_DISTRIBUTED_EVIDENCE_ASSIMILATION_SCOPED_REVISION.md`](docs/intelligence/PHASE_V9.5_DISTRIBUTED_EVIDENCE_ASSIMILATION_SCOPED_REVISION.md).
 
 ## Interconnect mathematics (v8.3.4)
 

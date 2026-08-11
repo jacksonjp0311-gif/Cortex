@@ -15,8 +15,19 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from .adapter_provenance import (
+    EVIDENCE_ATTESTED,
+    EVIDENCE_LEGACY,
+    EVIDENCE_LIVE,
+    EVIDENCE_SIMULATED,
+    EVIDENCE_SYNTHETIC,
+    EVIDENCE_UNKNOWN,
+    resolve_adapter_provenance,
+)
 from .competence import (
     CompetenceError,
+    evaluate_competence_applicability_constraints,
+    evaluate_revision_evidence_freshness,
     get_competence_candidate,
     verify_competence_candidate,
 )
@@ -27,18 +38,11 @@ from .model_circulation import (
     run_model_circulation,
     verify_model_circulation,
 )
-from .adapter_provenance import (
-    EVIDENCE_ATTESTED,
-    EVIDENCE_LEGACY,
-    EVIDENCE_LIVE,
-    EVIDENCE_SIMULATED,
-    EVIDENCE_SYNTHETIC,
-    EVIDENCE_UNKNOWN,
-)
 from .symbiosis import agent_instantiation_receipt, cortex_context_receipt
 
-SCHEMA = "cortex-competence-transfer/1.1"
-VERSION = "9.4.0"
+SCHEMA = "cortex-competence-transfer/1.2"
+EVIDENCE_SCHEMA = "cortex-competence-transfer/1.1"
+VERSION = "9.5.0"
 GLYPH = "⟡◇⇄"
 ARMS = ("A", "B", "C", "D", "E")
 PORTABILITY_STATES = frozenset(
@@ -174,6 +178,8 @@ def _candidate_projection(candidate: Mapping[str, Any]) -> dict[str, Any]:
         "intended_outcome": candidate.get("intended_outcome"),
         "prerequisites": candidate.get("prerequisites") or [],
         "applicability_conditions": candidate.get("applicability_conditions") or [],
+        "applicability_constraints": candidate.get("applicability_constraints") or [],
+        "applicability_exclusions": candidate.get("applicability_exclusions") or [],
         "environmental_assumptions": candidate.get("environmental_assumptions") or [],
         "required_tools": candidate.get("required_tools") or [],
         "failure_conditions": candidate.get("failure_conditions") or [],
@@ -188,8 +194,162 @@ def _candidate_projection(candidate: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _applicability_for_trial(candidate: Mapping[str, Any], context: Mapping[str, Any]) -> tuple[bool, list[str]]:
-    """Evaluate conditions for a declared trial without granting active use."""
+def _freeze_applicability_context(
+    store: Any,
+    declared: Mapping[str, Any] | None,
+    *,
+    repo: str,
+    repository_id: str,
+    body_epoch_id: str,
+    target_profile_id: str | None,
+    model_family_bindings: Mapping[str, Any],
+    frozen_at: float | None = None,
+) -> dict[str, Any]:
+    """Resolve and freeze canonical facts against which K will be tested."""
+    if declared is None:
+        declared = {}
+    if not isinstance(declared, Mapping):
+        raise TransferTrialError("applicability_context must be a mapping")
+    allowed = {
+        "target_id",
+        "target_class",
+        "environment",
+        "environment_fingerprint",
+        "model_family",
+    }
+    unsupported = sorted(str(key) for key in declared if key not in allowed)
+    if unsupported:
+        raise TransferTrialError(
+            "applicability_context contains provider-specific or unsupported fields: "
+            + ",".join(unsupported)
+        )
+    profile: Mapping[str, Any] | None = None
+    profile_proof: dict[str, Any] = {
+        "state": "unknown",
+        "profile_id": None,
+        "profile_hash": None,
+        "reason": "canonical_target_profile_not_declared",
+    }
+    if target_profile_id:
+        # Local import avoids the distribution -> transfer module import cycle.
+        from .competence_distribution import _profile_material, get_target_profile
+
+        profile = get_target_profile(store, repo, str(target_profile_id))
+        if profile is None:
+            raise TransferTrialError("canonical target profile is missing")
+        expected_profile_hash = _sha(_profile_material(profile))
+        if (
+            str(profile.get("profile_id") or "") != expected_profile_hash
+            or str(profile.get("profile_hash") or "") != expected_profile_hash
+            or str(profile.get("ledger_profile_hash") or "")
+            != expected_profile_hash
+            or str(profile.get("repo") or "") != repo
+            or str(profile.get("repository_id") or "") != repository_id
+        ):
+            raise TransferTrialError("canonical target profile failed verification")
+        profile_proof = {
+            "state": "pass",
+            "profile_id": expected_profile_hash,
+            "profile_hash": expected_profile_hash,
+            "reason": "immutable_target_profile_resolved",
+        }
+
+    identity = profile.get("identity") if isinstance(profile, Mapping) else {}
+    identity = identity if isinstance(identity, Mapping) else {}
+    target_class = ""
+    for key in ("target_class", "class", "type"):
+        if identity.get(key):
+            target_class = str(identity[key])
+            break
+    environment = (
+        json.loads(_canonical(dict(profile.get("environment") or {})))
+        if isinstance(profile, Mapping)
+        else None
+    )
+    computed_fingerprint = _sha(environment) if environment is not None else ""
+    canonical_values: dict[str, Any] = {
+        "target_id": str(profile.get("target_id") or "")
+        if isinstance(profile, Mapping)
+        else "",
+        "target_class": target_class,
+        "environment": environment,
+        "environment_fingerprint": computed_fingerprint,
+    }
+    for key in ("target_id", "target_class"):
+        declared_value = str(declared.get(key) or "")
+        if declared_value and declared_value != canonical_values[key]:
+            raise TransferTrialError(
+                f"caller applicability context does not match canonical {key}"
+            )
+    raw_environment = declared.get("environment")
+    if raw_environment is not None:
+        if not isinstance(raw_environment, Mapping):
+            raise TransferTrialError(
+                "applicability_context.environment must be a mapping"
+            )
+        if environment is None or dict(raw_environment) != environment:
+            raise TransferTrialError(
+                "caller applicability environment has no matching canonical profile"
+            )
+    declared_fingerprint = str(declared.get("environment_fingerprint") or "")
+    if declared_fingerprint and declared_fingerprint != computed_fingerprint:
+        raise TransferTrialError(
+            "caller environment fingerprint has no matching canonical profile"
+        )
+    declared_model_family = str(declared.get("model_family") or "")
+    canonical_families = sorted(
+        {
+            str(value.get("model_family") or "")
+            for value in model_family_bindings.values()
+            if isinstance(value, Mapping) and value.get("model_family")
+        }
+    )
+    if declared_model_family and declared_model_family not in canonical_families:
+        raise TransferTrialError(
+            "caller model family has no matching host-registered adapter classification"
+        )
+    return {
+        "schema_version": "cortex-transfer-applicability-context/1.0",
+        "repo": str(repo),
+        "repository_id": str(repository_id),
+        "body_epoch_id": str(body_epoch_id),
+        "frozen_at": float(frozen_at if frozen_at is not None else time.time()),
+        "target_profile": profile_proof,
+        "target_id": canonical_values["target_id"],
+        "target_class": canonical_values["target_class"],
+        "environment": environment,
+        "environment_fingerprint": computed_fingerprint,
+        "model_family_bindings": json.loads(
+            _canonical(dict(model_family_bindings))
+        ),
+    }
+
+
+def _adapter_family_binding(provenance: Mapping[str, Any]) -> dict[str, Any]:
+    """Project only host-verified model-family provenance into a trial."""
+    classification = provenance.get("host_model_classification")
+    classification = classification if isinstance(classification, Mapping) else {}
+    classified = str(classification.get("state") or "") == "host_registered"
+    return {
+        "state": "pass" if classified else "unknown",
+        "model_family": str(classification.get("model_family") or "")
+        if classified
+        else "",
+        "registration_id": provenance.get("registration_id"),
+        "registration_hash": provenance.get("registration_hash"),
+        "classification_digest": provenance.get(
+            "host_model_classification_digest"
+        ),
+        "authority_basis": classification.get("authority_basis")
+        if classified
+        else "none",
+    }
+
+
+def _trial_applicability_proof(
+    candidate: Mapping[str, Any], context: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Recompute transfer applicability without granting active use."""
     reasons: list[str] = []
     if str(candidate.get("revision_state") or "") in {"revoked", "superseded", "contested"}:
         reasons.append("candidate_state_blocked")
@@ -207,7 +367,93 @@ def _applicability_for_trial(candidate: Mapping[str, Any], context: Mapping[str,
             reasons.append("epoch_incompatible")
         if condition.get("repository_id") and str(condition["repository_id"]) != current_repo:
             reasons.append("repository_incompatible")
-    return not reasons, sorted(set(reasons))
+    hard_failure = bool(reasons)
+    freshness = evaluate_revision_evidence_freshness(
+        candidate, as_of=float(context.get("frozen_at") or time.time())
+    )
+    freshness_state = str(freshness.get("state") or "unknown")
+    if freshness.get("passed") is not True:
+        reasons.append(str(freshness.get("reason") or "revision_evidence_unknown"))
+    if freshness_state == "fail":
+        hard_failure = True
+    constraints = candidate.get("applicability_constraints")
+    constraints = (
+        list(constraints)
+        if isinstance(constraints, Sequence)
+        and not isinstance(constraints, (str, bytes))
+        else []
+    )
+    model_constrained = any(
+        isinstance(item, Mapping) and item.get("dimension") == "model_family"
+        for item in constraints
+    )
+    checks: list[tuple[str, dict[str, Any]]] = []
+    if model_constrained:
+        bindings = context.get("model_family_bindings")
+        bindings = bindings if isinstance(bindings, Mapping) else {}
+        for arm in ("D", "E"):
+            binding = bindings.get(arm)
+            family = (
+                str(binding.get("model_family") or "")
+                if isinstance(binding, Mapping)
+                else ""
+            )
+            checks.append(
+                (
+                    arm,
+                    evaluate_competence_applicability_constraints(
+                        candidate, {**context, "model_family": family}
+                    ),
+                )
+            )
+    else:
+        checks.append(
+            ("all", evaluate_competence_applicability_constraints(candidate, context))
+        )
+    constraint_results: list[dict[str, Any]] = []
+    constraint_states: list[str] = []
+    for arm, check in checks:
+        constraint_states.append(str(check.get("state") or "unknown"))
+        reasons.extend(str(item) for item in check.get("reasons") or ())
+        for result in check.get("results") or ():
+            constraint_results.append({"arm": arm, **dict(result)})
+    constraint_state = (
+        "fail"
+        if "fail" in constraint_states
+        else "unknown"
+        if "unknown" in constraint_states
+        else "pass"
+    )
+    state = (
+        "fail"
+        if hard_failure or constraint_state == "fail"
+        else "unknown"
+        if constraint_state == "unknown" or freshness_state == "unknown"
+        else "pass"
+    )
+    return {
+        "state": state,
+        "applicable": not reasons,
+        "reasons": sorted(set(reasons)),
+        "constraint_state": constraint_state,
+        "constraint_results": constraint_results,
+        "revision_evidence_freshness": freshness,
+        "context_hash": _sha(context),
+        "read_only": True,
+        "state_transition_persisted": False,
+        "distribution_authorized": False,
+        "execution_authorized": False,
+        "host_mutate_authorized": False,
+        "advisory_only": True,
+    }
+
+
+def _applicability_for_trial(
+    candidate: Mapping[str, Any], context: Mapping[str, Any]
+) -> tuple[bool, list[str]]:
+    """Backward-compatible tuple projection of the typed trial proof."""
+    proof = _trial_applicability_proof(candidate, context)
+    return bool(proof["applicable"]), list(proof["reasons"])
 
 
 def _new_trial_session(
@@ -557,7 +803,7 @@ def _validate_transfer_body(
     policy = trial.get("policy") if isinstance(trial.get("policy"), Mapping) else {}
     weights = policy.get("utility_weights") if isinstance(policy.get("utility_weights"), Mapping) else {}
     stored_arms = trial.get("arm_results") if isinstance(trial.get("arm_results"), Mapping) else {}
-    identity_keys = (
+    identity_keys = [
         "schema_version",
         "version",
         "repo",
@@ -576,7 +822,11 @@ def _validate_transfer_body(
         "origin_model",
         "trial_nonce",
         "fresh_model_identities",
-    )
+    ]
+    if str(trial.get("schema_version") or "") == SCHEMA:
+        identity_keys.extend(
+            ("applicability_context", "applicability_verification")
+        )
     if _sha({key: trial.get(key) for key in identity_keys}) != str(
         trial.get("trial_id") or ""
     ):
@@ -610,6 +860,49 @@ def _validate_transfer_body(
             trial.get("origin_evidence_class") or EVIDENCE_LEGACY
         ):
             errors.append("origin_evidence_class_binding_invalid")
+        if str(trial.get("schema_version") or "") == SCHEMA:
+            stored_context = trial.get("applicability_context")
+            if not isinstance(stored_context, Mapping):
+                errors.append("trial_applicability_context_missing")
+            else:
+                try:
+                    reconstructed_context = _freeze_applicability_context(
+                        store,
+                        {},
+                        repo=repo,
+                        repository_id=str(trial.get("repository_id") or ""),
+                        body_epoch_id=str(trial.get("body_epoch_id") or ""),
+                        target_profile_id=str(
+                            (
+                                stored_context.get("target_profile")
+                                if isinstance(
+                                    stored_context.get("target_profile"), Mapping
+                                )
+                                else {}
+                            ).get("profile_id")
+                            or ""
+                        ),
+                        model_family_bindings=(
+                            stored_context.get("model_family_bindings")
+                            if isinstance(
+                                stored_context.get("model_family_bindings"), Mapping
+                            )
+                            else {}
+                        ),
+                        frozen_at=float(stored_context.get("frozen_at") or 0.0),
+                    )
+                except (TransferTrialError, TypeError, ValueError):
+                    errors.append("trial_applicability_context_invalid")
+                else:
+                    if dict(stored_context) != reconstructed_context:
+                        errors.append("trial_applicability_context_not_canonical")
+                    expected_proof = _trial_applicability_proof(
+                        candidate, reconstructed_context
+                    )
+                    if dict(trial.get("applicability_verification") or {}) != expected_proof:
+                        errors.append("trial_applicability_proof_invalid")
+                    if expected_proof.get("applicable") is not True:
+                        errors.append("trial_applicability_not_pass")
     for arm in ARMS:
         item = stored_arms.get(arm)
         if not isinstance(item, Mapping):
@@ -637,6 +930,12 @@ def _validate_transfer_body(
         if not isinstance(context_package, Mapping):
             errors.append(f"arm_{arm}_transfer_context_missing")
             continue
+        if (
+            str(trial.get("schema_version") or "") == SCHEMA
+            and context_package.get("trial_applicability_context")
+            != trial.get("applicability_context")
+        ):
+            errors.append(f"arm_{arm}_applicability_context_binding_invalid")
         reconstructed = {
             "evaluation": evaluation.get("evaluation") or {},
             "invocation_result": invocation.get("response") or {},
@@ -654,6 +953,21 @@ def _validate_transfer_body(
         evidence_class = str(circulation.get("evidence_class") or EVIDENCE_UNKNOWN)
         expected_identity = dict(circulation.get("model_identity") or {})
         expected_provenance = dict(circulation.get("adapter_provenance") or {})
+        if str(trial.get("schema_version") or "") == SCHEMA:
+            stored_family_bindings = (
+                (trial.get("applicability_context") or {}).get(
+                    "model_family_bindings"
+                )
+                if isinstance(trial.get("applicability_context"), Mapping)
+                else {}
+            )
+            stored_family_binding = (
+                stored_family_bindings.get(arm)
+                if isinstance(stored_family_bindings, Mapping)
+                else None
+            )
+            if stored_family_binding != _adapter_family_binding(expected_provenance):
+                errors.append(f"arm_{arm}_model_family_binding_invalid")
         expected_bindings = dict(circulation.get("receipt_bindings") or {})
         comparisons = {
             "model_identity": expected_identity,
@@ -754,6 +1068,8 @@ def run_cross_model_transfer_trial(
     tool_budget: Mapping[str, Any] | None = None,
     model_configuration: Mapping[str, Any] | None = None,
     policy: Mapping[str, Any] | None = None,
+    target_profile_id: str | None = None,
+    applicability_context: Mapping[str, Any] | None = None,
     prior_feedback: Sequence[Mapping[str, Any]] | None = None,
     measurement_cohort_id: str | None = None,
     trial_nonce: str | None = None,
@@ -792,6 +1108,34 @@ def run_cross_model_transfer_trial(
     budgets = {"token_budget": 4096, "latency_budget_ms": 30000}
     budgets.update(dict(tool_budget or {}))
     configuration = dict(model_configuration or {})
+    arm_results: dict[str, Any] = {}
+    arm_scores: dict[str, Any] = {}
+    fresh_identities: list[dict[str, str]] = []
+    adapters: dict[str, ModelAdapter] = {}
+    arm_errors: list[str] = []
+    arm_evidence_classes: dict[str, str] = {}
+    model_family_bindings: dict[str, dict[str, Any]] = {}
+    seen_adapter_objects: set[int] = set()
+    for arm in ARMS:
+        try:
+            adapter = adapter_factory(arm)
+            if id(adapter) in seen_adapter_objects:
+                raise TransferTrialError(
+                    "adapter_factory reused one model instance across arms"
+                )
+            seen_adapter_objects.add(id(adapter))
+            identity = _adapter_identity(adapter)
+            if identity["model_id"] == str(origin.get("model_id") or ""):
+                raise TransferTrialError(
+                    "fresh model identity matches originating model"
+                )
+            adapters[arm] = adapter
+            fresh_identities.append(identity)
+            model_family_bindings[arm] = _adapter_family_binding(
+                resolve_adapter_provenance(store, repo, adapter)
+            )
+        except (ModelAdapterError, TransferTrialError, TypeError, ValueError) as exc:
+            arm_errors.append(f"{arm}:{type(exc).__name__}:{exc}")
     environment = {
         "repo": repo,
         "repository_id": repository_id,
@@ -801,6 +1145,26 @@ def run_cross_model_transfer_trial(
         "epoch_drifted_since_origin": current_epoch_id != body_epoch_id,
         "measurement_cohort_id": measurement_cohort_id,
     }
+    frozen_applicability_context = _freeze_applicability_context(
+        store,
+        applicability_context,
+        repo=repo,
+        repository_id=repository_id,
+        body_epoch_id=body_epoch_id,
+        target_profile_id=target_profile_id,
+        model_family_bindings=model_family_bindings,
+    )
+    applicability_verification = _trial_applicability_proof(
+        candidate, frozen_applicability_context
+    )
+    if applicability_verification.get("applicable") is not True:
+        raise TransferTrialError(
+            "competence is not applicable to frozen trial context: "
+            + ",".join(
+                str(item)
+                for item in applicability_verification.get("reasons") or ()
+            )
+        )
     trial_material = {
         "schema_version": SCHEMA,
         "version": VERSION,
@@ -812,6 +1176,8 @@ def run_cross_model_transfer_trial(
         "task_contract": task_contract.to_dict(),
         "task_contract_hash": task_contract.contract_hash,
         "environment": environment,
+        "applicability_context": frozen_applicability_context,
+        "applicability_verification": applicability_verification,
         "tools": list(tools),
         "budgets": budgets,
         "model_configuration": configuration,
@@ -819,18 +1185,20 @@ def run_cross_model_transfer_trial(
         "arms": list(ARMS),
         "origin_model": dict(origin),
         "trial_nonce": str(trial_nonce or ""),
+        "fresh_model_identities": fresh_identities,
     }
     ordinary = {
         "arm": "A",
         "task": str(task),
         "repository": {"repo": repo, "repository_id": repository_id, "manifest_hash": repository.get("manifest_hash")},
         "competence_included": False,
+        "trial_applicability_context": frozen_applicability_context,
     }
     origin_rows = store.symbiotic_session_receipts(
         repo,
         str((candidate.get("evidence_lineage", {}).get("originating_trajectories") or [{}])[0].get("session_id") or ""),
     )
-    raw_history = {"arm": "B", "task": str(task), "raw_origin_public_history": _public_raw_history(origin_rows), "competence_included": False}
+    raw_history = {"arm": "B", "task": str(task), "raw_origin_public_history": _public_raw_history(origin_rows), "competence_included": False, "trial_applicability_context": frozen_applicability_context}
     unfiltered = {
         "arm": "C",
         "task": str(task),
@@ -844,13 +1212,11 @@ def run_cross_model_transfer_trial(
             for item in store.list_admitted_memories(repo)
         ],
         "competence_included": False,
+        "trial_applicability_context": frozen_applicability_context,
     }
-    trial_context = {"body_epoch_id": body_epoch_id, "repository_id": repository_id, "repo": repo}
-    applicable, applicability_reasons = _applicability_for_trial(candidate, trial_context)
-    if not applicable:
-        raise TransferTrialError("competence is not applicable to frozen trial context")
+    applicability_reasons = list(applicability_verification["reasons"])
     competence = _candidate_projection(candidate)
-    distilled = {"arm": "D", "task": str(task), "competence": competence, "competence_included": True}
+    distilled = {"arm": "D", "task": str(task), "competence": competence, "competence_included": True, "trial_applicability_context": frozen_applicability_context}
     feedback_items: list[dict[str, Any]] = []
     feedback_errors: list[str] = []
     for reference in prior_feedback or ():
@@ -874,29 +1240,8 @@ def run_cross_model_transfer_trial(
                 "arm_D": (prior.get("arm_results", {}).get("D") or {}).get("metrics"),
             }
         )
-    enriched = {"arm": "E", "task": str(task), "competence": competence, "usage_feedback": feedback_items, "competence_included": True}
+    enriched = {"arm": "E", "task": str(task), "competence": competence, "usage_feedback": feedback_items, "competence_included": True, "trial_applicability_context": frozen_applicability_context}
     packages = {"A": ordinary, "B": raw_history, "C": unfiltered, "D": distilled, "E": enriched}
-    arm_results: dict[str, Any] = {}
-    arm_scores: dict[str, Any] = {}
-    fresh_identities: list[dict[str, str]] = []
-    adapters: dict[str, ModelAdapter] = {}
-    arm_errors: list[str] = []
-    arm_evidence_classes: dict[str, str] = {}
-    seen_adapter_objects: set[int] = set()
-    for arm in ARMS:
-        try:
-            adapter = adapter_factory(arm)
-            if id(adapter) in seen_adapter_objects:
-                raise TransferTrialError("adapter_factory reused one model instance across arms")
-            seen_adapter_objects.add(id(adapter))
-            identity = _adapter_identity(adapter)
-            if identity["model_id"] == str(origin.get("model_id") or ""):
-                raise TransferTrialError("fresh model identity matches originating model")
-            adapters[arm] = adapter
-            fresh_identities.append(identity)
-        except (ModelAdapterError, TransferTrialError, TypeError, ValueError) as exc:
-            arm_errors.append(f"{arm}:{type(exc).__name__}:{exc}")
-    trial_material["fresh_model_identities"] = fresh_identities
     trial_id = _sha(trial_material)
     for arm in ARMS:
         try:
@@ -1052,13 +1397,14 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
         if key not in {"receipt_hash", "created_at", "inserted", "duplicate"}
     }
     errors: list[str] = []
-    modern = str(trial.get("schema_version") or "") == SCHEMA
+    schema_version = str(trial.get("schema_version") or "")
+    evidence_typed = schema_version in {SCHEMA, EVIDENCE_SCHEMA}
     if _sha(material) != str(trial.get("receipt_hash") or ""):
         errors.append("trial_receipt_hash_invalid")
     if trial.get("distribution_authorized") is not False or trial.get("execution_authorized") is not False:
         errors.append("trial_authority_flags_invalid")
     for arm in ARMS:
-        if modern:
+        if evidence_typed:
             continue
         item = trial.get("arm_results", {}).get(arm)
         if not isinstance(item, Mapping):
@@ -1103,7 +1449,7 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
                 errors.append(f"{name}_mismatch")
     conformance = (
         _validate_transfer_body(store, repo, trial)
-        if modern
+        if evidence_typed
         else {
             "valid": True,
             "errors": [],
@@ -1124,14 +1470,14 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
         "stored_portability_status": trial.get("portability_status"),
         "evidence_class": conformance.get("evidence_class"),
         "empirical_transfer_established": bool(
-            modern
+            evidence_typed
             and not errors
             and str(conformance.get("portability_status") or "").startswith(
                 "empirical_"
             )
         ),
         "structural_transfer_established": bool(
-            modern
+            evidence_typed
             and not errors
             and str(conformance.get("portability_status") or "").startswith(
                 "structural_"
@@ -1143,7 +1489,7 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
         "arm_evidence_classes": dict(
             conformance.get("arm_evidence_classes") or {}
         ),
-        "legacy_partial": not modern,
+        "legacy_partial": not evidence_typed,
         "distribution_authorized": False,
         "execution_authorized": False,
         "advisory_only": True,
@@ -1156,8 +1502,8 @@ __all__ = [
     "DEFAULT_POLICY",
     "PORTABILITY_STATES",
     "SCHEMA",
-    "TransferTrialError",
     "VERSION",
+    "TransferTrialError",
     "append_transfer_trial",
     "ensure_transfer_tables",
     "get_transfer_trial",

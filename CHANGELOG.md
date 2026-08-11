@@ -1,3 +1,40 @@
+## 9.5.0 - Distributed Evidence Assimilation & Scoped Competence Revision
+
+- Added immutable evidence-assimilation cohorts that freeze exact v9.4
+  package-use feedback, evidence cutoff, selection policy, analysis policy,
+  canonical observation roots, and source competence identity before analysis.
+- Added observation-root deduplication and policy-declared dependence analysis.
+  Raw repetitions remain visible, but correlated feedback and alternate caller
+  representations cannot masquerade as independent empirical support.
+- Added host-verified model-family and principal dependence surfaces. Distinct
+  registrations or provider labels under one principal remain correlated;
+  missing legacy classification remains `legacy_partial` and unresolved.
+- Production revision accepts only the canonical all-evidence freeze. Explicit
+  feedback subsets and retroactive cutoffs remain reproducible structural
+  analyses, while callers cannot weaken the frozen dependence axes.
+- Added explicit diversity and scope diagnostics for local, target-class,
+  environment, model-capability, specialization, supporting, global-candidate,
+  and unresolved evidence. Caller scope labels remain non-authorizing.
+- Added immutable, non-authorizing competence revision candidates whose
+  semantic changes are derived from canonical analysis rather than caller
+  input. Synthetic evidence is excluded from empirical revision, and ordinary
+  feedback remains observational rather than causal proof.
+- Added separate independent revision verification and explicit promotion
+  receipts. Promotion re-runs evidence analysis, conserves counterevidence, and
+  atomically appends an immutable successor instead of mutating its parent.
+- Added deterministic as-of cohort currentness and a distinct promotion-time
+  freshness gate, so later expiry or profile changes block new promotion
+  without rewriting historical evidence.
+- Successor competences carry enforceable typed applicability constraints and
+  require an allowed, frozen applicability context during renewed transfer;
+  caller-built successor bodies cannot bypass canonical promotion lineage.
+- Existing parent-bound packages are not rewritten. A verified semantic
+  successor makes them resolve as superseded, while the successor returns to
+  transfer-pending state and requires a new governed projection.
+- Host mutation, execution, memory admission, policy effect, automatic
+  broadcast, and automatic global revision remain false. No real external-model
+  empirical trial or cumulative real-world intelligence gain is claimed.
+
 ## 9.4.0 - Empirical Transfer Seal & Package-Use Binding
 
 - Added a host-controlled adapter-provenance registry with an irrevocable

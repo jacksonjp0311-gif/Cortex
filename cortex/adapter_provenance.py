@@ -23,6 +23,7 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 SCHEMA = "cortex-adapter-provenance/1.0"
+HOST_MODEL_CLASSIFICATION_SCHEMA = "cortex-host-model-classification/1.0"
 VERSION = "9.4.0"
 
 EVIDENCE_UNKNOWN = "unknown"
@@ -280,6 +281,37 @@ def _identity_value(value: Any, field: str, *, required: bool) -> str:
     return text or "undeclared"
 
 
+def _host_model_classification(
+    *,
+    model_family: str | None,
+    capability_class: str | None,
+    principal_id: str,
+) -> dict[str, Any] | None:
+    """Normalize an optional principal-controlled model classification.
+
+    Adapter attributes and model responses are deliberately not consulted.
+    Supplying either field requires both, preventing a partial class surface
+    from silently entering cross-model diversity analysis.
+    """
+
+    if model_family is None and capability_class is None:
+        return None
+    family = _identity_value(model_family, "model_family", required=True)
+    capability = _identity_value(
+        capability_class, "capability_class", required=True
+    )
+    return {
+        "schema_version": HOST_MODEL_CLASSIFICATION_SCHEMA,
+        "state": "host_registered",
+        "model_family": family,
+        "capability_class": capability,
+        "principal_id": str(principal_id),
+        "authority_basis": "host_principal_registration",
+        "adapter_or_model_self_assertion_used": False,
+        "provider_attestation_claimed": False,
+    }
+
+
 def _host_identity(adapter: Any, *, strict: bool) -> dict[str, str]:
     values: dict[str, str] = {}
     for field in _IDENTITY_FIELDS:
@@ -421,6 +453,8 @@ def register_adapter_provenance(
     principal_id: str,
     principal_secret: str,
     endpoint_descriptor: Mapping[str, Any] | None = None,
+    model_family: str | None = None,
+    capability_class: str | None = None,
 ) -> dict[str, Any]:
     """Host-authenticate one exact adapter/profile and execution boundary."""
 
@@ -435,6 +469,11 @@ def register_adapter_provenance(
     repository_id = _repo_identity(store, repo)
     binding = _profile_binding(adapter, strict_identity=True)
     evidence_class = BOUNDARY_CLASSES[boundary_kind]
+    classification = _host_model_classification(
+        model_family=model_family,
+        capability_class=capability_class,
+        principal_id=str(principal_id),
+    )
     safe_endpoint = _sanitize_profile(dict(endpoint_descriptor or {}))
     endpoint_profile_digest = _sha(safe_endpoint)
 
@@ -465,6 +504,10 @@ def register_adapter_provenance(
         if str(prior.get("endpoint_profile_digest") or "") != endpoint_profile_digest:
             raise AdapterProvenanceError(
                 "adapter implementation/profile registration is immutable"
+            )
+        if prior.get("host_model_classification") != classification:
+            raise AdapterProvenanceError(
+                "adapter implementation/profile has an immutable host model classification"
             )
         check = verify_adapter_registration(store, repo, str(prior.get("registration_id") or ""))
         if check.get("valid") is not True:
@@ -502,6 +545,11 @@ def register_adapter_provenance(
         "claim_boundary": CLAIM_BOUNDARY,
         "created_at": created_at,
     }
+    # Omit the surface for legacy/unclassified registrations so the canonical
+    # identity law of pre-v9.5 registrations remains byte-for-byte unchanged.
+    if classification is not None:
+        material["host_model_classification"] = classification
+        material["host_model_classification_digest"] = _sha(classification)
     registration_hash = _sha(material)
     body = {
         **material,
@@ -551,7 +599,13 @@ def _registration(
     repo: str,
     binding: Mapping[str, Any],
 ) -> dict[str, Any] | None:
-    ensure_adapter_provenance_tables(store)
+    # Resolution must not execute DDL or commit a caller-owned transaction.
+    # Store initialization and the explicit registration write path own schema
+    # creation; an absent table is an unresolved registration, never evidence.
+    if store.db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_adapter_registrations'"
+    ).fetchone() is None:
+        return None
     repository_id = _repo_identity(store, repo)
     rows = store.db.execute(
         """SELECT * FROM model_adapter_registrations
@@ -582,7 +636,10 @@ def verify_adapter_registration(
     repo: str,
     registration_id: str,
 ) -> dict[str, Any]:
-    ensure_adapter_provenance_tables(store)
+    if store.db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_adapter_registrations'"
+    ).fetchone() is None:
+        return {"valid": False, "errors": ["adapter_registration_ledger_missing"]}
     repository_id = _repo_identity(store, repo)
     row = store.db.execute(
         """SELECT * FROM model_adapter_registrations
@@ -650,6 +707,56 @@ def verify_adapter_registration(
             if str(host_identity.get(field) or "") in {"", "undeclared"}:
                 errors.append("adapter_registration_host_identity_incomplete")
 
+    classification = body.get("host_model_classification")
+    classification_digest = str(
+        body.get("host_model_classification_digest") or ""
+    )
+    if classification is None:
+        if classification_digest:
+            errors.append("adapter_model_classification_body_missing")
+        classification_result = {
+            "schema_version": HOST_MODEL_CLASSIFICATION_SCHEMA,
+            "state": "legacy_partial",
+            "model_family": "",
+            "capability_class": "",
+            "authority_basis": "unavailable_in_legacy_registration",
+            "adapter_or_model_self_assertion_used": False,
+        }
+    elif not isinstance(classification, Mapping):
+        errors.append("adapter_model_classification_invalid")
+        classification_result = {}
+    else:
+        classification_result = dict(classification)
+        if _sha(classification_result) != classification_digest:
+            errors.append("adapter_model_classification_hash_invalid")
+        if (
+            classification_result.get("schema_version")
+            != HOST_MODEL_CLASSIFICATION_SCHEMA
+            or classification_result.get("state") != "host_registered"
+            or classification_result.get("authority_basis")
+            != "host_principal_registration"
+            or classification_result.get("adapter_or_model_self_assertion_used")
+            is not False
+            or classification_result.get("provider_attestation_claimed") is not False
+        ):
+            errors.append("adapter_model_classification_semantics_invalid")
+        for field in ("model_family", "capability_class"):
+            try:
+                normalized = _identity_value(
+                    classification_result.get(field), field, required=True
+                )
+            except AdapterProvenanceError:
+                errors.append(f"adapter_model_classification_{field}_invalid")
+            else:
+                if normalized != str(classification_result.get(field) or ""):
+                    errors.append(
+                        f"adapter_model_classification_{field}_not_canonical"
+                    )
+        if str(classification_result.get("principal_id") or "") != str(
+            body.get("principal_id") or ""
+        ):
+            errors.append("adapter_model_classification_principal_mismatch")
+
     binding_material = {
         "implementation_digest": str(body.get("implementation_digest") or ""),
         "runtime_profile_digest": str(body.get("runtime_profile_digest") or ""),
@@ -695,7 +802,14 @@ def verify_adapter_registration(
         "runtime_profile_digest": body.get("runtime_profile_digest"),
         "host_identity_digest": body.get("host_identity_digest"),
         "binding_digest": body.get("binding_digest"),
+        # This is a verified projection of the immutable registration row,
+        # not an adapter/model declaration.  Keeping it out of the historical
+        # registration hash law preserves existing receipts while allowing
+        # new evidence analysis to retain principal dependence.
+        "principal_id": str(body.get("principal_id") or ""),
         "host_identity": dict(host_identity or {}),
+        "host_model_classification": classification_result,
+        "host_model_classification_digest": classification_digest or None,
         "evidence_class": evidence_class,
         "boundary_kind": boundary_kind,
         "provider_attestation": body.get("provider_attestation"),
@@ -718,6 +832,14 @@ def _unknown_provenance(binding: Mapping[str, Any], *, state: str = "unregistere
         "trust_basis": "none" if state == "unregistered" else "invalid_registration",
         "provider_attestation": "unknown",
         "provider_attestation_claimed": False,
+        "host_model_classification": {
+            "schema_version": HOST_MODEL_CLASSIFICATION_SCHEMA,
+            "state": "unknown",
+            "model_family": "",
+            "capability_class": "",
+            "authority_basis": "none",
+            "adapter_or_model_self_assertion_used": False,
+        },
         "empirical": False,
         "claim_boundary": CLAIM_BOUNDARY,
     }
@@ -736,6 +858,14 @@ def resolve_adapter_provenance(store: Any, repo: str, adapter: Any) -> dict[str,
             "trust_basis": "sealed_fixture_lineage",
             "provider_attestation": "not_applicable",
             "provider_attestation_claimed": False,
+            "host_model_classification": {
+                "schema_version": HOST_MODEL_CLASSIFICATION_SCHEMA,
+                "state": "synthetic_not_classified",
+                "model_family": "",
+                "capability_class": "",
+                "authority_basis": "sealed_fixture_lineage",
+                "adapter_or_model_self_assertion_used": False,
+            },
             "empirical": False,
             "claim_boundary": CLAIM_BOUNDARY,
         }
@@ -763,6 +893,15 @@ def resolve_adapter_provenance(store: Any, repo: str, adapter: Any) -> dict[str,
         "host_identity_digest": binding["host_identity_digest"],
         "binding_digest": binding["binding_digest"],
         "host_identity": dict(registration.get("host_identity") or {}),
+        "principal_id": str(verification.get("principal_id") or ""),
+        "host_model_classification": dict(
+            registration.get("host_model_classification")
+            or verification.get("host_model_classification")
+            or {}
+        ),
+        "host_model_classification_digest": registration.get(
+            "host_model_classification_digest"
+        ),
         "registration_id": registration.get("registration_id"),
         "registration_hash": registration.get("registration_hash"),
         "trust_basis": "host_principal_registration",
@@ -788,6 +927,10 @@ def verify_adapter_provenance(
         }
     evidence_class = str(provenance.get("evidence_class") or EVIDENCE_UNKNOWN)
     errors: list[str] = []
+    verified_principal_id = ""
+    classification_projection = dict(
+        provenance.get("host_model_classification") or {}
+    )
     if evidence_class not in EVIDENCE_CLASSES:
         errors.append("adapter_evidence_class_invalid")
     if evidence_class == EVIDENCE_SYNTHETIC:
@@ -797,9 +940,19 @@ def verify_adapter_provenance(
             errors.append("synthetic_empirical_flag_invalid")
         if provenance.get("registration_id") not in {None, ""}:
             errors.append("synthetic_registration_invalid")
+        synthetic_classification = provenance.get("host_model_classification")
+        if not isinstance(synthetic_classification, Mapping) or (
+            str(synthetic_classification.get("state") or "")
+            != "synthetic_not_classified"
+            or str(synthetic_classification.get("model_family") or "")
+            or str(synthetic_classification.get("capability_class") or "")
+        ):
+            errors.append("synthetic_model_classification_invalid")
     elif evidence_class in {EVIDENCE_LIVE, EVIDENCE_ATTESTED, EVIDENCE_SIMULATED}:
         registration_id = str(provenance.get("registration_id") or "")
         check = verify_adapter_registration(store, repo, registration_id)
+        if check.get("valid") is True:
+            verified_principal_id = str(check.get("principal_id") or "")
         if check.get("valid") is not True:
             errors.extend(str(item) for item in check.get("errors") or ())
         comparisons = {
@@ -809,6 +962,9 @@ def verify_adapter_provenance(
             "host_identity_digest": "adapter_host_identity_registration_mismatch",
             "binding_digest": "adapter_binding_registration_mismatch",
             "registration_hash": "adapter_registration_hash_mismatch",
+            "host_model_classification_digest": (
+                "adapter_model_classification_registration_mismatch"
+            ),
         }
         for field, error in comparisons.items():
             if str(check.get(field) or "") != str(provenance.get(field) or ""):
@@ -817,6 +973,27 @@ def verify_adapter_provenance(
             provenance.get("host_identity") or {}
         ):
             errors.append("adapter_host_identity_material_mismatch")
+        if "host_model_classification" in provenance and dict(
+            check.get("host_model_classification") or {}
+        ) != classification_projection:
+            errors.append("adapter_model_classification_material_mismatch")
+        elif "host_model_classification" not in provenance:
+            # Historical v9.4 invocation receipts predate this projection.
+            # Preserve their original identity and expose the registration's
+            # typed legacy/unknown classification without pretending a modern
+            # model-family proof was present in the invocation.
+            classification_projection = dict(
+                check.get("host_model_classification") or {}
+            )
+        # New provenance carries the principal explicitly.  Historical
+        # receipts may omit this projection and remain structurally valid,
+        # but they cannot satisfy v9.5 independence analysis because that
+        # analysis treats the missing axis as unresolved.
+        supplied_principal = str(provenance.get("principal_id") or "")
+        if supplied_principal and supplied_principal != str(
+            check.get("principal_id") or ""
+        ):
+            errors.append("adapter_principal_registration_mismatch")
         if str(check.get("boundary_kind") or "") != str(
             provenance.get("execution_boundary") or ""
         ):
@@ -838,12 +1015,20 @@ def verify_adapter_provenance(
             errors.append("unknown_adapter_cannot_be_empirical")
         if provenance.get("registration_id") not in {None, ""}:
             errors.append("unknown_adapter_registration_invalid")
+        classification = provenance.get("host_model_classification")
+        if isinstance(classification, Mapping) and (
+            str(classification.get("model_family") or "")
+            or str(classification.get("capability_class") or "")
+        ):
+            errors.append("unknown_adapter_model_classification_forbidden")
     return {
         "valid": not errors,
         "evidence_class": evidence_class,
         "evidence_state": str(provenance.get("evidence_state") or "unknown"),
         "empirical": evidence_class == EVIDENCE_LIVE and not errors,
         "errors": sorted(set(errors)),
+        "host_model_classification": classification_projection,
+        "principal_id": verified_principal_id,
     }
 
 
@@ -852,7 +1037,6 @@ def evidence_satisfies(observed: str, minimum: str) -> bool:
 
 
 __all__ = [
-    "AdapterProvenanceError",
     "BOUNDARY_CLASSES",
     "CLAIM_BOUNDARY",
     "EVIDENCE_ATTESTED",
@@ -864,9 +1048,11 @@ __all__ = [
     "EVIDENCE_SYNTHETIC",
     "EVIDENCE_UNKNOWN",
     "FIXTURE_LINEAGE_MARKER",
+    "HOST_MODEL_CLASSIFICATION_SCHEMA",
     "PROVIDER_ATTESTATION_UNAVAILABLE",
     "SCHEMA",
     "VERSION",
+    "AdapterProvenanceError",
     "adapter_implementation_digest",
     "ensure_adapter_provenance_tables",
     "evidence_satisfies",

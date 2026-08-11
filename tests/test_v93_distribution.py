@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -149,6 +150,66 @@ class V93DistributionTests(unittest.TestCase):
         self.assertEqual(result["status"], "blocked")
         self.assertFalse(result["package_persisted"])
         self.assertIn("competence_type_prohibited", result["errors"])
+
+    def test_dry_run_projection_preserves_caller_transaction(self) -> None:
+        profile = self.profile("read-only-target")
+        self.store.db.execute(
+            "CREATE TEMP TABLE distribution_read_purity(value TEXT)"
+        )
+        self.store.db.commit()
+        self.store.db.execute("BEGIN")
+        self.store.db.execute(
+            "INSERT INTO distribution_read_purity(value) VALUES('uncommitted')"
+        )
+
+        result = project_competence(
+            self.store,
+            self.repo,
+            competence_id=self.candidate["competence_id"],
+            profile_id=profile["profile_id"],
+            persist=False,
+        )
+
+        self.assertEqual(result["status"], "active", result)
+        self.assertFalse(result["package_persisted"])
+        self.assertTrue(
+            self.store.db.in_transaction,
+            "dry-run projection committed the caller-owned transaction",
+        )
+        self.store.db.rollback()
+        remaining = self.store.db.execute(
+            "SELECT COUNT(*) AS n FROM distribution_read_purity"
+        ).fetchone()
+        self.assertEqual(int(remaining["n"]), 0)
+
+    def test_profile_currentness_has_deterministic_timestamp_tie_break(self) -> None:
+        created_at = time.time()
+        with patch(
+            "cortex.competence_distribution.time.time", return_value=created_at
+        ):
+            first = self.profile("tied-target", "1")
+            second = self.profile("tied-target", "2")
+        latest = max((first, second), key=lambda item: item["profile_id"])
+        stale = min((first, second), key=lambda item: item["profile_id"])
+
+        stale_projection = project_competence(
+            self.store,
+            self.repo,
+            competence_id=self.candidate["competence_id"],
+            profile_id=stale["profile_id"],
+            persist=False,
+        )
+        latest_projection = project_competence(
+            self.store,
+            self.repo,
+            competence_id=self.candidate["competence_id"],
+            profile_id=latest["profile_id"],
+            persist=False,
+        )
+
+        self.assertEqual(stale_projection["status"], "blocked")
+        self.assertIn("newer_target_profile_registered", stale_projection["errors"])
+        self.assertEqual(latest_projection["status"], "active", latest_projection)
 
     def test_revocation_and_feedback_do_not_rewrite_canonical_competence(self) -> None:
         package, _ = self.package()

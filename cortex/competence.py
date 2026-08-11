@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 SCHEMA = "cortex-competence/1.0"
+SUCCESSOR_SCHEMA = "cortex-competence/1.1"
 VERSION = "9.1.0"
 GLYPH = "⟡◇"
 CLAIM_BOUNDARY = (
@@ -494,8 +495,18 @@ def build_competence_candidate(
 
 def append_competence_candidate(store: Any, repo: str, candidate: Mapping[str, Any]) -> dict[str, Any]:
     """Append one immutable candidate; duplicate semantic identity is stable."""
-    ensure_competence_tables(store)
     body = dict(candidate)
+    # v9.5 successor competences are legitimate only as one half of the
+    # atomic revision-promotion transaction.  This general v9.1 append API has
+    # no promotion proof to bind, so accepting a caller-built v1.1 body here
+    # would let an otherwise well-formed forgery bypass that authority edge.
+    if str(body.get("schema_version") or "") == SUCCESSOR_SCHEMA:
+        raise CompetenceAdmissionError(
+            "successor competence requires atomic canonical revision promotion"
+        )
+    if str(body.get("schema_version") or "") != SCHEMA:
+        raise CompetenceAdmissionError("candidate competence schema is not admissible")
+    ensure_competence_tables(store)
     repository_id = _repository_id(store, repo)
     if str(body.get("repo") or "") != str(repo) or str(body.get("repository_id") or "") != repository_id:
         raise CompetenceError("candidate repository binding is invalid")
@@ -606,7 +617,17 @@ def verify_competence_candidate(store: Any, repo: str, competence_id: str) -> di
         }
     if candidate is None:
         return {"valid": False, "state": "unknown", "errors": ["candidate_missing"], "advisory_only": True}
+    if str(candidate.get("schema_version") or "") == SUCCESSOR_SCHEMA:
+        # Import locally: competence_revision builds successors from this
+        # module and therefore imports the v9.1 primitives above.  The
+        # successor verifier is recursion-safe and resolves the exact atomic
+        # promotion instead of treating inherited v9.1 lineage as sufficient.
+        from .competence_revision import verify_successor_lineage
+
+        return verify_successor_lineage(store, repo, candidate)
     errors: list[str] = []
+    if str(candidate.get("schema_version") or "") != SCHEMA:
+        errors.append("candidate_schema_invalid")
     if str(candidate.get("receipt_hash") or "") != str(candidate.get("ledger_receipt_hash") or ""):
         errors.append("ledger_receipt_hash_mismatch")
     if str(candidate.get("revision_state") or "") != str(candidate.get("ledger_state") or ""):
@@ -682,6 +703,208 @@ def verify_competence_candidate(store: Any, repo: str, competence_id: str) -> di
     }
 
 
+def evaluate_competence_applicability_constraints(
+    candidate: Mapping[str, Any], context: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Evaluate v9.5 typed scope constraints without lifecycle side effects.
+
+    This pure surface is shared by active projection and transfer experiments.
+    A transfer trial must be able to test a ``transfer_pending`` successor, so
+    it cannot call :func:`competence_is_applicable`, whose lifecycle gate
+    correctly requires a previously transfer-verified competence.
+    """
+    reasons: list[str] = []
+    constraint_results: list[dict[str, Any]] = []
+    constraint_failed = False
+    constraint_unknown = False
+    raw_constraints = candidate.get("applicability_constraints")
+    if (
+        isinstance(raw_constraints, Sequence)
+        and not isinstance(raw_constraints, (str, bytes))
+    ):
+        constraints = list(raw_constraints)
+    else:
+        constraints = []
+        if raw_constraints is not None:
+            reasons.append("applicability_constraints_malformed")
+            constraint_unknown = True
+    if str(candidate.get("schema_version") or "") == SUCCESSOR_SCHEMA and not constraints:
+        reasons.append("successor_applicability_constraints_missing")
+        constraint_unknown = True
+
+    identity = context.get("identity")
+    identity = identity if isinstance(identity, Mapping) else {}
+    target_class = str(context.get("target_class") or "")
+    if not target_class:
+        for key in ("target_class", "class", "type"):
+            if identity.get(key):
+                target_class = str(identity[key])
+                break
+
+    environment = context.get("environment")
+    environment_fingerprint = ""
+    if isinstance(environment, Mapping):
+        environment_fingerprint = _sha(dict(environment))
+    elif context.get("environment_fingerprint"):
+        environment_fingerprint = str(context.get("environment_fingerprint"))
+
+    model_family = str(context.get("model_family") or "")
+    if not model_family:
+        model_capability = context.get("model_capability")
+        if isinstance(model_capability, Mapping):
+            model_family = str(model_capability.get("model_family") or "")
+    dimension_values = {
+        "target_id": str(context.get("target_id") or ""),
+        "target_class": target_class,
+        "environment_fingerprint": environment_fingerprint,
+        "model_family": model_family,
+    }
+    for raw_constraint in constraints:
+        result: dict[str, Any] = {
+            "dimension": None,
+            "operator": None,
+            "values": [],
+            "observed": None,
+            "state": "unknown",
+        }
+        if not isinstance(raw_constraint, Mapping):
+            reasons.append("applicability_constraint_malformed")
+            constraint_unknown = True
+            constraint_results.append(result)
+            continue
+        dimension = str(raw_constraint.get("dimension") or "")
+        operator = str(raw_constraint.get("operator") or "")
+        raw_values = raw_constraint.get("values")
+        values_valid = (
+            isinstance(raw_values, Sequence)
+            and not isinstance(raw_values, (str, bytes))
+            and bool(raw_values)
+            and all(isinstance(value, str) and bool(value) for value in raw_values)
+        )
+        values = sorted(set(raw_values)) if values_valid else []
+        actual = dimension_values.get(dimension)
+        result.update(
+            {
+                "dimension": dimension,
+                "operator": operator,
+                "values": values,
+                "observed": actual,
+            }
+        )
+        if dimension not in dimension_values or operator not in {
+            "exclude",
+            "allow_only",
+        }:
+            reasons.append("applicability_constraint_schema_unknown")
+            constraint_unknown = True
+        elif not values_valid:
+            reasons.append(f"applicability_constraint_values_missing:{dimension}")
+            constraint_unknown = True
+        elif not actual:
+            reasons.append(f"applicability_dimension_missing:{dimension}")
+            constraint_unknown = True
+        elif operator == "exclude" and actual in values:
+            reasons.append(f"applicability_excluded:{dimension}")
+            constraint_failed = True
+            result["state"] = "fail"
+        elif operator == "allow_only" and actual not in values:
+            reasons.append(f"applicability_not_allowed:{dimension}")
+            constraint_failed = True
+            result["state"] = "fail"
+        else:
+            result["state"] = "pass"
+        constraint_results.append(result)
+    constraint_state = (
+        "fail" if constraint_failed else "unknown" if constraint_unknown else "pass"
+    )
+    return {
+        "state": constraint_state,
+        "passed": constraint_state == "pass",
+        "reasons": sorted(set(reasons)),
+        "results": constraint_results,
+        "read_only": True,
+        "state_transition_persisted": False,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+    }
+
+
+def evaluate_revision_evidence_freshness(
+    candidate: Mapping[str, Any], *, as_of: float | None = None
+) -> dict[str, Any]:
+    """Evaluate the noncompensatory evidence-expiry plane of a v9.5 successor."""
+
+    if str(candidate.get("schema_version") or "") != SUCCESSOR_SCHEMA:
+        return {
+            "state": "not_applicable",
+            "passed": True,
+            "reason": "not_a_revision_successor",
+            "evidence_expiry_at": None,
+            "read_only": True,
+        }
+    proof = candidate.get("revision_evidence_freshness")
+    if not isinstance(proof, Mapping):
+        return {
+            "state": "unknown",
+            "passed": False,
+            "reason": "revision_evidence_freshness_missing",
+            "evidence_expiry_at": None,
+            "read_only": True,
+        }
+    proof_body = {
+        str(key): value for key, value in proof.items() if key != "proof_hash"
+    }
+    if _sha(proof_body) != str(proof.get("proof_hash") or ""):
+        return {
+            "state": "fail",
+            "passed": False,
+            "reason": "revision_evidence_freshness_hash_invalid",
+            "evidence_expiry_at": proof.get("evidence_expiry_at"),
+            "read_only": True,
+        }
+    raw_expiry = proof.get("evidence_expiry_at")
+    observation_expiries = [
+        float(item.get("expires_at") or 0.0)
+        for item in proof.get("observation_proofs") or ()
+        if isinstance(item, Mapping)
+        and float(item.get("expires_at") or 0.0) > 0
+    ]
+    if (
+        raw_expiry in {None, ""}
+        or not observation_expiries
+        or float(raw_expiry) != min(observation_expiries)
+        or proof.get("valid") is not True
+        or str(proof.get("state") or "") != "pass"
+    ):
+        return {
+            "state": "unknown",
+            "passed": False,
+            "reason": "revision_evidence_freshness_unresolved",
+            "evidence_expiry_at": raw_expiry,
+            "read_only": True,
+        }
+    checked = float(as_of if as_of is not None else time.time())
+    expiry = float(raw_expiry)
+    state = "pass" if checked <= expiry else "fail"
+    return {
+        "state": state,
+        "passed": state == "pass",
+        "reason": (
+            "revision_evidence_current"
+            if state == "pass"
+            else "revision_evidence_expired"
+        ),
+        "checked_at": checked,
+        "evidence_cutoff": proof.get("evidence_cutoff"),
+        "evidence_expiry_at": expiry,
+        "seconds_until_expiry": expiry - checked,
+        "freshness_authority": proof.get("freshness_authority"),
+        "read_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+    }
+
+
 def competence_is_applicable(candidate: Mapping[str, Any], context: Mapping[str, Any]) -> dict[str, Any]:
     """Read-only applicability projection; it never writes a stale transition."""
     reasons: list[str] = []
@@ -702,10 +925,20 @@ def competence_is_applicable(candidate: Mapping[str, Any], context: Mapping[str,
                 reasons.append("repository_incompatible")
             if condition.get("required") is False:
                 continue
+    constraint_check = evaluate_competence_applicability_constraints(
+        candidate, context
+    )
+    reasons.extend(str(item) for item in constraint_check["reasons"])
+    revision_freshness = evaluate_revision_evidence_freshness(candidate)
+    if revision_freshness["state"] not in {"pass", "not_applicable"}:
+        reasons.append(str(revision_freshness["reason"]))
     return {
         "applicable": not reasons,
         "selected": not reasons,
         "reasons": sorted(set(reasons)),
+        "applicability_constraint_state": constraint_check["state"],
+        "applicability_constraint_results": constraint_check["results"],
+        "revision_evidence_freshness": revision_freshness,
         "read_only": True,
         "state_transition_persisted": False,
         "host_mutate_authorized": False,
@@ -770,14 +1003,14 @@ competence_active = competence_is_applicable
 
 __all__ = [
     "CLAIM_BOUNDARY",
-    "CompetenceCandidate",
-    "CompetenceAdmissionError",
-    "CompetenceError",
     "GLYPH",
     "LIFECYCLE_STATES",
     "PORTABILITY_STATES",
     "SCHEMA",
     "VERSION",
+    "CompetenceAdmissionError",
+    "CompetenceCandidate",
+    "CompetenceError",
     "append_competence_candidate",
     "build_competence_candidate",
     "competence_active",
@@ -785,6 +1018,8 @@ __all__ = [
     "derive_competence_candidate",
     "distill_competence_candidate",
     "ensure_competence_tables",
+    "evaluate_competence_applicability_constraints",
+    "evaluate_revision_evidence_freshness",
     "get_competence_candidate",
     "list_competence_candidates",
     "semantic_material",
