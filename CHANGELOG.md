@@ -1,3 +1,28 @@
+## 9.7.0 - Empirical Competence Differentiation
+
+- Added immutable differentiation receipts over canonical v9.2 A-E transfer
+  trials. Every trial is reverified and bound by receipt hash before analysis.
+- Added paired continuity, distillation, governance, and feedback-credit effect
+  panels with mean, sample deviation, standard error, confidence bounds, and
+  positive/zero/negative counts.
+- Added noncompensatory gates for sample size, ceiling saturation, competence
+  floor, dynamic range, lower confidence bound, negative transfer, epoch/cohort
+  compatibility, and evidence class.
+- Made frozen task-evaluator success the primary causal score. Composite utility
+  remains a secondary cost/quality diagnostic so runtime or provider latency
+  cannot masquerade as competence effect.
+- Rejected unknown policy fields, including model IDs, provider labels,
+  endpoints, or preferred-model hints. Model and provider identity remain only
+  in underlying invocation provenance and are never scoring inputs.
+- Removed the model and model-family defaults from the optional v9.6 live
+  commissioning scripts. Operators must now supply exact host-selected model
+  identity explicitly.
+- Evaluated the preserved live v9.6 trial through the v9.7 gate. The receipt is
+  valid but held because one case is insufficient, baseline and competence both
+  score 1.0, dynamic range is zero, and the paired effect is zero.
+- Distribution, memory admission, policy effect, execution, and host mutation
+  remain false. This release does not claim empirical competence improvement.
+
 ## 9.6.0 - Empirical Commissioning Seal
 
 - Added an optional loopback Ollama adapter outside the provider-neutral core.

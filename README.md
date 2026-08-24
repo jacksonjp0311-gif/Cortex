@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.6.0-0ea5e9?style=for-the-badge" alt="v9.6.0" />
+  <img src="https://img.shields.io/badge/version-9.7.0-0ea5e9?style=for-the-badge" alt="v9.7.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -292,6 +292,15 @@ live circulation passed its frozen text contract. A strict fresh-model A-E
 trial also ran, but every arm performed equally and all gains were zero, so
 Cortex correctly held transfer rather than manufacturing competence benefit.
 See [`PHASE_V9.6_EMPIRICAL_COMMISSIONING_SEAL.md`](docs/intelligence/PHASE_V9.6_EMPIRICAL_COMMISSIONING_SEAL.md).
+
+v9.7 turns that held result into an explicit causal-differentiation gate.
+Canonical A-E trials are grouped into frozen cohorts, task-evaluator scores are
+paired case by case, and ceiling, floor, dynamic-range, negative-transfer,
+minimum-sample, evidence-class, and confidence-bound gates compose without
+compensation. Model names, provider labels, and endpoints are rejected from the
+analysis policy and never enter scoring. The first live cohort remains held: it
+contains one saturated case, not evidence of competence lift. See
+[`PHASE_V9.7_EMPIRICAL_COMPETENCE_DIFFERENTIATION.md`](docs/intelligence/PHASE_V9.7_EMPIRICAL_COMPETENCE_DIFFERENTIATION.md).
 
 ## Interconnect mathematics (v8.3.4)
 
