@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cortex-memory"
-version = "9.5.0"
+version = "9.5.1"
 description = "Identity-bound predictive memory and measurement runtime for persistent software agents"
 readme = "README.md"
 requires-python = ">=3.10"

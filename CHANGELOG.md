@@ -1,3 +1,22 @@
+## 9.5.1 - Canonical Runtime Convergence
+
+- Made interconnect fail closed on unknown repository identities before any
+  repository-bound subsystem can initialize state.
+- Made ranker status observationally pure. Missing models remain absent and
+  schema drift is reported rather than repaired during inspection.
+- Added explicit non-authority flags to interconnect reports.
+- Added a UTF-8-safe CLI stream boundary for Windows and legacy redirected
+  consoles so glyph-bearing help and reports do not raise encoding errors.
+- Reused the already measured pre-refresh manifest only for the evidence
+  refresh decision while preserving separate pre-activation and
+  post-activation host-manifest scans for immutability conformance.
+- Restored agent-protocol parity by exposing `emergence-log` through generated
+  PowerShell and Bash repository wrappers.
+- Added adversarial tests for unknown-repository purity, absent-ranker purity,
+  Windows encoding, and activation-time host mutation detection.
+- Host mutation, execution, policy effect, and update authorization remain
+  false. This release does not claim real-model empirical transfer.
+
 ## 9.5.0 - Distributed Evidence Assimilation & Scoped Competence Revision
 
 - Added immutable evidence-assimilation cohorts that freeze exact v9.4

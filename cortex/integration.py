@@ -63,7 +63,7 @@ POWERSHELL_WRAPPER = r'''param(
         "thalamus", "interlink", "neural-replay", "doctor",
         "identity", "distill", "kernels", "interconnect", "immune", "metrics",
         "prune", "organism", "breathe", "causal", "glyphs", "evolve", "stream",
-        "harness", "hygiene", "packs"
+        "harness", "hygiene", "packs", "emergence-log"
     )]
     [string]$Command = "activate",
     [string]$Task = "",
@@ -183,6 +183,7 @@ if ($Command -eq "kernels") {
     if ($Annotate) { $ArgsList += "--annotate" }
 }
 if ($Command -eq "interconnect") { $ArgsList += @("interconnect", "--repo", $RepoName, "--json") }
+if ($Command -eq "emergence-log") { $ArgsList += @("emergence-log", "--repo", $RepoName, "--json") }
 if ($Command -eq "immune") { $ArgsList += @("immune", "--repo", $RepoName, "--json") }
 if ($Command -eq "metrics") { $ArgsList += @("metrics", "--repo", $RepoName, "--json") }
 if ($Command -eq "prune") {
@@ -529,7 +530,7 @@ case "$COMMAND" in
       exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" evolve --repo "$REPO_NAME" --activation-id "$ACT" --status "$STATUS" --verification "$VERIFICATION" --json
     fi
     ;;
-  consolidate|verify|status|graph|telemetry|environment|meta-language|neural-replay|doctor|interconnect|immune|metrics)
+  consolidate|verify|status|graph|telemetry|environment|meta-language|neural-replay|doctor|interconnect|immune|metrics|emergence-log)
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" "$COMMAND" --repo "$REPO_NAME" --json
     ;;
   *) echo "Unknown command: $COMMAND" >&2; exit 2 ;;

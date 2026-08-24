@@ -681,13 +681,16 @@ def activate_repository(
                 governor=governor,
                 memory_controller=memory_controller,
                 force_evidence_baseline=force_evidence_baseline,
+                observed_manifest=observed_manifest,
             )
             if evidence_refresh_audit.get("refreshed"):
                 refresh_result = evidence_refresh_audit.get("refresh_result") or {
                     "refreshed": True
                 }
                 repository = store.repo(repo) or repository
-                observed_manifest = current_manifest_hash(root, config)
+                observed_manifest = str(
+                    refresh_result.get("manifest_hash") or observed_manifest
+                )
                 manifest_current = bool(
                     evidence_refresh_audit.get("manifest_current", False)
                 ) or (
@@ -737,6 +740,9 @@ def activate_repository(
     # evidence refresh, body epoch, and epoch-scoped capability are bound. The
     # predictive cognitive cycle is independent and may have opened earlier;
     # it is not valid pre-state evidence for activation conformance.
+    # This is an independent post-refresh/pre-activation host observation. It
+    # must never be reused for the final host measurement.
+    host_manifest_before = current_manifest_hash(root, config)
     try:
         from .ostt.conformance import open_activation_observation
 
@@ -744,14 +750,14 @@ def activate_repository(
             store,
             repo,
             pre_epoch_id=str(epoch.epoch_id or ""),
-            host_manifest=str(current_manifest_hash(root, config) or ""),
+            host_manifest=str(host_manifest_before or ""),
         )
     except Exception as exc:
         activation_observation_open = {
             "schema_version": "cortex-activation-observation-opening/1.0",
             "pre_epoch_id": str(epoch.epoch_id or ""),
             "before_state": {},
-            "host_manifest_before": str(current_manifest_hash(root, config) or ""),
+            "host_manifest_before": str(host_manifest_before or ""),
             "error": f"{type(exc).__name__}:{exc}",
             "policy_effect": False,
             "update_authorized": False,
@@ -972,19 +978,20 @@ def activate_repository(
     )
     resolution["capability"] = cap
     resolution["body_epoch"] = epoch.to_dict()
+    host_manifest_before = current_manifest_hash(root, config)
     try:
         activation_observation_open = open_activation_observation(
             store,
             repo,
             pre_epoch_id=str(epoch.epoch_id or ""),
-            host_manifest=str(current_manifest_hash(root, config) or ""),
+            host_manifest=str(host_manifest_before or ""),
         )
     except Exception as exc:
         activation_observation_open = {
             "schema_version": "cortex-activation-observation-opening/1.0",
             "pre_epoch_id": str(epoch.epoch_id or ""),
             "before_state": {},
-            "host_manifest_before": str(current_manifest_hash(root, config) or ""),
+            "host_manifest_before": str(host_manifest_before or ""),
             "error": f"{type(exc).__name__}:{exc}",
             "policy_effect": False,
             "update_authorized": False,

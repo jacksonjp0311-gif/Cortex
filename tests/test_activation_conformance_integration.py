@@ -220,6 +220,34 @@ class ActivationConformanceIntegrationTests(unittest.TestCase):
         self.assertTrue(receipt["chain_valid"])
         self.assertEqual(_claim_flags(receipt), (False, False, True))
 
+    def test_host_change_during_activation_is_independently_observed(self) -> None:
+        from cortex.activation import activate_evidence_baseline as real_baseline
+
+        def mutate_host_after_baseline(*args, **kwargs):
+            result = real_baseline(*args, **kwargs)
+            (self.host / "concurrent-change.txt").write_text(
+                "changed during activation\n", encoding="utf-8"
+            )
+            return result
+
+        with mock.patch(
+            "cortex.activation.activate_evidence_baseline",
+            side_effect=mutate_host_after_baseline,
+        ):
+            result = self._baseline("detect concurrent host change")
+
+        receipt = result["ostt_residual_receipt"]
+        invariants = {
+            item["invariant_id"]: item for item in receipt["invariant_results"]
+        }
+        self.assertFalse(invariants["host_immutable"]["passed"])
+        self.assertNotEqual(
+            invariants["host_immutable"]["expected"],
+            invariants["host_immutable"]["observed"],
+        )
+        self.assertNotEqual(receipt["status"], "conformance_measured")
+        self.assertEqual(_claim_flags(receipt), (False, False, True))
+
     def test_all_read_only_reports_preserve_claim_boundary_and_gate_c_cold(self) -> None:
         result = self._baseline("report boundary activation")
         receipt = result["ostt_residual_receipt"]

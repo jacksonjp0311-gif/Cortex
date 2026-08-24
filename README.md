@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.5.0-0ea5e9?style=for-the-badge" alt="v9.5.0" />
+  <img src="https://img.shields.io/badge/version-9.5.1-0ea5e9?style=for-the-badge" alt="v9.5.1" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -273,6 +273,15 @@ Promotion separately proves that frozen evidence is still current, and typed
 successor constraints remain binding through transfer and local projection.
 Distributed feedback remains observational rather than causal proof. See
 [`PHASE_V9.5_DISTRIBUTED_EVIDENCE_ASSIMILATION_SCOPED_REVISION.md`](docs/intelligence/PHASE_V9.5_DISTRIBUTED_EVIDENCE_ASSIMILATION_SCOPED_REVISION.md).
+
+v9.5.1 converges the operational boundary around that architecture. Read-only
+interconnect no longer initializes ranker state or crashes on an unknown
+repository, Windows command output establishes a UTF-8-safe glyph boundary,
+and evidence refresh may reuse its initial drift observation without reusing
+the independent host-manifest measurements that prove activation-time
+immutability. The installed agent wrappers now expose the emergence log they
+instruct agents to read. See
+[`PHASE_V9.5.1_CANONICAL_RUNTIME_CONVERGENCE.md`](docs/intelligence/PHASE_V9.5.1_CANONICAL_RUNTIME_CONVERGENCE.md).
 
 ## Interconnect mathematics (v8.3.4)
 

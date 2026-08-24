@@ -789,13 +789,21 @@ def rebuild_ranker_from_events(
     }
 
 
-def ranker_fisher_diag(store: Any, repo: str, *, limit: int = 64) -> dict[str, Any]:
+def ranker_fisher_diag(
+    store: Any,
+    repo: str,
+    *,
+    limit: int = 64,
+    model: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Diagonal Fisher proxy from logged ranker examples (v6.19).
 
     I_ii ≈ mean[ p(1-p) x_i^2 ] with p = current model score on example features.
     Used to scale learning confidence / shadow promotion — not host authority.
     """
-    model = ensure_ranker(store, repo)
+    # Training callers may initialize the ranker. Inspection callers pass an
+    # already loaded model so a status read never creates or migrates one.
+    model = model or ensure_ranker(store, repo)
     names = list(model.get("feature_names") or FEATURE_NAMES)
     acc = [0.0] * len(names)
     n = 0
@@ -850,12 +858,55 @@ def ranker_fisher_diag(store: Any, repo: str, *, limit: int = 64) -> dict[str, A
 
 
 def ranker_status(store: Any, repo: str) -> dict[str, Any]:
-    model = ensure_ranker(store, repo)
+    row = store.db.execute(
+        "SELECT * FROM ranker_models WHERE repo=? AND model_id=?",
+        (repo, MODEL_ID),
+    ).fetchone()
     frozen = store.get_setting(f"ranker_frozen:{repo}", {}) or {}
-    fisher = ranker_fisher_diag(store, repo)
+    if not row:
+        return {
+            "schema_version": SCHEMA,
+            "repo": repo,
+            "available": False,
+            "model_id": None,
+            "train_count": 0,
+            "feature_count": 0,
+            "bias": None,
+            "frozen": bool(frozen.get("frozen")),
+            "freeze_reason": frozen.get("reason"),
+            "fisher": {
+                "ok": False,
+                "n_examples": 0,
+                "reason": "ranker_not_initialized",
+            },
+            "migration_required": False,
+            "advisory_only": True,
+            "policy_effect": False,
+            "update_authorized": False,
+            "claim_boundary": (
+                "Ranker status is read-only telemetry; absence does not initialize "
+                "a model or grant host rights."
+            ),
+        }
+    try:
+        names = list(json.loads(row["feature_names_json"] or "[]"))
+        weights = list(json.loads(row["weights_json"] or "[]"))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        names = []
+        weights = []
+    model = {
+        "model_id": row["model_id"],
+        "schema_version": row["schema_version"],
+        "weights": weights,
+        "bias": float(row["bias"]),
+        "train_count": int(row["train_count"]),
+        "feature_names": names,
+    }
+    fisher = ranker_fisher_diag(store, repo, model=model)
     return {
         "schema_version": SCHEMA,
         "repo": repo,
+        "available": True,
         "model_id": model["model_id"],
         "train_count": model["train_count"],
         "feature_count": len(model["feature_names"]),
@@ -863,7 +914,16 @@ def ranker_status(store: Any, repo: str) -> dict[str, Any]:
         "frozen": bool(frozen.get("frozen")),
         "freeze_reason": frozen.get("reason"),
         "fisher": fisher,
-        "claim_boundary": "Ranker status is operational telemetry; not host rights.",
+        "migration_required": (
+            len(weights) != len(FEATURE_NAMES) or names != list(FEATURE_NAMES)
+        ),
+        "advisory_only": True,
+        "policy_effect": False,
+        "update_authorized": False,
+        "claim_boundary": (
+            "Ranker status is read-only operational telemetry; schema drift is "
+            "reported and never repaired by inspection."
+        ),
     }
 
 

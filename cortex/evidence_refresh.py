@@ -76,6 +76,7 @@ def run_evidence_refresh_edge(
     memory_controller: str | None = None,
     force_evidence_baseline: bool = False,
     force: bool = False,
+    observed_manifest: str | None = None,
 ) -> dict[str, Any]:
     """Execute the audited evidence-refresh edge. Mutates evidence plane only."""
     from .epoch import compute_body_epoch, ensure_current_epoch, observe_current_epoch
@@ -97,7 +98,10 @@ def run_evidence_refresh_edge(
     }
 
     # 1. observe_drift
-    observed = current_manifest_hash(root, config)
+    # The activation caller already performed this exact pre-refresh scan. It
+    # may provide that observation as an optimization; it is never reused as
+    # the post-activation host-immutability measurement.
+    observed = observed_manifest or current_manifest_hash(root, config)
     row = store.repo(repo)
     stored = (row["manifest_hash"] or "") if row else ""
     manifest_current = observed == stored and bool(stored)
@@ -156,7 +160,9 @@ def run_evidence_refresh_edge(
 
     # 4. recompute epoch/controller (observe + optional ensure for identity; path select later)
     row = store.repo(repo)
-    observed = current_manifest_hash(root, config)
+    observed = str(refresh_result.get("manifest_hash") or "")
+    if not observed:
+        observed = current_manifest_hash(root, config)
     stored = (row["manifest_hash"] or "") if row else ""
     manifest_current = observed == stored and bool(stored)
     epoch_obs = observe_current_epoch(store, repo)
@@ -202,6 +208,7 @@ def run_evidence_refresh_edge(
         for k in (
             "indexed_files_this_run",
             "unchanged_files",
+            "manifest_hash",
             "error",
         )
         if k in refresh_result or refresh_result.get(k) is not None

@@ -54,6 +54,21 @@ from thalamus import apply_feedback, inhibit, make_request, record_feedback, rou
 from .verify import verify_repository
 
 
+def _configure_standard_streams() -> None:
+    """Make Cortex glyphs safe on Windows and redirected legacy consoles."""
+
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if not callable(reconfigure):
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+        except (AttributeError, OSError, ValueError):
+            # Embedded hosts and test streams may not permit reconfiguration.
+            # Their existing text contract remains authoritative.
+            continue
+
+
 def emit(value: Any, as_json: bool = False) -> None:
     if as_json or isinstance(value, (dict, list)):
         print(json.dumps(value, indent=2, default=str))
@@ -1541,6 +1556,7 @@ def _repo_root(store: Store, repo: str) -> Path:
 
 
 def main(argv: list[str] | None = None) -> None:
+    _configure_standard_streams()
     args = build_parser().parse_args(argv)
     home = ensure_home(Path(args.home).expanduser().resolve() if args.home else None)
     os.environ["CORTEX_ACTIVE_HOME"] = str(home)

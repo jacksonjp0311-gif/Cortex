@@ -159,6 +159,40 @@ def mesh_status(
     compact=True (default) omits full glyph registry to save tokens.
     """
 
+    # Fail before touching any repository-bound subsystem. Several historical
+    # status helpers lazily initialized their state, which meant an inspection
+    # of a misspelled repository could attempt a foreign-key write.
+    if not store.repo(repo):
+        return {
+            "schema_version": SCHEMA,
+            "glyph": GLYPH,
+            "spoken": "interconnect mesh",
+            "repo": repo,
+            "ts": round(time.time(), 3),
+            "status": "unknown_repository",
+            "error": f"Unknown repository: {repo}. Run cortex bootstrap first.",
+            "mesh_green": False,
+            "overall_ready": False,
+            "readiness": {
+                "schema_version": "cortex-interconnect-readiness/1.1",
+                "overall_state": "fail",
+                "overall_ready": False,
+                "reason": "unknown_repository",
+                "advisory_only": True,
+                "policy_effect": False,
+            },
+            "bottlenecks": ["unknown_repository"],
+            "advisory_only": True,
+            "policy_effect": False,
+            "update_authorized": False,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "claim_boundary": (
+                "Interconnect inspection cannot create repository identity, "
+                "initialize adaptive state, grant authority, or mutate host source."
+            ),
+        }
+
     graph = load_metric_graph(store, repo)
     ranker = ranker_status(store, repo)
     hnsw = hnsw_status(store, repo)
@@ -683,6 +717,11 @@ def mesh_status(
             if compact
             else progress_glyph_registry()
         ),
+        "advisory_only": True,
+        "policy_effect": False,
+        "update_authorized": False,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
         "claim_boundary": (
             "Interconnect mesh is local operational health; not consciousness "
             "and not host mutation authority."
