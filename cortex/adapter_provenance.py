@@ -398,12 +398,124 @@ def ensure_adapter_provenance_tables(store: Any) -> None:
     for name in ("runtime_profile_digest", "host_identity_digest", "binding_digest"):
         if name not in columns:
             store.db.execute(f"ALTER TABLE model_adapter_registrations ADD COLUMN {name} TEXT")
+    _migrate_legacy_registration_identity(store)
     store.db.execute(
         """CREATE UNIQUE INDEX IF NOT EXISTS idx_model_adapter_registration_binding
            ON model_adapter_registrations(repository_id, binding_digest)
            WHERE binding_digest IS NOT NULL"""
     )
     store.db.commit()
+
+
+def _migrate_legacy_registration_identity(store: Any) -> None:
+    """Replace the v9.4 implementation-wide UNIQUE law without rewriting rows.
+
+    Early v9.4 stores allowed only one model/runtime profile for an adapter
+    implementation and boundary.  That contradicts the current canonical
+    binding law and prevents a single provider-neutral adapter class from
+    addressing multiple replaceable models.  The migration copies immutable
+    row material byte-for-byte into the binding-keyed table inside one SQLite
+    transaction, verifies the copy, and only then drops the legacy table.
+    """
+
+    row = store.db.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='model_adapter_registrations'"
+    ).fetchone()
+    table_sql = re.sub(r"\s+", "", str(row["sql"] if row is not None else "")).lower()
+    legacy_law = "unique(repository_id,implementation_digest,boundary_kind)"
+    if legacy_law not in table_sql:
+        return
+
+    columns = (
+        "registration_id",
+        "registration_hash",
+        "repository_id",
+        "repo",
+        "implementation_digest",
+        "runtime_profile_digest",
+        "host_identity_digest",
+        "binding_digest",
+        "boundary_kind",
+        "evidence_class",
+        "principal_id",
+        "principal_secret_hash",
+        "registration_json",
+        "created_at",
+    )
+    before = [
+        tuple(row[name] for name in columns)
+        for row in store.db.execute(
+            "SELECT " + ",".join(columns) + " FROM model_adapter_registrations ORDER BY registration_id"
+        ).fetchall()
+    ]
+    with store.transaction() as conn:
+        conn.execute("DROP TRIGGER IF EXISTS model_adapter_registrations_no_update")
+        conn.execute("DROP TRIGGER IF EXISTS model_adapter_registrations_no_delete")
+        conn.execute("DROP INDEX IF EXISTS idx_model_adapter_registrations_repo")
+        conn.execute("DROP INDEX IF EXISTS idx_model_adapter_registration_binding")
+        conn.execute(
+            "ALTER TABLE model_adapter_registrations RENAME TO model_adapter_registrations_pre_v960"
+        )
+        conn.execute(
+            """
+            CREATE TABLE model_adapter_registrations(
+                registration_id TEXT PRIMARY KEY CHECK(length(registration_id) = 64),
+                registration_hash TEXT NOT NULL CHECK(length(registration_hash) = 64),
+                repository_id TEXT NOT NULL,
+                repo TEXT NOT NULL,
+                implementation_digest TEXT NOT NULL CHECK(length(implementation_digest) = 64),
+                runtime_profile_digest TEXT NOT NULL,
+                host_identity_digest TEXT NOT NULL,
+                binding_digest TEXT NOT NULL,
+                boundary_kind TEXT NOT NULL,
+                evidence_class TEXT NOT NULL,
+                principal_id TEXT NOT NULL,
+                principal_secret_hash TEXT NOT NULL CHECK(length(principal_secret_hash) = 64),
+                registration_json TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                UNIQUE(repository_id, binding_digest)
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO model_adapter_registrations("
+            + ",".join(columns)
+            + ") SELECT "
+            + ",".join(columns)
+            + " FROM model_adapter_registrations_pre_v960"
+        )
+        after = [
+            tuple(row[name] for name in columns)
+            for row in conn.execute(
+                "SELECT " + ",".join(columns) + " FROM model_adapter_registrations ORDER BY registration_id"
+            ).fetchall()
+        ]
+        if after != before:
+            raise AdapterProvenanceError(
+                "legacy adapter registration migration failed byte-preserving verification"
+            )
+        conn.execute("DROP TABLE model_adapter_registrations_pre_v960")
+        conn.execute(
+            """CREATE INDEX idx_model_adapter_registrations_repo
+               ON model_adapter_registrations(repo, implementation_digest, created_at DESC)"""
+        )
+        conn.execute(
+            """CREATE UNIQUE INDEX idx_model_adapter_registration_binding
+               ON model_adapter_registrations(repository_id, binding_digest)
+               WHERE binding_digest IS NOT NULL"""
+        )
+        conn.execute(
+            """CREATE TRIGGER model_adapter_registrations_no_update
+               BEFORE UPDATE ON model_adapter_registrations BEGIN
+                   SELECT RAISE(ABORT, 'adapter registrations cannot be updated');
+               END"""
+        )
+        conn.execute(
+            """CREATE TRIGGER model_adapter_registrations_no_delete
+               BEFORE DELETE ON model_adapter_registrations BEGIN
+                   SELECT RAISE(ABORT, 'adapter registrations cannot be deleted');
+               END"""
+        )
 
 
 def _registration_material(body: Mapping[str, Any]) -> dict[str, Any]:

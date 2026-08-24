@@ -1,3 +1,32 @@
+## 9.6.0 - Empirical Commissioning Seal
+
+- Added an optional loopback Ollama adapter outside the provider-neutral core.
+  It accepts only canonical model requests, requires a bounded public task,
+  enforces structured public output, strips provider-native fields, and never
+  requests or persists hidden reasoning.
+- Added an independently reconstructed empirical commissioning seal that
+  reloads canonical circulation receipts and requires a host-registered live
+  adapter, verified outcome, witness result, complete receipt chain, and false
+  authority flags.
+- Migrated legacy adapter-registration uniqueness from one row per
+  implementation/boundary to the exact implementation/runtime/model binding.
+  Existing immutable registration rows are copied byte-for-byte and verified
+  transactionally before the legacy table is removed.
+- Added explicit live commissioning and transfer scripts. Plaintext
+  registration secrets are generated ephemerally, never printed or persisted,
+  and are discarded after their hashes bind the local registration.
+- Executed one live `phi4-mini` circulation through the local Ollama boundary.
+  The canonical result independently verifies as a successful
+  `live_empirical` outcome with a commit-before-reveal witness.
+- Distilled only the demonstrated public exact-token procedure and executed a
+  strict five-arm live `mistral` transfer trial. Every arm passed, but all four
+  measured gains were `0.0`; the declared `0.05` threshold therefore held
+  portability at `unresolved` and blocked distribution.
+- Host mutation, execution, memory admission, policy effect, automatic
+  distribution, and automatic revision remain false. The release does not
+  claim provider attestation, model competence, cross-model benefit,
+  consciousness, agency, or authority.
+
 ## 9.5.1 - Canonical Runtime Convergence
 
 - Made interconnect fail closed on unknown repository identities before any
