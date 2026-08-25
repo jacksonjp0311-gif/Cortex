@@ -1,16 +1,17 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v9.8.2",
+  "release": "Cortex v9.8.3",
   "release_class": "advanced research prototype",
-  "source_commit": "5035b9b7e8bb8765b88b57d362636e45499014c6",
-  "runtime_parent": "5035b9b7e8bb8765b88b57d362636e45499014c6",
+  "source_commit": "f1025fa7246063c5f3a01835588d5c7f7b10cbef",
+  "runtime_parent": "f1025fa7246063c5f3a01835588d5c7f7b10cbef",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/intelligence/PHASE_V9.8.2_INFORMATION_BALANCED_HELDOUT_SEAL.md",
+  "phase_document": "docs/intelligence/PHASE_V9.8.3_FRONTIER_CALIBRATION_COMMISSIONING.md",
   "evidence_boundary": {
     "model_circulation": "verified mechanism and one prior live empirical circulation",
     "causal_competence_improvement": "not established",
     "experimental_discriminability": "entropy, discordance, exact power, and development task-forge mechanisms verified; confirmatory run not executed",
     "information_balanced_calibration": "Rasch-style difficulty and item-information mechanism verified; 80-case development ladder generated; frontier calibration not executed",
+    "calibration_commissioning": "two-stage discrete information gate and canonical live-circulation resolver verified; accepted observations zero; empirical calibration not executed",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical support verifier implemented; completeness unresolved",
     "production_repository_portability": "not established",
@@ -22,5 +23,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v9.8.1 discriminative task forge"
+  "supersedes": "Cortex v9.8.2 information-balanced heldout seal"
 }
