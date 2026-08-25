@@ -1,0 +1,60 @@
+{
+  "accepted_observation_hashes": [],
+  "authority": {
+    "execution_authorized": false,
+    "host_mutate_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "update_authorized": false
+  },
+  "claim_boundary": "v9.8.3 measures development-task difficulty from canonically verified live public outputs. It does not establish competence lift, confirmatory evidence, model superiority, cognition, consciousness, agency, or authority.",
+  "commissioning_hash": "7104535e77ffcd626de3d684e7c4f60dc8e710808eef26887e21558a034b1c9d",
+  "confirmatory_eligible": false,
+  "corpus_hash": "eb1d50acaddb4287c6d7964dea2d3226587ef98d5f8593be3c00ea6d9431c9bb",
+  "development_only": true,
+  "empirical_trial_executed": false,
+  "errors": [],
+  "families": {
+    "api_migration": {
+      "levels": {},
+      "recommended_action": "collect_screening_cases",
+      "state": "not_executed"
+    },
+    "architecture_reconstruction": {
+      "levels": {},
+      "recommended_action": "collect_screening_cases",
+      "state": "not_executed"
+    },
+    "multi_step_code_repair": {
+      "levels": {},
+      "recommended_action": "collect_screening_cases",
+      "state": "not_executed"
+    },
+    "repository_bug_localization": {
+      "levels": {},
+      "recommended_action": "collect_screening_cases",
+      "state": "not_executed"
+    },
+    "stale_state_detection": {
+      "levels": {},
+      "recommended_action": "collect_screening_cases",
+      "state": "not_executed"
+    }
+  },
+  "private_chain_of_thought_stored": false,
+  "protocol": {
+    "center_out": true,
+    "confirmation_cases": 8,
+    "model_identity_used_in_selection": false,
+    "model_selected_at_runtime": true,
+    "screening_cases": 4,
+    "success_window": [
+      0.3,
+      0.7
+    ]
+  },
+  "schema_version": "cortex-calibration-commissioning/1.0",
+  "selected": {},
+  "status": "CALIBRATION_NOT_EXECUTED",
+  "version": "9.8.3"
+}

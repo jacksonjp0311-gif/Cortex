@@ -1,3 +1,17 @@
+## 9.8.3 - Frontier Calibration Commissioning & Discrete Information Seal
+
+- Added a two-stage calibration protocol that treats four cases as screening
+  and requires eight cases for information-balanced level confirmation.
+- Made the Bernoulli rate lattice explicit: the `.30-.70` band admits only
+  `2/4` at four cases and `3/8`, `4/8`, or `5/8` at eight cases.
+- Added development observation resolution from canonically verified
+  `live_empirical` circulation rows. Caller success flags and synthetic adapter
+  evidence cannot enter the accepted panel.
+- Added duplicate case/invocation rejection, exact case/prompt bindings, closed
+  authority flags, and a model-neutral commissioning receipt.
+- Added a runnable structural commissioning surface. No new frontier model run,
+  held-out corpus, or causal competence claim was produced in this release.
+
 ## 9.8.2 - Information-Balanced Calibration & Held-Out Corpus Seal
 
 - Added Rasch-style ability/difficulty probability and item-information

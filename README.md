@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.2-0ea5e9?style=for-the-badge" alt="v9.8.2" />
+  <img src="https://img.shields.io/badge/version-9.8.3-0ea5e9?style=for-the-badge" alt="v9.8.3" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -138,6 +138,36 @@ development ladder
 An unexecuted held-out corpus is experimental design, not evidence. Caller
 claims, model identity, provider labels, and high continuous scores cannot turn
 it into a causal result.
+
+### The next measurement step: four screens, eight confirms
+
+v9.8.3 makes the experiment's discrete geometry explicit. With `n` binary
+cases, Cortex can observe only `p=k/n`. Four cases therefore permit only:
+
+```text
+n = 4  →  p ∈ {0, .25, .50, .75, 1}
+n = 8  →  p ∈ {0, .125, .25, .375, .50, .625, .75, .875, 1}
+```
+
+Inside the declared `.30 ≤ p ≤ .70` information band, four cases are too coarse
+for a robust seal: only `2/4` qualifies. Cortex now uses four cases only to find
+a promising difficulty, then requires eight independent variants. At eight,
+`3/8`, `4/8`, or `5/8` qualify.
+
+```text
+4-case screen
+  ├─ 0/4       → move easier
+  ├─ 4/4       → move harder
+  └─ mixed     → collect four new variants
+                         ↓
+8-case confirmation → retain only 3/8, 4/8, or 5/8
+```
+
+Accepted observations must be reconstructed from Cortex's canonical live-model
+circulation ledger and independently evaluated from public output. Synthetic
+fixtures, caller success flags, model labels, and replayed invocations cannot
+open the calibration gate. This release commissions that mechanism; it does not
+claim that a frontier calibration or positive competence transfer occurred.
 
 ## Start here: attach Cortex to a project
 

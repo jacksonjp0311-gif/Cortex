@@ -34,6 +34,8 @@ def main() -> int:
                 metadata_state = "structural_unexecuted"
             elif payload.get("schema_version") == "cortex-information-balanced-forge-benchmark/1.0" and payload.get("empirical_trial_executed") is False:
                 metadata_state = "structural_unexecuted"
+            elif payload.get("schema_version") == "cortex-calibration-commissioning/1.0" and payload.get("empirical_trial_executed") is False:
+                metadata_state = "structural_unexecuted"
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
@@ -52,7 +54,7 @@ def main() -> int:
     ).hexdigest()
     manifest = {
         "schema_version": "cortex-benchmark-result-manifest/1.0",
-        "cortex_version": "9.8.2",
+        "cortex_version": "9.8.3",
         "source_commit": commit,
         "benchmark_suite_hash": suite_hash,
         "runtime_class": {"python": platform.python_version(), "system": platform.system()},
@@ -60,7 +62,7 @@ def main() -> int:
         "result_count": len(files),
         "results": files,
         "limitations": [
-            "Artifacts span historical results, fresh controlled reruns, one development-only frontier calibration, and an unexecuted task-forge manifest.",
+            "Artifacts span historical results, fresh controlled reruns, one development-only frontier calibration, and unexecuted task-forge and commissioning manifests.",
             "Manifest generation is not a benchmark rerun.",
             "legacy_partial artifacts cannot establish current-head empirical effects.",
             "Development calibration and structural manifests cannot establish confirmatory competence effects.",

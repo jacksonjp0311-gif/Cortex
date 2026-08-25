@@ -15,8 +15,8 @@ from typing import Any
 from .discriminability import assess_binary_task_family
 
 
-SCHEMA_VERSION = "cortex-information-calibration/1.0"
-VERSION = "9.8.2"
+SCHEMA_VERSION = "cortex-information-calibration/1.1"
+VERSION = "9.8.3"
 _FORBIDDEN_IDENTITY_KEYS = frozenset({"model", "model_id", "provider", "provider_family", "adapter", "adapter_id", "endpoint"})
 _CALIBRATION_KEYS = frozenset({
     "schema_version", "version", "families", "selected", "overall_state",
@@ -28,6 +28,85 @@ _CALIBRATION_KEYS = frozenset({
 
 class InformationCalibrationError(ValueError):
     pass
+
+
+def attainable_success_rates(case_count: int) -> list[float]:
+    """Return the discrete Bernoulli rate lattice available at sample size n."""
+    count = int(case_count)
+    if count < 1:
+        raise InformationCalibrationError("case_count must be positive")
+    return [round(successes / count, 9) for successes in range(count + 1)]
+
+
+def eligible_success_counts(
+    case_count: int,
+    *,
+    minimum_success_rate: float = 0.30,
+    maximum_success_rate: float = 0.70,
+) -> list[int]:
+    """Return exactly attainable success counts inside the information band."""
+    if not 0.0 <= minimum_success_rate < maximum_success_rate <= 1.0:
+        raise InformationCalibrationError("calibration success-rate bounds are invalid")
+    rates = attainable_success_rates(case_count)
+    return [
+        successes
+        for successes, rate in enumerate(rates)
+        if minimum_success_rate <= rate <= maximum_success_rate
+    ]
+
+
+def assess_sequential_level(
+    outcomes: Sequence[bool | int | float],
+    *,
+    screening_cases: int = 4,
+    confirmation_cases: int = 8,
+    minimum_success_rate: float = 0.30,
+    maximum_success_rate: float = 0.70,
+) -> dict[str, Any]:
+    """Classify a level without pretending a four-case screen is calibration."""
+    if screening_cases < 2 or confirmation_cases <= screening_cases:
+        raise InformationCalibrationError("sequential sample sizes are invalid")
+    normalized = [int(float(value) >= 0.5) for value in outcomes]
+    count = len(normalized)
+    successes = sum(normalized)
+    if count < screening_cases:
+        state, action = "insufficient_data", "collect_screening_cases"
+    elif count < confirmation_cases:
+        if successes == 0:
+            state, action = "screening_floor", "move_easier"
+        elif successes == count:
+            state, action = "screening_ceiling", "move_harder"
+        else:
+            state, action = "screening_candidate", "collect_confirmation_cases"
+    else:
+        allowed = eligible_success_counts(
+            count,
+            minimum_success_rate=minimum_success_rate,
+            maximum_success_rate=maximum_success_rate,
+        )
+        if successes in allowed:
+            state, action = "calibrated", "retain_for_heldout_generation"
+        elif successes / count > maximum_success_rate:
+            state, action = "ceiling", "move_harder"
+        else:
+            state, action = "floor", "move_easier"
+    return {
+        "state": state,
+        "recommended_action": action,
+        "case_count": count,
+        "success_count": successes,
+        "success_rate": round(successes / count, 9) if count else None,
+        "screening_cases": int(screening_cases),
+        "confirmation_cases": int(confirmation_cases),
+        "attainable_success_rates": attainable_success_rates(count) if count else [],
+        "eligible_success_counts": eligible_success_counts(
+            count,
+            minimum_success_rate=minimum_success_rate,
+            maximum_success_rate=maximum_success_rate,
+        ) if count else [],
+        "development_only": True,
+        "confirmatory_eligible": False,
+    }
 
 
 def _canonical(value: Any) -> str:
@@ -186,7 +265,10 @@ __all__ = [
     "InformationCalibrationError",
     "SCHEMA_VERSION",
     "VERSION",
+    "assess_sequential_level",
+    "attainable_success_rates",
     "calibrate_difficulty_ladders",
+    "eligible_success_counts",
     "estimate_difficulty",
     "item_information",
     "rasch_success_probability",
