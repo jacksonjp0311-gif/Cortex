@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Cortex version | 9.8.2 |
-| Runtime commit | `ca26e1d6fbda7b3323e875c7fba8ccfc12ca972d` |
+| Runtime commit | `5035b9b7e8bb8765b88b57d362636e45499014c6` |
 | Benchmark manifest | [`benchmarks/results/MANIFEST.json`](benchmarks/results/MANIFEST.json) |
 | Evidence phase | [`v9.8.2 Information-Balanced Held-Out Seal`](docs/intelligence/PHASE_V9.8.2_INFORMATION_BALANCED_HELDOUT_SEAL.md) |
 | Prior independent audit date | August 24, 2026 |
