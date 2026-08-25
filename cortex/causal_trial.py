@@ -14,11 +14,13 @@ from typing import Any
 from .competence_differentiation import evaluate_competence_differentiation
 from .competence_transfer import get_transfer_trial
 from .discriminability import assess_paired_information, verify_task_panel
+from .discriminative_forge import verify_held_out_manifest
 from .distillation_witness import get_distillation_witness, verify_distillation_witness
+from .information_calibration import verify_difficulty_calibration
 
 PREREG_SCHEMA = "cortex-causal-preregistration/1.0"
 RESULT_SCHEMA = "cortex-preregistered-causal-result/1.0"
-VERSION = "9.8.1"
+VERSION = "9.8.2"
 PRIMARY_COMPARISONS = {"continuity": ("A", "D"), "distillation": ("B", "D"), "governance": ("C", "D")}
 STANDARD_ARMS = {
     "A": "ordinary_context",
@@ -139,6 +141,8 @@ def create_causal_preregistration(
     expected_discordance: float | None = None,
     target_power: float = 0.80,
     calibration_receipt: Mapping[str, Any] | None = None,
+    difficulty_calibration_receipt: Mapping[str, Any] | None = None,
+    heldout_corpus_manifest: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Freeze the causal design before any bound transfer trial exists."""
     repository_id = _repo_identity(store, repo)
@@ -165,15 +169,35 @@ def create_causal_preregistration(
             "reason": "expected_discordance_required_before_confirmatory_use",
         }
     )
-    calibration_check = verify_task_panel(calibration_receipt) if calibration_receipt is not None else {"valid": False, "errors": ["calibration_missing"]}
-    selected_families = set(calibration_receipt.get("selected_families") or []) if calibration_receipt is not None else set()
+    if difficulty_calibration_receipt is not None:
+        calibration_check = verify_difficulty_calibration(difficulty_calibration_receipt)
+        selected_families = set((difficulty_calibration_receipt.get("selected") or {}).keys())
+        calibration_hash = difficulty_calibration_receipt.get("calibration_hash")
+    else:
+        calibration_check = verify_task_panel(calibration_receipt) if calibration_receipt is not None else {"valid": False, "errors": ["calibration_missing"]}
+        selected_families = set(calibration_receipt.get("selected_families") or []) if calibration_receipt is not None else set()
+        calibration_hash = calibration_receipt.get("calibration_hash") if calibration_receipt is not None else None
     declared_families = {str(item) for item in task_family_strata}
     calibration_binding = {
         "state": "pass" if calibration_check["valid"] and bool(declared_families) and declared_families <= selected_families else "unknown",
-        "calibration_hash": calibration_receipt.get("calibration_hash") if calibration_receipt is not None else None,
+        "calibration_hash": calibration_hash,
         "selected_families": sorted(selected_families),
         "declared_families": sorted(declared_families),
         "reason": "declared_families_calibrated" if calibration_check["valid"] and bool(declared_families) and declared_families <= selected_families else "calibration_missing_invalid_or_unbound",
+    }
+    heldout_check = verify_held_out_manifest(heldout_corpus_manifest) if heldout_corpus_manifest is not None else {"valid": False, "errors": ["heldout_manifest_missing"]}
+    heldout_binding = {
+        "state": "pass" if (
+            heldout_check["valid"]
+            and heldout_corpus_manifest is not None
+            and heldout_corpus_manifest.get("source_calibration_hash") == calibration_hash
+            and heldout_corpus_manifest.get("corpus_hash") == str(task_corpus_hash)
+            and set((heldout_corpus_manifest.get("selected_levels") or {}).keys()) == declared_families
+        ) else "unknown",
+        "corpus_hash": heldout_corpus_manifest.get("corpus_hash") if heldout_corpus_manifest is not None else None,
+        "source_calibration_hash": heldout_corpus_manifest.get("source_calibration_hash") if heldout_corpus_manifest is not None else None,
+        "answers_present": heldout_corpus_manifest.get("answers_present_in_public_manifest") if heldout_corpus_manifest is not None else None,
+        "reason": "heldout_corpus_bound" if heldout_check["valid"] and heldout_corpus_manifest is not None and heldout_corpus_manifest.get("source_calibration_hash") == calibration_hash and heldout_corpus_manifest.get("corpus_hash") == str(task_corpus_hash) and set((heldout_corpus_manifest.get("selected_levels") or {}).keys()) == declared_families else "heldout_missing_invalid_or_unbound",
     }
     material = {
         "schema_version": PREREG_SCHEMA,
@@ -198,6 +222,7 @@ def create_causal_preregistration(
         "required_evidence_class": "live_empirical",
         "power_analysis": power_analysis,
         "discriminability_calibration": calibration_binding,
+        "heldout_corpus_seal": heldout_binding,
     }
     _reject_model_fields(material)
     preregistration_id = _sha(material)
@@ -440,6 +465,10 @@ def evaluate_preregistered_causal_trial(
         "development_calibration_bound": (
             isinstance(prereg.get("discriminability_calibration"), Mapping)
             and prereg["discriminability_calibration"].get("state") == "pass"
+        ),
+        "heldout_corpus_sealed": (
+            isinstance(prereg.get("heldout_corpus_seal"), Mapping)
+            and prereg["heldout_corpus_seal"].get("state") == "pass"
         ),
         "semantic_distillation_supported": witness_check.get("valid") is True and witness is not None and witness.get("status") == "SUPPORTED",
         "live_empirical_evidence": descriptive["gates"]["evidence_class"]["passed"],

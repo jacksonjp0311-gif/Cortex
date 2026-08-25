@@ -1,0 +1,1272 @@
+{
+  "calibration": null,
+  "claim_boundary": "Development calibration and held-out design only; no competence effect is established.",
+  "development_corpus": {
+    "cases": [
+      {
+        "answer_hash": "665c14833b4ba87e11e8bc3dcd6713bb2ac3180eb883c6bf0b3924a007a035f3",
+        "case_id": "1f5f33f00748511a38300244c09a7536cc538edbc89b3bad0a28db9913b93392",
+        "component_case_ids": [
+          "7d85f09807f508a13f5b4f0853e7166b4335e23b2c206665055dc5197c82b234"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/824', retry_limit=4, timeout_ms=28000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/824', 28, 4) and return only the new call, converting seconds to milliseconds.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "474c0554d7dad726a24e94443084e4cf3f530c6efddf20236253fa58d9aa3a5d",
+        "case_id": "78c489a817d3ee1adb62976aa3c8bbbe8aa58ebdd4085328ef33489fd7647041",
+        "component_case_ids": [
+          "dbc0143e8a21bf4b9b116a1bc1ee44502cad32473104a861baa33e192ce582e7"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/400', retry_limit=3, timeout_ms=27000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/400', 27, 3) and return only the new call, converting seconds to milliseconds.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "4ea1a7354c23b9b31eb883a673731b1e32ab569915a2e2ed22fe538d17b423f7",
+        "case_id": "bf73aea896de3e34ad7b074fa389821a9515f958bbaf91873101ed0d3fb599ce",
+        "component_case_ids": [
+          "de3514a6e22bf135774297fa3733b80541e09deff5063b4c3cb348040cd0fcc1"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/230', retry_limit=2, timeout_ms=36000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/230', 36, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "c5ed2debc45474e14677f3453b2cf674bda3c72d014fa9f232219030f3fe0b6c",
+        "case_id": "11525e02b89c93df0dbbb8606b84346cb0175ef4455e1f38cf0623a6d87a3511",
+        "component_case_ids": [
+          "e4345656a6ef48b017069edef0dd07306f1663da992355fc5eb0bbbb8c5cc424"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/489', retry_limit=1, timeout_ms=41000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/489', 41, 1) and return only the new call, converting seconds to milliseconds.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "fca7ebcd765eba6ea527ba78c86575fa561256235c08f1c75e981c40c642bb50",
+        "case_id": "1b9a9dbe767e84c89e9e38b734779cf8bfd1d2bf8508cab13697e5216e3367a1",
+        "component_case_ids": [
+          "ca5aa137193dfd0161241976895f77abd745d19827a7af1aa3db1dfae9c12930",
+          "c7c5d12352db86c2a078c3d91f944f31111407b68df76802b1d8e0baf58beaf5"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/852', retry_limit=2, timeout_ms=23000)|request(endpoint='/health/615', retry_limit=2, timeout_ms=23000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/852', 23, 2) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/615', 23, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "fee3025e5fc4bebe66283d1bc1dd90291c14f92ab7b6c6e18b4c351a078cd414",
+        "case_id": "9981090f4aefbf69c429c20a31e9bbe40981fdfd34b51be41e147d7e3d0922fa",
+        "component_case_ids": [
+          "8c16a126a8afb23ddc476859f94c4dd1cd7625452269c51e205f96c1d8451a26",
+          "5815f94eac8dc6dfffe0d3360acf1c632528b8e2c65d0760f81f48e882a5cd18"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/443', retry_limit=3, timeout_ms=34000)|request(endpoint='/health/261', retry_limit=1, timeout_ms=32000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/443', 34, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/261', 32, 1) and return only the new call, converting seconds to milliseconds.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "f9fbcd69b4d53e0dd1e5e7faf6dbe28aec34434d73dba53d8e31363280cd875e",
+        "case_id": "b6b5d8d4f9981051a3f4cb7e7512525fe60a04faecf01fe29f249a019c64d67b",
+        "component_case_ids": [
+          "be33d3411a4d81e0c7e381c52600d8e0f0a49ee5d8a8f730fff027fb770def65",
+          "b80fa8b3bb3b28c382c2978d745b533be74bb726ecc1600f7782073c4068abee"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/885', retry_limit=1, timeout_ms=36000)|request(endpoint='/health/593', retry_limit=2, timeout_ms=36000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/885', 36, 1) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/593', 36, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "fc552c03e99504f370e460de61f4d9a68a626bbbf1ba32c638aa736622fb182b",
+        "case_id": "500693bc933008e61a3f3b777dc124e52a3b8428a9896d53261fb281a5280a79",
+        "component_case_ids": [
+          "c635ed19cc98b200f52cf9537867ea1935c1f682ec90328fc685175c11979c5b",
+          "cdb7f3469fa26b612395041d90e50ae56b930334bda6e5da4d549b3534ae97a9"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/219', retry_limit=2, timeout_ms=39000)|request(endpoint='/health/431', retry_limit=3, timeout_ms=41000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/219', 39, 2) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/431', 41, 3) and return only the new call, converting seconds to milliseconds.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "9fbdc0a877607e465ccd92db4b75073a3d9c22a26f5f79528ed187450f0dacab",
+        "case_id": "605760c2f4b03312bda39d532375330ba42495b8ad4087d6e2d82dda09f0b114",
+        "component_case_ids": [
+          "dabd55e31e4c9920455781fd9bb55c0828fbd98049dc88236196a9b35d65df58",
+          "618bb6e674e352ac642559558e8171ac62f71e1a41a91def7241aaed7a5f374a",
+          "91bcf6ae818bd3665d17e6a16bed51066b43595fa8e6e626a68a246b8417c2a4"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/430', retry_limit=1, timeout_ms=25000)|request(endpoint='/health/754', retry_limit=4, timeout_ms=25000)|request(endpoint='/health/418', retry_limit=1, timeout_ms=23000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/430', 25, 1) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/754', 25, 4) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/418', 23, 1) and return only the new call, converting seconds to milliseconds.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "82de4a96e6c8a7f2222f1193e2fcc53419e38fe821a52780fd060c5e8eb7ab74",
+        "case_id": "824d15adb4f9481e7f74cbbd1411e2040db7d7556b674294566dae247415a36e",
+        "component_case_ids": [
+          "785e30909bd07ea0a6b77fef9c2bcebbb36c0ac5b42a70e86392cabfcc344b8c",
+          "5fe421174a1d4c628647348e6b70ba9bd9c0ee4843e665a00b5c7cef96114fef",
+          "0cdaee2829d656432b7f9fcdf0dacebc54b64f5d1c2d4ed315603831980ee405"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/292', retry_limit=3, timeout_ms=31000)|request(endpoint='/health/260', retry_limit=4, timeout_ms=31000)|request(endpoint='/health/949', retry_limit=4, timeout_ms=30000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/292', 31, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/260', 31, 4) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/949', 30, 4) and return only the new call, converting seconds to milliseconds.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "19ec0345625bec84a5f27a792469a41008ca986346ceeb1ee128f29066024c8f",
+        "case_id": "6cfa2472a2f58fd97736e6ff2276793bb17c8018ececb066a49b07201959c65a",
+        "component_case_ids": [
+          "11ffbb6cf6b00903296c048f8a21bdf5e76af2c57a8bfd2b3a4b1862bac543fe",
+          "0bc9c2ad3051f9f121bd94635a52deeee91363f45b485ad5ece3c0b2ed18a431",
+          "ca5bde171e1a08b1aeb12399a216894ab7eb86577932474f13967064b2a4d547"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/556', retry_limit=4, timeout_ms=35000)|request(endpoint='/health/636', retry_limit=2, timeout_ms=36000)|request(endpoint='/health/866', retry_limit=3, timeout_ms=32000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/556', 35, 4) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/636', 36, 2) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/866', 32, 3) and return only the new call, converting seconds to milliseconds.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "515ad032d25b22781cdd0cafb2a600928df05864cf5de739ac499459fc2c3024",
+        "case_id": "574454ff5c08258031b6acf63ae8defb3239d69351cd0623f80955424c027db8",
+        "component_case_ids": [
+          "95560cd0ebcff6395931c113de168561b2ba457364f9258823d8cd4043fa5456",
+          "ebdc229d73d66d02bf16c66340a0399d91886846493c901da39e1edf962067e3",
+          "d429fdd968e82f041b47665f5bba265b0531078f61e3fce123da0d4925186c9d"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/262', retry_limit=1, timeout_ms=40000)|request(endpoint='/health/517', retry_limit=3, timeout_ms=43000)|request(endpoint='/health/241', retry_limit=1, timeout_ms=43000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/262', 40, 1) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/517', 43, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/241', 43, 1) and return only the new call, converting seconds to milliseconds.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "5dbf378f0f4f5575872a1f2ad15408c2995c974c0002d99deb39627c10f19365",
+        "case_id": "d211be6139482190270dceb6436af462529e7406a770a9874847e68e7fa99863",
+        "component_case_ids": [
+          "2daed3b39505987466a6f848076d07a8d3df02b416e9ecd7d3a8f347e38b9314",
+          "b58de990f69d470c7a962ba8aab8627bc1baf27d82aaf8d311ea406d29dedf5a",
+          "e91682c2d40b1b4c181c28a2ba27892c057e087b1e030d7eb54f4a7881f269c5",
+          "1ac13337ad41c4be2c3cbe8747423e01e1c9f6fdec630a9cffb505914f7e6045"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/431', retry_limit=1, timeout_ms=25000)|request(endpoint='/health/346', retry_limit=2, timeout_ms=21000)|request(endpoint='/health/901', retry_limit=3, timeout_ms=27000)|request(endpoint='/health/592', retry_limit=3, timeout_ms=22000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/431', 25, 1) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/346', 21, 2) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/901', 27, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 4: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/592', 22, 3) and return only the new call, converting seconds to milliseconds.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "450880f47bffbb4e2b80bff8cc8b74d00f0ad79ebff83e4aa8c9dbf03e48b840",
+        "case_id": "2649bc9bbc2ade292c07c03218a3fc9c20a19cb17b8458c535a0e63f8e776c47",
+        "component_case_ids": [
+          "01e41b27da862e58514e89bfa81d35e1c8baab5ea7e5bbc11b70a31ec9b87bf8",
+          "f004578a6541c73c3958289780e3083077df975420f7fd7fbba8579c77c4a3df",
+          "1c18bb83a823f928d84f4ba6b52c5a0ad3480afdb2acc33ad912872513ba1aa3",
+          "fdb0a5566fd8114ccb5f5bc06c1c2f455c9bca0da99d91191088669f9a708555"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/831', retry_limit=3, timeout_ms=34000)|request(endpoint='/health/753', retry_limit=3, timeout_ms=29000)|request(endpoint='/health/159', retry_limit=3, timeout_ms=32000)|request(endpoint='/health/899', retry_limit=4, timeout_ms=33000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/831', 34, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/753', 29, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/159', 32, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 4: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/899', 33, 4) and return only the new call, converting seconds to milliseconds.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "b7ec9c4d098edfe3d0af5b6309e9f1b30f9d89f9c4c2db3d850d3dea944adf31",
+        "case_id": "bdf8aa6931712193bb744732b38ae58e81a806f77244c1bec9b071d2ffa83106",
+        "component_case_ids": [
+          "46d65ab1483d2f9fb26c03c21cb474c7af868d962288bc9b3e06daa4d3c9b558",
+          "e9a9da055437caa4871bd5cb7a881aa4717d8ddec988c16667321c4eb479036d",
+          "73a7a4dfde1a05592719a06c60b5cc47b6c1406e525d9eacce164a4e4fe5f668",
+          "458905f79184da085df21152c80e17d331d64ab6081975d270602a752d700730"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/856', retry_limit=4, timeout_ms=31000)|request(endpoint='/health/907', retry_limit=3, timeout_ms=33000)|request(endpoint='/health/432', retry_limit=1, timeout_ms=35000)|request(endpoint='/health/881', retry_limit=4, timeout_ms=38000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/856', 31, 4) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/907', 33, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/432', 35, 1) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 4: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/881', 38, 4) and return only the new call, converting seconds to milliseconds.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "9d50f283112fb93345eb5649bce0624491f023ba5933daac71c8a084e124080c",
+        "case_id": "5bc6b66513ed1157b74aafb6c7f0ce3bbede8db22f3f2fdc377a9691d1adc53d",
+        "component_case_ids": [
+          "630d80305e7d0cf2c1d7aed76296a712e2c3ed64e956529bf00dd8f7c2037ac4",
+          "7629e9372626341a5a0e055b43f57050cba381865a92cdd9fc0609290d83e387",
+          "ab0384f89ab2a56ff974dac08b8c626b26d3dc775017f9ef642a3eb8a60bc284",
+          "f2e5107135a689f9ca18c93f63b94f11e930920347c018f9fe5872e075615361"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health/342', retry_limit=4, timeout_ms=42000)|request(endpoint='/health/789', retry_limit=3, timeout_ms=40000)|request(endpoint='/health/216', retry_limit=4, timeout_ms=39000)|request(endpoint='/health/280', retry_limit=4, timeout_ms=36000)",
+        "family": "api_migration",
+        "prompt": "Subcase 1: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/342', 42, 4) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 2: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/789', 40, 3) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 3: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/216', 39, 4) and return only the new call, converting seconds to milliseconds. Solve each independent subcase and return answers joined by | in order. Subcase 4: Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health/280', 36, 4) and return only the new call, converting seconds to milliseconds.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "b55163e48d38dd0aa05899c4fc489cf53658131e42245e398150c9968bba1551",
+        "case_id": "4827c2d12d33d2d5d8149a58406d9b1ca0a4fb8e58578b4b4606cb602b0f3460",
+        "component_case_ids": [
+          "a3d0a22686d155462b1dac16c62949dd51bf63a0ec00d395626462f702913717"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a67c67b67e67d67f67",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a67': [], 'b67': ['a67'], 'c67': ['a67'], 'd67': ['b67', 'c67'], 'e67': ['c67'], 'f67': ['d67', 'e67']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "9117114ef0873eb7a63907630ce746d185fd177e71192baae03d88826b1d91f8",
+        "case_id": "9d40170d31ecf1f883c4ddaf1d3d8a6f3bea288e731f0cc2b0eda6368014ea48",
+        "component_case_ids": [
+          "8a04d71e5c2254b31932e7f3536a953f0bcfabdea9cc3f771e76f2c5418dae47"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a27b27c27d27e27f27",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a27': [], 'b27': ['a27'], 'c27': ['a27'], 'd27': ['b27', 'c27'], 'e27': ['c27'], 'f27': ['d27', 'e27']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "8fb1281e912fa4e45c9168574d9c0cf0d1d09ea106d232a9a67039ede6d1884d",
+        "case_id": "eb540d6915aefdca7a2309b1d1125fd5045d49140c6d2e5d710f17e4ff97afcd",
+        "component_case_ids": [
+          "21d51544433e3d42db630c3efe8393ec3b5ede5769a5daee595130676d5e837f"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a62c62b62e62d62f62",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a62': [], 'b62': ['a62'], 'c62': ['a62'], 'd62': ['b62', 'c62'], 'e62': ['c62'], 'f62': ['d62', 'e62']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "dc404e772dfebdb25cec8d8560a4666b4b9f72967fede12a95c4f7251f19cfa2",
+        "case_id": "da4d4b88a5c8550d5f3a557215e4cf82664a252a9de6bcc9999d0bb9ebeef381",
+        "component_case_ids": [
+          "f903b006a237ef26e9d2c31610d8251b5e7eefa0464af65c1fdc22d5f46895dc"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a61b61c61d61e61f61",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a61': [], 'b61': ['a61'], 'c61': ['a61'], 'd61': ['b61', 'c61'], 'e61': ['c61'], 'f61': ['d61', 'e61']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "b1090680eea971c7006872cade64eb7b2367f3ed4d6dd34117ce14e72763d399",
+        "case_id": "706866ba98c48ae6313af520986735b9109767887823429c0ccc336fbbaece29",
+        "component_case_ids": [
+          "1f0583e95826330986487962d9465cb1b4c00835ecb29921c2fd0ac25b687d46",
+          "761f4a763e8df7b3eb5f1c4a2391474e907ef3126766bf70d29d5bc6225ec45d"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a87c87b87e87d87f87|a76c76b76e76d76f76",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a87': [], 'b87': ['a87'], 'c87': ['a87'], 'd87': ['b87', 'c87'], 'e87': ['c87'], 'f87': ['d87', 'e87']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a76': [], 'b76': ['a76'], 'c76': ['a76'], 'd76': ['b76', 'c76'], 'e76': ['c76'], 'f76': ['d76', 'e76']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "95521a83ba4dcf418b11550acbeb2ec7a797ba34c8915572c90c91edbe3eeaf4",
+        "case_id": "1bdc1b4aff9e774acd884ee9c4821c12a463b212222b51f676bbad152152d846",
+        "component_case_ids": [
+          "e0c549c3d4fd03e19c39154fc36a9d8d453e9e5d16f85b320b1c6a41a44ad629",
+          "49f73040bf003a8813293b3b27e73ff5dd3df752dafc4d1aa11bd5daee84775d"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a12b12c12d12e12f12|a93b93c93d93e93f93",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a12': [], 'b12': ['a12'], 'c12': ['a12'], 'd12': ['b12', 'c12'], 'e12': ['c12'], 'f12': ['d12', 'e12']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a93': [], 'b93': ['a93'], 'c93': ['a93'], 'd93': ['b93', 'c93'], 'e93': ['c93'], 'f93': ['d93', 'e93']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "3c719ce37ac1a12606331abdf86ca04c7a599e340030fb13c52a80121e48b329",
+        "case_id": "68acacb166613d294194f5189b3affa1b055e56100f492443a65bac4e07a6d40",
+        "component_case_ids": [
+          "d534fb13db6a3fe921b6f0377a23ba7ed9aa1c431d87fa0a692aa85f7f8dabd5",
+          "27cd9996f5f314e6e16e5f165a08bc3eac6c642ba472f1d32101a6885f520e47"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a36c36b36e36d36f36|a42c42b42e42d42f42",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a36': [], 'b36': ['a36'], 'c36': ['a36'], 'd36': ['b36', 'c36'], 'e36': ['c36'], 'f36': ['d36', 'e36']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a42': [], 'b42': ['a42'], 'c42': ['a42'], 'd42': ['b42', 'c42'], 'e42': ['c42'], 'f42': ['d42', 'e42']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "8151be0897be3c783398d6b128872a6ffd53c65155f847bbac7dcfac5c3a9bc6",
+        "case_id": "139403a71d24667a4ae9976540814bee1330caf52a80d29a31068bd2142a0455",
+        "component_case_ids": [
+          "4ec0bd48f32d24ca08f2da51d253c3df68b4cf1baac17a3cfb937a4ea305349c",
+          "f269d84fec947c3214d56ad865ca2e17b1e25aeb1c916a3decf403feef0a2b86"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a47b47c47d47e47f47|a97b97c97d97e97f97",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a47': [], 'b47': ['a47'], 'c47': ['a47'], 'd47': ['b47', 'c47'], 'e47': ['c47'], 'f47': ['d47', 'e47']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a97': [], 'b97': ['a97'], 'c97': ['a97'], 'd97': ['b97', 'c97'], 'e97': ['c97'], 'f97': ['d97', 'e97']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "f79074c5cc34d45a6fe752bfdb1cdab4464f91f3d49fa32d96aff38fa15fca61",
+        "case_id": "a026adaad01e56e83a6d707f41fc5df200d1e77805ce001b5dc01564f2a1cc65",
+        "component_case_ids": [
+          "2da1c0e0331ac7d39f09c68fc0bfa071a430315f75545e815bc3ddb16030d26e",
+          "69b330bfbf12af19570f36b2d9855d3f4ef26408d08f7ceb0d145a6bf8c6241f",
+          "c14b316efea5a0b61d196c9c17a331635254ca302c5ef557e75b91c5ea6bebb1"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a81c81b81e81d81f81|a23c23b23e23d23f23|a35c35b35e35d35f35",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a81': [], 'b81': ['a81'], 'c81': ['a81'], 'd81': ['b81', 'c81'], 'e81': ['c81'], 'f81': ['d81', 'e81']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a23': [], 'b23': ['a23'], 'c23': ['a23'], 'd23': ['b23', 'c23'], 'e23': ['c23'], 'f23': ['d23', 'e23']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a35': [], 'b35': ['a35'], 'c35': ['a35'], 'd35': ['b35', 'c35'], 'e35': ['c35'], 'f35': ['d35', 'e35']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "f51dbe7b796636a99ab222fe9fb7ee8252e230b34bfa234adc5e9e8d7e60c81e",
+        "case_id": "626036f322e4fe5cb7a639ed6b3b201a455d59e7ebbb86bb89a9056cc3904633",
+        "component_case_ids": [
+          "165a90d68264f67be9cbe68a79163ffd427990b410cb9d8a92d8ee98df3072cc",
+          "335bda0212489f8795bbd7a42e64ad37a28b41760252fb3b4372fe6d877a8657",
+          "25abc2598a945a8ca0248eff8952201a87343d086529e80a58f87912727238e4"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a41b41c41d41e41f41|a50b50c50d50e50f50|a21b21c21d21e21f21",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a41': [], 'b41': ['a41'], 'c41': ['a41'], 'd41': ['b41', 'c41'], 'e41': ['c41'], 'f41': ['d41', 'e41']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a50': [], 'b50': ['a50'], 'c50': ['a50'], 'd50': ['b50', 'c50'], 'e50': ['c50'], 'f50': ['d50', 'e50']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a21': [], 'b21': ['a21'], 'c21': ['a21'], 'd21': ['b21', 'c21'], 'e21': ['c21'], 'f21': ['d21', 'e21']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "f1412690b7fdf679f1fe975927aa45c23587748eca7e8ba16ca1d09c1849882d",
+        "case_id": "5271bb793abda04737d6aba96460b51ffad58ac8a5254f267f16b7727935598e",
+        "component_case_ids": [
+          "98b5d0d3c99fc67a6bfe1ffc94345c6a1e9e3ce84fcad11879bf41e38addd48a",
+          "52cfd15369545eb6dcfd6e97d324a8c66c21f4090b0b78be1802df9ad855fb94",
+          "9c336e84fb7e831ab1cb85abef72440330ff481a8a61c6c76593266f97727c74"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a13c13b13e13d13f13|a30c30b30e30d30f30|a20c20b20e20d20f20",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a13': [], 'b13': ['a13'], 'c13': ['a13'], 'd13': ['b13', 'c13'], 'e13': ['c13'], 'f13': ['d13', 'e13']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a30': [], 'b30': ['a30'], 'c30': ['a30'], 'd30': ['b30', 'c30'], 'e30': ['c30'], 'f30': ['d30', 'e30']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a20': [], 'b20': ['a20'], 'c20': ['a20'], 'd20': ['b20', 'c20'], 'e20': ['c20'], 'f20': ['d20', 'e20']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "f4043d2018d36d25ffebc67bc12302ff6b03daa8a2f38b629ab56762daa2b4be",
+        "case_id": "476cf52bd08288d0a26f187341521970218a81a75465b453fb87fac5e2b0687d",
+        "component_case_ids": [
+          "1b96bb2c0781ff6cfecacd5327eb6abf93fc680766943b18ac3ec3fc5f6acd37",
+          "8aacb5a68d0754a352b95d057fe934720695fdd31a8f51c59b5d9a335708cccc",
+          "a863138ab3ad01393de05e4b76238bc5d9e182c62b6603db8c0a4e1b62e5c67d"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a56b56c56d56e56f56|a17b17c17d17e17f17|a68b68c68d68e68f68",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a56': [], 'b56': ['a56'], 'c56': ['a56'], 'd56': ['b56', 'c56'], 'e56': ['c56'], 'f56': ['d56', 'e56']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a17': [], 'b17': ['a17'], 'c17': ['a17'], 'd17': ['b17', 'c17'], 'e17': ['c17'], 'f17': ['d17', 'e17']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a68': [], 'b68': ['a68'], 'c68': ['a68'], 'd68': ['b68', 'c68'], 'e68': ['c68'], 'f68': ['d68', 'e68']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "eb74ca6ee6565fb932a951baa028ed169316d6d8dc1d08b9a68113b351fa93ab",
+        "case_id": "144cb5259151e514e65d3c1c48f93fdad862885cc6b960ab91ae14e06c8ba04f",
+        "component_case_ids": [
+          "617e601cb7c772bfa593b426886bf5a032d55c874414a44a5334b19e7346977d",
+          "92ca8a0cb78601a951c1c9e84ba9f89f594ba8c0c76a3973356aa01cb50cc877",
+          "d5fdd3172d2241d26244c7d25355f89d3e9a64ef24a50f3fa2764a453a115c4b",
+          "3334cd97bb47e77677ce38d4d36b79da157bdf7c6fcf186a81d9fee0340c5554"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a62c62b62e62d62f62|a70c70b70e70d70f70|a91c91b91e91d91f91|a46c46b46e46d46f46",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a62': [], 'b62': ['a62'], 'c62': ['a62'], 'd62': ['b62', 'c62'], 'e62': ['c62'], 'f62': ['d62', 'e62']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a70': [], 'b70': ['a70'], 'c70': ['a70'], 'd70': ['b70', 'c70'], 'e70': ['c70'], 'f70': ['d70', 'e70']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a91': [], 'b91': ['a91'], 'c91': ['a91'], 'd91': ['b91', 'c91'], 'e91': ['c91'], 'f91': ['d91', 'e91']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 4: Dependencies are {'a46': [], 'b46': ['a46'], 'c46': ['a46'], 'd46': ['b46', 'c46'], 'e46': ['c46'], 'f46': ['d46', 'e46']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "3d8076d2a6a3697a9371b251deb11639627c6232ab577b715ca5ce91cd5c0f8b",
+        "case_id": "f67b4ef5851c16bd6c84cc8e1d78dd4dcd8e15813e774bdb018afed90fc16d87",
+        "component_case_ids": [
+          "f8a338150312507ec3c21902b91d0656912e6f3d40e873702493ab3ea4999336",
+          "2eea5c0deb1ff9c10ed3569219c1447c17c32e4fa5ce34dcd359bde989c28f4e",
+          "0a7ca588e8ceaa595f0911808b41769f7bcba72174400f23a7a7bf890c13ca12",
+          "8f7e122cb19a892343ce234ed770032e789c803f6bac3f36c123a27c9bb0ae5f"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a95b95c95d95e95f95|a32b32c32d32e32f32|a57b57c57d57e57f57|a78b78c78d78e78f78",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a95': [], 'b95': ['a95'], 'c95': ['a95'], 'd95': ['b95', 'c95'], 'e95': ['c95'], 'f95': ['d95', 'e95']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a32': [], 'b32': ['a32'], 'c32': ['a32'], 'd32': ['b32', 'c32'], 'e32': ['c32'], 'f32': ['d32', 'e32']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a57': [], 'b57': ['a57'], 'c57': ['a57'], 'd57': ['b57', 'c57'], 'e57': ['c57'], 'f57': ['d57', 'e57']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 4: Dependencies are {'a78': [], 'b78': ['a78'], 'c78': ['a78'], 'd78': ['b78', 'c78'], 'e78': ['c78'], 'f78': ['d78', 'e78']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "fc0ca888aa9d5739af87208b3563c41bb522dbbbbbe28ebd0a75bc9549a377b5",
+        "case_id": "81acc1107a51e9c57a6d2343d7984361ab09e62715ad7e138a8d08b2282b7ed8",
+        "component_case_ids": [
+          "220c2d91554962d286a0730b53ead718bc4ee0970eb0698789ee46ba5599758c",
+          "09eafca89d97e533df1c9e6ccdd477c309687ef25da47d045aef15b57f3edbaa",
+          "43ba3f2a4c20abbdbb5754b5b269b385ad06ce4145e20587c3ac35eca4ddd3f8",
+          "0523d862f6bd637d78830c9413f7d162ef5c7a70197331901fcdf46fa87cb287"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a54c54b54e54d54f54|a71c71b71e71d71f71|a45c45b45e45d45f45|a82c82b82e82d82f82",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a54': [], 'b54': ['a54'], 'c54': ['a54'], 'd54': ['b54', 'c54'], 'e54': ['c54'], 'f54': ['d54', 'e54']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a71': [], 'b71': ['a71'], 'c71': ['a71'], 'd71': ['b71', 'c71'], 'e71': ['c71'], 'f71': ['d71', 'e71']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a45': [], 'b45': ['a45'], 'c45': ['a45'], 'd45': ['b45', 'c45'], 'e45': ['c45'], 'f45': ['d45', 'e45']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 4: Dependencies are {'a82': [], 'b82': ['a82'], 'c82': ['a82'], 'd82': ['b82', 'c82'], 'e82': ['c82'], 'f82': ['d82', 'e82']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "aa5592916edfe2edc9de077ed97ca22df31bc29f943607f0f32cd335c1185f9a",
+        "case_id": "ae17d1b71d6dca98e773950a548b0f4db8398db3f0cff09358c41d656f51ecb4",
+        "component_case_ids": [
+          "58eab890ac2b12d6e755c651cb3731335e87015bbd878b428a9a0a3ce2e51116",
+          "70aeeff6e1351a37c7e0a472b34a9090767282b1e2c013d20c7143889a99ed57",
+          "c931b5cf6b65dac8f2be7bf4f39e711a4d96df187be04dd28be4af5e1cc132c1",
+          "ebb03158ed303cd0805a283774b3c347797ed50af6c11e277ae06a070d8c8d19"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "a72b72c72d72e72f72|a76b76c76d76e76f76|a11b11c11d11e11f11|a88b88c88d88e88f88",
+        "family": "architecture_reconstruction",
+        "prompt": "Subcase 1: Dependencies are {'a72': [], 'b72': ['a72'], 'c72': ['a72'], 'd72': ['b72', 'c72'], 'e72': ['c72'], 'f72': ['d72', 'e72']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 2: Dependencies are {'a76': [], 'b76': ['a76'], 'c76': ['a76'], 'd76': ['b76', 'c76'], 'e76': ['c76'], 'f76': ['d76', 'e76']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 3: Dependencies are {'a11': [], 'b11': ['a11'], 'c11': ['a11'], 'd11': ['b11', 'c11'], 'e11': ['c11'], 'f11': ['d11', 'e11']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order. Solve each independent subcase and return answers joined by | in order. Subcase 4: Dependencies are {'a88': [], 'b88': ['a88'], 'c88': ['a88'], 'd88': ['b88', 'c88'], 'e88': ['c88'], 'f88': ['d88', 'e88']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "47cea6234e51694af3ba37750e249b15a6cd79dce68ac582e3075bb28393b5ea",
+        "case_id": "c5d09d36a68a1c2c9206b9e5764abb899efa89dca226890827a6a3708975bc7c",
+        "component_case_ids": [
+          "5562475333c5e62efb9c94aa22ed4328ca97f4ef24b61ec929eaeb007bdc3b78"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "15",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=26; for values=[7, 24, 14, 17, 4], update x=(x+value*(index+2)) mod 131. Return the final decimal value.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "d3742a15e92101573abab216b763ecbf03b4d0d58bb4ac3d003dd98f55904ffa",
+        "case_id": "76cb0f2d3631f91f36d69edaf9b758d0617706a2c0a49d8bb89b10187a226429",
+        "component_case_ids": [
+          "91c50834223348d19693b3dfbae41147ea7db1b48a3a0077fbec3fb60e8fefcf"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "67",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=25; for values=[2, 29, 15, 16, 18, 12], update x=(x+value*(index+2)) mod 127. Return the final decimal value.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "ca30de1c42bd3e0fdbeb7fb612cbf42e8e757b6948b7a51a67827df28b65107b",
+        "case_id": "a9be64ba9c823e504b4e7bbeade038f77a72ca7f15ea6df35290e62752605f47",
+        "component_case_ids": [
+          "847a0731e8d15ee62b6e763121e8f4ba5d17fa25b24ce4dd984573c24d843cd3"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "32",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=28; for values=[18, 6, 13, 10, 29, 5, 18], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "06024be3089840dc57375f951f67e195b31c37b7e819c63a15dcba31e894aa50",
+        "case_id": "6263c0f1a8e5a9d601b0542a14ef093f1c3a7d0bf784bfb300a3e1ccffba3bfc",
+        "component_case_ids": [
+          "b4aec6eb4250b7d2f093e23a5e0cc56ecc354d81715b706a65a2035c711528ae"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "36",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=26; for values=[29, 2, 5, 25, 14, 6, 9, 12], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "79ab475498f1647ff71f5ca4ad5d3c8e26e71383f3c7a856a6ddddcb794f750e",
+        "case_id": "80a459dd16b15f0f2922f7a00b31dc6a55e52196dd2903e3c211fba13edc842f",
+        "component_case_ids": [
+          "db0b1cab20048250ce171cda21a2e69bf15d4677485d639a67f67eb76db8502f",
+          "65840b31d78e00d5cc65a96974ec12b2ec2bf96bd5e8e4e9f1ab15bcf2a61dc1"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "125|118",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=11; for values=[15, 22, 28, 3, 3], update x=(x+value*(index+2)) mod 127. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=16; for values=[21, 13, 16, 9, 29], update x=(x+value*(index+2)) mod 131. Return the final decimal value.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "bd691074da2dc723b92fc14e75ca33a200cd170f2f8e3679458e2eb35e8b84c7",
+        "case_id": "f161b7ee314cd8efc971087a2e695fa37d13fda65335c8af484bb68448877409",
+        "component_case_ids": [
+          "8d96d37853fce50a61cb7689d0c7aff1a9e1d3a4cfa5f1874de8f775014df065",
+          "eacce8aab05e4f70aee5ed4d8cda956c8705f2b0242aa4d7c3a70fdf29161088"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "103|58",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=17; for values=[29, 16, 20, 4, 20, 2], update x=(x+value*(index+2)) mod 127. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=13; for values=[16, 12, 23, 2, 15, 27], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "1c9f49d9de17fbe859daf3aac68468fb9b3f2b31fdb1829d21acca1d0edddd94",
+        "case_id": "730678b537d7849a891e2f84f4a010b0b938a7aa7dca2998ca21817eef2bc523",
+        "component_case_ids": [
+          "8f2f462947a15cefc60eace7943afc332f3b1ef021470385c566b7b2497df818",
+          "b7dd587a194f084fe782b8cfc7317228141022b533dd3034d68ebf0de2badbc7"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "32|45",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=13; for values=[23, 26, 21, 16, 16, 9, 12], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=30; for values=[22, 9, 28, 20, 2, 7, 22], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "9c06e8878d4cc4cb2490f593cfbc8dd5eda4cab0d317d418b7ac5c81a39b49ea",
+        "case_id": "1e4b99df58fe7bdcdb0b7a2f85f3dbbab40e0bbf99a4e698e0234544404faf81",
+        "component_case_ids": [
+          "7f633a335e489fa87d3792be483f30eec7e909b6a280703d35fbd688f03ec04c",
+          "b9d1cc888bc4342561735c647c3089aa4ebfc17164e5f24c53c76e4744363909"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "65|71",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=24; for values=[28, 9, 16, 28, 14, 3, 14, 24], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=15; for values=[17, 5, 8, 2, 16, 26, 29, 18], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "cd2ce2dc70bf891ea234db52fa8786872fcdb2c59649ea7f44f6ee180c07fc84",
+        "case_id": "4ec9c53b34b9f4568349241c3ef43ec1b74f7aeb09dff9d4b0c7ed658b76a8b3",
+        "component_case_ids": [
+          "2f0fe39693f3c5d049f3a3faf0a22774c731568423ab0e76020cf302f8a4cdcd",
+          "2997ab21afe2cf90d9b9bceea0478a66b33816a1cbb2b5ff4eb0526004f09741",
+          "35465a06dcd67f373c3278803ec54bc9d15637282891dc3aada193ace0d93b86"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "93|18|61",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=30; for values=[18, 10, 9, 17, 23], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=12; for values=[20, 7, 28, 20, 4], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=25; for values=[18, 23, 22, 23, 22], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "8813d9a9007948d0cd357298d499838605c750db0d472d30488cf2584666e103",
+        "case_id": "2d5a49083a958486c90d9e3e15eaa4b64aeba0d061e20bddff3112602eec814d",
+        "component_case_ids": [
+          "81984556e29a355ad4d4f9972fa627f63517d64282f159a5c0f03f0047f09923",
+          "2ded4c7e822b2f8adf7c3aa972b1f975146f5502c8be43ec0ffd71845fd73768",
+          "664222686b105e0e54c1e63215e81528cd2516a6123a039d9639b545699c0d55"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "38|2|15",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=37; for values=[29, 14, 8, 12, 15, 16], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=28; for values=[20, 25, 27, 22, 3, 21], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=30; for values=[28, 13, 23, 16, 15, 19], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "4c6d0b7899d37df54be09408eca978b4e28a3c007418209651c8cbba062e5e65",
+        "case_id": "167fd1305dbecf4f26cf9a1f1f355e920c4fe103797b6038064f7551598f3366",
+        "component_case_ids": [
+          "939a3b9ee0777773f53f3414ad92e4bf00dce85920e908bed08827fa28243f92",
+          "75c3fddf02fe7a4f4adae8c2d3eae8a0213b83043ff43f7d2817e35da76d8e7f",
+          "2b99147bde5e84036d5ff6b15398b0843314fbae7b5d24b1da40489fc10c3ba0"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "44|83|82",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=19; for values=[13, 24, 17, 27, 14, 21, 16], update x=(x+value*(index+2)) mod 127. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=11; for values=[23, 29, 29, 18, 21, 19, 7], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=39; for values=[6, 25, 23, 16, 9, 29, 4], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "a73353238b5cd22c3e01d4afc96f093eee2d9d5494060d0b53abcb82334c69e3",
+        "case_id": "84a422efeae07c54e7bd5251e49958ba59935d9a763833ee2de9511b623fcae4",
+        "component_case_ids": [
+          "9f3b1b8cc2ff3b5ab96553eb81f31a92b094807a1c40086a59010b295cd00929",
+          "bdbf216efa758d0eedb5e969e9eee104779c691681e2b4f5d3d1deda66aeeb62",
+          "2ba28eb8524be06692092a2ccc313468a26ae508b92bde66555e840905cc7b6a"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "35|83|66",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=39; for values=[23, 14, 2, 4, 23, 14, 27, 15], update x=(x+value*(index+2)) mod 101. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=19; for values=[10, 26, 10, 12, 6, 23, 19, 11], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=19; for values=[21, 5, 11, 9, 4, 8, 18, 18], update x=(x+value*(index+2)) mod 97. Return the final decimal value.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "52abcf0d12c89a6358a8acd040717d1fe7b22707df102c6915472568a710f336",
+        "case_id": "3d401407b5a919df7b401d997bf2ee058cb92722c28dcd8160ca72b16b19c897",
+        "component_case_ids": [
+          "d0ba1f541ae47d03078c958fa27261024d050a18db8b27090a7a93ddf38f820f",
+          "72c968d560e0b9e8435229aa991df1f608b6ec2a630922d1211dbd66ea4e7cf9",
+          "7736a21c087e3b2b9c1b4aeca1a4ec02e7dd2399fb625e8482cb09fa0fc25c93",
+          "c8db8faa9bd603397173e34e659d6f2579e8a20d70f8cd092cdb36f2b3d53050"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "62|50|107|11",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=24; for values=[7, 23, 6, 4, 7], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=35; for values=[8, 28, 29, 6, 12], update x=(x+value*(index+2)) mod 101. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=22; for values=[29, 7, 22, 12, 20], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 4: Repair the accumulator conceptually: start=26; for values=[21, 25, 22, 7, 8], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "aeed07fd4d7a82dc2c37d74ec27f0c02f2b36ad6ff2a35f06bff452e284321bf",
+        "case_id": "c702d78aaa4222b8c467f23f2fb360d269ffa1db1a7444ae0b496f052d00bebc",
+        "component_case_ids": [
+          "ed559471035cb2cea4c108621cdb157d8f199e0d3cf45be0e6f0cf1f39f6b560",
+          "c7439b5cfc7063ccad77d707b368715bf853105a97966cf225eb39d4b1f478fe",
+          "d033a45d2c87a77a2a541322d24269e1abdb99f6147a94d81848ed7b1baf1e7f",
+          "1672f97b6deba3c8c1c17e478571ba11ff68474d99fce4ef70be76d99a475867"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "51|19|72|80",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=27; for values=[3, 19, 20, 5, 29, 10], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=30; for values=[12, 6, 13, 15, 23, 10], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=22; for values=[14, 4, 26, 3, 21, 8], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 4: Repair the accumulator conceptually: start=14; for values=[16, 27, 2, 18, 9, 27], update x=(x+value*(index+2)) mod 97. Return the final decimal value.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "42a46c3c0dfdd9097307d87ab816d9cb1dd26cbc17abe0a24e8f5913100d8b58",
+        "case_id": "3d347843fe8ba1852baaff83f06895cf753f2fc01aaf8301b0459f19f513e53f",
+        "component_case_ids": [
+          "994edbe25233733b697bec4cb0d8e3b6682578dd685d053a4077a79dae5de128",
+          "deb5ccc1e158f11540387dbc3f137abd904aa882fa13a09f67eb6875eac234dd",
+          "b334f40551a9bb8f2f01c37f726bf60777bd8b2aa7a3148f35f9debe102e22df",
+          "409c02bb845d9ca2c2fd78884fbec44d37850798d20cb39e336cc0d2a7b79db5"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "45|45|7|66",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=17; for values=[13, 4, 28, 20, 11, 28, 5], update x=(x+value*(index+2)) mod 131. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=36; for values=[23, 2, 7, 7, 13, 2, 7], update x=(x+value*(index+2)) mod 127. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=16; for values=[28, 19, 11, 5, 20, 2, 20], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 4: Repair the accumulator conceptually: start=23; for values=[8, 19, 2, 8, 29, 22, 22], update x=(x+value*(index+2)) mod 97. Return the final decimal value.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "5620dfc9c6dc4e1ca4a480dbe8071f4dccfeacde2c67d17ca5c22acf68109c0c",
+        "case_id": "2027afd15568a963535c734084019232313bb31b1666c3ad3d5605e49ad4f19b",
+        "component_case_ids": [
+          "41abc0cd01e8c1ae30b66325fb2e4bdfdf1f3b53fe6029513d62d2b1b71bff34",
+          "0753417df83146dea9915f34848560468b6b2dc778ec0588d6854e6dd2d15f0e",
+          "68f3e49f29d3b077d9d394e0d0369436ad475f9915fe30f46e87e23506312d7c",
+          "ce5c0c74878b591ec4be08f2a37c6c03bb9b9c6fd83c49faf9264e056fbcbf60"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "0|84|34|46",
+        "family": "multi_step_code_repair",
+        "prompt": "Subcase 1: Repair the accumulator conceptually: start=11; for values=[28, 7, 25, 16, 26, 19, 8, 28], update x=(x+value*(index+2)) mod 97. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 2: Repair the accumulator conceptually: start=35; for values=[15, 7, 5, 29, 3, 8, 17, 3], update x=(x+value*(index+2)) mod 101. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 3: Repair the accumulator conceptually: start=39; for values=[12, 9, 7, 4, 15, 27, 26, 19], update x=(x+value*(index+2)) mod 127. Return the final decimal value. Solve each independent subcase and return answers joined by | in order. Subcase 4: Repair the accumulator conceptually: start=39; for values=[21, 8, 23, 24, 2, 12, 11, 20], update x=(x+value*(index+2)) mod 127. Return the final decimal value.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "358ece27df5113aa24cd918d17bdb4fc7e78f3322f4ca55960f92ea911dc89ff",
+        "case_id": "eb3386c3affc2efe8e5398d00ed8f7b09be307c8f4b30cb867bc7c4744f44ef4",
+        "component_case_ids": [
+          "e4c0921d226a9fe36bbd0384c6434dfbc6fad8371c17f824b537ca15e355c2ba"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_1.py:4",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 131. Only module_1.py line 4 uses *5. Return the unique defect as file:line.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "90bdf545f2ac3ea8e7b83c0156ae675f48d1ee27d1547ce92122472ffd344724",
+        "case_id": "246c0e896444c205263c0cafd59541bfdbaf84f8a8cf0941770c2ceabe10aab2",
+        "component_case_ids": [
+          "09aa2780c86cb41e949d5d57a3b0fe5f98dd73030288011e75a2a9f58aa7233e"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_0.py:5",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 127. Only module_0.py line 5 uses *5. Return the unique defect as file:line.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "01081cbdda5d65fd06f67455d7fa3bdbfc005fe60e5555979fe8d126e4b0c2d2",
+        "case_id": "c9ea090b51272c2859879eee951c059503e49d6a360d96b8b0a11d314fccc150",
+        "component_case_ids": [
+          "99791236b83941ad5bde0913d0fe9780dcfee8629feafb0cdbecd3d007e003e7"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_3.py:6",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 101. Only module_3.py line 6 uses *5. Return the unique defect as file:line.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "4eeb6544914896f05b7d91a968e16621b1181ed29a167bb2efd0dc7415b81e3c",
+        "case_id": "5e82826b772eccadc04f794691fef2f7eebd61286086887ee011fc7e98981a69",
+        "component_case_ids": [
+          "742e47b280831b5c94e6786c0cbfc5baf1700872455dfca72c3215491b695278"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_2.py:7",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 101. Only module_2.py line 7 uses *5. Return the unique defect as file:line.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "c82465c4d631385c9de02f83b0adb04258689729f9b485d56c369facd7507da4",
+        "case_id": "98a65ccee2bba0dcdb6bd1453ccbdf1ea75c0bf30869000c528364d78f89e992",
+        "component_case_ids": [
+          "925cd3c3e79284c9d53deccf7300dc22b226ee90438315aa67696070f738e68a",
+          "e4c0921d226a9fe36bbd0384c6434dfbc6fad8371c17f824b537ca15e355c2ba"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_1.py:4|module_1.py:4",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 127. Only module_1.py line 4 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 131. Only module_1.py line 4 uses *5. Return the unique defect as file:line.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "567b9308f91b57de3d664e41b507f25549dfc0312d3592745c014936c8250576",
+        "case_id": "884dab76fe1fd41296f348f2f1b440f9f9b50f4d8359e72d9bae7c7e16a5dcb4",
+        "component_case_ids": [
+          "09aa2780c86cb41e949d5d57a3b0fe5f98dd73030288011e75a2a9f58aa7233e",
+          "a0da623391d5edf36e7aec612d6ef21c2337ab063b48d5823c976a55b2ba3319"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_0.py:5|module_0.py:5",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 127. Only module_0.py line 5 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 101. Only module_0.py line 5 uses *5. Return the unique defect as file:line.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "91ed06cd66474e326e4476d4d3fc194d7a18cf67d173bd41b5a925bdd4a9e6be",
+        "case_id": "d6fdf9edece8a387f9da96a7f420e1c229bebb2897d6a3db7ae69f199b778ad1",
+        "component_case_ids": [
+          "a24249ad738f403883fbadea2dbe04731b8ad4293cb0eb0c576c11225153115a",
+          "99791236b83941ad5bde0913d0fe9780dcfee8629feafb0cdbecd3d007e003e7"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_3.py:6|module_3.py:6",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 131. Only module_3.py line 6 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 101. Only module_3.py line 6 uses *5. Return the unique defect as file:line.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "6d31c2dac72471ba6c2957159b9ac3ff4fab16b5c3ec2f1e1cb8967c543f46fb",
+        "case_id": "e7a7de014647e7550093d65e9b036a14a4891553a3cec597267339d8e4f4c39e",
+        "component_case_ids": [
+          "917d03fd765e288e6cdc4bb6db4c85e413da782d3153d10cb5b6ea7a2800eb2e",
+          "742e47b280831b5c94e6786c0cbfc5baf1700872455dfca72c3215491b695278"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_2.py:7|module_2.py:7",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 97. Only module_2.py line 7 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 101. Only module_2.py line 7 uses *5. Return the unique defect as file:line.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "a9dc42f1378e739923c0b9830649c043fa98ea30684083daa1e60c721f8b5a8b",
+        "case_id": "3161961df02678ed39d23ba6672e12c72e3a497f59658f83bcd53671bd868145",
+        "component_case_ids": [
+          "e4c0921d226a9fe36bbd0384c6434dfbc6fad8371c17f824b537ca15e355c2ba",
+          "2ce60d53f3332e05ea8ab9ebfb27b5143cf98351d131ac45e4da6089b43df347",
+          "812e8ba321be50f5cc9613c06e8f8148d28c9cca90e53fc7cbcac12a6f7503d5"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_1.py:4|module_1.py:4|module_1.py:4",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 131. Only module_1.py line 4 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 97. Only module_1.py line 4 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 101. Only module_1.py line 4 uses *5. Return the unique defect as file:line.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "ee7725c7cbbfdcc0832a421e835a9a8dbf1e8e9d5c57de38bb729a3d7cd4a5f6",
+        "case_id": "62c2718401ca190528dae0690c72e0b744ec757d9299735548a4f092395f561c",
+        "component_case_ids": [
+          "10815ad4f6cc385b6702847426cc2ea937e48eebb94be631a70e89388d1c5dc0",
+          "10815ad4f6cc385b6702847426cc2ea937e48eebb94be631a70e89388d1c5dc0",
+          "a0da623391d5edf36e7aec612d6ef21c2337ab063b48d5823c976a55b2ba3319"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_0.py:5|module_0.py:5|module_0.py:5",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 131. Only module_0.py line 5 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 131. Only module_0.py line 5 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 101. Only module_0.py line 5 uses *5. Return the unique defect as file:line.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "d25273a0d778efdb1cf94319613227cf23ab520f2e42d47ec97787bcd575d7c1",
+        "case_id": "3ce1d1223b89d11d886731f1c47ffba6063d1183c981cc11bd01c26d4ffd91d1",
+        "component_case_ids": [
+          "5490c828a9b43b24f3274744862b2be8182d42e5b2b6831c802e509b15824b91",
+          "0ae0033c442c47dc1dbe99d7491e12168b2b12646eba09f93a62a38f9c27b9bf",
+          "99791236b83941ad5bde0913d0fe9780dcfee8629feafb0cdbecd3d007e003e7"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_3.py:6|module_3.py:6|module_3.py:6",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 127. Only module_3.py line 6 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 97. Only module_3.py line 6 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 101. Only module_3.py line 6 uses *5. Return the unique defect as file:line.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "2c3d3960d0e29fd190dd33d26d9723458e0b0d804a45495f20e8c3f7fffb8343",
+        "case_id": "fd77a52bb79fad765ab884488a679730705ed490e9b6280c1e06e6a44e4f5786",
+        "component_case_ids": [
+          "742e47b280831b5c94e6786c0cbfc5baf1700872455dfca72c3215491b695278",
+          "917d03fd765e288e6cdc4bb6db4c85e413da782d3153d10cb5b6ea7a2800eb2e",
+          "917d03fd765e288e6cdc4bb6db4c85e413da782d3153d10cb5b6ea7a2800eb2e"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_2.py:7|module_2.py:7|module_2.py:7",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 101. Only module_2.py line 7 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 97. Only module_2.py line 7 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 97. Only module_2.py line 7 uses *5. Return the unique defect as file:line.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "6abcccbb39f9c617a769fa3e28d63943d4d64ec1b8017dff1a83d1a1c26e7553",
+        "case_id": "234a59937d9f1a152e8d228faff2c7419d589a4e8a847db78cac9f22122d6975",
+        "component_case_ids": [
+          "e4c0921d226a9fe36bbd0384c6434dfbc6fad8371c17f824b537ca15e355c2ba",
+          "812e8ba321be50f5cc9613c06e8f8148d28c9cca90e53fc7cbcac12a6f7503d5",
+          "e4c0921d226a9fe36bbd0384c6434dfbc6fad8371c17f824b537ca15e355c2ba",
+          "812e8ba321be50f5cc9613c06e8f8148d28c9cca90e53fc7cbcac12a6f7503d5"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_1.py:4|module_1.py:4|module_1.py:4|module_1.py:4",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 131. Only module_1.py line 4 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 101. Only module_1.py line 4 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 131. Only module_1.py line 4 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 4: Four modules implement x=(x*7+value) mod 101. Only module_1.py line 4 uses *5. Return the unique defect as file:line.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "db2fdb0e6b532136b72ee19a157f7cc91b072f8b47e1dcb1e43bd76dfab6729e",
+        "case_id": "0dd9c7c8b62b5f701b8b0e22375082ce48ab6f9303ad93ab46de795651929b90",
+        "component_case_ids": [
+          "c24ba713ceffad0557f2a7ff3da42edf6f6ca84d5af4b8d6a84a0c5aa9e6b38a",
+          "c24ba713ceffad0557f2a7ff3da42edf6f6ca84d5af4b8d6a84a0c5aa9e6b38a",
+          "c24ba713ceffad0557f2a7ff3da42edf6f6ca84d5af4b8d6a84a0c5aa9e6b38a",
+          "c24ba713ceffad0557f2a7ff3da42edf6f6ca84d5af4b8d6a84a0c5aa9e6b38a"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_0.py:5|module_0.py:5|module_0.py:5|module_0.py:5",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 97. Only module_0.py line 5 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 97. Only module_0.py line 5 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 97. Only module_0.py line 5 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 4: Four modules implement x=(x*7+value) mod 97. Only module_0.py line 5 uses *5. Return the unique defect as file:line.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "b6b941befd0155475db663a13acbde95a6d4d1a20a06e7c837f8ad1d54e5abaa",
+        "case_id": "5a1cf7f397e3776dacdffe6c5800fc1a381a34e987e21f539d3d867d9043d10f",
+        "component_case_ids": [
+          "a24249ad738f403883fbadea2dbe04731b8ad4293cb0eb0c576c11225153115a",
+          "5490c828a9b43b24f3274744862b2be8182d42e5b2b6831c802e509b15824b91",
+          "0ae0033c442c47dc1dbe99d7491e12168b2b12646eba09f93a62a38f9c27b9bf",
+          "0ae0033c442c47dc1dbe99d7491e12168b2b12646eba09f93a62a38f9c27b9bf"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_3.py:6|module_3.py:6|module_3.py:6|module_3.py:6",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 131. Only module_3.py line 6 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 127. Only module_3.py line 6 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 97. Only module_3.py line 6 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 4: Four modules implement x=(x*7+value) mod 97. Only module_3.py line 6 uses *5. Return the unique defect as file:line.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "fd266064a7ba64690cffb2306afcc7bbb602c48f165b5ce166bd220940267b3e",
+        "case_id": "b6f49ad0087f4b674ed988e2147a9326d0978482823896fc62541441d6701c38",
+        "component_case_ids": [
+          "917d03fd765e288e6cdc4bb6db4c85e413da782d3153d10cb5b6ea7a2800eb2e",
+          "742e47b280831b5c94e6786c0cbfc5baf1700872455dfca72c3215491b695278",
+          "cda312de1100bbcfa9d7a552664eff58f2c1f0b736d254a8088dd7cb49184e10",
+          "cda312de1100bbcfa9d7a552664eff58f2c1f0b736d254a8088dd7cb49184e10"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_2.py:7|module_2.py:7|module_2.py:7|module_2.py:7",
+        "family": "repository_bug_localization",
+        "prompt": "Subcase 1: Four modules implement x=(x*7+value) mod 97. Only module_2.py line 7 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 2: Four modules implement x=(x*7+value) mod 101. Only module_2.py line 7 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 3: Four modules implement x=(x*7+value) mod 127. Only module_2.py line 7 uses *5. Return the unique defect as file:line. Solve each independent subcase and return answers joined by | in order. Subcase 4: Four modules implement x=(x*7+value) mod 127. Only module_2.py line 7 uses *5. Return the unique defect as file:line.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "a9dd34930fcc75d71e526cd16032cd15f937522c8245c550dde7bdae9a4336d6",
+        "case_id": "483f9d3a54c5beec0cf3478641fe469366b62c60772a2b251ff7ac997512d1e2",
+        "component_case_ids": [
+          "497038703206423e9c4682ed5e53bbae44ce4b0007fc96ca0b4e8e0741d0fe87"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_85",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_85', 7, 'active'), ('m2_85', 8, 'active'), ('m1_85', 8, 'contested'), ('m3_85', 8, 'active'), ('m2_85', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "503800a10cd9f1c751463555268179d87d49fbb29bbc3bdf14f6b0e164c61c9a",
+        "case_id": "5553e37fcc2e1c005fa0aac079663179edd19ecef840905710285c149fdac61e",
+        "component_case_ids": [
+          "fbb2d349c232a5e77b7f106b3485f01c165306c445293fb75dcb42810f33d776"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_34",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_34', 12, 'active'), ('m2_34', 13, 'active'), ('m1_34', 13, 'contested'), ('m3_34', 13, 'active'), ('m2_34', 14, 'superseded')]. Latest row per ID wins. At current epoch 13, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "b989afd9aa0680f51f91f21af458c5b43f2b9eee626444672adc5d4bd6f6d4c7",
+        "case_id": "127da56b42c3e3e0d7e62a7fa41433b53a6b8a391280304266e15b1e8eea0ea6",
+        "component_case_ids": [
+          "44882487a049e0cc95b86dd1aabb6e6b6251b3af3d560c97e0595e0025f90dc5"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_76",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_76', 11, 'active'), ('m2_76', 12, 'active'), ('m1_76', 12, 'contested'), ('m3_76', 12, 'active'), ('m2_76', 13, 'superseded')]. Latest row per ID wins. At current epoch 12, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "6dfb67258f37595151ebb39254d32e9eaf54ba50103ea0843e0a4e330e0c094a",
+        "case_id": "0dbe8f007b35cc4d910937642f7fa4fe901f63c3593018c04c47b45a039deeac",
+        "component_case_ids": [
+          "e2fe1e15064aee4c3e269e0fc2613b773173f67828f59f0e873e44cc6b908dac"
+        ],
+        "difficulty_level": 1,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_97",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_97', 14, 'active'), ('m2_97', 15, 'active'), ('m1_97', 15, 'contested'), ('m3_97', 15, 'active'), ('m2_97', 16, 'superseded')]. Latest row per ID wins. At current epoch 15, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "d118a008c30af0bbb86be74cc876fadeec652390114e99331b8052b323a72aba",
+        "case_id": "061cfdfe27b1800cfbe6e4f20b8ad1f37b12794d1f3a6235936687394cbfae8a",
+        "component_case_ids": [
+          "2bd114f5b9b187c1b3ba83fee973467548bbb94d3c559fa36c44d7214eaa8ec2",
+          "afe5029fe4438758b572e98247a8d1ef998f9c6882985a87a28695cf933f7c31"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_41|m3_17",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_41', 5, 'active'), ('m2_41', 6, 'active'), ('m1_41', 6, 'contested'), ('m3_41', 6, 'active'), ('m2_41', 7, 'superseded')]. Latest row per ID wins. At current epoch 6, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_17', 8, 'active'), ('m2_17', 9, 'active'), ('m1_17', 9, 'contested'), ('m3_17', 9, 'active'), ('m2_17', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "3e8546b2da2f1792a30d3baf5015ea576299d8d4a7deb73fd5b98475d505dcce",
+        "case_id": "85e96cd0d58bdb6b60ae1ffad57abe7b85dffecfb2b781ab013a86bfd65e481f",
+        "component_case_ids": [
+          "a3528ebf3100ea663905a318eaa8cc0632cd1b4b15eccad74d86fd90f4830500",
+          "16aa4ff928a0b4968784cba874b6bb0a20e16b2804576818ad2ce06566132293"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_84|m3_38",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_84', 6, 'active'), ('m2_84', 7, 'active'), ('m1_84', 7, 'contested'), ('m3_84', 7, 'active'), ('m2_84', 8, 'superseded')]. Latest row per ID wins. At current epoch 7, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_38', 10, 'active'), ('m2_38', 11, 'active'), ('m1_38', 11, 'contested'), ('m3_38', 11, 'active'), ('m2_38', 12, 'superseded')]. Latest row per ID wins. At current epoch 11, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "7a064d12d00d1d68015f87baa5f52cc7974626a7255fda0a96b6866521e5fe83",
+        "case_id": "97a8f468f677989a5f33096aa4729149f417855b5055b9b79eff797a29ad2e5d",
+        "component_case_ids": [
+          "dc3991030715e73c1c8215779155a4efe9a03ea05a7dd975f96b176411c918e0",
+          "6f78bead55cf5f09ce043bc55e7e6d7411d849fee2cc43cd76f79a05191c726d"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_77|m3_16",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_77', 12, 'active'), ('m2_77', 13, 'active'), ('m1_77', 13, 'contested'), ('m3_77', 13, 'active'), ('m2_77', 14, 'superseded')]. Latest row per ID wins. At current epoch 13, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_16', 7, 'active'), ('m2_16', 8, 'active'), ('m1_16', 8, 'contested'), ('m3_16', 8, 'active'), ('m2_16', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "846dce5f334521be0708b1cca5175cbc9ea54f0048dab5e8ab83d2968c65c622",
+        "case_id": "60390855922e31323a9f8b20fd340e07430d6855b24ff76f543f0b7e7712c542",
+        "component_case_ids": [
+          "552d517289e897dc3768c493982a80dff0a0511a0753018a8a00ae9c5308cbf7",
+          "d801f580bd0c87902ebbea8aaf661be7d48aa28755eb3f13891ba51c7b97ccde"
+        ],
+        "difficulty_level": 2,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_51|m3_50",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_51', 8, 'active'), ('m2_51', 9, 'active'), ('m1_51', 9, 'contested'), ('m3_51', 9, 'active'), ('m2_51', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_50', 9, 'active'), ('m2_50', 10, 'active'), ('m1_50', 10, 'contested'), ('m3_50', 10, 'active'), ('m2_50', 11, 'superseded')]. Latest row per ID wins. At current epoch 10, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "4355a4febfdf0c6337c7048369de9fda725c4e03aa7e619fd841994e118a1d21",
+        "case_id": "c029368e9bc73d82b3aaddc7d7c035262b28ea4af279c400a5b4b139c87d1a23",
+        "component_case_ids": [
+          "693209443667722eef8267367fd9166a2602131613ca28f782af2fe19d093794",
+          "3a4c2fa191da1f7e67c24d4c405dbc8d822eddfff407b1defe82d1922312ec78",
+          "9a89e5fef5937e2f387221d40bd6464734f679f797cbe2d12aa886e2f1cc9d8e"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_33|m3_62|m3_81",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_33', 5, 'active'), ('m2_33', 6, 'active'), ('m1_33', 6, 'contested'), ('m3_33', 6, 'active'), ('m2_33', 7, 'superseded')]. Latest row per ID wins. At current epoch 6, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_62', 9, 'active'), ('m2_62', 10, 'active'), ('m1_62', 10, 'contested'), ('m3_62', 10, 'active'), ('m2_62', 11, 'superseded')]. Latest row per ID wins. At current epoch 10, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_81', 6, 'active'), ('m2_81', 7, 'active'), ('m1_81', 7, 'contested'), ('m3_81', 7, 'active'), ('m2_81', 8, 'superseded')]. Latest row per ID wins. At current epoch 7, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "999e876b12acaa630423aaf06ffb68addfc2f87298fffcbbe8618d0291379272",
+        "case_id": "259c6d3862799b2dbd8f3deccf72a0c883a17172ca4feacb3689b69d09295d38",
+        "component_case_ids": [
+          "bc1f6b3ed5102d0d98aaf3b3960d7fe63fac9ae13576c8181bb3ec2e6de67465",
+          "992a34ccf05e0615f550754cd974d670bc87c7d6c0b7c2a717c812a8a3310c78",
+          "c053d7bac148e273562cd037c0a613f0eb21b6fce8582bbd8bc78d466261f39e"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_49|m3_14|m3_37",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_49', 7, 'active'), ('m2_49', 8, 'active'), ('m1_49', 8, 'contested'), ('m3_49', 8, 'active'), ('m2_49', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_14', 9, 'active'), ('m2_14', 10, 'active'), ('m1_14', 10, 'contested'), ('m3_14', 10, 'active'), ('m2_14', 11, 'superseded')]. Latest row per ID wins. At current epoch 10, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_37', 6, 'active'), ('m2_37', 7, 'active'), ('m1_37', 7, 'contested'), ('m3_37', 7, 'active'), ('m2_37', 8, 'superseded')]. Latest row per ID wins. At current epoch 7, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "d0154d7c913f685bc4e112742285fbfadbf3c09649509536492d4fe8311a7c11",
+        "case_id": "271d1da8f0db21d6c24c4789994b35a689544fa1dde7d00cfd5f2cbec2472155",
+        "component_case_ids": [
+          "2158bb957ef26b2d6d8755e4cac42ff043dd45d7a2583e48ab9cb7b6c7aa94f2",
+          "3adea27b0f385d6d4049d10cff13b925e8978af0f4c695c028e337896fb17c05",
+          "b0fe3898c1a926108e3ef68e315e617fb8e0f79bda8340db17d7d194911c5181"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_88|m3_34|m3_43",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_88', 13, 'active'), ('m2_88', 14, 'active'), ('m1_88', 14, 'contested'), ('m3_88', 14, 'active'), ('m2_88', 15, 'superseded')]. Latest row per ID wins. At current epoch 14, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_34', 11, 'active'), ('m2_34', 12, 'active'), ('m1_34', 12, 'contested'), ('m3_34', 12, 'active'), ('m2_34', 13, 'superseded')]. Latest row per ID wins. At current epoch 12, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_43', 7, 'active'), ('m2_43', 8, 'active'), ('m1_43', 8, 'contested'), ('m3_43', 8, 'active'), ('m2_43', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "50fa6fbb5e4974115d72f36102f4ac6ad3a7f0d0b9d55dd78656959574876038",
+        "case_id": "aebf2bf3ac12fbe57f839c1a1405038e4509c77fbaca74d8c3f4f3766951e051",
+        "component_case_ids": [
+          "75229acd4ccc13de8b998052d433c3fcbb64f507133cef418da6418c782a406b",
+          "a576125b8f0c47d5fb76a7d6f5fe507f953d118395f3db3ef0aff148a918e215",
+          "f90c94bd6a247e4136002c79d8292dcbcb6aa392e09e29c193dfea5d4021f4c6"
+        ],
+        "difficulty_level": 3,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_68|m3_75|m3_89",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_68', 13, 'active'), ('m2_68', 14, 'active'), ('m1_68', 14, 'contested'), ('m3_68', 14, 'active'), ('m2_68', 15, 'superseded')]. Latest row per ID wins. At current epoch 14, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_75', 13, 'active'), ('m2_75', 14, 'active'), ('m1_75', 14, 'contested'), ('m3_75', 14, 'active'), ('m2_75', 15, 'superseded')]. Latest row per ID wins. At current epoch 14, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_89', 12, 'active'), ('m2_89', 13, 'active'), ('m1_89', 13, 'contested'), ('m3_89', 13, 'active'), ('m2_89', 14, 'superseded')]. Latest row per ID wins. At current epoch 13, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "de5e54d222812eba467fa192d861d3d83747333d165a1c868ca4f0ce460c235b",
+        "case_id": "9bc7ab93ff0eeb6af089bf94926323ab7aa2037648012164ea6a600cfa56e2df",
+        "component_case_ids": [
+          "a3fa065c9e76f70de09d37fdfabb21be7d830cb4e12bb5adba6851c898487dfc",
+          "606bcb193d07b7fda48c06e0f0d74d2e1822a452e94b3f52978bd99f3a273f04",
+          "2f9b4e29aeb250173cd5869f5f6ba2515434daa5a65287006fe3123f3e95ded7",
+          "497038703206423e9c4682ed5e53bbae44ce4b0007fc96ca0b4e8e0741d0fe87"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_87|m3_97|m3_20|m3_85",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_87', 9, 'active'), ('m2_87', 10, 'active'), ('m1_87', 10, 'contested'), ('m3_87', 10, 'active'), ('m2_87', 11, 'superseded')]. Latest row per ID wins. At current epoch 10, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_97', 9, 'active'), ('m2_97', 10, 'active'), ('m1_97', 10, 'contested'), ('m3_97', 10, 'active'), ('m2_97', 11, 'superseded')]. Latest row per ID wins. At current epoch 10, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_20', 5, 'active'), ('m2_20', 6, 'active'), ('m1_20', 6, 'contested'), ('m3_20', 6, 'active'), ('m2_20', 7, 'superseded')]. Latest row per ID wins. At current epoch 6, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 4: Ledger rows arrive in order [('m1_85', 7, 'active'), ('m2_85', 8, 'active'), ('m1_85', 8, 'contested'), ('m3_85', 8, 'active'), ('m2_85', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "f181d449420cf92a9d40155cf584989d99dd3b78c66c7762e14155f844891df7",
+        "case_id": "81f6a3f16d14b3f5d2531ee0366979bfb879bfe3c5a507b1f24ecf17f93b38e4",
+        "component_case_ids": [
+          "f318d83cef361e02e36adfe9d1b4749ae18cd139517f6fafa0b9e61548b3ffd0",
+          "c6f4c620030ac524636a548e37e5622ca5b3612b421a0116dc2a56134ddd36cd",
+          "53c65a2f481adbea6c5bb15f893d7430d4d4c64f83a713db4694576b0eb43ded",
+          "dcd0f039352aee1d87832a0f51dcc2af285e7f2f5edc7a5308348917c395311e"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_76|m3_72|m3_96|m3_78",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_76', 12, 'active'), ('m2_76', 13, 'active'), ('m1_76', 13, 'contested'), ('m3_76', 13, 'active'), ('m2_76', 14, 'superseded')]. Latest row per ID wins. At current epoch 13, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_72', 6, 'active'), ('m2_72', 7, 'active'), ('m1_72', 7, 'contested'), ('m3_72', 7, 'active'), ('m2_72', 8, 'superseded')]. Latest row per ID wins. At current epoch 7, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_96', 8, 'active'), ('m2_96', 9, 'active'), ('m1_96', 9, 'contested'), ('m3_96', 9, 'active'), ('m2_96', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 4: Ledger rows arrive in order [('m1_78', 10, 'active'), ('m2_78', 11, 'active'), ('m1_78', 11, 'contested'), ('m3_78', 11, 'active'), ('m2_78', 12, 'superseded')]. Latest row per ID wins. At current epoch 11, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "0ee7522fdda4bcff0fe0fd5cd800c4464387a53ddf3dc70f2f7c7b52556fd8f0",
+        "case_id": "1b4020717ac3d424252670eb0265b56b790fc4cf499b543a8b56b017fbdfce7b",
+        "component_case_ids": [
+          "0696a8f4c92921585dda7262136e384e91bf7df3635ff698c8f63fd0a860b700",
+          "9412f3f346a6f0525fa2f158a4dbf8063e7313473e0b4e1f45f55f76a7cfd8d7",
+          "141103ab3d005e4b1c4449330fcb1659c9782bbf47dc67976b89eb9e0e11802d",
+          "e3784d389d89ea6a192e15f1aebb895cce80c5b30a9bc9a96f70976fc97101ba"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_57|m3_54|m3_40|m3_42",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_57', 7, 'active'), ('m2_57', 8, 'active'), ('m1_57', 8, 'contested'), ('m3_57', 8, 'active'), ('m2_57', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_54', 9, 'active'), ('m2_54', 10, 'active'), ('m1_54', 10, 'contested'), ('m3_54', 10, 'active'), ('m2_54', 11, 'superseded')]. Latest row per ID wins. At current epoch 10, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_40', 8, 'active'), ('m2_40', 9, 'active'), ('m1_40', 9, 'contested'), ('m3_40', 9, 'active'), ('m2_40', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 4: Ledger rows arrive in order [('m1_42', 10, 'active'), ('m2_42', 11, 'active'), ('m1_42', 11, 'contested'), ('m3_42', 11, 'active'), ('m2_42', 12, 'superseded')]. Latest row per ID wins. At current epoch 11, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "bb098a22406c2fe45c4714c8fc9b6677622124d30ae9cc8c28f7f18739fe15a2",
+        "case_id": "2564baf4003611e6785f7de55fbadbd4c0e00eb77a3152fe6bb0052382831263",
+        "component_case_ids": [
+          "1dfd0d58475715e80348250511145e5a1f975b5ac2927280fde079f6e37870e2",
+          "a8c2bc890a5aec27c26d5af30084cb836516bb604efe6b175e1050a187c11496",
+          "ed1df75b415fd5b530abdfbfdbc1e0d0fba6030a5b29e71b59bfb2b84625b101",
+          "8ae4c774d32df32c93605dc3e104bdde12988da2b27ebed8a441fb552729d6c6"
+        ],
+        "difficulty_level": 4,
+        "difficulty_mechanism": "composed_exact_subcases",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3_85|m3_19|m3_41|m3_62",
+        "family": "stale_state_detection",
+        "prompt": "Subcase 1: Ledger rows arrive in order [('m1_85', 8, 'active'), ('m2_85', 9, 'active'), ('m1_85', 9, 'contested'), ('m3_85', 9, 'active'), ('m2_85', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 2: Ledger rows arrive in order [('m1_19', 8, 'active'), ('m2_19', 9, 'active'), ('m1_19', 9, 'contested'), ('m3_19', 9, 'active'), ('m2_19', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 3: Ledger rows arrive in order [('m1_41', 13, 'active'), ('m2_41', 14, 'active'), ('m1_41', 14, 'contested'), ('m3_41', 14, 'active'), ('m2_41', 15, 'superseded')]. Latest row per ID wins. At current epoch 14, return sorted comma-separated IDs whose latest row is exactly current and active. Solve each independent subcase and return answers joined by | in order. Subcase 4: Ledger rows arrive in order [('m1_62', 12, 'active'), ('m2_62', 13, 'active'), ('m1_62', 13, 'contested'), ('m3_62', 13, 'active'), ('m2_62', 14, 'superseded')]. Latest row per ID wins. At current epoch 13, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 3
+      }
+    ],
+    "confirmatory_eligible": false,
+    "corpus_hash": "eb1d50acaddb4287c6d7964dea2d3226587ef98d5f8593be3c00ea6d9431c9bb",
+    "development_only": true,
+    "held_out": false,
+    "maximum_level": 4,
+    "model_identity_in_ontology": false,
+    "schema_version": "cortex-difficulty-ladder-corpus/1.0",
+    "seed_commitment": "cf2ac29b7cb013496830b0ae745ec9a673d4ea3774a3a670e02c42785c1cb01e",
+    "task_families": [
+      "repository_bug_localization",
+      "multi_step_code_repair",
+      "stale_state_detection",
+      "api_migration",
+      "architecture_reconstruction"
+    ],
+    "variants_per_level": 4,
+    "version": "9.8.2"
+  },
+  "empirical_trial_executed": false,
+  "heldout_public_manifest": null,
+  "model_selected_by_runner": false,
+  "provider_selected_by_runner": false,
+  "schema_version": "cortex-information-balanced-forge-benchmark/1.0",
+  "state": "DEVELOPMENT_CORPUS_BUILT",
+  "version": "9.8.2"
+}

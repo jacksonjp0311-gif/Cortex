@@ -1,3 +1,23 @@
+## 9.8.2 - Information-Balanced Calibration & Held-Out Corpus Seal
+
+- Added Rasch-style ability/difficulty probability and item-information
+  diagnostics. Task selection maximizes `p(1-p)` only after a hard
+  discriminability gate passes.
+- Added deterministic composed difficulty ladders across the five v9.8.1 task
+  families and fail-closed recommendations for ceiling, floor, and incomplete
+  ladders.
+- Added a disjoint held-out corpus generator with host-secret partitioning,
+  answer-free public manifests, private answer-key commitments, and tamper
+  verification.
+- Bound information-balanced calibration and the exact held-out public corpus
+  into causal preregistration. Unexecuted corpus design remains non-evidence.
+- Fixed a held-out leakage wound found adversarially: every task family now
+  consumes its generation seed in semantic task content, not merely identity.
+- Generated the 80-case structural development ladder. No new frontier or
+  confirmatory model trial was executed or claimed.
+- Preserved runtime model neutrality and kept host mutation, execution, memory
+  admission, and policy effect false.
+
 ## 9.8.1 - Discriminative Task Forge & Information-Powered Trial
 
 - Added Bernoulli-entropy and matched-discordance diagnostics so floor,

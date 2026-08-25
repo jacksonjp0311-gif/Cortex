@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.1-0ea5e9?style=for-the-badge" alt="v9.8.1" />
+  <img src="https://img.shields.io/badge/version-9.8.2-0ea5e9?style=for-the-badge" alt="v9.8.2" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -102,6 +102,42 @@ v9.8.1 integrates this finding in three places:
 The first frontier calibration remains useful evidence that the original tasks
 were too easy. It is explicitly development-only and cannot establish
 competence transfer. Cortex still makes no claim that it improves a model.
+
+## How Cortex now chooses a useful experiment
+
+v9.8.2 adds an information-balanced difficulty ladder. For a runtime with
+measured ability `θ` and a task with estimated difficulty `β`, Cortex uses the
+model-neutral Rasch relationship:
+
+```text
+P(success | θ, β) = σ(θ - β)
+I(task) = P(success) × (1 - P(success))
+```
+
+Information peaks when ability and difficulty meet. Easy tasks can verify that
+a mechanism runs, but repeated success near `p=1` cannot reveal treatment lift.
+
+![Cortex v9.8.2 information-balanced calibration](assets/information-balance-v982.svg)
+
+The implementation composes progressively larger exact-evaluator tasks, scores
+each difficulty level using development-only observations, and retains only
+levels inside the declared information window. It then generates a different
+held-out corpus using a host-controlled secret seed. The public seal contains
+prompts, case identities, evaluator hashes, and an answer-key commitment—but no
+answers or secret seed.
+
+```text
+development ladder
+  → estimate β and p(1-p)
+  → select informative level
+  → generate disjoint held-out cases
+  → freeze public corpus hash + private answer commitment
+  → preregister before model execution
+```
+
+An unexecuted held-out corpus is experimental design, not evidence. Caller
+claims, model identity, provider labels, and high continuous scores cannot turn
+it into a causal result.
 
 ## Start here: attach Cortex to a project
 
@@ -363,6 +399,14 @@ development-only deterministic task forge. The frontier calibration scored
 8/8 and the routing rerun saturated at rank 1 in both arms; both are retained as
 honest ceiling results, not competence claims. See
 [`PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md`](docs/intelligence/PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md).
+
+v9.8.2 calibrates difficulty rather than merely generating cases. A Rasch-style
+development estimator selects the highest-information admissible level, then a
+host-secret partition creates a disjoint held-out public seal with privately
+committed answers. Causal preregistration now verifies both bindings. The
+80-case ladder has been generated structurally; no new frontier calibration or
+confirmatory model trial is claimed in this release. See
+[`PHASE_V9.8.2_INFORMATION_BALANCED_HELDOUT_SEAL.md`](docs/intelligence/PHASE_V9.8.2_INFORMATION_BALANCED_HELDOUT_SEAL.md).
 
 ## Interconnect mathematics (v8.3.4)
 

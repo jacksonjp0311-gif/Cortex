@@ -21,6 +21,8 @@ from cortex.competence_transfer import run_cross_model_transfer_trial
 from cortex.config import ensure_home
 from cortex.distillation_witness import create_distillation_witness, verify_distillation_witness
 from cortex.discriminability import assess_task_panel
+from cortex.discriminative_forge import TASK_FAMILIES, build_difficulty_ladder_corpus, build_held_out_bundle
+from cortex.information_calibration import calibrate_difficulty_ladders
 from cortex.evaluation import TaskEvaluationContract
 from cortex.model_circulation import FixtureAdapter, run_model_circulation
 from cortex.store import Store
@@ -194,6 +196,42 @@ class V98CausalCompetenceTests(unittest.TestCase):
         self.assertFalse(result["model_identity_used_in_scoring"])
         self.assertFalse(result["host_mutate_authorized"])
         self.assertFalse(result["execution_authorized"])
+
+    def test_v982_preregistration_binds_public_heldout_seal_without_answers(self) -> None:
+        candidate = self._candidate()
+        witness = create_distillation_witness(self.store, self.repo, candidate["competence_id"])
+        development = build_difficulty_ladder_corpus(seed="v982-dev", maximum_level=3, variants_per_level=2)
+        calibration = calibrate_difficulty_ladders({
+            family: {"1": [1, 1, 1, 1], "2": [1, 0, 1, 0], "3": [0, 0, 0, 0]}
+            for family in TASK_FAMILIES
+        })
+        bundle = build_held_out_bundle(
+            calibration, development, secret_seed="host-secret-test-seed", cases_per_family=2
+        )
+        manifest = bundle["manifest"]
+        prereg = create_causal_preregistration(
+            self.store,
+            self.repo,
+            competence_id=candidate["competence_id"],
+            distillation_witness_id=witness["witness_id"],
+            task_corpus_hash=manifest["corpus_hash"],
+            task_contract_hashes=[self.contract.contract_hash],
+            planned_cases=2,
+            randomization_seed_commitment="confirmatory-seed-commitment",
+            minimum_effects={"continuity": 0.1, "distillation": 0.1, "governance": 0.1},
+            negative_transfer_threshold=0.1,
+            alpha=0.05,
+            stopping_rule={"kind": "fixed_sample", "planned_cases": 2},
+            exclusion_rules=["canonical trial invalid"],
+            task_family_strata=list(TASK_FAMILIES),
+            difficulty_calibration_receipt=calibration,
+            heldout_corpus_manifest=manifest,
+        )
+        self.assertEqual(prereg["discriminability_calibration"]["state"], "pass")
+        self.assertEqual(prereg["heldout_corpus_seal"]["state"], "pass")
+        self.assertFalse(prereg["heldout_corpus_seal"]["answers_present"])
+        self.assertNotIn("host-secret-test-seed", str(prereg))
+        self.assertNotIn("answer_key", prereg)
 
 
 if __name__ == "__main__":

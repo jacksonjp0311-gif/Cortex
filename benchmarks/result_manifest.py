@@ -32,6 +32,8 @@ def main() -> int:
                 metadata_state = "development_calibration"
             elif payload.get("schema_version") == "cortex-discriminative-forge-benchmark/1.0" and payload.get("observation_state") == "not_executed":
                 metadata_state = "structural_unexecuted"
+            elif payload.get("schema_version") == "cortex-information-balanced-forge-benchmark/1.0" and payload.get("empirical_trial_executed") is False:
+                metadata_state = "structural_unexecuted"
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
@@ -50,7 +52,7 @@ def main() -> int:
     ).hexdigest()
     manifest = {
         "schema_version": "cortex-benchmark-result-manifest/1.0",
-        "cortex_version": "9.8.1",
+        "cortex_version": "9.8.2",
         "source_commit": commit,
         "benchmark_suite_hash": suite_hash,
         "runtime_class": {"python": platform.python_version(), "system": platform.system()},

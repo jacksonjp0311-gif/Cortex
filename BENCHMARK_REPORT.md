@@ -4,10 +4,10 @@
 
 | Field | Value |
 |---|---|
-| Cortex version | 9.8.1 |
+| Cortex version | 9.8.2 |
 | Runtime commit | `ca26e1d6fbda7b3323e875c7fba8ccfc12ca972d` |
 | Benchmark manifest | [`benchmarks/results/MANIFEST.json`](benchmarks/results/MANIFEST.json) |
-| Evidence phase | [`v9.8.1 Discriminative Task Forge`](docs/intelligence/PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md) |
+| Evidence phase | [`v9.8.2 Information-Balanced Held-Out Seal`](docs/intelligence/PHASE_V9.8.2_INFORMATION_BALANCED_HELDOUT_SEAL.md) |
 | Prior independent audit date | August 24, 2026 |
 | Exact v9.7 audited HEAD | `797e06f2ab860bba7f13888a3213ccc9aa863e7d` |
 | Evidence class | Mixed: controlled synthetic, structural, and one prior live empirical circulation |
@@ -47,6 +47,27 @@ Cortex home. This preserves the home-identity guard and removes a benchmark
 harness confound. Thirty deferred materialization operations remain, so the
 result is not evidence of lower total lifecycle work.
 
+## v9.8.2 experiment-design result
+
+The model-neutral forge generated an 80-case development ladder:
+
+```text
+5 task families × 4 difficulty levels × 4 variants = 80 cases
+development corpus hash = eb1d50acaddb4287c6d7964dea2d3226587ef98d5f8593be3c00ea6d9431c9bb
+frontier calibration = NOT EXECUTED
+held-out corpus = NOT GENERATED
+confirmatory effect = NOT ESTABLISHED
+```
+
+The artifact verifies deterministic task construction and the persistent
+test/production distinction. It is structural evidence only. A held-out corpus
+will not be generated until real development outcomes identify an informative
+difficulty level for every retained family.
+
+The first adversarial held-out test discovered that some nominally reseeded
+tasks remained semantically identical. v9.8.2 now varies actual task parameters
+across every family and rejects any development/held-out case overlap.
+
 ## Current committed quantitative artifacts
 
 The current results directory contains four primary JSON result sets. Their
@@ -79,7 +100,7 @@ All primary gains equal `0.0`. v9.7 correctly classified this cohort as held
 because it has one case, a ceiling baseline, and zero dynamic range. v9.8 adds
 no new empirical observation and makes no positive causal claim.
 
-## v9.8-v9.8.1 measurement changes
+## v9.8-v9.8.2 measurement changes
 
 - New competence semantic identities bind operational material beside IDs.
 - Immutable semantic witnesses distinguish exact canonical support from
@@ -95,6 +116,10 @@ no new empirical observation and makes no positive causal claim.
 - A deterministic five-family task forge is development-only by construction.
 - Readiness composes as `Theta=min(E,D,I)`; continuous scores cannot compensate
   for missing semantic evidence, discriminability, or replication.
+- Rasch-style difficulty estimates and `I=p(1-p)` select an informative
+  development level without using model/provider identity.
+- The answer-free held-out public manifest binds to a private answer-key
+  commitment and its exact development calibration.
 
 ## Still unresolved
 
