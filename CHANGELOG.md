@@ -1,3 +1,22 @@
+## 9.8.1 - Discriminative Task Forge & Information-Powered Trial
+
+- Added Bernoulli-entropy and matched-discordance diagnostics so floor,
+  ceiling, undersampled, and zero-information experiments fail closed before
+  confirmation.
+- Added noncompensatory `E/D/I` evidence geometry. Its optional geometric mean
+  is diagnostic only and cannot compensate for a failed or unknown axis.
+- Added a deterministic provider-neutral development task forge spanning five
+  software-agent task families. Forged cases remain permanently excluded from
+  confirmatory evidence.
+- Added exact matched-binary power planning, deterministic paired case
+  bootstrap intervals, effective-causal-sample reporting, and calibration/power
+  gates to causal preregistration.
+- Preserved the runtime-selected 8/8 frontier calibration and rank-1/rank-1
+  routing rerun as ceiling evidence, not competence improvement.
+- Repaired the deferred/eager benchmark so each sample receives a fresh host
+  identity and Cortex home without weakening the home-rebind guard.
+- Kept host mutation, execution, memory admission, and policy effect false.
+
 ## 9.8.0 - Preregistered Causal Competence Trial
 
 - Added a v1.2 competence semantic-identity law that binds explicit IDs and

@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "workload": "Cortex cloned as host; a second Cortex clone bootstraps and activates the host.",
+  "runs": 2,
+  "host_engine": {
+    "bootstrap_seconds": 79.827639,
+    "activation_seconds": 67.783448,
+    "indexed_files": 588.0,
+    "certificate_verified": true
+  },
+  "nested_cloned_engine": {
+    "label": "INTERNAL CORTEX ENGINE",
+    "role": "internal_self_host_engine",
+    "bootstrap_seconds": 76.396274,
+    "activation_seconds": 64.723625,
+    "indexed_files": 588.0,
+    "certificate_verified": true,
+    "nested_engine_excluded": true,
+    "engine_commit_current": true
+  },
+  "samples": {
+    "host_engine": [
+      {
+        "mode": "host_engine",
+        "engine_label": "HOST CORTEX ENGINE",
+        "engine_role": "host_repository_engine",
+        "source_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit_current": true,
+        "engine_version": "9.8.0",
+        "bootstrap_seconds": 82.266847,
+        "activation_seconds": 71.879939,
+        "certificate": "verified",
+        "activation": "ready",
+        "indexed_files": 588,
+        "context_evidence": 3,
+        "nested_engine_excluded": true,
+        "clone_engine": "CortexHost",
+        "tests_ok": null
+      },
+      {
+        "mode": "host_engine",
+        "engine_label": "HOST CORTEX ENGINE",
+        "engine_role": "host_repository_engine",
+        "source_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit_current": true,
+        "engine_version": "9.8.0",
+        "bootstrap_seconds": 77.388431,
+        "activation_seconds": 63.686958,
+        "certificate": "verified",
+        "activation": "ready",
+        "indexed_files": 588,
+        "context_evidence": 3,
+        "nested_engine_excluded": true,
+        "clone_engine": "CortexHost",
+        "tests_ok": null
+      }
+    ],
+    "nested_cloned_engine": [
+      {
+        "mode": "nested_clone",
+        "engine_label": "INTERNAL CORTEX ENGINE",
+        "engine_role": "internal_self_host_engine",
+        "source_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit_current": true,
+        "engine_version": "9.8.0",
+        "bootstrap_seconds": 73.993535,
+        "activation_seconds": 69.598933,
+        "certificate": "verified",
+        "activation": "ready",
+        "indexed_files": 588,
+        "context_evidence": 3,
+        "nested_engine_excluded": true,
+        "clone_engine": "CortexHost\\InternalCortexEngine",
+        "tests_ok": null
+      },
+      {
+        "mode": "nested_clone",
+        "engine_label": "INTERNAL CORTEX ENGINE",
+        "engine_role": "internal_self_host_engine",
+        "source_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit": "166d5a56c7a24b5b9a17c8803ef3a8de258a877b",
+        "engine_commit_current": true,
+        "engine_version": "9.8.0",
+        "bootstrap_seconds": 78.799013,
+        "activation_seconds": 59.848318,
+        "certificate": "verified",
+        "activation": "ready",
+        "indexed_files": 588,
+        "context_evidence": 3,
+        "nested_engine_excluded": true,
+        "clone_engine": "CortexHost\\InternalCortexEngine",
+        "tests_ok": null
+      }
+    ]
+  }
+}

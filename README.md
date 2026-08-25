@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.0-0ea5e9?style=for-the-badge" alt="v9.8.0" />
+  <img src="https://img.shields.io/badge/version-9.8.1-0ea5e9?style=for-the-badge" alt="v9.8.1" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -59,6 +59,49 @@ durable, inspectable, and safer to reuse.
 | **Measurement** | Cortex records and independently checks state transitions instead of treating predictions as facts. |
 | **Local-first privacy** | The durable body lives under `~/.cortex`; your project remains yours. |
 | **Human control** | Suggestions and telemetry never silently rewrite source, change policy, or grant execution authority. |
+
+## What we just learned: success needs contrast
+
+Cortex reached an important measurement boundary. A runtime-selected frontier
+model solved all eight disposable calibration tasks, and a fresh Thalamus rerun
+placed the correct file at rank 1 with and without routing. Both mechanisms
+worked—but both experiments saturated. Once every arm is already correct, there
+is no remaining contrast from which to infer improvement.
+
+![Cortex v9.8.1 evidence geometry](assets/evidence-geometry-v981.svg)
+
+For a binary result with success probability `p`, Cortex now reports the task's
+information directly:
+
+```text
+H(Y) = -p log₂(p) - (1-p) log₂(1-p)
+```
+
+At `p=0` or `p=1`, `H(Y)=0`: a floor or ceiling. For matched treatment trials,
+the effective causal sample is not simply the number of cases. It is the number
+of pairs that disagree:
+
+```text
+b = baseline fails, Cortex succeeds
+c = baseline succeeds, Cortex fails
+effective causal sample = b + c
+```
+
+v9.8.1 integrates this finding in three places:
+
+- a model-neutral task forge creates disposable development cases across bug
+  localization, code repair, stale-state detection, API migration, and
+  architecture reconstruction;
+- calibration rejects ceiling, floor, undersampled, and zero-discordance
+  families before they can define a confirmatory corpus;
+- exact power planning, paired bootstrap intervals, and the noncompensatory
+  evidence geometry `Θ = min(E, D, I)` bind semantic evidence, experimental
+  discriminability, and independent replication without averaging a missing
+  axis away.
+
+The first frontier calibration remains useful evidence that the original tasks
+were too easy. It is explicitly development-only and cannot establish
+competence transfer. Cortex still makes no claim that it improves a model.
 
 ## Start here: attach Cortex to a project
 
@@ -312,6 +355,14 @@ preregistration and uses exact matched-binary tests with Holm correction. The
 preserved one-case live result remains descriptive and held; v9.8 does not
 claim that Cortex improved a model. See
 [`PHASE_V9.8_PREREGISTERED_CAUSAL_COMPETENCE_TRIAL.md`](docs/intelligence/PHASE_V9.8_PREREGISTERED_CAUSAL_COMPETENCE_TRIAL.md).
+
+v9.8.1 turns the resulting nulls into experiment-design machinery. It measures
+Bernoulli entropy, exposes discordant pairs as the effective causal sample,
+calculates exact matched-binary power before confirmation, and adds a
+development-only deterministic task forge. The frontier calibration scored
+8/8 and the routing rerun saturated at rank 1 in both arms; both are retained as
+honest ceiling results, not competence claims. See
+[`PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md`](docs/intelligence/PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md).
 
 ## Interconnect mathematics (v8.3.4)
 

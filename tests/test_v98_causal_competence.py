@@ -13,11 +13,14 @@ from cortex.causal_trial import (
     evaluate_preregistered_causal_trial,
     exact_matched_binary,
     holm_adjust,
+    matched_binary_power_plan,
+    paired_bootstrap_interval,
 )
 from cortex.competence import derive_competence_candidate
 from cortex.competence_transfer import run_cross_model_transfer_trial
 from cortex.config import ensure_home
 from cortex.distillation_witness import create_distillation_witness, verify_distillation_witness
+from cortex.discriminability import assess_task_panel
 from cortex.evaluation import TaskEvaluationContract
 from cortex.model_circulation import FixtureAdapter, run_model_circulation
 from cortex.store import Store
@@ -104,6 +107,26 @@ class V98CausalCompetenceTests(unittest.TestCase):
         adjusted = holm_adjust({"a": 0.01, "b": 0.03, "c": 0.20})
         self.assertEqual(adjusted, {"a": 0.03, "b": 0.06, "c": 0.2})
 
+    def test_paired_interval_and_power_plan_are_frozen_and_reproducible(self) -> None:
+        first = paired_bootstrap_interval(
+            [0, 0, 0, 1], [1, 1, 1, 1], seed_material="v98-test"
+        )
+        second = paired_bootstrap_interval(
+            [0, 0, 0, 1], [1, 1, 1, 1], seed_material="v98-test"
+        )
+        self.assertEqual(first, second)
+        self.assertEqual(first["state"], "estimated")
+        self.assertEqual(first["interval"], [0.25, 1.0])
+        plan = matched_binary_power_plan(
+            minimum_effect=0.20,
+            expected_discordance=0.40,
+            alpha=0.05 / 3,
+            target_power=0.80,
+        )
+        self.assertEqual(plan["state"], "complete")
+        self.assertGreaterEqual(plan["required_cases"], 2)
+        self.assertGreaterEqual(plan["achieved_power"], 0.80)
+
     def test_preregistration_rejects_model_residual_paths(self) -> None:
         candidate = self._candidate()
         witness = create_distillation_witness(self.store, self.repo, candidate["competence_id"])
@@ -142,6 +165,8 @@ class V98CausalCompetenceTests(unittest.TestCase):
             stopping_rule={"kind": "fixed_sample", "planned_cases": 2},
             exclusion_rules=["canonical trial invalid"],
             arms=list("ABCDE"),
+            task_family_strata=["fixture_family"],
+            calibration_receipt=assess_task_panel({"fixture_family": [0, 1, 0, 1]}),
         )
         trials = []
         for index in range(2):
@@ -165,6 +190,7 @@ class V98CausalCompetenceTests(unittest.TestCase):
         self.assertEqual(result["status"], "CAUSAL_TRIAL_HELD")
         self.assertFalse(result["promotion_eligible"])
         self.assertIn("live_empirical_evidence", result["failed_gates"])
+        self.assertTrue(result["gates"]["development_calibration_bound"])
         self.assertFalse(result["model_identity_used_in_scoring"])
         self.assertFalse(result["host_mutate_authorized"])
         self.assertFalse(result["execution_authorized"])

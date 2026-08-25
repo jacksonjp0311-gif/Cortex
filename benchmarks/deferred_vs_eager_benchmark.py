@@ -65,53 +65,40 @@ def _build_host(base: Path, *, aria_docs: int = 40) -> Path:
     return host
 
 
-def _run_once(mode: str, host: Path, runs: int) -> dict:
+def _run_once(mode: str, runs: int, aria_docs: int) -> dict:
     samples = []
     for _ in range(runs):
         with tempfile.TemporaryDirectory(prefix=f"cortex-{mode}-") as temporary:
             base = Path(temporary)
+            # Each run receives a fresh host as well as a fresh Cortex home.
+            # Reusing one host would correctly trip the explicit home-rebind
+            # identity guard on the second sample and contaminate timing.
+            host = _build_host(base, aria_docs=aria_docs)
             home = ensure_home(base / "home")
             store = Store(home / "cortex.db")
-            # Pre-seed config mode via bootstrap path: patch after first config write
-            started = time.perf_counter()
-            result = bootstrap_repository(home, store, host, f"Host{mode.title()}")
-            # Re-bootstrap with forced mode on config
-            config = RepoConfig(
-                repository_name=f"Host{mode.title()}",
-                repository_id=result["repository_id"],
-                aria_substrate_indexing=mode,
-            )
-            config.engine_module_root = str(Path(__file__).resolve().parents[1])
-            config.cortex_home = str(home)
-            save_repo_config(host, config)
-            store.close()
-            store = Store(home / "cortex.db")
-            started = time.perf_counter()
-            result = bootstrap_repository(
-                home, store, host, f"Host{mode.title()}", force=True
-            )
-            elapsed = time.perf_counter() - started
-            aria = result["index"].get("aria_substrate", {})
-            deferred = sum(
-                1
-                for row in store.files(f"Host{mode.title()}")
-                if row["status"] == "substrate_deferred"
-            )
-            indexed_aria = sum(
-                1
-                for row in store.files(f"Host{mode.title()}")
-                if row["status"] == "indexed" and is_internal_aria_path(row["path"])
-            )
-            samples.append(
-                {
-                    "bootstrap_seconds": round(elapsed, 6),
-                    "certificate": result["certificate"]["status"],
-                    "deferred": deferred,
-                    "indexed_aria": indexed_aria,
-                    "work_proxy": aria.get("work_proxy"),
-                }
-            )
-            store.close()
+            try:
+                result = bootstrap_repository(home, store, host, f"Host{mode.title()}")
+                config = RepoConfig(
+                    repository_name=f"Host{mode.title()}",
+                    repository_id=result["repository_id"],
+                    aria_substrate_indexing=mode,
+                )
+                config.engine_module_root = str(Path(__file__).resolve().parents[1])
+                config.cortex_home = str(home)
+                save_repo_config(host, config)
+                store.close()
+                store = Store(home / "cortex.db")
+                started = time.perf_counter()
+                result = bootstrap_repository(
+                    home, store, host, f"Host{mode.title()}", force=True
+                )
+                elapsed = time.perf_counter() - started
+                aria = result["index"].get("aria_substrate", {})
+                deferred = sum(1 for row in store.files(f"Host{mode.title()}") if row["status"] == "substrate_deferred")
+                indexed_aria = sum(1 for row in store.files(f"Host{mode.title()}") if row["status"] == "indexed" and is_internal_aria_path(row["path"]))
+                samples.append({"bootstrap_seconds": round(elapsed, 6), "certificate": result["certificate"]["status"], "deferred": deferred, "indexed_aria": indexed_aria, "work_proxy": aria.get("work_proxy")})
+            finally:
+                store.close()
     seconds = [sample["bootstrap_seconds"] for sample in samples]
     return {
         "mode": mode,
@@ -139,10 +126,8 @@ def main() -> None:
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory(prefix="cortex-deferred-eager-host-") as temporary:
-        host = _build_host(Path(temporary), aria_docs=args.aria_docs)
-        deferred = _run_once("deferred", host, args.runs)
-        eager = _run_once("eager", host, args.runs)
+    deferred = _run_once("deferred", args.runs, args.aria_docs)
+    eager = _run_once("eager", args.runs, args.aria_docs)
 
     speedup = (
         eager["median_bootstrap_seconds"] / deferred["median_bootstrap_seconds"]

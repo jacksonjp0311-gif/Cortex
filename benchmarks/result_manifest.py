@@ -39,7 +39,7 @@ def main() -> int:
     ).hexdigest()
     manifest = {
         "schema_version": "cortex-benchmark-result-manifest/1.0",
-        "cortex_version": "9.8.0",
+        "cortex_version": "9.8.1",
         "source_commit": commit,
         "benchmark_suite_hash": suite_hash,
         "runtime_class": {"python": platform.python_version(), "system": platform.system()},

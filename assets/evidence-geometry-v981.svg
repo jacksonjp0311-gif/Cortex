@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
+  <title id="title">Cortex v9.8.1 evidence geometry</title>
+  <desc id="description">A chart showing two ceiling measurements with zero contrast and the three noncompensatory evidence axes: semantic support, discriminability, and independent replication.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#07111f"/><stop offset="1" stop-color="#12112a"/></linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#06b6d4"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#d946ef"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="650" rx="24" fill="url(#background)"/>
+  <path d="M0 116H1200M600 116V600" stroke="#26334a" stroke-width="1"/>
+  <text x="52" y="57" fill="#f8fafc" font-family="Inter,Segoe UI,Arial" font-size="28" font-weight="700">CORTEX / THE INFORMATION BOUNDARY</text>
+  <text x="52" y="88" fill="#94a3b8" font-family="Inter,Segoe UI,Arial" font-size="15">Working machinery still needs contrast before causal effects become observable.</text>
+
+  <text x="52" y="155" fill="#67e8f9" font-family="Inter,Segoe UI,Arial" font-size="16" font-weight="700">WHAT THE RERUNS FOUND</text>
+  <text x="52" y="199" fill="#e2e8f0" font-family="Inter,Segoe UI,Arial" font-size="15">Frontier calibration success</text>
+  <rect x="52" y="216" width="470" height="30" rx="7" fill="#172033"/>
+  <rect x="52" y="216" width="470" height="30" rx="7" fill="url(#cyan)"/>
+  <text x="535" y="238" fill="#f8fafc" font-family="ui-monospace,Consolas" font-size="17" text-anchor="end">8 / 8</text>
+  <text x="52" y="276" fill="#fbbf24" font-family="Inter,Segoe UI,Arial" font-size="14">100% success → entropy H(Y) = 0 → ceiling</text>
+
+  <text x="52" y="325" fill="#e2e8f0" font-family="Inter,Segoe UI,Arial" font-size="15">Thalamus target rank</text>
+  <text x="52" y="359" fill="#94a3b8" font-family="Inter,Segoe UI,Arial" font-size="13">baseline</text>
+  <rect x="132" y="343" width="390" height="24" rx="6" fill="url(#violet)"/>
+  <text x="535" y="361" fill="#f8fafc" font-family="ui-monospace,Consolas" font-size="15" text-anchor="end">rank 1</text>
+  <text x="52" y="397" fill="#94a3b8" font-family="Inter,Segoe UI,Arial" font-size="13">routed</text>
+  <rect x="132" y="381" width="390" height="24" rx="6" fill="url(#violet)"/>
+  <text x="535" y="399" fill="#f8fafc" font-family="ui-monospace,Consolas" font-size="15" text-anchor="end">rank 1</text>
+  <text x="52" y="437" fill="#fbbf24" font-family="Inter,Segoe UI,Arial" font-size="14">Δrank = 0 → no routing contrast remains</text>
+
+  <rect x="52" y="482" width="496" height="104" rx="14" fill="#0d1728" stroke="#2b3a54"/>
+  <text x="74" y="516" fill="#f8fafc" font-family="ui-monospace,Consolas" font-size="17">effective causal sample = b + c</text>
+  <text x="74" y="546" fill="#94a3b8" font-family="Inter,Segoe UI,Arial" font-size="14">b: baseline fails, Cortex succeeds</text>
+  <text x="74" y="570" fill="#94a3b8" font-family="Inter,Segoe UI,Arial" font-size="14">c: baseline succeeds, Cortex fails</text>
+
+  <text x="650" y="155" fill="#c4b5fd" font-family="Inter,Segoe UI,Arial" font-size="16" font-weight="700">THE EMERGING EVIDENCE GEOMETRY</text>
+  <path d="M900 214L720 480H1080Z" fill="#111a2c" stroke="#475569" stroke-width="2"/>
+  <path d="M900 260L773 448H1027Z" fill="none" stroke="#334155" stroke-dasharray="6 7"/>
+  <circle cx="900" cy="214" r="38" fill="#0e7490" stroke="#67e8f9" stroke-width="2" filter="url(#glow)"/>
+  <circle cx="720" cy="480" r="38" fill="#6d28d9" stroke="#c4b5fd" stroke-width="2" filter="url(#glow)"/>
+  <circle cx="1080" cy="480" r="38" fill="#047857" stroke="#6ee7b7" stroke-width="2" filter="url(#glow)"/>
+  <text x="900" y="220" fill="#fff" font-family="Inter,Segoe UI,Arial" font-size="21" font-weight="700" text-anchor="middle">E</text>
+  <text x="720" y="486" fill="#fff" font-family="Inter,Segoe UI,Arial" font-size="21" font-weight="700" text-anchor="middle">D</text>
+  <text x="1080" y="486" fill="#fff" font-family="Inter,Segoe UI,Arial" font-size="21" font-weight="700" text-anchor="middle">I</text>
+  <text x="900" y="174" fill="#a5f3fc" font-family="Inter,Segoe UI,Arial" font-size="14" text-anchor="middle">semantic evidence</text>
+  <text x="720" y="535" fill="#ddd6fe" font-family="Inter,Segoe UI,Arial" font-size="14" text-anchor="middle">discriminability</text>
+  <text x="1080" y="535" fill="#a7f3d0" font-family="Inter,Segoe UI,Arial" font-size="14" text-anchor="middle">independent replication</text>
+  <circle cx="900" cy="392" r="66" fill="#111827" stroke="#f8fafc" stroke-width="2"/>
+  <text x="900" y="382" fill="#f8fafc" font-family="ui-monospace,Consolas" font-size="18" text-anchor="middle">Θ = min(E,D,I)</text>
+  <text x="900" y="410" fill="#fbbf24" font-family="Inter,Segoe UI,Arial" font-size="13" text-anchor="middle">no axis can compensate</text>
+
+  <text x="650" y="594" fill="#94a3b8" font-family="Inter,Segoe UI,Arial" font-size="14">v9.8.1 builds experiments for information—not just more successful runs.</text>
+  <text x="1148" y="625" fill="#475569" font-family="ui-monospace,Consolas" font-size="11" text-anchor="end">ADVISORY · NO AUTHORITY EFFECT</text>
+</svg>

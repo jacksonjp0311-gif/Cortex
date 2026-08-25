@@ -1,0 +1,232 @@
+{
+  "calibration": null,
+  "claim_boundary": "Development calibration only. Generated cases and observations are excluded from confirmatory evidence.",
+  "corpus": {
+    "authority": {
+      "execution_authorized": false,
+      "host_mutate_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false
+    },
+    "cases": [
+      {
+        "answer_hash": "8fba61ce59184f69a7a047345feea20c3e5c01ca1c5d4056efdcdca4883b3e3b",
+        "case_id": "4d52a3c06148fe91418fe78befd9cd3802d963d3e3a93639eec944734a411b7e",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health', retry_limit=2, timeout_ms=20000)",
+        "family": "api_migration",
+        "prompt": "Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health', 20, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "3ddc9fa6e79af52e36290f604baacb404bbffc182bce5496cdf33ec680d292e9",
+        "case_id": "f9f13f67e9427885e3886d8a7fb59a822d97bf6243ae95be7189b172a3e593e1",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health', retry_limit=2, timeout_ms=25000)",
+        "family": "api_migration",
+        "prompt": "Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health', 25, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "91a8dca7ec3d39de96dd5ac22159d1b16d2ee07c48adbccb32d2caebd434cd41",
+        "case_id": "5ae2b56e9a9d7dd2367ad03bfe4d4e871d215ca12d790b0bdd6ed75517ba040e",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health', retry_limit=2, timeout_ms=30000)",
+        "family": "api_migration",
+        "prompt": "Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health', 30, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "43cdca99119c5f46fc41b450d3a1d67669c7eee0925b378c9081355771382a0f",
+        "case_id": "bd3a4c7b2261773aff7aad4b6b049706e7ed19874bd7d8517e8e1b65e1c16bf3",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "request(endpoint='/health', retry_limit=2, timeout_ms=35000)",
+        "family": "api_migration",
+        "prompt": "Old API fetch(url, timeout, retries) became request(*, endpoint, retry_limit, timeout_ms). Migrate fetch('/health', 35, 2) and return only the new call, converting seconds to milliseconds.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "6a2f25865fc57df6aa79640c846046f654eb8bef3cf10cfb59e9240150419312",
+        "case_id": "65cb1b8ca818a7fe8fd6a8a604145d63d2662b8b218f892ee5f99695b32d808c",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "acbedf",
+        "family": "architecture_reconstruction",
+        "prompt": "Dependencies are {'a': [], 'b': ['a'], 'c': ['a'], 'd': ['b', 'c'], 'e': ['c'], 'f': ['d', 'e']}. Repeatedly sort ready nodes; choose last when (output_position+0) is odd, otherwise first. Return the concatenated order.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "b24daeeb6fab51e617ee863f24584d5ef8c26f1d829b7647b6e3a3cbe28aac1e",
+        "case_id": "15f31d865c7c80e394d2a1596f832af402f1af49312c0f7ec5afb77df643c590",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "abcdef",
+        "family": "architecture_reconstruction",
+        "prompt": "Dependencies are {'a': [], 'b': ['a'], 'c': ['a'], 'd': ['b', 'c'], 'e': ['c'], 'f': ['d', 'e']}. Repeatedly sort ready nodes; choose last when (output_position+1) is odd, otherwise first. Return the concatenated order.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "6a2f25865fc57df6aa79640c846046f654eb8bef3cf10cfb59e9240150419312",
+        "case_id": "c461ea320b21e11083d3c2b97f19baf977b3ebd1a266eb8e5b1ea22341d894a3",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "acbedf",
+        "family": "architecture_reconstruction",
+        "prompt": "Dependencies are {'a': [], 'b': ['a'], 'c': ['a'], 'd': ['b', 'c'], 'e': ['c'], 'f': ['d', 'e']}. Repeatedly sort ready nodes; choose last when (output_position+2) is odd, otherwise first. Return the concatenated order.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "b24daeeb6fab51e617ee863f24584d5ef8c26f1d829b7647b6e3a3cbe28aac1e",
+        "case_id": "6d588c4d634428e628cac18f1176111dfc5398d2b09827fad5c9db5f8293dd15",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "abcdef",
+        "family": "architecture_reconstruction",
+        "prompt": "Dependencies are {'a': [], 'b': ['a'], 'c': ['a'], 'd': ['b', 'c'], 'e': ['c'], 'f': ['d', 'e']}. Repeatedly sort ready nodes; choose last when (output_position+3) is odd, otherwise first. Return the concatenated order.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "94d16fa9d29e8ce22b2c001db1d587cae77f291f83cc8efee008ab3fcfb0bb0d",
+        "case_id": "cb3dfb1bc0109bdfaae003482f7d7b10aa58fbcb50319b876ed020c7f0fa5506",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "53",
+        "family": "multi_step_code_repair",
+        "prompt": "Repair the accumulator conceptually: start=27; for values=[27, 14, 13, 17, 16], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "c7e05c3805ca65af412b1d8ad0d096d94f09b176766c132dfc102b20f30f794b",
+        "case_id": "1f6fa2410e3063629fd4332e0a8d8f2ddeaf503fd0610cb2ef46628c0b73b2ad",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "55",
+        "family": "multi_step_code_repair",
+        "prompt": "Repair the accumulator conceptually: start=19; for values=[28, 28, 23, 3, 28, 2], update x=(x+value*(index+2)) mod 131. Return the final decimal value.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "9728ac83eb879c0a4dcb9544bf5aa3ec2050cf287d17966cca0572dd4cfc8ed1",
+        "case_id": "764cdf441c24d15f4ac56da3ca361f66bff938258c21ed18f54ea5099bf09e8a",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "80",
+        "family": "multi_step_code_repair",
+        "prompt": "Repair the accumulator conceptually: start=24; for values=[16, 14, 22, 3, 10, 9, 20], update x=(x+value*(index+2)) mod 101. Return the final decimal value.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "68fec0473e988a1ef1c13c4f9b9a15cc67de203de8be796ce82ae4fd7b158e64",
+        "case_id": "d010ec72494ecf62752d53e61af85255d6fb5a08c17724a4132188e83bafdecc",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "60",
+        "family": "multi_step_code_repair",
+        "prompt": "Repair the accumulator conceptually: start=12; for values=[22, 13, 2, 27, 27, 9, 3, 9], update x=(x+value*(index+2)) mod 127. Return the final decimal value.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "358ece27df5113aa24cd918d17bdb4fc7e78f3322f4ca55960f92ea911dc89ff",
+        "case_id": "812e8ba321be50f5cc9613c06e8f8148d28c9cca90e53fc7cbcac12a6f7503d5",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_1.py:4",
+        "family": "repository_bug_localization",
+        "prompt": "Four modules implement x=(x*7+value) mod 101. Only module_1.py line 4 uses *5. Return the unique defect as file:line.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "90bdf545f2ac3ea8e7b83c0156ae675f48d1ee27d1547ce92122472ffd344724",
+        "case_id": "10815ad4f6cc385b6702847426cc2ea937e48eebb94be631a70e89388d1c5dc0",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_0.py:5",
+        "family": "repository_bug_localization",
+        "prompt": "Four modules implement x=(x*7+value) mod 131. Only module_0.py line 5 uses *5. Return the unique defect as file:line.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "01081cbdda5d65fd06f67455d7fa3bdbfc005fe60e5555979fe8d126e4b0c2d2",
+        "case_id": "99791236b83941ad5bde0913d0fe9780dcfee8629feafb0cdbecd3d007e003e7",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_3.py:6",
+        "family": "repository_bug_localization",
+        "prompt": "Four modules implement x=(x*7+value) mod 101. Only module_3.py line 6 uses *5. Return the unique defect as file:line.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "4eeb6544914896f05b7d91a968e16621b1181ed29a167bb2efd0dc7415b81e3c",
+        "case_id": "cda312de1100bbcfa9d7a552664eff58f2c1f0b736d254a8088dd7cb49184e10",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "module_2.py:7",
+        "family": "repository_bug_localization",
+        "prompt": "Four modules implement x=(x*7+value) mod 127. Only module_2.py line 7 uses *5. Return the unique defect as file:line.",
+        "variant": 3
+      },
+      {
+        "answer_hash": "cfe82102456ece1cbf985b249f35a9161fce905f33a93e5d7f0e9cef3db39dd7",
+        "case_id": "2562dc27944060481fffd996da7f278fdeec567cc420b33c37f17ceb1845d781",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3",
+        "family": "stale_state_detection",
+        "prompt": "Ledger rows arrive in order [('m1', 5, 'active'), ('m2', 6, 'active'), ('m1', 6, 'contested'), ('m3', 6, 'active'), ('m2', 7, 'superseded')]. Latest row per ID wins. At current epoch 6, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 0
+      },
+      {
+        "answer_hash": "cfe82102456ece1cbf985b249f35a9161fce905f33a93e5d7f0e9cef3db39dd7",
+        "case_id": "27143b784380b65a743a9c91d8df76ccbfc0bc672d6eec816f66a0a125467e6d",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3",
+        "family": "stale_state_detection",
+        "prompt": "Ledger rows arrive in order [('m1', 6, 'active'), ('m2', 7, 'active'), ('m1', 7, 'contested'), ('m3', 7, 'active'), ('m2', 8, 'superseded')]. Latest row per ID wins. At current epoch 7, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 1
+      },
+      {
+        "answer_hash": "cfe82102456ece1cbf985b249f35a9161fce905f33a93e5d7f0e9cef3db39dd7",
+        "case_id": "4318d1d1ab04ee7bdaee579b0f876da4cdc81b02deb703d07900c682b6e471d9",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3",
+        "family": "stale_state_detection",
+        "prompt": "Ledger rows arrive in order [('m1', 7, 'active'), ('m2', 8, 'active'), ('m1', 8, 'contested'), ('m3', 8, 'active'), ('m2', 9, 'superseded')]. Latest row per ID wins. At current epoch 8, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 2
+      },
+      {
+        "answer_hash": "cfe82102456ece1cbf985b249f35a9161fce905f33a93e5d7f0e9cef3db39dd7",
+        "case_id": "6eea6e5aa6656f72932984c686a9fd7969106df728b6eb629fac44b6c6490097",
+        "difficulty_band": "development_calibration",
+        "evaluator": "normalized_exact_public_output",
+        "expected_public_output": "m3",
+        "family": "stale_state_detection",
+        "prompt": "Ledger rows arrive in order [('m1', 8, 'active'), ('m2', 9, 'active'), ('m1', 9, 'contested'), ('m3', 9, 'active'), ('m2', 10, 'superseded')]. Latest row per ID wins. At current epoch 9, return sorted comma-separated IDs whose latest row is exactly current and active.",
+        "variant": 3
+      }
+    ],
+    "confirmatory_eligible": false,
+    "corpus_hash": "117333b067acb00a8f6c8eee016909d7dc4a926dd6a1f74b7487f0c6a8911d74",
+    "development_only": true,
+    "held_out": false,
+    "model_identity_in_ontology": false,
+    "schema_version": "cortex-discriminative-forge/1.0",
+    "seed_commitment": "a47edb54b4f4f204d6d7c60a16eb9398bb6b88032fb3fe9d1578f3e7a7ab3442",
+    "task_families": [
+      "repository_bug_localization",
+      "multi_step_code_repair",
+      "stale_state_detection",
+      "api_migration",
+      "architecture_reconstruction"
+    ],
+    "version": "9.8.1"
+  },
+  "empirical_trial_executed": false,
+  "observation_state": "not_executed",
+  "schema_version": "cortex-discriminative-forge-benchmark/1.0"
+}

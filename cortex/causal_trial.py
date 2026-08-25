@@ -5,17 +5,20 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import random
 import time
 from collections.abc import Mapping, Sequence
+from functools import lru_cache
 from typing import Any
 
 from .competence_differentiation import evaluate_competence_differentiation
 from .competence_transfer import get_transfer_trial
+from .discriminability import assess_paired_information, verify_task_panel
 from .distillation_witness import get_distillation_witness, verify_distillation_witness
 
 PREREG_SCHEMA = "cortex-causal-preregistration/1.0"
 RESULT_SCHEMA = "cortex-preregistered-causal-result/1.0"
-VERSION = "9.8.0"
+VERSION = "9.8.1"
 PRIMARY_COMPARISONS = {"continuity": ("A", "D"), "distillation": ("B", "D"), "governance": ("C", "D")}
 STANDARD_ARMS = {
     "A": "ordinary_context",
@@ -133,6 +136,9 @@ def create_causal_preregistration(
     task_family_strata: Sequence[str] = (),
     capability_class_strata: Sequence[str] = (),
     arms: Sequence[str] = tuple(STANDARD_ARMS),
+    expected_discordance: float | None = None,
+    target_power: float = 0.80,
+    calibration_receipt: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Freeze the causal design before any bound transfer trial exists."""
     repository_id = _repo_identity(store, repo)
@@ -146,6 +152,29 @@ def create_causal_preregistration(
     if not 0 < float(alpha) < 1:
         raise CausalTrialError("alpha must be between zero and one")
     minimum = {name: float(minimum_effects[name]) for name in PRIMARY_COMPARISONS}
+    power_analysis = (
+        matched_binary_power_plan(
+            minimum_effect=min(minimum.values()),
+            expected_discordance=float(expected_discordance),
+            alpha=float(alpha) / len(PRIMARY_COMPARISONS),
+            target_power=float(target_power),
+        )
+        if expected_discordance is not None
+        else {
+            "state": "undeclared",
+            "reason": "expected_discordance_required_before_confirmatory_use",
+        }
+    )
+    calibration_check = verify_task_panel(calibration_receipt) if calibration_receipt is not None else {"valid": False, "errors": ["calibration_missing"]}
+    selected_families = set(calibration_receipt.get("selected_families") or []) if calibration_receipt is not None else set()
+    declared_families = {str(item) for item in task_family_strata}
+    calibration_binding = {
+        "state": "pass" if calibration_check["valid"] and bool(declared_families) and declared_families <= selected_families else "unknown",
+        "calibration_hash": calibration_receipt.get("calibration_hash") if calibration_receipt is not None else None,
+        "selected_families": sorted(selected_families),
+        "declared_families": sorted(declared_families),
+        "reason": "declared_families_calibrated" if calibration_check["valid"] and bool(declared_families) and declared_families <= selected_families else "calibration_missing_invalid_or_unbound",
+    }
     material = {
         "schema_version": PREREG_SCHEMA,
         "repository_id": repository_id,
@@ -167,6 +196,8 @@ def create_causal_preregistration(
         "task_family_strata": sorted(str(item) for item in task_family_strata),
         "capability_class_strata": sorted(str(item) for item in capability_class_strata),
         "required_evidence_class": "live_empirical",
+        "power_analysis": power_analysis,
+        "discriminability_calibration": calibration_binding,
     }
     _reject_model_fields(material)
     preregistration_id = _sha(material)
@@ -201,8 +232,9 @@ def exact_matched_binary(control: Sequence[float], treatment: Sequence[float]) -
     if len(control) != len(treatment):
         raise CausalTrialError("matched binary panels must have equal length")
     pairs = [(int(float(a) >= 0.5), int(float(b) >= 0.5)) for a, b in zip(control, treatment)]
-    benefit = sum(1 for a, b in pairs if a == 0 and b == 1)
-    harm = sum(1 for a, b in pairs if a == 1 and b == 0)
+    information = assess_paired_information(control, treatment)
+    benefit = int(information["benefit_pairs"])
+    harm = int(information["harm_pairs"])
     discordant = benefit + harm
     tail = min(benefit, harm)
     p_value = (
@@ -216,11 +248,113 @@ def exact_matched_binary(control: Sequence[float], treatment: Sequence[float]) -
         "benefit_pairs": benefit,
         "harm_pairs": harm,
         "discordant_pairs": discordant,
+        "effective_causal_sample": information["effective_causal_sample"],
+        "discordance_rate": information["discordance_rate"],
+        "information_state": information["state"],
         "paired_risk_difference": round((benefit - harm) / n, 9) if n else None,
         "exact_two_sided_p": round(p_value, 12),
         "variance_state": "estimable" if n > 1 else "not_estimable",
         "confidence_interval": None,
         "confidence_interval_state": "not_implemented_for_paired_binary_v9.8",
+    }
+
+
+def paired_bootstrap_interval(
+    control: Sequence[float],
+    treatment: Sequence[float],
+    *,
+    confidence: float = 0.95,
+    replicates: int = 5000,
+    seed_material: str = "",
+) -> dict[str, Any]:
+    """Deterministic case-level paired bootstrap for the risk difference."""
+    if len(control) != len(treatment):
+        raise CausalTrialError("matched binary panels must have equal length")
+    n = len(control)
+    if n < 2:
+        return {
+            "interval": None,
+            "state": "not_estimable",
+            "method": "paired_case_bootstrap_percentile",
+            "replicates": 0,
+        }
+    if not 0 < confidence < 1 or replicates < 100:
+        raise CausalTrialError("bootstrap confidence/replicates are invalid")
+    pairs = [(float(a), float(b)) for a, b in zip(control, treatment)]
+    seed = int(_sha({"seed_material": seed_material, "pairs": pairs})[:16], 16)
+    rng = random.Random(seed)
+    estimates = []
+    for _ in range(int(replicates)):
+        sample = [pairs[rng.randrange(n)] for _ in range(n)]
+        estimates.append(sum(b - a for a, b in sample) / n)
+    estimates.sort()
+    tail = (1.0 - confidence) / 2.0
+    lower_index = max(0, min(len(estimates) - 1, int(math.floor(tail * len(estimates)))))
+    upper_index = max(0, min(len(estimates) - 1, int(math.ceil((1.0 - tail) * len(estimates))) - 1))
+    return {
+        "interval": [round(estimates[lower_index], 9), round(estimates[upper_index], 9)],
+        "state": "estimated",
+        "method": "paired_case_bootstrap_percentile",
+        "confidence": confidence,
+        "replicates": int(replicates),
+        "seed_digest": _sha({"seed_material": seed_material, "pairs": pairs}),
+    }
+
+
+@lru_cache(maxsize=None)
+def _exact_discordance_p(benefit: int, harm: int) -> float:
+    discordant = benefit + harm
+    if not discordant:
+        return 1.0
+    tail = min(benefit, harm)
+    return min(
+        1.0,
+        2.0 * sum(math.comb(discordant, k) for k in range(tail + 1)) / (2**discordant),
+    )
+
+
+def matched_binary_power_plan(
+    *,
+    minimum_effect: float,
+    expected_discordance: float,
+    alpha: float = 0.05,
+    target_power: float = 0.80,
+    max_cases: int = 512,
+) -> dict[str, Any]:
+    """Find matched-case count from an exact discordance probability model."""
+    effect = float(minimum_effect)
+    discordance = float(expected_discordance)
+    if not 0 < effect <= discordance <= 1:
+        raise CausalTrialError("power assumptions require 0 < effect <= discordance <= 1")
+    if not 0 < alpha < 1 or not 0 < target_power < 1:
+        raise CausalTrialError("power alpha/target must be between zero and one")
+    benefit_probability = (discordance + effect) / (2.0 * discordance)
+    required = None
+    achieved = 0.0
+    for n in range(2, int(max_cases) + 1):
+        power = 0.0
+        for d in range(n + 1):
+            p_d = math.comb(n, d) * (discordance**d) * ((1.0 - discordance) ** (n - d))
+            for benefit in range(d + 1):
+                harm = d - benefit
+                if _exact_discordance_p(benefit, harm) > alpha:
+                    continue
+                p_b = math.comb(d, benefit) * (benefit_probability**benefit) * ((1.0 - benefit_probability) ** harm)
+                power += p_d * p_b
+        if power >= target_power:
+            required = n
+            achieved = power
+            break
+    return {
+        "state": "complete" if required is not None else "unresolved",
+        "method": "exact_mcnemar_unconditional_power_sum",
+        "minimum_effect": effect,
+        "expected_discordance": discordance,
+        "alpha": alpha,
+        "target_power": target_power,
+        "required_cases": required,
+        "achieved_power": round(achieved, 9) if required is not None else None,
+        "max_cases": int(max_cases),
     }
 
 
@@ -275,6 +409,12 @@ def evaluate_preregistered_causal_trial(
             [case["scores"][control_arm] for case in descriptive["cases"]],
             [case["scores"][treatment_arm] for case in descriptive["cases"]],
         )
+        panel["confidence_interval"] = paired_bootstrap_interval(
+            [case["scores"][control_arm] for case in descriptive["cases"]],
+            [case["scores"][treatment_arm] for case in descriptive["cases"]],
+            seed_material=f"{preregistration_id}:{name}",
+        )
+        panel["confidence_interval_state"] = panel["confidence_interval"]["state"]
         exact[name] = panel
         p_values[name] = float(panel["exact_two_sided_p"])
     adjusted = holm_adjust(p_values)
@@ -291,6 +431,16 @@ def evaluate_preregistered_causal_trial(
     gates = {
         "preregistered_before_trials": timing_pass,
         "planned_sample_complete": len(descriptive["cases"]) >= int(prereg["planned_cases"]),
+        "power_analysis_complete": (
+            isinstance(prereg.get("power_analysis"), Mapping)
+            and prereg["power_analysis"].get("state") == "complete"
+            and prereg["power_analysis"].get("required_cases") is not None
+            and int(prereg["planned_cases"]) >= int(prereg["power_analysis"]["required_cases"])
+        ),
+        "development_calibration_bound": (
+            isinstance(prereg.get("discriminability_calibration"), Mapping)
+            and prereg["discriminability_calibration"].get("state") == "pass"
+        ),
         "semantic_distillation_supported": witness_check.get("valid") is True and witness is not None and witness.get("status") == "SUPPORTED",
         "live_empirical_evidence": descriptive["gates"]["evidence_class"]["passed"],
         "discriminative_cohort": descriptive["gates"]["ceiling"]["passed"] and descriptive["gates"]["floor"]["passed"] and descriptive["gates"]["dynamic_range"]["passed"],
@@ -353,4 +503,6 @@ __all__ = [
     "exact_matched_binary",
     "get_causal_preregistration",
     "holm_adjust",
+    "matched_binary_power_plan",
+    "paired_bootstrap_interval",
 ]
