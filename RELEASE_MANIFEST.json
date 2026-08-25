@@ -1,14 +1,15 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v9.8.0",
+  "release": "Cortex v9.8.1",
   "release_class": "advanced research prototype",
-  "source_commit": "bb33b5a7eb3afa2f65300108623274bef94a6e5d",
-  "runtime_parent": "bb33b5a7eb3afa2f65300108623274bef94a6e5d",
+  "source_commit": "ca26e1d6fbda7b3323e875c7fba8ccfc12ca972d",
+  "runtime_parent": "ca26e1d6fbda7b3323e875c7fba8ccfc12ca972d",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/intelligence/PHASE_V9.8_PREREGISTERED_CAUSAL_COMPETENCE_TRIAL.md",
+  "phase_document": "docs/intelligence/PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md",
   "evidence_boundary": {
     "model_circulation": "verified mechanism and one prior live empirical circulation",
     "causal_competence_improvement": "not established",
+    "experimental_discriminability": "entropy, discordance, exact power, and development task-forge mechanisms verified; confirmatory run not executed",
     "semantic_distillation": "exact canonical support verifier implemented; completeness unresolved",
     "production_repository_portability": "not established",
     "external_replication": "not established"
@@ -19,5 +20,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v3.1.0 root release manifest (archival; available in Git history)"
+  "supersedes": "Cortex v9.8.0 preregistered causal competence trial"
 }

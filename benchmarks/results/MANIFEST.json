@@ -1,13 +1,14 @@
 {
-  "benchmark_suite_hash": "db37a7b529ed850b8995491e3ffa45549f7c4f0ab1913a47cf55f911cf697378",
-  "cortex_version": "9.8.0",
+  "benchmark_suite_hash": "9a8729bfe6f2210279751081e579a3df3e28e38bf7975ffaf89966e42a6b5314",
+  "cortex_version": "9.8.1",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
-    "Artifacts predate this manifest and lack a unified original run identity.",
+    "Artifacts span historical results, fresh controlled reruns, one development-only frontier calibration, and an unexecuted task-forge manifest.",
     "Manifest generation is not a benchmark rerun.",
-    "legacy_partial artifacts cannot establish current-head empirical effects."
+    "legacy_partial artifacts cannot establish current-head empirical effects.",
+    "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 4,
+  "result_count": 9,
   "results": [
     {
       "bytes": 3346,
@@ -16,10 +17,16 @@
       "sha256": "32074437faf69641c5f19fdd63aaf67438991f96aa914924b9506427fbc0919e"
     },
     {
-      "bytes": 2039,
+      "bytes": 2016,
       "metadata_state": "legacy_partial",
       "path": "benchmarks/results/foreign_host_matrix.json",
-      "sha256": "c784e826cfa4b4f624fdb2f6429cea057205ee8bba3950049db2aa4ba344e22d"
+      "sha256": "99219b10b0481a0b8abcb5dc40861ed356209a5d8299ffa47a675dae965b133e"
+    },
+    {
+      "bytes": 8378,
+      "metadata_state": "development_calibration",
+      "path": "benchmarks/results/frontier_calibration_v980_grok46.json",
+      "sha256": "efe37950ff7c42b8d017d6917d0e3fc39561ac4943d243b3c8da2d1768495151"
     },
     {
       "bytes": 2851,
@@ -32,6 +39,30 @@
       "metadata_state": "legacy_partial",
       "path": "benchmarks/results/thalamus_before_after.json",
       "sha256": "d639ec492822f36e7cbb9122914eda04ba8628b154ca10e6914c81eb97b17307"
+    },
+    {
+      "bytes": 4628,
+      "metadata_state": "fresh_controlled_rerun_partial_metadata",
+      "path": "benchmarks/results/v980_rerun/deferred_vs_eager.json",
+      "sha256": "adb30218accb5e5e1733db4596f54c5fec0c450bed1583a45e9072de5bb52467"
+    },
+    {
+      "bytes": 3521,
+      "metadata_state": "fresh_controlled_rerun_partial_metadata",
+      "path": "benchmarks/results/v980_rerun/self_host_before_after.json",
+      "sha256": "3bec6c15b267e64bcbeecf3719c009fb8f6a92ccd695ed0b9c86cb076cecba42"
+    },
+    {
+      "bytes": 2039,
+      "metadata_state": "fresh_controlled_rerun_partial_metadata",
+      "path": "benchmarks/results/v980_rerun/thalamus_before_after.json",
+      "sha256": "55a17917b2850df30a4ce1c034e7821a76e7e6d4f53624c4c71625b2d307bd5b"
+    },
+    {
+      "bytes": 14007,
+      "metadata_state": "structural_unexecuted",
+      "path": "benchmarks/results/v981_discriminative_forge.json",
+      "sha256": "8be195f594ba387bbca78be83c28da9d6cf9ff7d74140a518367bec513b4345f"
     }
   ],
   "runtime_class": {
@@ -39,5 +70,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "bb33b5a7eb3afa2f65300108623274bef94a6e5d"
+  "source_commit": "ca26e1d6fbda7b3323e875c7fba8ccfc12ca972d"
 }

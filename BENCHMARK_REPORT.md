@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Cortex version | 9.8.1 |
-| Runtime commit | Recorded in `RELEASE_MANIFEST.json` after the release commit |
+| Runtime commit | `ca26e1d6fbda7b3323e875c7fba8ccfc12ca972d` |
 | Benchmark manifest | [`benchmarks/results/MANIFEST.json`](benchmarks/results/MANIFEST.json) |
 | Evidence phase | [`v9.8.1 Discriminative Task Forge`](docs/intelligence/PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md) |
 | Prior independent audit date | August 24, 2026 |
