@@ -9,8 +9,12 @@
   evidence cannot enter the accepted panel.
 - Added duplicate case/invocation rejection, exact case/prompt bindings, closed
   authority flags, and a model-neutral commissioning receipt.
-- Added a runnable structural commissioning surface. No new frontier model run,
-  held-out corpus, or causal competence claim was produced in this release.
+- Added a runnable structural commissioning surface whose initial receipt
+  honestly recorded that no frontier calibration had yet executed.
+- Added a provider-neutral JSON subprocess adapter and executed 52 canonical
+  runtime-selected frontier development circulations. API migration calibrated
+  at 4/8 (`I=0.25`); four families remained ceiling-limited, so the overall
+  release remains `CALIBRATION_HELD` and non-confirmatory.
 
 ## 9.8.2 - Information-Balanced Calibration & Held-Out Corpus Seal
 

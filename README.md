@@ -169,6 +169,13 @@ fixtures, caller success flags, model labels, and replayed invocations cannot
 open the calibration gate. This release commissions that mechanism; it does not
 claim that a frontier calibration or positive competence transfer occurred.
 
+The first canonical v9.8.3 frontier commissioning run has now executed. Across
+52 fresh live-model circulations, API migration level 2 landed at `4/8`, giving
+`p=.5` and maximum item information `I=.25`. The other four families remained
+at ceiling, including three that scored `12/12` through level 4. Cortex therefore
+reports `CALIBRATION_HELD`: one useful family found, four requiring harder task
+geometry, and no competence-improvement claim.
+
 ## Start here: attach Cortex to a project
 
 You do not need to clone Cortex or move your project into this repository. Open a

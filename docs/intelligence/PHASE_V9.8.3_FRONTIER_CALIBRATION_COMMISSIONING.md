@@ -7,8 +7,9 @@ development calibration protocol. It does not select or encode a model. A host
 chooses a runtime adapter, and Cortex only accepts observations reconstructed
 from a canonically verified `live_empirical` model circulation.
 
-No frontier calibration was executed for this release. The committed structural
-receipt therefore says `CALIBRATION_NOT_EXECUTED`.
+The release first emitted an honest `CALIBRATION_NOT_EXECUTED` structural seal.
+After operator-authorized epoch realignment, a runtime-selected frontier model
+then completed 52 development-only circulations through the canonical ledger.
 
 ## The discrete information wound
 
@@ -77,10 +78,35 @@ does not establish positive competence lift, model superiority, cross-model
 transfer, cognition, consciousness, agency, execution authority, memory
 authority, or policy authority.
 
+## Empirical commissioning result
+
+The runtime-selected Grok 4.6 CLI was registered as a host-controlled local
+subprocess boundary. Model identity remained provenance and was not used by the
+selection algorithm. Every case ran in a fresh Cortex session with tools and web
+disabled; only the public answer, bounded usage metadata, and canonical hashes
+were retained.
+
+| Family | Observations | Result |
+|---|---:|---|
+| Repository bug localization | 12 | Ceiling through level 4 |
+| Multi-step code repair | 12 | Ceiling through level 4 |
+| Stale-state detection | 12 | Ceiling through level 4 |
+| API migration | 8 | **Calibrated at level 2: 4/8, `I=0.25`** |
+| Architecture reconstruction | 8 | Ceiling: 7/8 at level 2 |
+
+The aggregate state is `CALIBRATION_HELD`, not ready. One of five families has
+an information-bearing level; the remaining four require genuinely harder task
+mechanisms. Fifty-two unique invocations resolved as `live_empirical`; no hidden
+reasoning or raw provider envelope was persisted, and all authority flags stayed
+false.
+
 ## Next evidence
 
-1. Execute the development ladder with fresh runtime-selected frontier sessions.
-2. Confirm informative levels with eight independent variants.
-3. Run a separate development-only A/D discordance pilot.
-4. Generate the secret-seeded held-out corpus only after calibration passes.
+1. Replace additive independent composition with coupled, prerequisite-bearing
+   difficulty for the four ceiling families.
+2. Recalibrate only those development families with fresh cases.
+3. Run a separate development-only A/D discordance pilot after at least one
+   additional family calibrates.
+4. Generate the secret-seeded held-out corpus only after the declared family
+   gate passes.
 5. Preregister v9.9 before any confirmatory model invocation.

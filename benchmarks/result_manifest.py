@@ -36,6 +36,8 @@ def main() -> int:
                 metadata_state = "structural_unexecuted"
             elif payload.get("schema_version") == "cortex-calibration-commissioning/1.0" and payload.get("empirical_trial_executed") is False:
                 metadata_state = "structural_unexecuted"
+            elif payload.get("schema_version") == "cortex-frontier-calibration-commissioning/1.0":
+                metadata_state = "development_live_empirical"
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
