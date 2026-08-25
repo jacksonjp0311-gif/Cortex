@@ -22,15 +22,26 @@ def main() -> int:
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
     files = []
-    for path in sorted(RESULTS.glob("*.json")):
+    for path in sorted(RESULTS.rglob("*.json")):
         if path.name == "MANIFEST.json":
             continue
+        metadata_state = "legacy_partial"
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("evidence_class") == "live_external_calibration" and payload.get("confirmatory_eligible") is False:
+                metadata_state = "development_calibration"
+            elif payload.get("schema_version") == "cortex-discriminative-forge-benchmark/1.0" and payload.get("observation_state") == "not_executed":
+                metadata_state = "structural_unexecuted"
+            elif path.parent.name == "v980_rerun":
+                metadata_state = "fresh_controlled_rerun_partial_metadata"
+        except (json.JSONDecodeError, OSError):
+            metadata_state = "unreadable"
         files.append(
             {
                 "path": path.relative_to(ROOT).as_posix(),
                 "bytes": path.stat().st_size,
                 "sha256": sha256(path),
-                "metadata_state": "legacy_partial",
+                "metadata_state": metadata_state,
             }
         )
     suite_files = sorted((ROOT / "benchmarks").glob("*.py"))
@@ -47,9 +58,10 @@ def main() -> int:
         "result_count": len(files),
         "results": files,
         "limitations": [
-            "Artifacts predate this manifest and lack a unified original run identity.",
+            "Artifacts span historical results, fresh controlled reruns, one development-only frontier calibration, and an unexecuted task-forge manifest.",
             "Manifest generation is not a benchmark rerun.",
             "legacy_partial artifacts cannot establish current-head empirical effects.",
+            "Development calibration and structural manifests cannot establish confirmatory competence effects.",
         ],
     }
     (RESULTS / "MANIFEST.json").write_text(
