@@ -1,3 +1,27 @@
+## 9.8.0 - Preregistered Causal Competence Trial
+
+- Added a v1.2 competence semantic-identity law that binds explicit IDs and
+  their operational sibling material while continuing to ignore harmless
+  explanatory prose and model provenance. Legacy v1.0 receipts retain their
+  original verification law and are not rewritten.
+- Added immutable tri-state semantic distillation witnesses. The deterministic
+  verifier resolves canonical public evaluation, outcome, and witness receipts;
+  exact support may pass, while unsupported generalization and completeness
+  remain `UNKNOWN`.
+- Added immutable model-neutral causal preregistrations that freeze task corpus,
+  contracts, arms, planned sample, seed commitment, stopping/exclusion rules,
+  minimum effects, negative-transfer threshold, and multiplicity policy before
+  bound transfer trials execute.
+- Added exact matched-binary discordance tests and Holm-adjusted primary
+  comparisons for continuity, distillation, and governance. A one-case panel
+  now reports variance as not estimable on the v9.8 surface.
+- Preserved fixture evidence as structural only. Synthetic wins cannot satisfy
+  the live-empirical gate or produce a causal competence claim.
+- Replaced stale root v3 release/benchmark surfaces with current, explicitly
+  scoped v9.8 manifests while preserving the historical report under Git.
+- Distribution, execution, memory admission, policy effect, and host mutation
+  remain false. No positive competence effect or universal transfer is claimed.
+
 ## 9.7.0 - Empirical Competence Differentiation
 
 - Added immutable differentiation receipts over canonical v9.2 A-E transfer

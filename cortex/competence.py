@@ -16,9 +16,10 @@ import time
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-SCHEMA = "cortex-competence/1.0"
+LEGACY_SCHEMA = "cortex-competence/1.0"
 SUCCESSOR_SCHEMA = "cortex-competence/1.1"
-VERSION = "9.1.0"
+SCHEMA = "cortex-competence/1.2"
+VERSION = "9.8.0"
 GLYPH = "⟡◇"
 CLAIM_BOUNDARY = (
     "A competence candidate is a portable, advisory abstraction derived from "
@@ -101,7 +102,12 @@ def _stable_items(value: Any) -> list[Any]:
 
 
 def _semantic_atom(value: Any) -> Any:
-    """Return identity-bearing meaning while ignoring prose/model provenance."""
+    """Return the legacy v9.1 identity atom.
+
+    Historical v1.0 receipts used the first explicit identifier and ignored
+    sibling operational fields.  Keep that law available only for immutable
+    legacy verification; new candidates use :func:`_semantic_atom_v2`.
+    """
     if isinstance(value, Mapping):
         for key in ("id", "capability_id", "outcome_id", "key", "name", "code"):
             if value.get(key):
@@ -114,6 +120,25 @@ def _semantic_atom(value: Any) -> Any:
             if str(key).lower()
             not in {"description", "summary", "rationale", "prose", "text"}
         }
+    return _text(value)
+
+
+def _semantic_atom_v2(value: Any) -> Any:
+    """Bind an explicit identifier *and* its operational sibling material.
+
+    Explanatory prose remains outside semantic identity, but an identifier can
+    no longer eclipse a changed procedure, constraint, tool, or other
+    operational field living beside it.
+    """
+    if isinstance(value, Mapping):
+        ignored = {"description", "summary", "rationale", "prose"}
+        return {
+            str(key): _semantic_atom_v2(value[key])
+            for key in sorted(value, key=lambda item: str(item))
+            if str(key).lower() not in ignored
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return sorted((_semantic_atom_v2(item) for item in value), key=_canonical)
     return _text(value)
 
 
@@ -139,6 +164,52 @@ def semantic_material(
         "required_tools": _stable_items(required_tools),
         "failure_conditions": _stable_items(failure_conditions),
     }
+
+
+def semantic_material_v2(
+    *,
+    candidate_type: str,
+    capability: Any,
+    intended_outcome: Any,
+    prerequisites: Any,
+    applicability_conditions: Any,
+    environmental_assumptions: Any,
+    required_tools: Any,
+    failure_conditions: Any,
+) -> dict[str, Any]:
+    """Build the v9.8 semantic identity without ID-shadow collisions."""
+    return {
+        "identity_schema": "cortex-competence-semantic-identity/2.0",
+        "candidate_type": _text(candidate_type),
+        "capability": _semantic_atom_v2(capability),
+        "intended_outcome": _semantic_atom_v2(intended_outcome),
+        "prerequisites": sorted(
+            (_semantic_atom_v2(item) for item in _items(prerequisites)),
+            key=_canonical,
+        ),
+        "applicability_conditions": sorted(
+            (_semantic_atom_v2(item) for item in _items(applicability_conditions)),
+            key=_canonical,
+        ),
+        "environmental_assumptions": sorted(
+            (_semantic_atom_v2(item) for item in _items(environmental_assumptions)),
+            key=_canonical,
+        ),
+        "required_tools": sorted(
+            (_semantic_atom_v2(item) for item in _items(required_tools)),
+            key=_canonical,
+        ),
+        "failure_conditions": sorted(
+            (_semantic_atom_v2(item) for item in _items(failure_conditions)),
+            key=_canonical,
+        ),
+    }
+
+
+def _semantic_material_for_schema(schema: str, **values: Any) -> dict[str, Any]:
+    if schema == SCHEMA:
+        return semantic_material_v2(**values)
+    return semantic_material(**values)
 
 
 def _repository_id(store: Any, repo: str) -> str:
@@ -398,7 +469,7 @@ def build_competence_candidate(
         raise CompetenceAdmissionError(
             "verified failure cannot be represented as a successful procedure"
         )
-    semantic = semantic_material(
+    semantic = semantic_material_v2(
         candidate_type=kind,
         capability=capability,
         intended_outcome=intended_outcome,
@@ -514,7 +585,8 @@ def append_competence_candidate(store: Any, repo: str, candidate: Mapping[str, A
     semantic_id = str(body.get("semantic_identity_hash") or "")
     if len(competence_id) != 64 or competence_id != semantic_id:
         raise CompetenceError("candidate semantic identity is invalid")
-    material = semantic_material(
+    material = _semantic_material_for_schema(
+        str(body.get("schema_version") or ""),
         candidate_type=str(body.get("candidate_type") or ""),
         capability=body.get("capability"),
         intended_outcome=body.get("intended_outcome"),
@@ -626,7 +698,8 @@ def verify_competence_candidate(store: Any, repo: str, competence_id: str) -> di
 
         return verify_successor_lineage(store, repo, candidate)
     errors: list[str] = []
-    if str(candidate.get("schema_version") or "") != SCHEMA:
+    candidate_schema = str(candidate.get("schema_version") or "")
+    if candidate_schema not in {SCHEMA, LEGACY_SCHEMA}:
         errors.append("candidate_schema_invalid")
     if str(candidate.get("receipt_hash") or "") != str(candidate.get("ledger_receipt_hash") or ""):
         errors.append("ledger_receipt_hash_mismatch")
@@ -638,7 +711,8 @@ def verify_competence_candidate(store: Any, repo: str, competence_id: str) -> di
         errors.append("candidate_receipt_hash_invalid")
     if str(candidate.get("semantic_identity_hash") or "") != str(competence_id):
         errors.append("semantic_identity_invalid")
-    material = semantic_material(
+    material = _semantic_material_for_schema(
+        candidate_schema,
         candidate_type=str(candidate.get("candidate_type") or ""),
         capability=candidate.get("capability"),
         intended_outcome=candidate.get("intended_outcome"),
@@ -1005,6 +1079,7 @@ __all__ = [
     "CLAIM_BOUNDARY",
     "GLYPH",
     "LIFECYCLE_STATES",
+    "LEGACY_SCHEMA",
     "PORTABILITY_STATES",
     "SCHEMA",
     "VERSION",
@@ -1023,6 +1098,7 @@ __all__ = [
     "get_competence_candidate",
     "list_competence_candidates",
     "semantic_material",
+    "semantic_material_v2",
     "verify_competence",
     "verify_competence_candidate",
 ]

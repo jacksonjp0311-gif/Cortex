@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.7.0-0ea5e9?style=for-the-badge" alt="v9.7.0" />
+  <img src="https://img.shields.io/badge/version-9.8.0-0ea5e9?style=for-the-badge" alt="v9.8.0" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -301,6 +301,17 @@ compensation. Model names, provider labels, and endpoints are rejected from the
 analysis policy and never enter scoring. The first live cohort remains held: it
 contains one saturated case, not evidence of competence lift. See
 [`PHASE_V9.7_EMPIRICAL_COMPETENCE_DIFFERENTIATION.md`](docs/intelligence/PHASE_V9.7_EMPIRICAL_COMPETENCE_DIFFERENTIATION.md).
+
+v9.8 closes two evidence wounds exposed by the independent benchmark audit.
+New competence identities bind operational material beside explicit IDs, while
+legacy receipts retain their historical hash law. A separate tri-state
+distillation witness reconstructs exact support from canonical public
+evaluation/outcome evidence and leaves unsupported generalization `UNKNOWN`.
+Confirmatory transfer now begins with an immutable, model-neutral
+preregistration and uses exact matched-binary tests with Holm correction. The
+preserved one-case live result remains descriptive and held; v9.8 does not
+claim that Cortex improved a model. See
+[`PHASE_V9.8_PREREGISTERED_CAUSAL_COMPETENCE_TRIAL.md`](docs/intelligence/PHASE_V9.8_PREREGISTERED_CAUSAL_COMPETENCE_TRIAL.md).
 
 ## Interconnect mathematics (v8.3.4)
 
