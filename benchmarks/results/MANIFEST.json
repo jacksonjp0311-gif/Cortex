@@ -1,0 +1,43 @@
+{
+  "benchmark_suite_hash": "db37a7b529ed850b8995491e3ffa45549f7c4f0ab1913a47cf55f911cf697378",
+  "cortex_version": "9.8.0",
+  "evidence_class": "committed_controlled_artifacts",
+  "limitations": [
+    "Artifacts predate this manifest and lack a unified original run identity.",
+    "Manifest generation is not a benchmark rerun.",
+    "legacy_partial artifacts cannot establish current-head empirical effects."
+  ],
+  "result_count": 4,
+  "results": [
+    {
+      "bytes": 3346,
+      "metadata_state": "legacy_partial",
+      "path": "benchmarks/results/deferred_vs_eager.json",
+      "sha256": "32074437faf69641c5f19fdd63aaf67438991f96aa914924b9506427fbc0919e"
+    },
+    {
+      "bytes": 2039,
+      "metadata_state": "legacy_partial",
+      "path": "benchmarks/results/foreign_host_matrix.json",
+      "sha256": "c784e826cfa4b4f624fdb2f6429cea057205ee8bba3950049db2aa4ba344e22d"
+    },
+    {
+      "bytes": 2851,
+      "metadata_state": "legacy_partial",
+      "path": "benchmarks/results/self_host_before_after.json",
+      "sha256": "56eb0ffc6aaf72f8ef8d663834ea4e70bb73437362c26bda2c55c05884a710b1"
+    },
+    {
+      "bytes": 2050,
+      "metadata_state": "legacy_partial",
+      "path": "benchmarks/results/thalamus_before_after.json",
+      "sha256": "d639ec492822f36e7cbb9122914eda04ba8628b154ca10e6914c81eb97b17307"
+    }
+  ],
+  "runtime_class": {
+    "python": "3.12.2",
+    "system": "Windows"
+  },
+  "schema_version": "cortex-benchmark-result-manifest/1.0",
+  "source_commit": "bb33b5a7eb3afa2f65300108623274bef94a6e5d"
+}

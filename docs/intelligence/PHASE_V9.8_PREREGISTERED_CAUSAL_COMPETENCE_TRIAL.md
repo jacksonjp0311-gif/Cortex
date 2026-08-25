@@ -139,5 +139,4 @@ No new live empirical model run was executed by this release. A confirmatory
 study still needs a preregistered, non-ceiling corpus with an adequately powered
 matched sample, multiple task families and model capability classes, negative
 controls, a paired-binary confidence interval, fresh runtime cohorts, production
-repository portability measurements, and independent external replication.
-
+  repository portability measurements, and independent external replication.
