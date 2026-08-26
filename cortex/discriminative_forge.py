@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
 from collections.abc import Mapping
 from typing import Any
@@ -26,6 +27,7 @@ TASK_FAMILIES = (
     "architecture_reconstruction",
 )
 COUPLED_FAMILIES = tuple(family for family in TASK_FAMILIES if family != "api_migration")
+LATENT_CAUSE_FAMILIES = COUPLED_FAMILIES
 
 
 def _canonical(value: Any) -> str:
@@ -347,6 +349,245 @@ def build_coupled_dependency_corpus(
     return {**material, "corpus_hash": _sha(material)}
 
 
+def _latent_geometry(hypothesis_signatures: Mapping[str, Any]) -> dict[str, Any]:
+    """Bind the discrete information geometry independently of model outcomes."""
+    signature_hashes = {str(key): _sha(value) for key, value in sorted(hypothesis_signatures.items())}
+    count = len(signature_hashes)
+    unique_count = len(set(signature_hashes.values()))
+    posterior_count = 1 if count > 1 and unique_count == count else max(1, count - unique_count + 1)
+    prior_entropy = math.log2(count) if count else 0.0
+    posterior_entropy = math.log2(posterior_count) if posterior_count else 0.0
+    return {
+        "hypothesis_count": count,
+        "local_hypothesis_entropy_bits": round(prior_entropy, 9),
+        "posterior_hypothesis_count": posterior_count,
+        "posterior_hypothesis_entropy_bits": round(posterior_entropy, 9),
+        "resolved_information_bits": round(prior_entropy - posterior_entropy, 9),
+        "hypothesis_evidence_hashes": signature_hashes,
+        "evidence_signatures_unique": unique_count == count,
+        "epistemic_coupling": True,
+    }
+
+
+def build_latent_cause_corpus(
+    *, seed: str = "cortex-v985-latent-development", maximum_level: int = 4,
+    variants_per_level: int = 8,
+) -> dict[str, Any]:
+    """Forge exact tasks where downstream evidence resolves symmetric causes."""
+    if maximum_level < 1 or variants_per_level < 2:
+        raise ValueError("latent-cause corpus requires levels and at least two variants")
+    cases: list[dict[str, Any]] = []
+    for level in range(1, maximum_level + 1):
+        for variant in range(variants_per_level):
+            rng = random.Random(int(_sha(f"{seed}:{level}:{variant}")[:16], 16))
+            hypothesis_count = 4 + level * 3
+
+            # Every candidate module is locally plausible. Only end-to-end probe
+            # checksums distinguish which candidate carried its declared defect.
+            module_count = hypothesis_count
+            modules = [(rng.randrange(2, 17), rng.randrange(1, 53)) for _ in range(module_count)]
+            faults = [(rng.randrange(1, 7), rng.randrange(1, 19)) for _ in range(module_count)]
+
+            def bug_signature(candidate: int, starts: list[int]) -> tuple[int, ...]:
+                result = []
+                for start in starts:
+                    value = start
+                    for index, ((multiplier, offset), (dm, do)) in enumerate(zip(modules, faults)):
+                        value = (value * (multiplier + (dm if index == candidate else 0)) + offset + (do if index == candidate else 0)) % 1009
+                    result.append(value)
+                return tuple(result)
+
+            bug_starts: list[int] = []
+            bug_signatures: dict[str, tuple[int, ...]] = {}
+            while len(bug_starts) < 8:
+                bug_starts.append(rng.randrange(2, 997))
+                bug_signatures = {f"H{i:02d}": bug_signature(i, bug_starts) for i in range(module_count)}
+                if len(set(bug_signatures.values())) == module_count and len(bug_starts) >= 2 + level:
+                    break
+            true_bug = rng.randrange(module_count)
+            bug_hypotheses = [
+                (f"H{i:02d}", f"module_{i:02d}.py", 20 + i, faults[i][0], faults[i][1])
+                for i in range(module_count)
+            ]
+            bug_material = {
+                "family": "repository_bug_localization", "difficulty_level": level, "variant": variant,
+                "difficulty_mechanism": "latent_fault_from_end_to_end_probes",
+                "dependency_depth": module_count, "hypotheses": bug_hypotheses,
+                "prompt": (
+                    f"Normal ordered modules are {modules}, each applying x=(x*multiplier+offset) mod 1009. "
+                    f"Exactly one locally plausible hypothesis is true: {bug_hypotheses}. Under H, only that module "
+                    "adds its listed multiplier_delta and offset_delta. End-to-end observations for starts "
+                    f"{bug_starts} are {list(bug_signatures[f'H{true_bug:02d}'])}. Infer the unique hypothesis and "
+                    "return H:file:line exactly."
+                ),
+                "evaluator": "normalized_exact_public_output",
+                "expected_public_output": f"H{true_bug:02d}:module_{true_bug:02d}.py:{20 + true_bug}",
+                **_latent_geometry(bug_signatures),
+            }
+            cases.append({**bug_material, "case_id": _sha(bug_material), "answer_hash": _sha(bug_material["expected_public_output"])})
+
+            # Candidate patches share the same interface. Training traces identify
+            # the recurrence; the requested answer applies it to a fresh input.
+            patches: list[tuple[int, int, int]] = []
+            while len(patches) < hypothesis_count:
+                candidate = (rng.randrange(2, 19), rng.randrange(1, 29), rng.randrange(1, 31))
+                if candidate not in patches:
+                    patches.append(candidate)
+
+            def run_patch(patch: tuple[int, int, int], start: int, values: list[int]) -> int:
+                a, b, c = patch
+                value = start
+                for index, item in enumerate(values):
+                    value = (a * value + b * item + c * index) % 1013
+                return value
+
+            repair_probes: list[tuple[int, list[int]]] = []
+            repair_signatures: dict[str, tuple[int, ...]] = {}
+            while len(repair_probes) < 7:
+                repair_probes.append((rng.randrange(2, 100), [rng.randrange(2, 80) for _ in range(4 + level)]))
+                repair_signatures = {
+                    f"P{i:02d}": tuple(run_patch(patch, start, values) for start, values in repair_probes)
+                    for i, patch in enumerate(patches)
+                }
+                if len(set(repair_signatures.values())) == hypothesis_count and len(repair_probes) >= 2 + level:
+                    break
+            true_patch = rng.randrange(hypothesis_count)
+            held_start = rng.randrange(2, 100)
+            held_values = [rng.randrange(2, 90) for _ in range(6 + level * 2)]
+            repair_material = {
+                "family": "multi_step_code_repair", "difficulty_level": level, "variant": variant,
+                "difficulty_mechanism": "latent_patch_from_sparse_training_traces",
+                "dependency_depth": len(held_values),
+                "prompt": (
+                    "Candidate patches P00.. apply x=(a*x+b*item+c*i) mod 1013 using tuples "
+                    f"{list(enumerate(patches))}. Training inputs are {repair_probes}; their terminal outputs under "
+                    f"the deployed patch are {list(repair_signatures[f'P{true_patch:02d}'])}. Infer the unique patch, "
+                    f"then run held input start={held_start}, values={held_values}. Return P:final exactly."
+                ),
+                "evaluator": "normalized_exact_public_output",
+                "expected_public_output": f"P{true_patch:02d}:{run_patch(patches[true_patch], held_start, held_values)}",
+                **_latent_geometry(repair_signatures),
+            }
+            cases.append({**repair_material, "case_id": _sha(repair_material), "answer_hash": _sha(repair_material["expected_public_output"])})
+
+            # Competing eligibility policies are all structurally valid. Historical
+            # panels reveal the deployed policy before it is applied to a target.
+            all_policies = [(window, support, parent) for window in range(4) for support in range(1, 5) for parent in (0, 1)]
+            rng.shuffle(all_policies)
+            policies = all_policies[:hypothesis_count]
+
+            def eligible(policy: tuple[int, int, int], panel: list[tuple[str, int, str, int, str | None]], epoch: int) -> str:
+                window, support_min, parent_required = policy
+                accepted: set[str] = set()
+                changed = True
+                while changed:
+                    changed = False
+                    for ident, row_epoch, status, support, parent in panel:
+                        ok_parent = not parent_required or parent is None or parent in accepted
+                        if ident not in accepted and row_epoch >= epoch - window and status == "active" and support >= support_min and ok_parent:
+                            accepted.add(ident); changed = True
+                return ",".join(sorted(accepted)) if accepted else "NONE"
+
+            diagnostic_epoch = 23
+            stale_panels: list[tuple[int, list[tuple[str, int, str, int, str | None]]]] = [
+                (diagnostic_epoch, [(f"age{age}", diagnostic_epoch - age, "active", 4, None)])
+                for age in range(4)
+            ]
+            stale_panels.extend(
+                (diagnostic_epoch, [(f"support{support}", diagnostic_epoch, "active", support, None)])
+                for support in range(1, 5)
+            )
+            stale_panels.append((diagnostic_epoch, [
+                ("blocked_parent", diagnostic_epoch, "contested", 4, None),
+                ("dependent_child", diagnostic_epoch, "active", 4, "blocked_parent"),
+            ]))
+            stale_signatures = {
+                f"S{i:02d}": tuple(eligible(policy, panel, epoch) for epoch, panel in stale_panels)
+                for i, policy in enumerate(policies)
+            }
+            true_policy = rng.randrange(hypothesis_count)
+            target_epoch = 25
+            target_panel = [
+                (f"t{i}", target_epoch - rng.randrange(4), rng.choice(("active", "active", "contested")), rng.randrange(1, 5), None if i < 2 else f"t{rng.randrange(i)}")
+                for i in range(10 + level)
+            ]
+            stale_material = {
+                "family": "stale_state_detection", "difficulty_level": level, "variant": variant,
+                "difficulty_mechanism": "latent_eligibility_policy_from_history",
+                "dependency_depth": len(target_panel),
+                "prompt": (
+                    "Candidate policies S00.. are (epoch_window,min_support,parent_required): "
+                    f"{list(enumerate(policies))}. A row is eligible when active, inside the epoch window, has enough "
+                    "support, and—when required—its parent is eligible. Historical (epoch,panel) cases are "
+                    f"{stale_panels}; deployed outputs are {list(stale_signatures[f'S{true_policy:02d}'])}. Infer the "
+                    f"unique policy and apply it to target epoch={target_epoch}, panel={target_panel}. Return S:IDs."
+                ),
+                "evaluator": "normalized_exact_public_output",
+                "expected_public_output": f"S{true_policy:02d}:{eligible(policies[true_policy], target_panel, target_epoch)}",
+                **_latent_geometry(stale_signatures),
+            }
+            cases.append({**stale_material, "case_id": _sha(stale_material), "answer_hash": _sha(stale_material["expected_public_output"])})
+
+            # Candidate hidden edges are locally indistinguishable. Weighted build
+            # traces reveal the edge; a new weight panel requests its schedule.
+            node_count = 6 + level * 2
+            nodes = [f"n{i:02d}" for i in range(node_count)]
+            candidates = [(nodes[parent], nodes[child]) for child in range(2, node_count) for parent in range(child)]
+            rng.shuffle(candidates)
+            candidate_edges = candidates[:hypothesis_count]
+
+            def schedule(edge: tuple[str, str], weights: Mapping[str, int]) -> str:
+                parent, child = edge
+                remaining, emitted = set(nodes), []
+                while remaining:
+                    ready = [node for node in remaining if node != child or parent in emitted]
+                    chosen = min(ready, key=lambda node: (int(weights[node]), node))
+                    emitted.append(chosen); remaining.remove(chosen)
+                return ">".join(emitted)
+
+            build_probes: list[dict[str, int]] = []
+            architecture_signatures: dict[str, tuple[str, ...]] = {}
+            while len(build_probes) < 14:
+                order = list(range(1, node_count + 1)); rng.shuffle(order)
+                build_probes.append({node: order[index] for index, node in enumerate(nodes)})
+                architecture_signatures = {
+                    f"E{i:02d}": tuple(schedule(edge, weights) for weights in build_probes)
+                    for i, edge in enumerate(candidate_edges)
+                }
+                if len(set(architecture_signatures.values())) == hypothesis_count and len(build_probes) >= 3 + level:
+                    break
+            true_edge = rng.randrange(hypothesis_count)
+            target_order = list(range(1, node_count + 1)); rng.shuffle(target_order)
+            target_weights = {node: target_order[index] for index, node in enumerate(nodes)}
+            architecture_material = {
+                "family": "architecture_reconstruction", "difficulty_level": level, "variant": variant,
+                "difficulty_mechanism": "latent_dependency_from_build_traces",
+                "dependency_depth": node_count,
+                "prompt": (
+                    f"Nodes are {nodes}. Exactly one candidate hidden edge parent->child is deployed: "
+                    f"{list(enumerate(candidate_edges))}. For each weight map, repeatedly emit the ready node with "
+                    f"lowest weight (tie by name). Historical weights are {build_probes}; observed schedules are "
+                    f"{list(architecture_signatures[f'E{true_edge:02d}'])}. Infer the unique edge and schedule target "
+                    f"weights {target_weights}. Return E:parent->child:schedule."
+                ),
+                "evaluator": "normalized_exact_public_output",
+                "expected_public_output": f"E{true_edge:02d}:{candidate_edges[true_edge][0]}->{candidate_edges[true_edge][1]}:{schedule(candidate_edges[true_edge], target_weights)}",
+                **_latent_geometry(architecture_signatures),
+            }
+            cases.append({**architecture_material, "case_id": _sha(architecture_material), "answer_hash": _sha(architecture_material["expected_public_output"])})
+
+    cases.sort(key=lambda row: (row["family"], row["difficulty_level"], row["variant"]))
+    material = {
+        "schema_version": "cortex-latent-cause-corpus/1.0", "version": "9.8.5",
+        "seed_commitment": _sha(seed), "task_families": list(LATENT_CAUSE_FAMILIES),
+        "maximum_level": int(maximum_level), "variants_per_level": int(variants_per_level),
+        "cases": cases, "development_only": True, "held_out": False,
+        "confirmatory_eligible": False, "model_identity_in_ontology": False,
+        "difficulty_law": "residual_hypothesis_entropy_and_downstream_evidence_resolution",
+    }
+    return {**material, "corpus_hash": _sha(material)}
+
+
 def build_held_out_bundle(
     calibration: Mapping[str, Any],
     development_corpus: Mapping[str, Any],
@@ -459,11 +700,13 @@ def verify_held_out_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
 
 __all__ = [
     "COUPLED_FAMILIES",
+    "LATENT_CAUSE_FAMILIES",
     "SCHEMA_VERSION",
     "TASK_FAMILIES",
     "VERSION",
     "build_difficulty_ladder_corpus",
     "build_coupled_dependency_corpus",
+    "build_latent_cause_corpus",
     "build_discriminative_corpus",
     "build_held_out_bundle",
     "evaluate_case",

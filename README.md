@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.4-0ea5e9?style=for-the-badge" alt="v9.8.4" />
+  <img src="https://img.shields.io/badge/version-9.8.5-0ea5e9?style=for-the-badge" alt="v9.8.5" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -207,6 +207,47 @@ subsequent computation appears. The next task forge must preserve multiple
 plausible causes after local inspection and make bounded downstream evidence—not
 length alone—resolve them. This is a measurement-design result, not evidence of
 competence lift.
+
+### What latent causes revealed
+
+v9.8.5 made several causes locally plausible, then supplied exact downstream
+observations that uniquely identified one cause. Every development case binds
+the prior hypothesis count, evidence signatures, posterior count, and resolved
+information into its corpus identity.
+
+![Cortex v9.8.5 latent-cause calibration](assets/latent-cause-v985.svg)
+
+The 48-observation live panel found four different regimes:
+
+| Family | Selected result | Classification |
+|---|---:|---|
+| Bug localization | 12/12 | ceiling |
+| Multi-step repair | 7/8 at level 4 | ceiling with contrast |
+| Stale-state detection | 5/8 at level 3 | calibrated development family |
+| Architecture reconstruction | 0/4 at levels 2 and 1 | floor |
+
+Stale-state produced `p=.625` and item information `I=.237654321`. It is the
+first calibrated family produced by the latent-cause forge. Overall status is
+still `CALIBRATION_HELD` because only one of four declared families calibrated.
+
+The experiment also refined the math. Prior ambiguity and evidence resolution
+are necessary, but they do not uniquely determine difficulty:
+
+```text
+A_local     = H(H | L)
+R_evidence  = I(H; O | L)
+η_evidence  = R_evidence / C
+```
+
+`C` is the measured inference cost. `η_evidence`—resolved bits per unit cost—is
+currently a declared but uncalibrated quantity because the canonical panel does
+not yet retain a sufficient latency distribution. Evidence that factorizes into
+independent parameter checks can remain easy even when `A_local` is large;
+entangled evidence can create a floor at smaller entropy. Cortex therefore no
+longer treats one scalar “difficulty” as a universal task coordinate.
+
+No held-out competence trial ran. This result measures development-task
+geometry, not model improvement, cognition, consciousness, or authority.
 
 ## Start here: attach Cortex to a project
 

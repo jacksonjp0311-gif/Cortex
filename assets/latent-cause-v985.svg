@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="410" viewBox="0 0 980 410" role="img" aria-labelledby="title desc">
+  <title id="title">Cortex v9.8.5 latent-cause development calibration</title>
+  <desc id="desc">Bug localization scored 100 percent, repair 87.5 percent, stale state 62.5 percent, and architecture zero percent. Only stale state falls inside the 30 to 70 percent calibration window.</desc>
+  <rect width="980" height="410" rx="24" fill="#07111f"/>
+  <text x="48" y="54" fill="#f8fafc" font-family="system-ui,sans-serif" font-size="25" font-weight="700">LATENT-CAUSE CALIBRATION</text>
+  <text x="48" y="82" fill="#94a3b8" font-family="ui-monospace,monospace" font-size="14">48 canonical observations · development only · CALIBRATION_HELD</text>
+  <rect x="430" y="112" width="280" height="224" fill="#22c55e" opacity=".12"/>
+  <line x1="430" y1="112" x2="430" y2="336" stroke="#22c55e" stroke-dasharray="5 5"/>
+  <line x1="710" y1="112" x2="710" y2="336" stroke="#22c55e" stroke-dasharray="5 5"/>
+  <g font-family="system-ui,sans-serif" font-size="15" fill="#cbd5e1">
+    <text x="48" y="147">Bug localization</text><text x="48" y="202">Multi-step repair</text>
+    <text x="48" y="257">Stale-state</text><text x="48" y="312">Architecture</text>
+  </g>
+  <g>
+    <rect x="220" y="128" width="700" height="25" rx="6" fill="#38bdf8"/>
+    <rect x="220" y="183" width="613" height="25" rx="6" fill="#38bdf8"/>
+    <rect x="220" y="238" width="438" height="25" rx="6" fill="#22c55e"/>
+    <rect x="220" y="293" width="3" height="25" rx="2" fill="#f43f5e"/>
+  </g>
+  <g font-family="ui-monospace,monospace" font-size="14" fill="#f8fafc" font-weight="700">
+    <text x="929" y="147">100%</text><text x="842" y="202">87.5%</text>
+    <text x="667" y="257">62.5%</text><text x="231" y="312">0%</text>
+  </g>
+  <text x="570" y="359" text-anchor="middle" fill="#22c55e" font-family="ui-monospace,monospace" font-size="12">declared information window .30–.70</text>
+  <text x="48" y="388" fill="#64748b" font-family="ui-monospace,monospace" font-size="12">same entropy range ≠ same decoding regime</text>
+</svg>

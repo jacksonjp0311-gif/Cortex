@@ -1,3 +1,22 @@
+## 9.8.5 - Latent-Cause Discrimination Forge
+
+- Added four model-neutral development families in which multiple causes remain
+  locally plausible and exact downstream evidence resolves a unique hypothesis.
+- Bound prior hypothesis entropy, posterior size, resolved information, and
+  unique evidence-signature hashes into every development case.
+- Hardened the frontier runner to resume from independently reconstructed
+  canonical observations, reuse immutable adapter provenance, and record
+  bounded invocation failures without converting them into success.
+- Executed a 48-observation canonical live panel (20 verified observations
+  resumed, 28 new). Stale-state level 3 calibrated at `5/8` (`p=.625`,
+  `I=.237654321`); repair reached `7/8`, bug localization remained `12/12`, and
+  architecture remained a `0/4` floor at levels 2 and 1.
+- Recorded `CALIBRATION_HELD`: one of four declared latent families calibrated,
+  no held-out trial executed, and every authority surface remained false.
+- Observed one pre-seal 180-second adapter timeout that succeeded on bounded
+  retry. The sealed panel contains no timeout failure; latency-distribution
+  calibration remains future work.
+
 ## 9.8.4 - Coupled Dependency Task Geometry
 
 - Replaced additive independent subcases in four ceiling-limited development
