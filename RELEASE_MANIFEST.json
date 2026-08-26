@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v9.8.4",
+  "release": "Cortex v9.8.5",
   "release_class": "advanced research prototype",
-  "source_commit": "0a6ad184581342faa7763dfe42685a47a9da5832",
-  "runtime_parent": "0a6ad184581342faa7763dfe42685a47a9da5832",
+  "source_commit": "6093e2c3510d792fc9151cb34c97b91b1eac8839",
+  "runtime_parent": "6093e2c3510d792fc9151cb34c97b91b1eac8839",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/intelligence/PHASE_V9.8.4_COUPLED_DEPENDENCY_TASK_GEOMETRY.md",
+  "phase_document": "docs/intelligence/PHASE_V9.8.5_LATENT_CAUSE_DISCRIMINATION_FORGE.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -13,6 +13,7 @@
     "information_balanced_calibration": "Rasch-style difficulty and item-information mechanism verified; one API-migration level calibrated at 4/8; no held-out confirmatory trial executed",
     "calibration_commissioning": "52 canonical live-empirical development circulations verified; API migration calibrated at 4/8 and four families remained ceiling-limited; overall CALIBRATION_HELD",
     "coupled_task_geometry": "52 additional canonical live-empirical development circulations verified; three coupled families remained 12/12 and multi-step repair reached 7/8 at depth 4; overall CALIBRATION_HELD",
+    "latent_cause_geometry": "48 canonical live-empirical development observations verified; stale-state level 3 calibrated at 5/8, repair reached 7/8, bug localization remained 12/12, architecture remained a 0/4 floor; overall CALIBRATION_HELD",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical support verifier implemented; completeness unresolved",
     "production_repository_portability": "not established",
@@ -24,5 +25,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v9.8.3 frontier calibration commissioning"
+  "supersedes": "Cortex v9.8.4 coupled dependency task geometry"
 }
