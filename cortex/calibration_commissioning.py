@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import statistics
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -17,12 +19,13 @@ from .discriminative_forge import TASK_FAMILIES, evaluate_case
 from .information_calibration import assess_sequential_level, estimate_difficulty
 from .model_circulation import verify_model_circulation
 
-SCHEMA_VERSION = "cortex-calibration-commissioning/1.0"
-OBSERVATION_SCHEMA = "cortex-calibration-observation/1.0"
-VERSION = "9.8.3"
+SCHEMA_VERSION = "cortex-calibration-commissioning/1.1"
+OBSERVATION_SCHEMA = "cortex-calibration-observation/1.1"
+VERSION = "9.8.6"
 CLAIM_BOUNDARY = (
-    "v9.8.3 measures development-task difficulty from canonically verified live "
-    "public outputs. It does not establish competence lift, confirmatory evidence, "
+    "v9.8.6 measures development-task difficulty and observational invocation cost "
+    "from canonically verified live public outputs. It does not establish repeatability, "
+    "competence lift, confirmatory evidence, "
     "model superiority, cognition, consciousness, agency, or authority."
 )
 
@@ -42,6 +45,126 @@ def _authority() -> dict[str, bool]:
         "memory_admission_authorized": False,
         "policy_effect": False,
         "update_authorized": False,
+    }
+
+
+def _numeric(mapping: Mapping[str, Any], *keys: str) -> float | None:
+    for key in keys:
+        value = mapping.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)):
+            return float(value)
+    return None
+
+
+def _invocation_cost_metrics(invocation: Mapping[str, Any]) -> dict[str, Any]:
+    """Reconstruct provider-neutral cost coordinates from a verified invocation."""
+    requested = invocation.get("requested_at")
+    completed = invocation.get("completed_at")
+    latency = None
+    if isinstance(requested, (int, float)) and isinstance(completed, (int, float)):
+        candidate = float(completed) - float(requested)
+        if math.isfinite(candidate) and candidate >= 0.0:
+            latency = candidate
+    usage = invocation.get("token_usage") if isinstance(invocation.get("token_usage"), Mapping) else {}
+    cost = invocation.get("cost") if isinstance(invocation.get("cost"), Mapping) else {}
+    input_tokens = _numeric(usage, "input_tokens", "input")
+    output_tokens = _numeric(usage, "output_tokens", "output")
+    reasoning_tokens = _numeric(usage, "reasoning_tokens", "reasoning")
+    total_tokens = _numeric(usage, "total_tokens", "total")
+    if total_tokens is None and input_tokens is not None and output_tokens is not None:
+        total_tokens = input_tokens + output_tokens
+    amount = _numeric(cost, "amount")
+    currency = str(cost.get("currency") or "").upper() or None
+    material = {
+        "schema_version": "cortex-calibration-cost/1.0",
+        "latency_seconds": round(latency, 6) if latency is not None else None,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "reasoning_tokens": reasoning_tokens,
+        "total_tokens": total_tokens,
+        "cost_amount": amount,
+        "cost_currency": currency,
+        "validity": {
+            "latency": latency is not None,
+            "input_tokens": input_tokens is not None,
+            "output_tokens": output_tokens is not None,
+            "reasoning_tokens": reasoning_tokens is not None,
+            "total_tokens": total_tokens is not None,
+            "cost": amount is not None and currency is not None,
+        },
+        "source": "canonical_model_invocation_receipt",
+        "observational_only": True,
+        "repeatability_established": False,
+    }
+    return {**material, "cost_metrics_hash": _sha(material)}
+
+
+def _distribution(values: Sequence[float]) -> dict[str, Any]:
+    finite = sorted(float(value) for value in values if math.isfinite(float(value)))
+    if not finite:
+        return {"n": 0, "median": None, "p95": None, "mad": None, "minimum": None, "maximum": None}
+    median = statistics.median(finite)
+    p95 = finite[max(0, math.ceil(0.95 * len(finite)) - 1)]
+    mad = statistics.median(abs(value - median) for value in finite)
+    return {
+        "n": len(finite), "median": round(median, 6), "p95": round(p95, 6),
+        "mad": round(mad, 6), "minimum": round(finite[0], 6), "maximum": round(finite[-1], 6),
+    }
+
+
+def summarize_observation_costs(
+    observations: Sequence[Mapping[str, Any]], cases: Mapping[str, Mapping[str, Any]]
+) -> dict[str, Any]:
+    """Describe cross-case cost; never represent it as repeated-run variance."""
+    latency: list[float] = []
+    tokens: list[float] = []
+    costs: list[float] = []
+    efficiency: list[float] = []
+    currencies: set[str] = set()
+    for row in observations:
+        metrics = row.get("cost_metrics") if isinstance(row.get("cost_metrics"), Mapping) else {}
+        case = cases.get(str(row.get("case_id") or ""), {})
+        elapsed = metrics.get("latency_seconds")
+        if isinstance(elapsed, (int, float)) and float(elapsed) > 0:
+            latency.append(float(elapsed))
+            bits = case.get("resolved_information_bits")
+            if isinstance(bits, (int, float)):
+                efficiency.append(float(bits) / float(elapsed))
+        total = metrics.get("total_tokens")
+        if isinstance(total, (int, float)):
+            tokens.append(float(total))
+        amount = metrics.get("cost_amount")
+        if isinstance(amount, (int, float)):
+            costs.append(float(amount))
+        currency = metrics.get("cost_currency")
+        if currency:
+            currencies.add(str(currency))
+    return {
+        "schema_version": "cortex-calibration-cost-panel/1.0",
+        "sample_count": len(observations),
+        "latency_seconds": _distribution(latency),
+        "total_tokens": _distribution(tokens),
+        "cost_amount": _distribution(costs),
+        "cost_currencies": sorted(currencies),
+        "resolved_information_bits_per_second": _distribution(efficiency),
+        "distribution_kind": "cross_case_observational",
+        "repeatability_established": False,
+        "gate_effect": False,
+        "authority_effect": False,
+    }
+
+
+def summarize_evidence_geometry(cases: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    entanglement = [float(row["evidence_entanglement_ratio"]) for row in cases if isinstance(row.get("evidence_entanglement_ratio"), (int, float))]
+    resolving = [float(row["resolving_coordinate_fraction"]) for row in cases if isinstance(row.get("resolving_coordinate_fraction"), (int, float))]
+    return {
+        "schema_version": "cortex-evidence-entanglement-panel/1.0",
+        "case_count": len(cases),
+        "entanglement_ratio": _distribution(entanglement),
+        "resolving_coordinate_fraction": _distribution(resolving),
+        "structural_only": True,
+        "outcome_independent": True,
+        "gate_effect": False,
     }
 
 
@@ -90,6 +213,7 @@ def resolve_calibration_observation(
         "outcome_receipt_hash": ((verification.get("receipt_bindings") or {}).get("model_outcome") or {}).get("receipt_hash"),
         "witness_result_hash": verification.get("witness_result_hash"),
         "evidence_class": verification.get("evidence_class"),
+        "cost_metrics": _invocation_cost_metrics(invocation),
         "success": success,
         "state": "observed" if not errors else "held",
         "errors": sorted(set(errors)),
@@ -157,20 +281,27 @@ def commission_calibration_panel(
         seen_invocations.add(invocation_id)
         accepted.append(row)
 
-    grouped: dict[str, dict[str, list[bool]]] = {}
+    grouped: dict[str, dict[str, list[dict[str, Any]]]] = {}
     for row in accepted:
-        grouped.setdefault(str(row["family"]), {}).setdefault(str(row["difficulty_level"]), []).append(bool(row["success"]))
+        grouped.setdefault(str(row["family"]), {}).setdefault(str(row["difficulty_level"]), []).append(row)
     family_reports: dict[str, Any] = {}
     selected: dict[str, Any] = {}
     for family in sorted(str(name) for name in corpus.get("task_families") or TASK_FAMILIES):
         levels: dict[str, Any] = {}
-        for level, outcomes in sorted(grouped.get(family, {}).items()):
+        for level, level_rows in sorted(grouped.get(family, {}).items()):
+            outcomes = [bool(row["success"]) for row in level_rows]
+            level_cases = [cases[str(row["case_id"])] for row in level_rows]
             sequential = assess_sequential_level(
                 outcomes,
                 screening_cases=screening_cases,
                 confirmation_cases=confirmation_cases,
             )
-            levels[level] = {**sequential, "rasch": estimate_difficulty(outcomes)}
+            levels[level] = {
+                **sequential,
+                "rasch": estimate_difficulty(outcomes),
+                "cost_panel": summarize_observation_costs(level_rows, cases),
+                "evidence_geometry": summarize_evidence_geometry(level_cases),
+            }
         calibrated = [row for row in levels.items() if row[1]["state"] == "calibrated"]
         calibrated.sort(key=lambda item: (-float(item[1]["rasch"]["item_information"] or 0.0), item[0]))
         if calibrated:
@@ -242,5 +373,6 @@ def verify_calibration_commissioning(receipt: Mapping[str, Any]) -> dict[str, An
 __all__ = [
     "CLAIM_BOUNDARY", "OBSERVATION_SCHEMA", "SCHEMA_VERSION", "VERSION",
     "commission_calibration_panel", "resolve_calibration_observation",
+    "summarize_evidence_geometry", "summarize_observation_costs",
     "verify_calibration_commissioning",
 ]

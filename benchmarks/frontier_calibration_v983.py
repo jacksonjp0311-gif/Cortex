@@ -22,6 +22,7 @@ from cortex.discriminative_forge import (
     COUPLED_FAMILIES,
     LATENT_CAUSE_FAMILIES,
     TASK_FAMILIES,
+    build_cost_entanglement_corpus,
     build_coupled_dependency_corpus,
     build_difficulty_ladder_corpus,
     build_latent_cause_corpus,
@@ -65,13 +66,21 @@ def main() -> int:
     parser.add_argument("--reasoning-effort", default="high")
     parser.add_argument("--timeout-seconds", type=float, default=180.0)
     parser.add_argument("--repo", default="Cortex")
-    parser.add_argument("--corpus-mode", choices=("additive", "coupled", "latent"), default="additive")
+    parser.add_argument(
+        "--target", action="append", default=[], metavar="FAMILY=LEVEL",
+        help="Run only a preregistered development stratum; repeat for multiple families.",
+    )
+    parser.add_argument(
+        "--corpus-mode", choices=("additive", "coupled", "latent", "entanglement"),
+        default="additive",
+    )
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks" / "results" / "v983_frontier_calibration.json")
     args = parser.parse_args()
     phase_id, phase_version = {
         "additive": ("v983", "9.8.3"),
         "coupled": ("v984", "9.8.4"),
         "latent": ("v985", "9.8.5"),
+        "entanglement": ("v986", "9.8.6"),
     }[args.corpus_mode]
     command = shutil.which(args.command) or args.command
     adapter = JsonSubprocessAdapter(
@@ -87,7 +96,15 @@ def main() -> int:
         timeout_seconds=args.timeout_seconds,
         run_profile=args.corpus_mode,
     )
-    if args.corpus_mode == "latent":
+    if args.corpus_mode == "entanglement":
+        corpus = build_cost_entanglement_corpus(
+            seed="cortex-v986-cost-entanglement-development",
+            maximum_level=4,
+            variants_per_level=8,
+        )
+        task_families = LATENT_CAUSE_FAMILIES
+        report_version = phase_version
+    elif args.corpus_mode == "latent":
         corpus = build_latent_cause_corpus(
             seed="cortex-v985-latent-development", maximum_level=4, variants_per_level=8
         )
@@ -106,6 +123,15 @@ def main() -> int:
         task_families = TASK_FAMILIES
         report_version = phase_version
     cases = {(row["family"], int(row["difficulty_level"]), int(row["variant"])): row for row in corpus["cases"]}
+    target_levels: dict[str, int] = {}
+    for raw_target in args.target:
+        family, separator, raw_level = str(raw_target).partition("=")
+        if not separator or family not in task_families or not raw_level.isdigit():
+            parser.error(f"invalid --target {raw_target!r}; expected one declared FAMILY=LEVEL")
+        level = int(raw_level)
+        if not 1 <= level <= int(corpus["maximum_level"]):
+            parser.error(f"target level {level} is outside the corpus")
+        target_levels[family] = level
     home = cortex_home()
     store = Store(home / "cortex.db")
     registration = resolve_adapter_provenance(store, args.repo, adapter)
@@ -157,6 +183,7 @@ def main() -> int:
             model_id=args.model, capability_profile={"development_calibration": True},
             tool_scopes=(), persist=True,
         )
+        attempt_started = time.monotonic()
         try:
             result = run_model_circulation(
                 store, args.repo, session, adapter=adapter, task_contract=contract,
@@ -171,6 +198,7 @@ def main() -> int:
                 "difficulty_level": case["difficulty_level"], "variant": case["variant"],
                 "state": "bounded_invocation_failed", "error_class": type(exc.__cause__).__name__ if exc.__cause__ else type(exc).__name__,
                 "timeout_seconds": args.timeout_seconds, "canonical_outcome_present": False,
+                "attempt_elapsed_seconds": round(time.monotonic() - attempt_started, 6),
                 "counted_as_success": False, "confirmatory_eligible": False,
                 "authority": {"host_mutate_authorized": False, "execution_authorized": False, "memory_admission_authorized": False, "policy_effect": False},
             }
@@ -185,7 +213,14 @@ def main() -> int:
         print(json.dumps({"call": calls, "family": case["family"], "level": case["difficulty_level"], "variant": case["variant"], "success": observation["success"], "state": observation["state"]}), flush=True)
         return bool(observation["success"])
 
-    for family in task_families:
+    for family in (tuple(target_levels) if target_levels else task_families):
+        if target_levels:
+            level = target_levels[family]
+            family_outcomes = [execute(cases[(family, level, variant)]) for variant in range(4)]
+            if 0 < sum(bool(value) for value in family_outcomes) < 4:
+                for variant in range(4, 8):
+                    execute(cases[(family, level, variant)])
+            continue
         level = 2
         visited = set()
         while level not in visited and 1 <= level <= 4:
@@ -218,6 +253,7 @@ def main() -> int:
         "execution_failures": execution_failures,
         "execution_failure_count": len(execution_failures),
         "timeout_seconds": args.timeout_seconds,
+        "target_levels": dict(target_levels),
         "commissioning": receipt,
         "observations": observations,
         "hidden_reasoning_persisted": False,

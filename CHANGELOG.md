@@ -1,3 +1,22 @@
+## 9.8.6 - Cost-Calibrated Evidence Entanglement
+
+- Added outcome-independent evidence-entanglement measurements over exact
+  hypothesis signatures: conditional entropy, coordinate collision, minimum
+  resolving coordinates, and resolving-coordinate fraction.
+- Reconstructed latency, token usage, cost, and resolved-information throughput
+  from canonical model-invocation receipts. Missing coordinates remain null and
+  invalid rather than becoming false zeroes.
+- Added cross-case median, p95, median absolute deviation, and range panels while
+  explicitly refusing to call cross-case dispersion repeat-run variance.
+- Added targeted development strata to the provider-neutral frontier runner so
+  bounded interventions can be tested without rerunning already mapped levels.
+- Executed eight fresh runtime-selected frontier observations. Doubling repair
+  transfer depth remained a `4/4` ceiling; exposing complete architecture
+  signature support moved the prior `0/4` floor to a `4/4` ceiling.
+- Recorded `CALIBRATION_HELD`: the interventions bracket an informative region
+  but do not calibrate it. No held-out competence trial ran and all authority
+  surfaces remained false.
+
 ## 9.8.5 - Latent-Cause Discrimination Forge
 
 - Added four model-neutral development families in which multiple causes remain

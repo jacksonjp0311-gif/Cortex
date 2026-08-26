@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Cortex v9.8.6 evidence-cost calibration</title>
+  <desc id="desc">Repair remained at ceiling while explicit architecture signatures moved performance from floor to ceiling. Median latency and token cost are shown.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/><stop offset="1" stop-color="#11152d"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="360" rx="22" fill="url(#bg)"/>
+  <rect x="1" y="1" width="958" height="358" rx="21" fill="none" stroke="#334155"/>
+  <text x="48" y="48" fill="#e2e8f0" font-family="Segoe UI, sans-serif" font-size="24" font-weight="700">v9.8.6 · EVIDENCE COST</text>
+  <text x="48" y="76" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="14">STRUCTURE ≠ COST ≠ AUTHORITY · 8 LIVE DEVELOPMENT OBSERVATIONS</text>
+  <line x1="48" y1="104" x2="912" y2="104" stroke="#334155"/>
+
+  <text x="48" y="142" fill="#cbd5e1" font-family="Segoe UI, sans-serif" font-size="16">Repair · doubled transfer depth</text>
+  <rect x="330" y="124" width="480" height="24" rx="12" fill="#172033"/>
+  <rect x="330" y="124" width="480" height="24" rx="12" fill="url(#signal)"/>
+  <text x="828" y="142" fill="#f8fafc" font-family="ui-monospace, monospace" font-size="16">4/4</text>
+  <text x="330" y="170" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13">still ceiling · median 120.81 s · 24,560 tokens</text>
+
+  <text x="48" y="220" fill="#cbd5e1" font-family="Segoe UI, sans-serif" font-size="16">Architecture · signature support</text>
+  <rect x="330" y="202" width="480" height="24" rx="12" fill="#172033"/>
+  <rect x="330" y="202" width="480" height="24" rx="12" fill="url(#signal)"/>
+  <text x="828" y="220" fill="#f8fafc" font-family="ui-monospace, monospace" font-size="16">4/4</text>
+  <text x="330" y="248" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13">was 0/4 · median 122.21 s · 19,216 tokens</text>
+
+  <rect x="48" y="282" width="864" height="44" rx="10" fill="#0f2030" stroke="#164e63"/>
+  <text x="68" y="309" fill="#67e8f9" font-family="Segoe UI, sans-serif" font-size="15">NEXT MEASUREMENT: reveal a controlled fraction of resolving signatures and locate the 30–70% band.</text>
+</svg>

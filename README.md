@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.5-0ea5e9?style=for-the-badge" alt="v9.8.5" />
+  <img src="https://img.shields.io/badge/version-9.8.6-0ea5e9?style=for-the-badge" alt="v9.8.6" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -248,6 +248,45 @@ longer treats one scalar “difficulty” as a universal task coordinate.
 
 No held-out competence trial ran. This result measures development-task
 geometry, not model improvement, cognition, consciousness, or authority.
+
+### What evidence cost revealed
+
+v9.8.6 reconstructed latency, tokens, and monetary cost from the same immutable
+model-invocation receipts that bind each public outcome. It also measured how
+much each evidence coordinate separates the remaining hypotheses—without using
+model success to define the geometry.
+
+![Cortex v9.8.6 evidence-cost calibration](assets/evidence-cost-v986.svg)
+
+Let `O_j` be one evidence coordinate and `H` the latent hypothesis. Cortex now
+records:
+
+```text
+E_entangle = mean_j H(H | O_j) / H(H)
+R_min      = minimum coordinates required to distinguish every H
+η_evidence = resolved information bits / observed inference seconds
+```
+
+These quantities remain separate. `E_entangle` describes the structure of the
+evidence; `η_evidence` describes observed information throughput; neither is an
+authority or promotion score.
+
+The targeted eight-observation frontier panel produced a useful overshoot:
+
+| Intervention | Before | v9.8.6 screen | Median latency | Median tokens |
+|---|---:|---:|---:|---:|
+| Double repair transfer depth | 7/8 at level 4 | 4/4 | 120.81 s | 24,560 |
+| Expose architecture signature table | 0/4 at level 1 | 4/4 | 122.21 s | 19,216 |
+
+More recurrence did not break the repair ceiling. Complete signature disclosure
+moved architecture completely across the informative band, from floor to
+ceiling. The next calibration variable is therefore *partial signature support*:
+freeze a declared fraction of resolving evidence and locate the point where the
+model succeeds on 30–70% of cases. The latency spread reported here is cross-case
+observational dispersion, not repeat-run variance.
+
+Overall status remains `CALIBRATION_HELD`. No competence improvement,
+consciousness, agency, or new execution authority is claimed.
 
 ## Start here: attach Cortex to a project
 

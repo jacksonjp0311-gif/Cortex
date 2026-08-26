@@ -8,6 +8,7 @@ confirmatory evidence.
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import math
 import random
@@ -349,7 +350,66 @@ def build_coupled_dependency_corpus(
     return {**material, "corpus_hash": _sha(material)}
 
 
-def _latent_geometry(hypothesis_signatures: Mapping[str, Any]) -> dict[str, Any]:
+def _conditional_hypothesis_entropy(signatures: list[tuple[Any, ...]], coordinate: int) -> float:
+    """Return H(H|O_coordinate) under a uniform hypothesis prior."""
+    groups: dict[str, int] = {}
+    for signature in signatures:
+        key = _canonical(signature[coordinate])
+        groups[key] = groups.get(key, 0) + 1
+    total = len(signatures)
+    return sum((count / total) * math.log2(count) for count in groups.values()) if total else 0.0
+
+
+def _minimum_resolving_coordinates(signatures: list[tuple[Any, ...]]) -> int | None:
+    """Find the smallest observed-coordinate subset that separates every hypothesis."""
+    if not signatures:
+        return None
+    width = len(signatures[0])
+    for size in range(1, width + 1):
+        for coordinates in itertools.combinations(range(width), size):
+            projections = {
+                tuple(_canonical(signature[index]) for index in coordinates)
+                for signature in signatures
+            }
+            if len(projections) == len(signatures):
+                return size
+    return None
+
+
+def _evidence_entanglement(hypothesis_signatures: Mapping[str, Any]) -> dict[str, Any]:
+    """Measure how evidence coordinates factorize without consulting model outcomes."""
+    signatures = [tuple(value) for _, value in sorted(hypothesis_signatures.items())]
+    if not signatures or not signatures[0]:
+        raise ValueError("evidence geometry requires non-empty, equally shaped signatures")
+    width = len(signatures[0])
+    if any(len(signature) != width for signature in signatures):
+        raise ValueError("evidence signatures must have equal coordinate counts")
+    prior_entropy = math.log2(len(signatures))
+    conditional = [_conditional_hypothesis_entropy(signatures, index) for index in range(width)]
+    pair_collisions = [
+        sum(a == b for a, b in zip(left, right)) / width
+        for left, right in itertools.combinations(signatures, 2)
+    ]
+    minimum = _minimum_resolving_coordinates(signatures)
+    return {
+        "evidence_coordinate_count": width,
+        "mean_single_coordinate_conditional_entropy_bits": round(sum(conditional) / width, 9),
+        "maximum_single_coordinate_information_bits": round(prior_entropy - min(conditional), 9),
+        "evidence_entanglement_ratio": round(
+            (sum(conditional) / width) / prior_entropy if prior_entropy else 0.0, 9
+        ),
+        "mean_pairwise_coordinate_collision_rate": round(
+            sum(pair_collisions) / len(pair_collisions) if pair_collisions else 0.0, 9
+        ),
+        "minimum_resolving_coordinate_count": minimum,
+        "resolving_coordinate_fraction": round(minimum / width, 9) if minimum is not None else None,
+        "metric_scope": "structural_evidence_geometry_not_model_difficulty",
+    }
+
+
+def _latent_geometry(
+    hypothesis_signatures: Mapping[str, Any], *, include_entanglement: bool = False
+) -> dict[str, Any]:
     """Bind the discrete information geometry independently of model outcomes."""
     signature_hashes = {str(key): _sha(value) for key, value in sorted(hypothesis_signatures.items())}
     count = len(signature_hashes)
@@ -357,7 +417,7 @@ def _latent_geometry(hypothesis_signatures: Mapping[str, Any]) -> dict[str, Any]
     posterior_count = 1 if count > 1 and unique_count == count else max(1, count - unique_count + 1)
     prior_entropy = math.log2(count) if count else 0.0
     posterior_entropy = math.log2(posterior_count) if posterior_count else 0.0
-    return {
+    geometry = {
         "hypothesis_count": count,
         "local_hypothesis_entropy_bits": round(prior_entropy, 9),
         "posterior_hypothesis_count": posterior_count,
@@ -367,14 +427,21 @@ def _latent_geometry(hypothesis_signatures: Mapping[str, Any]) -> dict[str, Any]
         "evidence_signatures_unique": unique_count == count,
         "epistemic_coupling": True,
     }
+    if include_entanglement:
+        geometry.update(_evidence_entanglement(hypothesis_signatures))
+    return geometry
 
 
 def build_latent_cause_corpus(
     *, seed: str = "cortex-v985-latent-development", maximum_level: int = 4,
     variants_per_level: int = 8,
+    include_evidence_entanglement: bool = False,
+    architecture_signature_table: bool = False,
+    repair_transfer_multiplier: int = 1,
+    corpus_version: str = "9.8.5",
 ) -> dict[str, Any]:
     """Forge exact tasks where downstream evidence resolves symmetric causes."""
-    if maximum_level < 1 or variants_per_level < 2:
+    if maximum_level < 1 or variants_per_level < 2 or repair_transfer_multiplier < 1:
         raise ValueError("latent-cause corpus requires levels and at least two variants")
     cases: list[dict[str, Any]] = []
     for level in range(1, maximum_level + 1):
@@ -422,7 +489,9 @@ def build_latent_cause_corpus(
                 ),
                 "evaluator": "normalized_exact_public_output",
                 "expected_public_output": f"H{true_bug:02d}:module_{true_bug:02d}.py:{20 + true_bug}",
-                **_latent_geometry(bug_signatures),
+                **_latent_geometry(
+                    bug_signatures, include_entanglement=include_evidence_entanglement
+                ),
             }
             cases.append({**bug_material, "case_id": _sha(bug_material), "answer_hash": _sha(bug_material["expected_public_output"])})
 
@@ -453,7 +522,10 @@ def build_latent_cause_corpus(
                     break
             true_patch = rng.randrange(hypothesis_count)
             held_start = rng.randrange(2, 100)
-            held_values = [rng.randrange(2, 90) for _ in range(6 + level * 2)]
+            held_values = [
+                rng.randrange(2, 90)
+                for _ in range(6 + level * 2 * repair_transfer_multiplier)
+            ]
             repair_material = {
                 "family": "multi_step_code_repair", "difficulty_level": level, "variant": variant,
                 "difficulty_mechanism": "latent_patch_from_sparse_training_traces",
@@ -466,7 +538,9 @@ def build_latent_cause_corpus(
                 ),
                 "evaluator": "normalized_exact_public_output",
                 "expected_public_output": f"P{true_patch:02d}:{run_patch(patches[true_patch], held_start, held_values)}",
-                **_latent_geometry(repair_signatures),
+                **_latent_geometry(
+                    repair_signatures, include_entanglement=include_evidence_entanglement
+                ),
             }
             cases.append({**repair_material, "case_id": _sha(repair_material), "answer_hash": _sha(repair_material["expected_public_output"])})
 
@@ -524,7 +598,9 @@ def build_latent_cause_corpus(
                 ),
                 "evaluator": "normalized_exact_public_output",
                 "expected_public_output": f"S{true_policy:02d}:{eligible(policies[true_policy], target_panel, target_epoch)}",
-                **_latent_geometry(stale_signatures),
+                **_latent_geometry(
+                    stale_signatures, include_entanglement=include_evidence_entanglement
+                ),
             }
             cases.append({**stale_material, "case_id": _sha(stale_material), "answer_hash": _sha(stale_material["expected_public_output"])})
 
@@ -559,6 +635,10 @@ def build_latent_cause_corpus(
             true_edge = rng.randrange(hypothesis_count)
             target_order = list(range(1, node_count + 1)); rng.shuffle(target_order)
             target_weights = {node: target_order[index] for index, node in enumerate(nodes)}
+            signature_table = (
+                f" Candidate historical signature table is {architecture_signatures}."
+                if architecture_signature_table else ""
+            )
             architecture_material = {
                 "family": "architecture_reconstruction", "difficulty_level": level, "variant": variant,
                 "difficulty_mechanism": "latent_dependency_from_build_traces",
@@ -567,25 +647,50 @@ def build_latent_cause_corpus(
                     f"Nodes are {nodes}. Exactly one candidate hidden edge parent->child is deployed: "
                     f"{list(enumerate(candidate_edges))}. For each weight map, repeatedly emit the ready node with "
                     f"lowest weight (tie by name). Historical weights are {build_probes}; observed schedules are "
-                    f"{list(architecture_signatures[f'E{true_edge:02d}'])}. Infer the unique edge and schedule target "
+                    f"{list(architecture_signatures[f'E{true_edge:02d}'])}.{signature_table} Infer the unique edge and schedule target "
                     f"weights {target_weights}. Return E:parent->child:schedule."
                 ),
                 "evaluator": "normalized_exact_public_output",
                 "expected_public_output": f"E{true_edge:02d}:{candidate_edges[true_edge][0]}->{candidate_edges[true_edge][1]}:{schedule(candidate_edges[true_edge], target_weights)}",
-                **_latent_geometry(architecture_signatures),
+                **_latent_geometry(
+                    architecture_signatures, include_entanglement=include_evidence_entanglement
+                ),
             }
             cases.append({**architecture_material, "case_id": _sha(architecture_material), "answer_hash": _sha(architecture_material["expected_public_output"])})
 
     cases.sort(key=lambda row: (row["family"], row["difficulty_level"], row["variant"]))
     material = {
-        "schema_version": "cortex-latent-cause-corpus/1.0", "version": "9.8.5",
+        "schema_version": (
+            "cortex-latent-cause-corpus/1.1"
+            if include_evidence_entanglement else "cortex-latent-cause-corpus/1.0"
+        ), "version": corpus_version,
         "seed_commitment": _sha(seed), "task_families": list(LATENT_CAUSE_FAMILIES),
         "maximum_level": int(maximum_level), "variants_per_level": int(variants_per_level),
         "cases": cases, "development_only": True, "held_out": False,
         "confirmatory_eligible": False, "model_identity_in_ontology": False,
-        "difficulty_law": "residual_hypothesis_entropy_and_downstream_evidence_resolution",
+        "difficulty_law": (
+            "hypothesis_entropy_evidence_entanglement_transfer_burden_and_observed_cost"
+            if include_evidence_entanglement
+            else "residual_hypothesis_entropy_and_downstream_evidence_resolution"
+        ),
     }
     return {**material, "corpus_hash": _sha(material)}
+
+
+def build_cost_entanglement_corpus(
+    *, seed: str = "cortex-v986-cost-entanglement-development", maximum_level: int = 4,
+    variants_per_level: int = 8,
+) -> dict[str, Any]:
+    """Build v9.8.6 cases with structural evidence geometry and bounded rebalance."""
+    return build_latent_cause_corpus(
+        seed=seed,
+        maximum_level=maximum_level,
+        variants_per_level=variants_per_level,
+        include_evidence_entanglement=True,
+        architecture_signature_table=True,
+        repair_transfer_multiplier=2,
+        corpus_version="9.8.6",
+    )
 
 
 def build_held_out_bundle(
@@ -706,6 +811,7 @@ __all__ = [
     "VERSION",
     "build_difficulty_ladder_corpus",
     "build_coupled_dependency_corpus",
+    "build_cost_entanglement_corpus",
     "build_latent_cause_corpus",
     "build_discriminative_corpus",
     "build_held_out_bundle",
