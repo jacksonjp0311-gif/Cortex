@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.3-0ea5e9?style=for-the-badge" alt="v9.8.3" />
+  <img src="https://img.shields.io/badge/version-9.8.4-0ea5e9?style=for-the-badge" alt="v9.8.4" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -175,6 +175,38 @@ The first canonical v9.8.3 frontier commissioning run has now executed. Across
 at ceiling, including three that scored `12/12` through level 4. Cortex therefore
 reports `CALIBRATION_HELD`: one useful family found, four requiring harder task
 geometry, and no competence-improvement claim.
+
+### What coupled tasks revealed
+
+v9.8.4 tested the four ceiling-limited families again with real state coupling:
+later rules, branches, eligibility, or schedule choices depended on earlier
+states. Across 52 fresh frontier circulations, three families still scored
+`12/12`; multi-step repair reached `7/8` at depth 4. The result remains
+`CALIBRATION_HELD`.
+
+![Cortex v9.8.4 coupled-task result](assets/coupled-geometry-v984.svg)
+
+The experiment separates two kinds of difficulty:
+
+```text
+computational coupling: later state depends on earlier state
+epistemic coupling:      several causes remain plausible until evidence resolves them
+```
+
+Increasing dependency depth `d` did not reliably reduce success. The missing
+axis is residual causal ambiguity. Let `H` be a set of plausible hypotheses,
+`L` the locally visible evidence, and `O` the downstream observations:
+
+```text
+A_local = H(H | L)
+R_evidence = I(H; O | L) = H(H | L) - H(H | L,O)
+```
+
+If `A_local = 0`, the answer is already obvious locally, however long the
+subsequent computation appears. The next task forge must preserve multiple
+plausible causes after local inspection and make bounded downstream evidence—not
+length alone—resolve them. This is a measurement-design result, not evidence of
+competence lift.
 
 ## Start here: attach Cortex to a project
 

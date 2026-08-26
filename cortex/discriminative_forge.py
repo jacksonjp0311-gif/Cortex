@@ -17,7 +17,7 @@ from .information_calibration import verify_difficulty_calibration
 
 
 SCHEMA_VERSION = "cortex-discriminative-forge/1.1"
-VERSION = "9.8.2"
+VERSION = "9.8.4"
 TASK_FAMILIES = (
     "repository_bug_localization",
     "multi_step_code_repair",
@@ -25,6 +25,7 @@ TASK_FAMILIES = (
     "api_migration",
     "architecture_reconstruction",
 )
+COUPLED_FAMILIES = tuple(family for family in TASK_FAMILIES if family != "api_migration")
 
 
 def _canonical(value: Any) -> str:
@@ -194,6 +195,158 @@ def build_difficulty_ladder_corpus(
     return {**material, "corpus_hash": _sha(material)}
 
 
+def build_coupled_dependency_corpus(
+    *, seed: str = "cortex-v984-coupled-development", maximum_level: int = 4,
+    variants_per_level: int = 8,
+) -> dict[str, Any]:
+    """Forge state-coupled tasks for families that saturated additive composition."""
+    if maximum_level < 1 or variants_per_level < 2:
+        raise ValueError("coupled corpus requires levels and at least two variants")
+    cases: list[dict[str, Any]] = []
+    for level in range(1, maximum_level + 1):
+        for variant in range(variants_per_level):
+            rng = random.Random(int(_sha(f"{seed}:{level}:{variant}")[:16], 16))
+            depth = 8 + level * 5
+
+            # The intended multiplier depends on the incoming state. One module
+            # violates that rule, so later expected operations depend on earlier state.
+            primes = (3, 5, 7, 11)
+            state = rng.randrange(10, 90)
+            initial = state
+            defect = rng.randrange(2, depth - 1)
+            modules = []
+            for index in range(depth):
+                intended = primes[(state + index) % len(primes)]
+                multiplier = primes[(primes.index(intended) + 1) % len(primes)] if index == defect else intended
+                offset = rng.randrange(1, 40)
+                modules.append((f"module_{index:02d}.py", 10 + index, multiplier, offset))
+                state = (state * multiplier + offset) % 997
+            bug_material = {
+                "family": "repository_bug_localization", "difficulty_level": level,
+                "variant": variant, "difficulty_mechanism": "state_dependent_invariant_violation",
+                "dependency_depth": depth,
+                "prompt": (
+                    f"Start x={initial}. Process modules in order {modules}. Before module i, its intended multiplier is "
+                    f"{primes}[(x+i) mod 4]. Then update x=(x*listed_multiplier+offset) mod 997. Exactly one module's "
+                    "listed multiplier violates the rule; its changed state affects every later rule evaluation. "
+                    "Return the first violation as file:line."
+                ),
+                "evaluator": "normalized_exact_public_output",
+                "expected_public_output": f"module_{defect:02d}.py:{10 + defect}",
+            }
+            cases.append({**bug_material, "case_id": _sha(bug_material), "answer_hash": _sha(bug_material["expected_public_output"])})
+
+            # Both registers feed every following branch and transition.
+            values = [rng.randrange(2, 80) for _ in range(depth + level)]
+            x, y = rng.randrange(5, 80), rng.randrange(5, 80)
+            start_x, start_y = x, y
+            for index, value in enumerate(values):
+                old_x, old_y = x, y
+                if (old_x + old_y + index) % 3 == 0:
+                    x = (old_x + value * (index + 2) + old_y) % 997
+                    y = (old_y * 3 + old_x + value) % 991
+                else:
+                    x = (old_x * 5 + old_y + value) % 997
+                    y = (old_y + value * (index + 3) + old_x) % 991
+                x, y = y % 983, (x + 2 * y + index) % 983
+            repair_material = {
+                "family": "multi_step_code_repair", "difficulty_level": level,
+                "variant": variant, "difficulty_mechanism": "recurrent_branch_coupling",
+                "dependency_depth": len(values),
+                "prompt": (
+                    f"Registers start x={start_x}, y={start_y}; values={values}. For zero-based i use old x,y. If "
+                    "(old_x+old_y+i) mod 3=0 set x=(old_x+value*(i+2)+old_y) mod 997 and "
+                    "y=(old_y*3+old_x+value) mod 991; otherwise set x=(old_x*5+old_y+value) mod 997 and "
+                    "y=(old_y+value*(i+3)+old_x) mod 991. Then simultaneously set x=y mod 983 and "
+                    "y=(x+2*y+i) mod 983 using the just-computed x,y. Return final x:y in decimal."
+                ),
+                "evaluator": "normalized_exact_public_output", "expected_public_output": f"{x}:{y}",
+            }
+            cases.append({**repair_material, "case_id": _sha(repair_material), "answer_hash": _sha(repair_material["expected_public_output"])})
+
+            # Eligibility depends on canonical latest state and recursively on parent eligibility.
+            count = 7 + level * 3
+            epoch = 20 + level
+            parents = {f"m{i}": (None if i < 2 else f"m{(i - 2) // 2}") for i in range(count)}
+            events = []
+            for index in range(count):
+                ident = f"m{index}"
+                events.append((ident, epoch - 1, "active"))
+                status = "active" if rng.random() > 0.28 else rng.choice(("contested", "superseded", "revoked"))
+                events.append((ident, epoch, status))
+            rng.shuffle(events)
+            latest = {}
+            for sequence, (ident, row_epoch, status) in enumerate(events):
+                prior = latest.get(ident)
+                if prior is None or (row_epoch, sequence) > (prior[0], prior[1]):
+                    latest[ident] = (row_epoch, sequence, status)
+            eligible: set[str] = set()
+            changed = True
+            while changed:
+                changed = False
+                for ident in sorted(parents):
+                    parent = parents[ident]
+                    row = latest[ident]
+                    if row[0] == epoch and row[2] == "active" and (parent is None or parent in eligible) and ident not in eligible:
+                        eligible.add(ident); changed = True
+            stale_material = {
+                "family": "stale_state_detection", "difficulty_level": level,
+                "variant": variant, "difficulty_mechanism": "recursive_lineage_eligibility",
+                "dependency_depth": count,
+                "prompt": (
+                    f"Parent map is {parents}. Ledger events are {events}. For each ID choose the row with greatest "
+                    f"epoch, breaking equal-epoch ties by later list position. At current epoch {epoch}, a memory is "
+                    "eligible only if its canonical latest state is active and its parent is either null or itself "
+                    "eligible. Compute to a fixed point. Return sorted comma-separated eligible IDs, or NONE."
+                ),
+                "evaluator": "normalized_exact_public_output",
+                "expected_public_output": ",".join(sorted(eligible)) if eligible else "NONE",
+            }
+            cases.append({**stale_material, "case_id": _sha(stale_material), "answer_hash": _sha(stale_material["expected_public_output"])})
+
+            # Ready-node choice changes a checksum which changes all future scores.
+            node_count = 8 + level * 3
+            names = [f"n{i:02d}" for i in range(node_count)]
+            dependencies = {}
+            weights = {}
+            for index, name in enumerate(names):
+                candidates = names[:index]
+                parent_count = 0 if index < 3 else rng.choice((1, 1, 2))
+                dependencies[name] = sorted(rng.sample(candidates, min(parent_count, len(candidates))))
+                weights[name] = rng.randrange(3, 97)
+            remaining, order, checksum = set(names), [], rng.randrange(1, 50)
+            start_checksum = checksum
+            while remaining:
+                ready = [name for name in remaining if all(parent in order for parent in dependencies[name])]
+                chosen = min(ready, key=lambda name: (((weights[name] + checksum * (names.index(name) + 1)) % 101), name))
+                order.append(chosen); remaining.remove(chosen)
+                checksum = (checksum * 7 + weights[chosen] + len(order)) % 103
+            architecture_material = {
+                "family": "architecture_reconstruction", "difficulty_level": level,
+                "variant": variant, "difficulty_mechanism": "checksum_coupled_topological_schedule",
+                "dependency_depth": node_count,
+                "prompt": (
+                    f"Nodes in fixed index order are {names}; dependencies={dependencies}; weights={weights}; start "
+                    f"checksum={start_checksum}. Repeatedly find nodes whose dependencies are already output. Score "
+                    "ready node j as (weight+checksum*(fixed_index+1)) mod 101; choose lowest (tie by name). Append it, "
+                    "then checksum=(checksum*7+weight+output_count) mod 103. Return names joined by >."
+                ),
+                "evaluator": "normalized_exact_public_output", "expected_public_output": ">".join(order),
+            }
+            cases.append({**architecture_material, "case_id": _sha(architecture_material), "answer_hash": _sha(architecture_material["expected_public_output"])})
+
+    cases.sort(key=lambda row: (row["family"], row["difficulty_level"], row["variant"]))
+    material = {
+        "schema_version": "cortex-coupled-dependency-corpus/1.0", "version": VERSION,
+        "seed_commitment": _sha(seed), "task_families": list(COUPLED_FAMILIES),
+        "maximum_level": int(maximum_level), "variants_per_level": int(variants_per_level),
+        "cases": cases, "development_only": True, "held_out": False,
+        "confirmatory_eligible": False, "model_identity_in_ontology": False,
+        "difficulty_law": "dependency_depth_and_state_coupling_not_additive_prompt_length",
+    }
+    return {**material, "corpus_hash": _sha(material)}
+
+
 def build_held_out_bundle(
     calibration: Mapping[str, Any],
     development_corpus: Mapping[str, Any],
@@ -305,10 +458,12 @@ def verify_held_out_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
 
 
 __all__ = [
+    "COUPLED_FAMILIES",
     "SCHEMA_VERSION",
     "TASK_FAMILIES",
     "VERSION",
     "build_difficulty_ladder_corpus",
+    "build_coupled_dependency_corpus",
     "build_discriminative_corpus",
     "build_held_out_bundle",
     "evaluate_case",

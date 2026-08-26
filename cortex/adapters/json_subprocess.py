@@ -37,6 +37,7 @@ class JsonSubprocessAdapter:
         model_version: str = "undeclared",
         cwd: str | Path | None = None,
         timeout_seconds: float = 180.0,
+        run_profile: str = "default",
     ) -> None:
         executable = str(Path(command).expanduser().resolve())
         if not Path(executable).is_file():
@@ -50,6 +51,7 @@ class JsonSubprocessAdapter:
         self.model_version = str(model_version or "undeclared")
         self.cwd = str(Path(cwd or Path.cwd()).resolve())
         self.timeout_seconds = float(timeout_seconds)
+        self.run_profile = str(run_profile or "default")
         if not self.provider_family or not self.model_id:
             raise ModelAdapterError("provider family and model identity are required")
         if not 1 <= self.timeout_seconds <= 600:

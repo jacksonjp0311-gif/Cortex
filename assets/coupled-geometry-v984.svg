@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="390" viewBox="0 0 980 390" role="img" aria-labelledby="title desc">
+  <title id="title">Cortex v9.8.4 coupled-task calibration</title>
+  <desc id="desc">Bug localization, stale-state detection, and architecture reconstruction remained at 100 percent success. Multi-step repair reached 87.5 percent. The calibration band is 30 to 70 percent.</desc>
+  <rect width="980" height="390" rx="24" fill="#07111f"/>
+  <text x="52" y="55" fill="#f8fafc" font-family="system-ui,sans-serif" font-size="25" font-weight="700">COUPLED DEPENDENCY GEOMETRY</text>
+  <text x="52" y="84" fill="#94a3b8" font-family="ui-monospace,monospace" font-size="14">52 fresh frontier circulations · development only · CALIBRATION_HELD</text>
+  <rect x="320" y="112" width="350" height="222" fill="#22c55e" opacity="0.10"/>
+  <line x1="670" y1="112" x2="670" y2="334" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="505" y="354" text-anchor="middle" fill="#22c55e" font-family="ui-monospace,monospace" font-size="12">declared information window .30–.70</text>
+  <g font-family="system-ui,sans-serif" font-size="15" fill="#cbd5e1">
+    <text x="52" y="145">Bug localization</text><text x="52" y="197">Multi-step repair</text>
+    <text x="52" y="249">Stale-state</text><text x="52" y="301">Architecture</text>
+  </g>
+  <g fill="#38bdf8">
+    <rect x="220" y="126" width="700" height="24" rx="6"/>
+    <rect x="220" y="178" width="613" height="24" rx="6"/>
+    <rect x="220" y="230" width="700" height="24" rx="6"/>
+    <rect x="220" y="282" width="700" height="24" rx="6"/>
+  </g>
+  <g font-family="ui-monospace,monospace" font-size="14" fill="#f8fafc" font-weight="700">
+    <text x="932" y="144">100%</text><text x="845" y="196">87.5%</text>
+    <text x="932" y="248">100%</text><text x="932" y="300">100%</text>
+  </g>
+  <g font-family="ui-monospace,monospace" font-size="11" fill="#64748b">
+    <text x="220" y="324">0</text><text x="565" y="324">.5</text><text x="910" y="324">1.0</text>
+  </g>
+</svg>

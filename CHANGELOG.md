@@ -1,3 +1,18 @@
+## 9.8.4 - Coupled Dependency Task Geometry
+
+- Replaced additive independent subcases in four ceiling-limited development
+  families with state-coupled exact tasks whose later operations depend on
+  earlier states.
+- Bound the corpus mode into adapter runtime provenance so additive and coupled
+  calibration cohorts cannot be silently conflated.
+- Executed 52 fresh runtime-selected frontier circulations. Three families
+  remained perfect through depth 4; multi-step repair reached `7/8` at depth 4
+  but remained above the `.30-.70` information window.
+- Recorded `CALIBRATION_HELD` with no selected family, no confirmatory
+  eligibility, no hidden reasoning, and every authority surface false.
+- Established the next measurement wound: computational dependency depth is
+  insufficient when local evidence eliminates causal ambiguity immediately.
+
 ## 9.8.3 - Frontier Calibration Commissioning & Discrete Information Seal
 
 - Added a two-stage calibration protocol that treats four cases as screening
