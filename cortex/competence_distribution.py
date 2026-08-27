@@ -35,7 +35,7 @@ from .competence_transfer import (
 )
 
 SCHEMA = "cortex-competence-distribution/1.1"
-VERSION = "9.4.0"
+VERSION = "9.8.7"
 GLYPH = "⟿"
 EVENT_TYPES = frozenset({"challenge", "quarantine", "revoke", "supersede", "rollback"})
 BLOCKING_EVENTS = frozenset({"challenge", "quarantine", "revoke", "supersede", "rollback"})
@@ -466,13 +466,21 @@ def _transfer_gate(
         check = verify_transfer_trial(store, repo, str(trial.get("trial_id") or ""))
         status = str(check.get("portability_status") or "unresolved")
         evidence_class = str(check.get("evidence_class") or EVIDENCE_UNKNOWN)
+        semantic_state = str(
+            check.get("semantic_distillation_state") or "legacy_partial"
+        )
         status_ready = (
             status in EMPIRICAL_TRANSFER_READY
             if mode == "production"
             else status in EMPIRICAL_TRANSFER_READY | STRUCTURAL_TRANSFER_READY
         )
         evidence_ready = evidence_satisfies(evidence_class, minimum)
-        if check.get("valid") is True and status_ready and evidence_ready:
+        semantic_ready = semantic_state == "pass" or (
+            mode == "sandbox"
+            and semantic_state in {"unknown", "legacy_partial"}
+            and evidence_class in {EVIDENCE_SYNTHETIC, EVIDENCE_SIMULATED}
+        )
+        if check.get("valid") is True and status_ready and evidence_ready and semantic_ready:
             matching.append(
                 {
                     "trial": trial,
@@ -481,6 +489,10 @@ def _transfer_gate(
                     "receipt_hash": str(check.get("receipt_hash") or ""),
                     "portability_status": status,
                     "evidence_class": evidence_class,
+                    "semantic_distillation_state": semantic_state,
+                    "distillation_support": dict(
+                        check.get("distillation_support") or {}
+                    ),
                     "created_at": float(trial.get("created_at") or 0.0),
                     "task_contract_hash": str(
                         trial.get("task_contract_hash") or ""
@@ -497,6 +509,8 @@ def _transfer_gate(
             errors.append("transfer_status_below_target_policy")
         elif not evidence_ready:
             errors.append("transfer_evidence_below_target_policy")
+        elif not semantic_ready:
+            errors.append("semantic_distillation_support_not_pass")
     if not matching:
         return {
             "state": "unknown" if not trials else "fail",
@@ -516,6 +530,8 @@ def _transfer_gate(
                 "receipt_hash",
                 "portability_status",
                 "evidence_class",
+                "semantic_distillation_state",
+                "distillation_support",
                 "created_at",
                 "task_contract_hash",
                 "environment",
@@ -528,6 +544,8 @@ def _transfer_gate(
         "state": "pass",
         "transfer_status": latest["portability_status"],
         "evidence_class": latest["evidence_class"],
+        "semantic_distillation_state": latest["semantic_distillation_state"],
+        "distillation_support": latest["distillation_support"],
         "trial_ids": [item["trial_id"] for item in matching],
         "trial_proofs": proofs,
         "latest_trial_id": latest["trial_id"],
@@ -558,6 +576,9 @@ def _verify_bound_transfer_proof(
     errors = list(check.get("errors") or ())
     status = str(check.get("portability_status") or "unresolved")
     evidence_class = str(check.get("evidence_class") or EVIDENCE_UNKNOWN)
+    semantic_state = str(
+        check.get("semantic_distillation_state") or "legacy_partial"
+    )
     mode = str(profile.get("distribution_mode") or "")
     minimum = str(profile.get("minimum_evidence_class") or "")
     ready = (
@@ -579,6 +600,19 @@ def _verify_bound_transfer_proof(
         errors.append("bound_transfer_status_below_policy")
     if not evidence_satisfies(evidence_class, minimum):
         errors.append("bound_transfer_evidence_below_policy")
+    semantic_ready = semantic_state == "pass" or (
+        mode == "sandbox"
+        and semantic_state in {"unknown", "legacy_partial"}
+        and evidence_class in {EVIDENCE_SYNTHETIC, EVIDENCE_SIMULATED}
+    )
+    if not semantic_ready:
+        errors.append("bound_semantic_distillation_support_not_pass")
+    if semantic_state != str(proof.get("semantic_distillation_state") or ""):
+        errors.append("bound_semantic_distillation_state_mismatch")
+    if dict(check.get("distillation_support") or {}) != dict(
+        proof.get("distillation_support") or {}
+    ):
+        errors.append("bound_distillation_support_mismatch")
     if str(trial.get("competence_id") or "") != str(
         package.get("competence_id") or ""
     ):
@@ -588,6 +622,8 @@ def _verify_bound_transfer_proof(
         "receipt_hash": check.get("receipt_hash"),
         "portability_status": status,
         "evidence_class": evidence_class,
+        "semantic_distillation_state": semantic_state,
+        "distillation_support": dict(check.get("distillation_support") or {}),
         "created_at": float(trial.get("created_at") or 0.0),
         "task_contract_hash": trial.get("task_contract_hash"),
         "environment": dict(trial.get("environment") or {}),
@@ -615,6 +651,8 @@ def _verify_bound_transfer_proof(
         "receipt_hash": check.get("receipt_hash"),
         "status": status,
         "evidence_class": evidence_class,
+        "semantic_distillation_state": semantic_state,
+        "distillation_support": dict(check.get("distillation_support") or {}),
         "task_contract_hash": canonical_proof["task_contract_hash"],
         "environment": canonical_proof["environment"],
         "model_identities": canonical_proof["model_identities"],
@@ -1025,6 +1063,10 @@ def project_competence(
         "transfer_proof": {
             "status": transfer.get("transfer_status"),
             "evidence_class": transfer.get("evidence_class"),
+            "semantic_distillation_state": transfer.get(
+                "semantic_distillation_state"
+            ),
+            "distillation_support": transfer.get("distillation_support", {}),
             "minimum_evidence_class": transfer.get("minimum_evidence_class"),
             "distribution_mode": transfer.get("distribution_mode"),
             "latest_trial_id": transfer.get("latest_trial_id"),

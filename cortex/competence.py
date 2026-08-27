@@ -19,7 +19,7 @@ from typing import Any
 LEGACY_SCHEMA = "cortex-competence/1.0"
 SUCCESSOR_SCHEMA = "cortex-competence/1.1"
 SCHEMA = "cortex-competence/1.2"
-VERSION = "9.8.0"
+VERSION = "9.8.7"
 GLYPH = "⟡◇"
 CLAIM_BOUNDARY = (
     "A competence candidate is a portable, advisory abstraction derived from "
@@ -1065,7 +1065,22 @@ def derive_competence_candidate(
     # inside ``evidence_lineage``.  This keeps the identity stable if a future
     # verifier adds diagnostics without changing the competence.
     if persist:
-        return append_competence_candidate(store, repo, candidate)
+        persisted = append_competence_candidate(store, repo, candidate)
+        # Semantic support is a separate immutable proof.  The competence
+        # cannot attest to its own meaning and the proof must never be folded
+        # into the candidate's identity after admission.
+        from .distillation_witness import resolve_distillation_support
+
+        support = resolve_distillation_support(
+            store, repo, str(persisted["competence_id"]), create_if_missing=True
+        )
+        return {
+            **persisted,
+            "distillation_witness_id": support.get("witness_id"),
+            "distillation_witness_receipt_hash": support.get("receipt_hash"),
+            "semantic_support_state": support.get("state"),
+            "semantic_support_status": support.get("status"),
+        }
     return {**candidate, "persisted": False, "advisory_only": True}
 
 

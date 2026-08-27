@@ -121,9 +121,13 @@ class V95RevisionTests(unittest.TestCase):
             self.repo,
             session_id=origin["session_id"],
             turn_id=1,
-            capability={"id": "cap.v95.revision"},
-            intended_outcome={"id": "out.v95.revision"},
-            counterevidence=[{"kind": "known_origin_limit"}],
+            # This fixture registers its adapter as live empirical.  The
+            # competence must therefore carry operational material that the
+            # canonical public result actually supports; IDs and invented
+            # counterevidence can no longer open an empirical transfer.
+            capability={"id": "cap.v95.revision", "procedure": "ok"},
+            intended_outcome={"id": "out.v95.revision", "criterion": "ok"},
+            counterevidence=[{"kind": "ok"}],
         )
         self.trial = run_cross_model_transfer_trial(
             self.store,

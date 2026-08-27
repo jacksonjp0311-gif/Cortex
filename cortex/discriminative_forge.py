@@ -376,6 +376,24 @@ def _minimum_resolving_coordinates(signatures: list[tuple[Any, ...]]) -> int | N
     return None
 
 
+def _resolving_coordinate_indices(
+    signatures: list[tuple[Any, ...]],
+) -> tuple[int, ...] | None:
+    """Return the deterministic lexicographically first minimum separator."""
+    if not signatures:
+        return None
+    width = len(signatures[0])
+    for size in range(1, width + 1):
+        for coordinates in itertools.combinations(range(width), size):
+            projections = {
+                tuple(_canonical(signature[index]) for index in coordinates)
+                for signature in signatures
+            }
+            if len(projections) == len(signatures):
+                return tuple(int(index) for index in coordinates)
+    return None
+
+
 def _evidence_entanglement(hypothesis_signatures: Mapping[str, Any]) -> dict[str, Any]:
     """Measure how evidence coordinates factorize without consulting model outcomes."""
     signatures = [tuple(value) for _, value in sorted(hypothesis_signatures.items())]
@@ -437,12 +455,15 @@ def build_latent_cause_corpus(
     variants_per_level: int = 8,
     include_evidence_entanglement: bool = False,
     architecture_signature_table: bool = False,
+    architecture_signature_fraction: float | None = None,
     repair_transfer_multiplier: int = 1,
     corpus_version: str = "9.8.5",
 ) -> dict[str, Any]:
     """Forge exact tasks where downstream evidence resolves symmetric causes."""
     if maximum_level < 1 or variants_per_level < 2 or repair_transfer_multiplier < 1:
         raise ValueError("latent-cause corpus requires levels and at least two variants")
+    if architecture_signature_fraction is not None and not 0.0 < float(architecture_signature_fraction) <= 1.0:
+        raise ValueError("architecture signature fraction must be in (0, 1]")
     cases: list[dict[str, Any]] = []
     for level in range(1, maximum_level + 1):
         for variant in range(variants_per_level):
@@ -635,10 +656,54 @@ def build_latent_cause_corpus(
             true_edge = rng.randrange(hypothesis_count)
             target_order = list(range(1, node_count + 1)); rng.shuffle(target_order)
             target_weights = {node: target_order[index] for index, node in enumerate(nodes)}
-            signature_table = (
-                f" Candidate historical signature table is {architecture_signatures}."
-                if architecture_signature_table else ""
-            )
+            disclosure: dict[str, Any] = {}
+            if architecture_signature_fraction is not None:
+                signatures = [
+                    tuple(value)
+                    for _, value in sorted(architecture_signatures.items())
+                ]
+                resolving = _resolving_coordinate_indices(signatures) or ()
+                disclosed_count = max(
+                    1,
+                    math.ceil(
+                        len(resolving) * float(architecture_signature_fraction)
+                    ),
+                )
+                disclosed_indices = tuple(resolving[:disclosed_count])
+                disclosed_table = {
+                    key: tuple(value[index] for index in disclosed_indices)
+                    for key, value in sorted(architecture_signatures.items())
+                }
+                hidden_table = {
+                    key: tuple(
+                        item for index, item in enumerate(value)
+                        if index not in disclosed_indices
+                    )
+                    for key, value in sorted(architecture_signatures.items())
+                }
+                signature_table = (
+                    " Candidate partial historical signature table at probe indices "
+                    f"{list(disclosed_indices)} is {disclosed_table}."
+                )
+                disclosure = {
+                    "evidence_disclosure_fraction": float(
+                        architecture_signature_fraction
+                    ),
+                    "minimum_resolving_coordinate_indices": list(resolving),
+                    "disclosed_coordinate_indices": list(disclosed_indices),
+                    "disclosed_coordinate_count": len(disclosed_indices),
+                    "disclosed_signature_table": disclosed_table,
+                    "undisclosed_signature_commitment": _sha(hidden_table),
+                    "complete_signature_commitment": _sha(
+                        architecture_signatures
+                    ),
+                    "disclosure_scope": "development_only_structural_support",
+                }
+            else:
+                signature_table = (
+                    f" Candidate historical signature table is {architecture_signatures}."
+                    if architecture_signature_table else ""
+                )
             architecture_material = {
                 "family": "architecture_reconstruction", "difficulty_level": level, "variant": variant,
                 "difficulty_mechanism": "latent_dependency_from_build_traces",
@@ -655,6 +720,7 @@ def build_latent_cause_corpus(
                 **_latent_geometry(
                     architecture_signatures, include_entanglement=include_evidence_entanglement
                 ),
+                **disclosure,
             }
             cases.append({**architecture_material, "case_id": _sha(architecture_material), "answer_hash": _sha(architecture_material["expected_public_output"])})
 
@@ -674,6 +740,15 @@ def build_latent_cause_corpus(
             else "residual_hypothesis_entropy_and_downstream_evidence_resolution"
         ),
     }
+    if architecture_signature_fraction is not None:
+        material["evidence_disclosure_policy"] = {
+            "family": "architecture_reconstruction",
+            "fraction_of_minimum_resolving_coordinates": float(
+                architecture_signature_fraction
+            ),
+            "answers_disclosed": False,
+            "development_only": True,
+        }
     return {**material, "corpus_hash": _sha(material)}
 
 
@@ -690,6 +765,29 @@ def build_cost_entanglement_corpus(
         architecture_signature_table=True,
         repair_transfer_multiplier=2,
         corpus_version="9.8.6",
+    )
+
+
+def build_partial_evidence_corpus(
+    *,
+    seed: str = "cortex-v987-partial-evidence-development",
+    maximum_level: int = 4,
+    variants_per_level: int = 8,
+    architecture_signature_fraction: float = 0.5,
+) -> dict[str, Any]:
+    """Expose a committed fraction of the minimum resolving support.
+
+    Raw observations remain present, so the intervention measures evidence
+    organization cost rather than removing evidence or leaking an answer.
+    """
+    return build_latent_cause_corpus(
+        seed=seed,
+        maximum_level=maximum_level,
+        variants_per_level=variants_per_level,
+        include_evidence_entanglement=True,
+        architecture_signature_fraction=architecture_signature_fraction,
+        repair_transfer_multiplier=2,
+        corpus_version="9.8.7",
     )
 
 
@@ -812,6 +910,7 @@ __all__ = [
     "build_difficulty_ladder_corpus",
     "build_coupled_dependency_corpus",
     "build_cost_entanglement_corpus",
+    "build_partial_evidence_corpus",
     "build_latent_cause_corpus",
     "build_discriminative_corpus",
     "build_held_out_bundle",

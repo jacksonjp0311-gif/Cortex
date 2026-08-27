@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-9.8.6-0ea5e9?style=for-the-badge" alt="v9.8.6" />
+  <img src="https://img.shields.io/badge/version-9.8.7-0ea5e9?style=for-the-badge" alt="v9.8.7" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -287,6 +287,50 @@ observational dispersion, not repeat-run variance.
 
 Overall status remains `CALIBRATION_HELD`. No competence improvement,
 consciousness, agency, or new execution authority is claimed.
+
+### What the distillation seal and partial evidence revealed
+
+v9.8.7 closes a more important boundary than another layer of abstraction:
+a competence can no longer enter empirical transfer merely because its source
+trajectory is valid. Cortex now requires a separate immutable distillation
+witness to reconstruct meaningful capability and intended-outcome claims from
+canonical public evaluation and outcome evidence.
+
+```text
+lineage valid  ≠  semantic claim supported
+
+K_empirical = 1
+    only if
+VerifyTrajectory(K) = 1
+∧ VerifyDistillationWitness(K) = SUPPORTED
+```
+
+An identifier-only object therefore remains `UNKNOWN`. Synthetic trials may
+still test the machinery, but an unknown semantic witness cannot become live
+empirical transfer or a production distribution package. Historical receipts
+remain immutable and resolve as legacy/partial where the new proof is absent.
+
+The same release tested the evidence transition suggested by v9.8.6. The
+architecture task moved from `0/4` with no aligned signature table to `4/4`
+when only one committed cross-hypothesis coordinate was organized for the
+model. Both the 50% and 25% policies disclosed one coordinate on the screened
+cases because the minimum resolving set contained only one or two coordinates.
+
+```text
+Architecture reconstruction, level 1
+
+no aligned coordinate       0/4  |                    |
+one aligned coordinate      4/4  |████████████████████|
+full signature table        4/4  |████████████████████|
+```
+
+This is not a calibrated 30–70% band. It is evidence of a discrete
+representation transition: the useful experimental variable is no longer a
+continuous fraction of a tiny coordinate set. The next screen must vary how
+candidate hypotheses are aligned or how many candidate rows receive the
+coordinate, while freezing the underlying observations. The two new panels are
+development-only, used a runtime-selected external model, and grant no
+execution, mutation, memory-admission, or policy authority.
 
 ## Start here: attach Cortex to a project
 

@@ -19,7 +19,11 @@ from cortex.causal_trial import (
 from cortex.competence import derive_competence_candidate
 from cortex.competence_transfer import run_cross_model_transfer_trial
 from cortex.config import ensure_home
-from cortex.distillation_witness import create_distillation_witness, verify_distillation_witness
+from cortex.distillation_witness import (
+    create_distillation_witness,
+    resolve_distillation_support,
+    verify_distillation_witness,
+)
 from cortex.discriminability import assess_task_panel
 from cortex.discriminative_forge import TASK_FAMILIES, build_difficulty_ladder_corpus, build_held_out_bundle
 from cortex.information_calibration import calibrate_difficulty_ladders
@@ -83,6 +87,8 @@ class V98CausalCompetenceTests(unittest.TestCase):
 
     def test_semantic_witness_reconstructs_exact_public_support(self) -> None:
         candidate = self._candidate()
+        self.assertEqual(candidate["semantic_support_state"], "pass")
+        self.assertTrue(candidate["distillation_witness_id"])
         witness = create_distillation_witness(self.store, self.repo, candidate["competence_id"])
         self.assertEqual(witness["status"], "SUPPORTED", witness)
         self.assertEqual(witness["unknown_count"], 0)
@@ -90,6 +96,55 @@ class V98CausalCompetenceTests(unittest.TestCase):
         self.assertTrue(checked["valid"], checked["errors"])
         self.assertEqual(checked["state"], "pass")
         self.assertEqual(witness["counterevidence_completeness"], "UNKNOWN")
+
+    def test_identifier_only_abstraction_cannot_self_support(self) -> None:
+        candidate = derive_competence_candidate(
+            self.store,
+            self.repo,
+            session_id=self._origin("identifier-only-origin"),
+            turn_id=1,
+            capability={"id": "cap.label.only"},
+            intended_outcome={"id": "out.label.only"},
+        )
+        support = resolve_distillation_support(
+            self.store, self.repo, candidate["competence_id"]
+        )
+        self.assertEqual(support["state"], "unknown", support)
+        witness = create_distillation_witness(
+            self.store, self.repo, candidate["competence_id"]
+        )
+        self.assertEqual(witness["meaningful_operational_claim_count"], 0)
+        self.assertEqual(
+            witness["required_operational_surfaces"],
+            {"capability": False, "intended_outcome": False},
+        )
+        self.assertFalse(witness["distribution_authorized"])
+        self.assertFalse(witness["execution_authorized"])
+
+    def test_structural_trial_binds_semantic_support_without_promoting_it(self) -> None:
+        candidate = derive_competence_candidate(
+            self.store,
+            self.repo,
+            session_id=self._origin("structural-origin"),
+            turn_id=1,
+            capability={"id": "cap.structural.only"},
+            intended_outcome={"id": "out.structural.only"},
+        )
+        trial = run_cross_model_transfer_trial(
+            self.store,
+            self.repo,
+            competence_id=candidate["competence_id"],
+            task_contract=self.contract,
+            adapter_factory=lambda arm: FixtureAdapter(
+                model_id=f"structural-{arm}", text="TARGET"
+            ),
+            task="structural semantic-seal trial",
+            trial_nonce="v987-semantic-unknown",
+        )
+        self.assertEqual(trial["distillation_support"]["state"], "unknown")
+        self.assertFalse(trial["empirical_transfer_established"])
+        self.assertFalse(trial["distribution_authorized"])
+        self.assertFalse(trial["execution_authorized"])
 
     def test_unsupported_generalization_remains_unknown(self) -> None:
         candidate = self._candidate(procedure="generalizes to every repository")

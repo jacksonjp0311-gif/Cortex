@@ -1,0 +1,394 @@
+{
+  "adapter_registration_id": "ddc618d1072b56bd6ccb2a1a4ee1caa7436f6448b9931e76db030a7a65bb060e",
+  "authority": {
+    "execution_authorized": false,
+    "host_mutate_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  },
+  "call_count": 4,
+  "commissioning": {
+    "accepted_observation_hashes": [
+      "17f4f13566a73cc94551a8d721adf2c226c6d456aecdae775669c003ca53ad28",
+      "511f4a16323af171a62827eff515d84e1113f7f6840c97a2077224a46f8a001a",
+      "589cf79878c24e9d021a8dc25e7bd3ff343e165e39fc10a1f5addabf781e2983",
+      "ad97cd7c9da315c15f19864629248231c3a2803badc04943c1c70eb066a9bcca"
+    ],
+    "authority": {
+      "execution_authorized": false,
+      "host_mutate_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false,
+      "update_authorized": false
+    },
+    "claim_boundary": "v9.8.6 measures development-task difficulty and observational invocation cost from canonically verified live public outputs. It does not establish repeatability, competence lift, confirmatory evidence, model superiority, cognition, consciousness, agency, or authority.",
+    "commissioning_hash": "5960b571dc007141c4cd5272ac4c096fe37414818d9ba209c304e32a6b6f167d",
+    "confirmatory_eligible": false,
+    "corpus_hash": "007bad8b7b51876c666363eeddc528f75f6b524e1a96ee8af2f85c92ef31d944",
+    "development_only": true,
+    "empirical_trial_executed": true,
+    "errors": [],
+    "families": {
+      "architecture_reconstruction": {
+        "levels": {
+          "1": {
+            "attainable_success_rates": [
+              0.0,
+              0.25,
+              0.5,
+              0.75,
+              1.0
+            ],
+            "case_count": 4,
+            "confirmation_cases": 8,
+            "confirmatory_eligible": false,
+            "cost_panel": {
+              "authority_effect": false,
+              "cost_amount": {
+                "mad": 0.000871,
+                "maximum": 0.009947,
+                "median": 0.008635,
+                "minimum": 0.007274,
+                "n": 4,
+                "p95": 0.009947
+              },
+              "cost_currencies": [
+                "USD"
+              ],
+              "distribution_kind": "cross_case_observational",
+              "gate_effect": false,
+              "latency_seconds": {
+                "mad": 12.431327,
+                "maximum": 72.042845,
+                "median": 53.054665,
+                "minimum": 34.237726,
+                "n": 4,
+                "p95": 72.042845
+              },
+              "repeatability_established": false,
+              "resolved_information_bits_per_second": {
+                "mad": 0.010376,
+                "maximum": 0.081996,
+                "median": 0.053611,
+                "minimum": 0.038968,
+                "n": 4,
+                "p95": 0.081996
+              },
+              "sample_count": 4,
+              "schema_version": "cortex-calibration-cost-panel/1.0",
+              "total_tokens": {
+                "mad": 694.0,
+                "maximum": 20187.0,
+                "median": 19045.5,
+                "minimum": 17567.0,
+                "n": 4,
+                "p95": 20187.0
+              }
+            },
+            "development_only": true,
+            "eligible_success_counts": [
+              2
+            ],
+            "evidence_geometry": {
+              "case_count": 4,
+              "entanglement_ratio": {
+                "mad": 0.056324,
+                "maximum": 0.381322,
+                "median": 0.319561,
+                "minimum": 0.233628,
+                "n": 4,
+                "p95": 0.381322
+              },
+              "gate_effect": false,
+              "outcome_independent": true,
+              "resolving_coordinate_fraction": {
+                "mad": 0.125,
+                "maximum": 0.5,
+                "median": 0.375,
+                "minimum": 0.25,
+                "n": 4,
+                "p95": 0.5
+              },
+              "schema_version": "cortex-evidence-entanglement-panel/1.0",
+              "structural_only": true
+            },
+            "rasch": {
+              "case_count": 4,
+              "estimated_difficulty": -2.197224577,
+              "estimator": "rasch_logit_with_jeffreys_smoothing",
+              "item_information": 0.09,
+              "reference_ability": 0.0,
+              "smoothed_success_probability": 0.9,
+              "state": "estimated",
+              "success_count": 4,
+              "success_rate": 1.0
+            },
+            "recommended_action": "move_harder",
+            "screening_cases": 4,
+            "state": "screening_ceiling",
+            "success_count": 4,
+            "success_rate": 1.0
+          }
+        },
+        "recommended_action": "move_harder",
+        "state": "held"
+      },
+      "multi_step_code_repair": {
+        "levels": {},
+        "recommended_action": "collect_screening_cases",
+        "state": "not_executed"
+      },
+      "repository_bug_localization": {
+        "levels": {},
+        "recommended_action": "collect_screening_cases",
+        "state": "not_executed"
+      },
+      "stale_state_detection": {
+        "levels": {},
+        "recommended_action": "collect_screening_cases",
+        "state": "not_executed"
+      }
+    },
+    "private_chain_of_thought_stored": false,
+    "protocol": {
+      "center_out": true,
+      "confirmation_cases": 8,
+      "model_identity_used_in_selection": false,
+      "model_selected_at_runtime": true,
+      "screening_cases": 4,
+      "success_window": [
+        0.3,
+        0.7
+      ]
+    },
+    "schema_version": "cortex-calibration-commissioning/1.1",
+    "selected": {},
+    "status": "CALIBRATION_HELD",
+    "version": "9.8.6"
+  },
+  "confirmatory_eligible": false,
+  "corpus_hash": "007bad8b7b51876c666363eeddc528f75f6b524e1a96ee8af2f85c92ef31d944",
+  "corpus_mode": "partial",
+  "execution_failure_count": 0,
+  "execution_failures": [],
+  "hidden_reasoning_persisted": false,
+  "model_identity": {
+    "model_id": "grok-4.6",
+    "provider_family": "xai-grok-cli"
+  },
+  "model_selection_source": "runtime_argument",
+  "observations": [
+    {
+      "authority": {
+        "execution_authorized": false,
+        "host_mutate_authorized": false,
+        "memory_admission_authorized": false,
+        "policy_effect": false,
+        "update_authorized": false
+      },
+      "case_id": "82d1f0c48e2809c16ad9cb86904c8a394492871f45460ac18be95a7e02cad530",
+      "confirmatory_eligible": false,
+      "cost_metrics": {
+        "cost_amount": 0.00820454,
+        "cost_currency": "USD",
+        "cost_metrics_hash": "83b84a5b68f4ebca4f3bfab1bdc1e5bb383c6d4682c00bbbaf7e706fca90aee8",
+        "input_tokens": 12437.0,
+        "latency_seconds": 47.00895,
+        "observational_only": true,
+        "output_tokens": 3674.0,
+        "reasoning_tokens": 3633.0,
+        "repeatability_established": false,
+        "schema_version": "cortex-calibration-cost/1.0",
+        "source": "canonical_model_invocation_receipt",
+        "total_tokens": 18799.0,
+        "validity": {
+          "cost": true,
+          "input_tokens": true,
+          "latency": true,
+          "output_tokens": true,
+          "reasoning_tokens": true,
+          "total_tokens": true
+        }
+      },
+      "development_only": true,
+      "difficulty_level": "1",
+      "errors": [],
+      "evidence_class": "live_empirical",
+      "family": "architecture_reconstruction",
+      "invocation_id": "model_sym_65637636ba330c0b7d32_1_7eefa75c1512",
+      "invocation_receipt_hash": "c3226cd7cea561255c24b1f68ea72998e69c424c66aa8318e275609c48ac64c8",
+      "observation_hash": "589cf79878c24e9d021a8dc25e7bd3ff343e165e39fc10a1f5addabf781e2983",
+      "outcome_receipt_hash": "b93f6d3b346bcba5a413f287bcde2c61dd738d5df44b3eadcd13483db5f61ed1",
+      "private_chain_of_thought_stored": false,
+      "repo": "Cortex",
+      "schema_version": "cortex-calibration-observation/1.1",
+      "session_id": "sym_65637636ba330c0b7d32",
+      "state": "observed",
+      "success": true,
+      "turn_id": 1,
+      "version": "9.8.6",
+      "witness_result_hash": "91504ad5b82090241eb940caf057a720a1f3aa25f7d8b74e08a79f9d8d713758"
+    },
+    {
+      "authority": {
+        "execution_authorized": false,
+        "host_mutate_authorized": false,
+        "memory_admission_authorized": false,
+        "policy_effect": false,
+        "update_authorized": false
+      },
+      "case_id": "e60107d6e3bcde79bbef81df8e4738a17979da211605cf7ff06ced064176acd6",
+      "confirmatory_eligible": false,
+      "cost_metrics": {
+        "cost_amount": 0.00906644,
+        "cost_currency": "USD",
+        "cost_metrics_hash": "bca6ef1f729c54602bdf6ecb9685681cd6999014af19c47fa1fbdeaee26315f3",
+        "input_tokens": 13845.0,
+        "latency_seconds": 59.100381,
+        "observational_only": true,
+        "output_tokens": 4167.0,
+        "reasoning_tokens": 4126.0,
+        "repeatability_established": false,
+        "schema_version": "cortex-calibration-cost/1.0",
+        "source": "canonical_model_invocation_receipt",
+        "total_tokens": 19292.0,
+        "validity": {
+          "cost": true,
+          "input_tokens": true,
+          "latency": true,
+          "output_tokens": true,
+          "reasoning_tokens": true,
+          "total_tokens": true
+        }
+      },
+      "development_only": true,
+      "difficulty_level": "1",
+      "errors": [],
+      "evidence_class": "live_empirical",
+      "family": "architecture_reconstruction",
+      "invocation_id": "model_sym_9284fd906d0a5fffbf9e_1_7eefa75c1512",
+      "invocation_receipt_hash": "4a65356364a7cb6d5d224c882fad6c084b8754f5821c3cb66a7290cf4c828423",
+      "observation_hash": "17f4f13566a73cc94551a8d721adf2c226c6d456aecdae775669c003ca53ad28",
+      "outcome_receipt_hash": "09f1935354d6edb7bd1d11654686838afccaacf4b9d0f4009dbbf3f51dfb856f",
+      "private_chain_of_thought_stored": false,
+      "repo": "Cortex",
+      "schema_version": "cortex-calibration-observation/1.1",
+      "session_id": "sym_9284fd906d0a5fffbf9e",
+      "state": "observed",
+      "success": true,
+      "turn_id": 1,
+      "version": "9.8.6",
+      "witness_result_hash": "361040ebd9789430f7f9bc18cc25c3b37bdf19aff8a85cba2f19173b7a46ca44"
+    },
+    {
+      "authority": {
+        "execution_authorized": false,
+        "host_mutate_authorized": false,
+        "memory_admission_authorized": false,
+        "policy_effect": false,
+        "update_authorized": false
+      },
+      "case_id": "2124e5d0d5a0d2d8fd0f20972ea44bc903780e5ee774dca453b2eb7afa3f9438",
+      "confirmatory_eligible": false,
+      "cost_metrics": {
+        "cost_amount": 0.0099467,
+        "cost_currency": "USD",
+        "cost_metrics_hash": "6e0c978f6d82fe370d13b4250512f3fb970a0916cff4ae2291b5845a19c70b3e",
+        "input_tokens": 13717.0,
+        "latency_seconds": 72.042845,
+        "observational_only": true,
+        "output_tokens": 5062.0,
+        "reasoning_tokens": 5021.0,
+        "repeatability_established": false,
+        "schema_version": "cortex-calibration-cost/1.0",
+        "source": "canonical_model_invocation_receipt",
+        "total_tokens": 20187.0,
+        "validity": {
+          "cost": true,
+          "input_tokens": true,
+          "latency": true,
+          "output_tokens": true,
+          "reasoning_tokens": true,
+          "total_tokens": true
+        }
+      },
+      "development_only": true,
+      "difficulty_level": "1",
+      "errors": [],
+      "evidence_class": "live_empirical",
+      "family": "architecture_reconstruction",
+      "invocation_id": "model_sym_2b7bbb51890350cdfaca_1_7eefa75c1512",
+      "invocation_receipt_hash": "d438e2b6001abe823faabe291c18db62589cd2db3843f79d5e165edd867861c3",
+      "observation_hash": "511f4a16323af171a62827eff515d84e1113f7f6840c97a2077224a46f8a001a",
+      "outcome_receipt_hash": "36b01aefe2654066aee3dc2f9a49d5a04aeaaa0c97599d51c7f4688b3ebd4868",
+      "private_chain_of_thought_stored": false,
+      "repo": "Cortex",
+      "schema_version": "cortex-calibration-observation/1.1",
+      "session_id": "sym_2b7bbb51890350cdfaca",
+      "state": "observed",
+      "success": true,
+      "turn_id": 1,
+      "version": "9.8.6",
+      "witness_result_hash": "ee3e065904879ce7a83322c632aa15e078896bd93b39e40227a8c292bcbe434d"
+    },
+    {
+      "authority": {
+        "execution_authorized": false,
+        "host_mutate_authorized": false,
+        "memory_admission_authorized": false,
+        "policy_effect": false,
+        "update_authorized": false
+      },
+      "case_id": "611daf86abc433c88f06165ed489983b55ceb591844085acd073eb1c3d00d1c4",
+      "confirmatory_eligible": false,
+      "cost_metrics": {
+        "cost_amount": 0.0072743,
+        "cost_currency": "USD",
+        "cost_metrics_hash": "1c69408da18b02df3f7f2566f9b647833f78c0bb608933bf59552c15f7f97df1",
+        "input_tokens": 13717.0,
+        "latency_seconds": 34.237726,
+        "observational_only": true,
+        "output_tokens": 2442.0,
+        "reasoning_tokens": 2401.0,
+        "repeatability_established": false,
+        "schema_version": "cortex-calibration-cost/1.0",
+        "source": "canonical_model_invocation_receipt",
+        "total_tokens": 17567.0,
+        "validity": {
+          "cost": true,
+          "input_tokens": true,
+          "latency": true,
+          "output_tokens": true,
+          "reasoning_tokens": true,
+          "total_tokens": true
+        }
+      },
+      "development_only": true,
+      "difficulty_level": "1",
+      "errors": [],
+      "evidence_class": "live_empirical",
+      "family": "architecture_reconstruction",
+      "invocation_id": "model_sym_2ab1e8dbeee4516d7e7a_1_7eefa75c1512",
+      "invocation_receipt_hash": "1c1b7feb39451fc6e6c098cadf5428dc5bfbd72736aa7ddcbd3aa5a2edbb0524",
+      "observation_hash": "ad97cd7c9da315c15f19864629248231c3a2803badc04943c1c70eb066a9bcca",
+      "outcome_receipt_hash": "8b979389eb80d82a794c844b4750f01f82f2444f0bc364a1922c0176999e7226",
+      "private_chain_of_thought_stored": false,
+      "repo": "Cortex",
+      "schema_version": "cortex-calibration-observation/1.1",
+      "session_id": "sym_2ab1e8dbeee4516d7e7a",
+      "state": "observed",
+      "success": true,
+      "turn_id": 1,
+      "version": "9.8.6",
+      "witness_result_hash": "66ffce10153b388e17c11ef2eff5edd9fc19c101be0341647f05308d4b5fae91"
+    }
+  ],
+  "raw_provider_envelope_persisted": false,
+  "reused_observation_count": 0,
+  "schema_version": "cortex-frontier-calibration-commissioning/1.0",
+  "target_levels": {
+    "architecture_reconstruction": 1
+  },
+  "timeout_seconds": 180.0,
+  "version": "9.8.7"
+}

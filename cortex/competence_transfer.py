@@ -40,9 +40,10 @@ from .model_circulation import (
 )
 from .symbiosis import agent_instantiation_receipt, cortex_context_receipt
 
-SCHEMA = "cortex-competence-transfer/1.2"
+SCHEMA = "cortex-competence-transfer/1.3"
+PREVIOUS_SCHEMA = "cortex-competence-transfer/1.2"
 EVIDENCE_SCHEMA = "cortex-competence-transfer/1.1"
-VERSION = "9.5.0"
+VERSION = "9.8.7"
 GLYPH = "⟡◇⇄"
 ARMS = ("A", "B", "C", "D", "E")
 PORTABILITY_STATES = frozenset(
@@ -823,10 +824,12 @@ def _validate_transfer_body(
         "trial_nonce",
         "fresh_model_identities",
     ]
-    if str(trial.get("schema_version") or "") == SCHEMA:
+    if str(trial.get("schema_version") or "") in {SCHEMA, PREVIOUS_SCHEMA}:
         identity_keys.extend(
             ("applicability_context", "applicability_verification")
         )
+    if str(trial.get("schema_version") or "") == SCHEMA:
+        identity_keys.append("distillation_support")
     if _sha({key: trial.get(key) for key in identity_keys}) != str(
         trial.get("trial_id") or ""
     ):
@@ -861,6 +864,30 @@ def _validate_transfer_body(
         ):
             errors.append("origin_evidence_class_binding_invalid")
         if str(trial.get("schema_version") or "") == SCHEMA:
+            from .distillation_witness import resolve_distillation_support
+
+            support = resolve_distillation_support(
+                store,
+                repo,
+                str(trial.get("competence_id") or ""),
+                create_if_missing=False,
+            )
+            canonical_support = {
+                key: support.get(key)
+                for key in (
+                    "state",
+                    "status",
+                    "witness_id",
+                    "receipt_hash",
+                    "schema_version",
+                    "verifier",
+                )
+            }
+            if dict(trial.get("distillation_support") or {}) != canonical_support:
+                errors.append("distillation_support_binding_invalid")
+            if canonical_origin_class in {EVIDENCE_LIVE, EVIDENCE_ATTESTED} and support.get("state") != "pass":
+                errors.append("empirical_distillation_support_not_pass")
+        if str(trial.get("schema_version") or "") in {SCHEMA, PREVIOUS_SCHEMA}:
             stored_context = trial.get("applicability_context")
             if not isinstance(stored_context, Mapping):
                 errors.append("trial_applicability_context_missing")
@@ -931,7 +958,7 @@ def _validate_transfer_body(
             errors.append(f"arm_{arm}_transfer_context_missing")
             continue
         if (
-            str(trial.get("schema_version") or "") == SCHEMA
+            str(trial.get("schema_version") or "") in {SCHEMA, PREVIOUS_SCHEMA}
             and context_package.get("trial_applicability_context")
             != trial.get("applicability_context")
         ):
@@ -953,7 +980,7 @@ def _validate_transfer_body(
         evidence_class = str(circulation.get("evidence_class") or EVIDENCE_UNKNOWN)
         expected_identity = dict(circulation.get("model_identity") or {})
         expected_provenance = dict(circulation.get("adapter_provenance") or {})
-        if str(trial.get("schema_version") or "") == SCHEMA:
+        if str(trial.get("schema_version") or "") in {SCHEMA, PREVIOUS_SCHEMA}:
             stored_family_bindings = (
                 (trial.get("applicability_context") or {}).get(
                     "model_family_bindings"
@@ -1093,6 +1120,29 @@ def run_cross_model_transfer_trial(
     current_epoch_id = str(epoch.get("epoch_id") or epoch.get("live_epoch_id") or "")
     origin = candidate.get("evidence_lineage", {}).get("model_origin", {})
     origin_evidence_class = str(origin.get("evidence_class") or EVIDENCE_LEGACY)
+    from .distillation_witness import resolve_distillation_support
+
+    semantic_support = resolve_distillation_support(
+        store, repo, competence_id, create_if_missing=True
+    )
+    if (
+        origin_evidence_class in {EVIDENCE_LIVE, EVIDENCE_ATTESTED}
+        and semantic_support.get("state") != "pass"
+    ):
+        raise TransferTrialError(
+            "live empirical transfer requires canonically supported distillation"
+        )
+    distillation_support = {
+        key: semantic_support.get(key)
+        for key in (
+            "state",
+            "status",
+            "witness_id",
+            "receipt_hash",
+            "schema_version",
+            "verifier",
+        )
+    }
     origin_epoch = str(
         (candidate.get("evidence_lineage", {}).get("originating_trajectories") or [{}])[0].get("body_epoch_id")
         or ""
@@ -1184,6 +1234,7 @@ def run_cross_model_transfer_trial(
         "policy": frozen_policy,
         "arms": list(ARMS),
         "origin_model": dict(origin),
+        "distillation_support": distillation_support,
         "trial_nonce": str(trial_nonce or ""),
         "fresh_model_identities": fresh_identities,
     }
@@ -1398,7 +1449,12 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
     }
     errors: list[str] = []
     schema_version = str(trial.get("schema_version") or "")
-    evidence_typed = schema_version in {SCHEMA, EVIDENCE_SCHEMA}
+    evidence_typed = schema_version in {SCHEMA, PREVIOUS_SCHEMA, EVIDENCE_SCHEMA}
+    semantic_state = (
+        str((trial.get("distillation_support") or {}).get("state") or "unknown")
+        if schema_version == SCHEMA
+        else "legacy_partial"
+    )
     if _sha(material) != str(trial.get("receipt_hash") or ""):
         errors.append("trial_receipt_hash_invalid")
     if trial.get("distribution_authorized") is not False or trial.get("execution_authorized") is not False:
@@ -1470,7 +1526,8 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
         "stored_portability_status": trial.get("portability_status"),
         "evidence_class": conformance.get("evidence_class"),
         "empirical_transfer_established": bool(
-            evidence_typed
+            schema_version == SCHEMA
+            and semantic_state == "pass"
             and not errors
             and str(conformance.get("portability_status") or "").startswith(
                 "empirical_"
@@ -1490,6 +1547,8 @@ def verify_transfer_trial(store: Any, repo: str, trial_id: str) -> dict[str, Any
             conformance.get("arm_evidence_classes") or {}
         ),
         "legacy_partial": not evidence_typed,
+        "semantic_distillation_state": semantic_state,
+        "distillation_support": dict(trial.get("distillation_support") or {}),
         "distribution_authorized": False,
         "execution_authorized": False,
         "advisory_only": True,
@@ -1501,6 +1560,7 @@ __all__ = [
     "CLAIM_BOUNDARY",
     "DEFAULT_POLICY",
     "PORTABILITY_STATES",
+    "PREVIOUS_SCHEMA",
     "SCHEMA",
     "VERSION",
     "TransferTrialError",

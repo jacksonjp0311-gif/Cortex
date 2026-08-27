@@ -1283,3 +1283,24 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Added Git commit, churn, and co-change telemetry.
 - Added retrieval probes and bootstrap certificates.
 - Added automatic activation refresh and Governor read-only fallback.
+## 9.8.7 - Semantic Distillation Seal & Partial Evidence Calibration
+
+- Made the independent distillation witness part of the ordinary competence
+  lifecycle instead of a preregistration-only surface. New candidates receive
+  a separate immutable semantic-support receipt after canonical admission.
+- Required meaningful capability and intended-outcome claims. Identifier-only
+  candidates remain `UNKNOWN` even when their origin trajectory is valid.
+- Bound current distillation-witness identity and state into v1.3 transfer
+  trials. Live empirical transfer now fails closed unless semantic support is
+  `pass`; synthetic trials remain structural and non-authorizing.
+- Required semantic support for production competence packages while retaining
+  explicitly sandboxed synthetic inspection and immutable legacy receipts.
+- Added committed partial-signature development corpora with deterministic
+  minimum resolving coordinates, disclosed/hidden evidence commitments, and
+  no answer disclosure.
+- Executed two four-case runtime-selected architecture screens. The 50% and
+  25% policies each disclosed one resolving coordinate and both scored `4/4`,
+  identifying a discrete zero-to-one representation transition rather than an
+  informative continuous band.
+- Preserved all authority flags as false. No competence lift, general semantic
+  entailment, confirmatory causal effect, consciousness, or agency is claimed.

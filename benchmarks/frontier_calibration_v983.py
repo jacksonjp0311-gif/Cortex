@@ -26,6 +26,7 @@ from cortex.discriminative_forge import (
     build_coupled_dependency_corpus,
     build_difficulty_ladder_corpus,
     build_latent_cause_corpus,
+    build_partial_evidence_corpus,
 )
 from cortex.evaluation import TaskEvaluationContract
 from cortex.model_circulation import ModelAdapterError, run_model_circulation
@@ -65,13 +66,17 @@ def main() -> int:
     parser.add_argument("--provider-family", required=True)
     parser.add_argument("--reasoning-effort", default="high")
     parser.add_argument("--timeout-seconds", type=float, default=180.0)
+    parser.add_argument(
+        "--signature-fraction", type=float, default=0.5,
+        help="Partial-mode fraction of the minimum resolving coordinate set.",
+    )
     parser.add_argument("--repo", default="Cortex")
     parser.add_argument(
         "--target", action="append", default=[], metavar="FAMILY=LEVEL",
         help="Run only a preregistered development stratum; repeat for multiple families.",
     )
     parser.add_argument(
-        "--corpus-mode", choices=("additive", "coupled", "latent", "entanglement"),
+        "--corpus-mode", choices=("additive", "coupled", "latent", "entanglement", "partial"),
         default="additive",
     )
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks" / "results" / "v983_frontier_calibration.json")
@@ -81,6 +86,7 @@ def main() -> int:
         "coupled": ("v984", "9.8.4"),
         "latent": ("v985", "9.8.5"),
         "entanglement": ("v986", "9.8.6"),
+        "partial": ("v987", "9.8.7"),
     }[args.corpus_mode]
     command = shutil.which(args.command) or args.command
     adapter = JsonSubprocessAdapter(
@@ -96,7 +102,16 @@ def main() -> int:
         timeout_seconds=args.timeout_seconds,
         run_profile=args.corpus_mode,
     )
-    if args.corpus_mode == "entanglement":
+    if args.corpus_mode == "partial":
+        corpus = build_partial_evidence_corpus(
+            seed="cortex-v987-partial-evidence-development",
+            maximum_level=4,
+            variants_per_level=8,
+            architecture_signature_fraction=args.signature_fraction,
+        )
+        task_families = LATENT_CAUSE_FAMILIES
+        report_version = phase_version
+    elif args.corpus_mode == "entanglement":
         corpus = build_cost_entanglement_corpus(
             seed="cortex-v986-cost-entanglement-development",
             maximum_level=4,
