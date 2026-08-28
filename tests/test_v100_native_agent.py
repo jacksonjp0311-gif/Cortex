@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
@@ -25,6 +26,7 @@ from cortex.native_agent import (
     ScriptedAgentAdapter,
     verify_native_agent_trajectory,
 )
+from cortex.provider_fabric import HttpProviderAgentAdapter
 from cortex.store import Store
 from cortex.symbiosis import open_symbiotic_session
 
@@ -77,6 +79,67 @@ class V100NativeAgentTests(unittest.TestCase):
         serialized = str(receipt)
         self.assertNotIn("must be discarded", serialized)
         self.assertNotIn("chain_of_thought", serialized)
+        self.assertFalse(receipt["host_mutate_authorized"])
+        self.assertFalse(receipt["execution_authorized"])
+
+    def test_model_receives_cortex_identity_projection_and_granted_tools(self) -> None:
+        captured = []
+
+        class CapturingAdapter(ScriptedAgentAdapter):
+            def invoke_agent(self, request):
+                captured.append(request)
+                return super().invoke_agent(request)
+
+        result = NativeAgentRuntime(self.store, self.repo).run(
+            "Inspect Cortex",
+            adapter=CapturingAdapter([{"public_output": "ready", "finish_reason": "stop"}]),
+            grant=self._grant("filesystem.list", "filesystem.read"),
+        )
+        self.assertEqual(result["status"], "completed")
+        system = captured[0].messages[0].content
+        self.assertIn("operating inside Cortex", system)
+        self.assertIn('"repository":"NativeHost"', system)
+        self.assertIn('"context_projection"', system)
+        self.assertIn('"filesystem.list"', system)
+        self.assertIn('"host_mutate_authorized":false', system)
+        provider_tools = HttpProviderAgentAdapter._tools(captured[0])
+        self.assertEqual(provider_tools[0]["function"]["name"], "cortex_filesystem_list")
+        self.assertNotIn(".", provider_tools[0]["function"]["name"])
+
+        class FakeStream:
+            def __iter__(self):
+                yield b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"provider-call","function":{"name":"cortex_filesystem_list","arguments":"{\\\"path\\\":\\\".\\\"}"}}]},"finish_reason":"tool_calls"}]}\n'
+                yield b"data: [DONE]\n"
+
+            def close(self):
+                return None
+
+        seen_payload = {}
+
+        def open_fixture(http_request, timeout):
+            seen_payload.update(json.loads(http_request.data.decode("utf-8")))
+            return FakeStream()
+
+        http_adapter = HttpProviderAgentAdapter("openai", "reasoning-model", "secret", "https://example.invalid/v1")
+        with patch("cortex.provider_fabric.urllib.request.urlopen", side_effect=open_fixture):
+            transported = http_adapter.invoke_agent(captured[0])
+        self.assertEqual(seen_payload["reasoning_effort"], "none")
+        self.assertEqual(transported["tool_calls"][0]["name"], "filesystem.list")
+
+    def test_filesystem_list_is_bounded_read_only_and_workspace_contained(self) -> None:
+        adapter = ScriptedAgentAdapter(
+            [
+                {"tool_calls": [{"id": "list-1", "name": "filesystem.list", "arguments": {"path": "."}}], "finish_reason": "tool_calls"},
+                {"public_output": "listed", "finish_reason": "stop"},
+            ]
+        )
+        result = NativeAgentRuntime(self.store, self.repo).run(
+            "list source", adapter=adapter, grant=self._grant("filesystem.list")
+        )
+        receipt = self.store.symbiotic_receipt(result["trajectory_receipt_hash"], repo=self.repo)
+        listed = receipt["tool_results"][0]
+        self.assertEqual(listed["status"], "completed")
+        self.assertIn("README.md", [item["path"] for item in listed["output"]["entries"]])
         self.assertFalse(receipt["host_mutate_authorized"])
         self.assertFalse(receipt["execution_authorized"])
 

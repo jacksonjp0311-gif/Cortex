@@ -243,7 +243,7 @@ class Alpha2InterfaceTests(unittest.TestCase):
             providers={"openai": ToolFixtureProvider()},
         )
         service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=fabric)
-        service.update_settings({"default_tool_mode": "read_only"})
+        self.assertEqual(service.settings()["default_tool_mode"], "read_only")
         session = service.create_session({"provider": "openai", "model_id": "fixture-chat"})
         service.send_message(session["session_id"], "inspect")
         deadline = time.time() + 10
@@ -254,6 +254,24 @@ class Alpha2InterfaceTests(unittest.TestCase):
         types = [event["event_type"] for event in service.events.since(session["session_id"], 0)]
         self.assertIn("tool.requested", types)
         self.assertIn("tool.completed", types)
+
+    def test_context_reports_canonical_projection_instead_of_false_zero(self) -> None:
+        service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=self.fabric)
+        session = service.create_session({"provider": "openai", "model_id": "fixture-chat"})
+        service.send_message(session["session_id"], "context")
+        deadline = time.time() + 10
+        while service.is_active(session["session_id"]) and time.time() < deadline:
+            time.sleep(0.02)
+        context = service.context(session["session_id"])
+        self.assertGreater(context["projected_items"], 0)
+        self.assertGreater(context["token_estimate"], 0)
+        self.assertIn("cortex_identity", context["source_classes"])
+
+    def test_tool_mode_cannot_enable_execution(self) -> None:
+        service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=self.fabric)
+        with self.assertRaisesRegex(ValueError, "default_tool_mode"):
+            service.update_settings({"default_tool_mode": "execute"})
+        self.assertFalse(service.status()["authority"]["execution_authorized"])
 
     def test_provider_failure_keeps_conversation_alive(self) -> None:
         fabric = ProviderFabric(
@@ -307,7 +325,8 @@ class Alpha2InterfaceTests(unittest.TestCase):
         self.assertEqual(telemetry["state"], "COMPLETE")
         self.assertEqual(telemetry["metrics"]["model_latency"]["measurement"], "measured")
         self.assertGreaterEqual(telemetry["metrics"]["model_latency"]["value"], 0)
-        self.assertEqual(telemetry["metrics"]["context_tokens"]["measurement"], "unavailable")
+        self.assertEqual(telemetry["metrics"]["context_tokens"]["measurement"], "estimated")
+        self.assertGreater(telemetry["metrics"]["context_tokens"]["value"], 0)
         self.assertEqual(telemetry["metrics"]["confidence"]["measurement"], "unavailable")
         self.assertFalse(telemetry["authority"]["execution_authorized"])
 

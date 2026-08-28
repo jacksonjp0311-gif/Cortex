@@ -123,7 +123,9 @@ class CortexChatService:
             "selected_provider", "selected_model", "reasoning_effort",
             "temperature", "max_output_tokens", "default_tool_mode", "appearance",
         }
-        return {key: current[key] for key in allowed if key in current}
+        defaults = {"default_tool_mode": "read_only", "appearance": "standard"}
+        defaults.update({key: current[key] for key in allowed if key in current})
+        return defaults
 
     def update_settings(self, values: Mapping[str, Any]) -> dict[str, Any]:
         current = self.settings()
@@ -133,6 +135,8 @@ class CortexChatService:
         }
         for key, value in values.items():
             if key in allowed:
+                if key == "default_tool_mode" and value not in {"off", "read_only"}:
+                    raise ValueError("default_tool_mode must be off or read_only")
                 current[key] = _json_safe(value)
         self.store.set_setting(f"ui:settings:{self.repo}", current)
         return current
@@ -265,7 +269,7 @@ class CortexChatService:
         worker_store = Store(Path(self.store.path))
         try:
             adapter = self.fabric.adapter(provider, model_id)
-            allowed_tools = ("filesystem.read",) if tool_mode == "read_only" else ()
+            allowed_tools = ("filesystem.list", "filesystem.read") if tool_mode == "read_only" else ()
             grant = CapabilityGrant(
                 workspace_root=self.repository_path,
                 allowed_tools=allowed_tools,
@@ -334,12 +338,35 @@ class CortexChatService:
         requests = receipt.get("requests") or []
         request = requests[-1] if requests else {}
         projection = request.get("context_projection") if isinstance(request, Mapping) else {}
+        if isinstance(projection, Mapping):
+            projected_items = (
+                1
+                + len(projection.get("evidence_digests") or ())
+                + len(projection.get("memory_episode_digests") or ())
+                + len(projection.get("unresolved_contradictions") or ())
+                + len(projection.get("constitutional_restrictions") or ())
+            )
+            serialized_projection = json.dumps(
+                projection,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                default=str,
+            )
+            token_estimate = max(1, (len(serialized_projection) + 3) // 4)
+            source_classes = ["cortex_identity", "constitutional"]
+            if projection.get("evidence_digests"):
+                source_classes.append("evidence")
+            if projection.get("memory_episode_digests"):
+                source_classes.append("memory")
+        else:
+            projected_items, token_estimate, source_classes = 0, None, []
         return {
             "state": "ACTIVE",
             "projection_hash": receipt.get("context_projection_hash"),
-            "projected_items": len(projection.get("evidence") or ()) if isinstance(projection, Mapping) else 0,
-            "token_estimate": projection.get("estimated_tokens") if isinstance(projection, Mapping) else None,
-            "source_classes": sorted({str(item.get("kind") or "unknown") for item in (projection.get("evidence") or ()) if isinstance(item, Mapping)}) if isinstance(projection, Mapping) else [],
+            "projected_items": projected_items,
+            "token_estimate": token_estimate,
+            "source_classes": source_classes,
             "projection": projection,
         }
 

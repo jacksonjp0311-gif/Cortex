@@ -1,11 +1,15 @@
 # Tool Security
 
-Tools are unavailable by default. The host constructs a `CapabilityGrant`
-containing allowed tool names, a workspace root, optional exact command-vector allowlist,
-and resource limits. The model cannot widen it.
+The local Cortex UI defaults to a repository-scoped read-only profile and lets
+the operator turn that profile off. Other runtime callers receive only the
+`CapabilityGrant` they explicitly construct. The host grant contains allowed
+tool names, a workspace root, optional exact command-vector allowlist, and
+resource limits. The model cannot widen it.
 
-Alpha 1 tools:
+Native tools:
 
+- `filesystem.list`: read-only, workspace-contained, bounded directory listing;
+  generated/runtime-heavy directories are excluded.
 - `filesystem.read`: read-only, workspace-contained, bounded bytes.
 - `terminal.execute`: argument-vector execution without a shell, contained
   working directory, exact host-approved argument vector, timeout, and bounded

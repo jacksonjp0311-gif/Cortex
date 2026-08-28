@@ -305,17 +305,39 @@ class HttpProviderAgentAdapter:
         self._base_url = str(base_url).rstrip("/")
 
     @staticmethod
+    def _tool_name_maps(request: AgentModelRequest) -> tuple[dict[str, str], dict[str, str]]:
+        """Map Cortex dotted tool identities onto provider-safe function names."""
+        canonical_to_transport: dict[str, str] = {}
+        transport_to_canonical: dict[str, str] = {}
+        for tool in request.tools:
+            canonical = str(tool.get("name") or "")
+            transport = "cortex_" + "".join(
+                character if character.isalnum() or character in {"_", "-"} else "_"
+                for character in canonical
+            )
+            if transport in transport_to_canonical and transport_to_canonical[transport] != canonical:
+                raise ModelAdapterError("provider tool-name normalization collision")
+            canonical_to_transport[canonical] = transport
+            transport_to_canonical[transport] = canonical
+        return canonical_to_transport, transport_to_canonical
+
+    @staticmethod
     def _messages(request: AgentModelRequest) -> list[dict[str, Any]]:
+        canonical_to_transport, _ = HttpProviderAgentAdapter._tool_name_maps(request)
         result: list[dict[str, Any]] = []
         for message in request.messages:
             body = message.to_dict()
+            if message.role == "tool":
+                body.pop("name", None)
             if message.role == "assistant" and message.tool_calls:
                 body["tool_calls"] = [
                     {
                         "id": str(call.get("call_id") or call.get("id") or ""),
                         "type": "function",
                         "function": {
-                            "name": str(call.get("name") or ""),
+                            "name": canonical_to_transport.get(
+                                str(call.get("name") or ""), str(call.get("name") or "")
+                            ),
                             "arguments": json.dumps(
                                 dict(call.get("arguments") or {}),
                                 separators=(",", ":"),
@@ -329,12 +351,13 @@ class HttpProviderAgentAdapter:
 
     @staticmethod
     def _tools(request: AgentModelRequest) -> list[dict[str, Any]]:
+        canonical_to_transport, _ = HttpProviderAgentAdapter._tool_name_maps(request)
         result = []
         for tool in request.tools:
             result.append({
                 "type": "function",
                 "function": {
-                    "name": str(tool.get("name") or ""),
+                    "name": canonical_to_transport[str(tool.get("name") or "")],
                     "description": str(tool.get("description") or ""),
                     "parameters": dict(tool.get("input_schema") or {}),
                 },
@@ -359,10 +382,17 @@ class HttpProviderAgentAdapter:
             "stream_options": {"include_usage": True},
         }
         tools = self._tools(request)
+        _, transport_to_canonical = self._tool_name_maps(request)
         if tools:
             payload["tools"] = tools
         if self.provider_family == "openai":
             payload["store"] = False
+            # OpenAI's chat-completions transport rejects function tools for
+            # some reasoning models unless reasoning effort is explicitly off.
+            # Cortex does not persist hidden reasoning, and the Responses API
+            # transport remains a future adapter refinement.
+            if tools:
+                payload["reasoning_effort"] = "none"
         data = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         http_request = urllib.request.Request(
             f"{self._base_url}/chat/completions",
@@ -382,7 +412,18 @@ class HttpProviderAgentAdapter:
                 raise ProviderError("INVALID_KEY", "Provider authentication failed.") from exc
             if exc.code == 429:
                 raise ProviderError("RATE_LIMITED", "Model request rate limited.", retryable=True) from exc
-            raise ProviderError("PROVIDER_ERROR", f"Provider returned HTTP {exc.code}.") from exc
+            detail = ""
+            try:
+                body = exc.read(65_536).decode("utf-8", errors="replace")
+                parsed = json.loads(body)
+                error = parsed.get("error") if isinstance(parsed, Mapping) else None
+                if isinstance(error, Mapping):
+                    detail = str(error.get("message") or error.get("code") or "")
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                detail = ""
+            detail = " ".join(detail.split())[:500]
+            suffix = f" {detail}" if detail else ""
+            raise ProviderError("PROVIDER_ERROR", f"Provider returned HTTP {exc.code}.{suffix}") from exc
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             raise ProviderError("NETWORK_ERROR", "Model provider connection failed.", retryable=True) from exc
 
@@ -430,7 +471,11 @@ class HttpProviderAgentAdapter:
         finally:
             response.close()
         tool_calls = [
-            {"id": value["id"] or f"call_{index}", "name": value["name"], "arguments": value["arguments"] or "{}"}
+            {
+                "id": value["id"] or f"call_{index}",
+                "name": transport_to_canonical.get(value["name"], value["name"]),
+                "arguments": value["arguments"] or "{}",
+            }
             for index, value in sorted(calls.items())
         ]
         if tool_calls:

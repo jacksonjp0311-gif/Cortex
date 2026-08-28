@@ -11,6 +11,14 @@ Implemented providers:
 | xAI / Grok | live `GET /v1/language-models`, `/v1/models` fallback | streaming OpenAI-compatible chat completions |
 | OpenRouter | live `GET /api/v1/models` | streaming OpenAI-compatible chat completions |
 
+Cortex tool identities retain their architecture-native dotted names while
+the HTTP adapter maps them reversibly to provider-safe function identifiers.
+For OpenAI reasoning models that reject chat-completions tools with reasoning
+effort enabled, the current adapter explicitly uses `reasoning_effort=none` on
+tool-bearing requests. This preserves bounded tool access but is not a claim
+that the chat-completions surface exposes reasoning-depth telemetry; a native
+Responses API adapter remains future transport work.
+
 Provider identity is provenance, never authority. Model output cannot mark
 itself successful, witnessed, admitted to memory, or authorized to execute.
 

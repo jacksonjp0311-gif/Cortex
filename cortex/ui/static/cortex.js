@@ -419,6 +419,7 @@ async function loadInitial() {
     state.sessions = (await api("/v1/sessions")).sessions;
     renderSessions();
     applyAppearance(state.settings.appearance || "standard");
+    $$('[data-tool-mode]').forEach(button => button.classList.toggle("active", button.dataset.toolMode === (state.settings.default_tool_mode || "read_only")));
     drawCharts();
     if (state.sessions.length) await openSession(state.sessions[0].session_id);
     else if (!state.providers.some(provider => provider.configured)) $("#settingsDialog").showModal();
@@ -876,6 +877,12 @@ $("#closeCortex").onclick = () => $("#cortexDialog").close();
 $$('[data-appearance]').forEach(button => button.onclick = async () => {
   applyAppearance(button.dataset.appearance);
   state.settings = await api("/v1/settings", { method: "PATCH", body: JSON.stringify({ appearance: button.dataset.appearance }) });
+});
+$$('[data-tool-mode]').forEach(button => button.onclick = async () => {
+  const mode = button.dataset.toolMode;
+  $$('[data-tool-mode]').forEach(item => item.classList.toggle("active", item === button));
+  state.settings = await api("/v1/settings", { method: "PATCH", body: JSON.stringify({ default_tool_mode: mode }) });
+  toast(mode === "read_only" ? "Repository inspection enabled. Execution and writes remain blocked." : "Repository inspection disabled.");
 });
 function renderUptime() {
   const elapsed = Math.max(0, state.uptimeBase + (Date.now() - state.uptimeStartedAt) / 1000);
