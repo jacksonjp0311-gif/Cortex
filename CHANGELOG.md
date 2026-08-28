@@ -1,3 +1,24 @@
+## 10.0.0-alpha.1 - Native Agent Runtime
+
+- Added the first executable headless agent loop: governed Cortex context,
+  replaceable model adapter, bounded tool request/result circulation, public
+  final answer, and immutable trajectory receipt.
+- Added provider-neutral request/response contracts plus deterministic and
+  host-selected JSON subprocess adapters without a provider SDK dependency or
+  hard-coded model.
+- Added explicit host capability grants, workspace-contained filesystem reads,
+  shell-free allowlisted terminal execution, bounded outputs, and typed
+  untrusted tool results.
+- Added a versioned, hash-linked event stream and deep trajectory verification
+  covering request/response binding, tool pairing, final-answer identity,
+  authority closure, and the existing symbiotic ledger chain.
+- Added the headless `cortex run` command, a structural native-runtime
+  benchmark, eleven adversarial/integration tests, the v10 architecture set, and
+  the current Hermes extraction/attribution audit.
+- Preserved every v9 historical receipt and governance surface. Alpha 1 does
+  not add memory admission, competence promotion, autonomous authority,
+  provider streaming, compression, interruption, delegation, MCP, or UI.
+
 ## 9.8.6 - Cost-Calibrated Evidence Entanglement
 
 - Added outcome-independent evidence-entanglement measurements over exact

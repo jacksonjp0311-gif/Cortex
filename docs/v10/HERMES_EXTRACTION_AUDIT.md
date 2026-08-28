@@ -1,8 +1,11 @@
 # Hermes Extraction Audit
 
-Audit date: 2026-08-27  
-Upstream: `NousResearch/hermes-agent`  
-Audited upstream commit: `6dcebea7fc5d0cc4f621eeaddf52b7d877a5f882`  
+Audit date: 2026-08-27
+
+Upstream: `NousResearch/hermes-agent`
+
+Audited upstream commit: `6dcebea7fc5d0cc4f621eeaddf52b7d877a5f882`
+
 Upstream license: MIT, Copyright (c) 2025 Nous Research
 
 This audit inspected current upstream source before implementation. Cortex does

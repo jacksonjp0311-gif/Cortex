@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v9.8.7",
+  "release": "Cortex v10.0.0-alpha.1",
   "release_class": "advanced research prototype",
-  "source_commit": "954db5d14b92f78b95b0750d3fc9fb951783806a",
-  "runtime_parent": "954db5d14b92f78b95b0750d3fc9fb951783806a",
+  "source_commit": "a0fbd2c6919ecfa1659a25a9ca0f5e98718ab020",
+  "runtime_parent": "a0fbd2c6919ecfa1659a25a9ca0f5e98718ab020",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/intelligence/PHASE_V9.8.7_SEMANTIC_DISTILLATION_PARTIAL_EVIDENCE.md",
+  "phase_document": "docs/v10/README.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -17,6 +17,7 @@
     "cost_calibrated_entanglement": "eight targeted canonical live-empirical observations verified; doubled repair depth and complete architecture signature support both screened at 4/4; cross-case cost distributions measured; repeatability and confirmatory competence effects not established; overall CALIBRATION_HELD",
     "semantic_distillation_seal": "current independent atomic-support witness is bound into empirical transfer and production distribution; identifier-only or unsupported abstractions remain UNKNOWN; verified narrowing successors inherit support only through parent witness and canonical revision proof",
     "partial_evidence_calibration": "eight targeted canonical live-empirical observations verified across two four-case panels; 50% and 25% policies each disclosed one resolving coordinate and screened at 4/4; zero-to-one representation discontinuity observed; informative band and competence effect not established",
+    "native_agent_runtime": "provider-neutral headless model/tool/model circulation, bounded host capability grants, versioned events, and immutable trajectory reconstruction verified structurally; empirical agent benefit not established",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
     "production_repository_portability": "not established",
@@ -28,5 +29,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v9.8.6 cost-calibrated evidence entanglement"
+  "supersedes": "Cortex v9.8.7 semantic distillation and partial-evidence calibration"
 }
