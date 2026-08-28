@@ -29,6 +29,9 @@ const state = {
   latencyHistory: [],
   uptimeBase: 0,
   uptimeStartedAt: Date.now(),
+  eventSequence: 0,
+  eventConnected: false,
+  reconciling: false,
 };
 
 async function api(path, options = {}) {
@@ -143,6 +146,18 @@ function drawSparkline(canvas, values, startColor, endColor) {
   if (!values.length) {
     context.strokeStyle = "rgba(125, 151, 177, .28)";
     context.beginPath(); context.moveTo(0, rect.height * .72); context.lineTo(rect.width, rect.height * .72); context.stroke();
+    return;
+  }
+  if (values.length === 1) {
+    const gradient = context.createLinearGradient(0, 0, rect.width, 0);
+    gradient.addColorStop(0, startColor);
+    gradient.addColorStop(1, endColor);
+    context.fillStyle = gradient;
+    context.shadowBlur = 10;
+    context.shadowColor = endColor;
+    context.beginPath();
+    context.arc(rect.width * .5, rect.height * .48, 3.2, 0, Math.PI * 2);
+    context.fill();
     return;
   }
   const min = Math.min(...values);
@@ -302,14 +317,10 @@ function resetLiveMetrics() {
   state.firstDeltaAt = null;
   state.streamedCharacters = 0;
   state.toolCalls = 0;
-  $("#tokenRate").textContent = "—";
-  $("#rateClass").textContent = "AWAITING USAGE";
-  $("#latencyMetric").textContent = "—";
-  $("#latencyClass").textContent = "MEASURING";
-  $("#firstTokenMetric").textContent = "—";
+  $("#rateClass").textContent = $("#tokenRate").textContent === "—" ? "AWAITING USAGE" : "LAST TURN · AWAITING LIVE";
+  $("#latencyClass").textContent = $("#latencyMetric").textContent === "—" ? "MEASURING" : "LAST TURN · MEASURING";
   $("#toolMetric").textContent = "0";
-  $("#costMetric").textContent = "—";
-  $("#costClass").textContent = "UNAVAILABLE";
+  $("#costClass").textContent = $("#costMetric").textContent === "—" ? "UNAVAILABLE" : "LAST TURN";
   $("#telemetryState").textContent = "LIVE";
   $("#healthMetric").textContent = "ACTIVE";
 }
@@ -432,7 +443,11 @@ async function newConversation() {
 async function openSession(id) {
   if (state.source) state.source.close();
   state.session = await api(`/v1/sessions/${id}`);
-  state.streaming = state.session.active;
+  const live = await api(`/v1/sessions/${id}/live`);
+  state.eventSequence = Number(live.last_sequence || 0);
+  state.eventConnected = false;
+  state.streaming = Boolean(live.active);
+  state.telemetry = live.telemetry;
   state.streamText = "";
   state.lastPrompt = [...(state.session.messages || [])].reverse().find(message => message.role === "user")?.content || "";
   renderSessions();
@@ -502,12 +517,30 @@ async function send(text) {
 
 function connectEvents() {
   if (!state.session) return;
-  state.source = new EventSource(`/v1/events?session_id=${encodeURIComponent(state.session.session_id)}`);
+  const sessionId = state.session.session_id;
+  state.source = new EventSource(`/v1/events?session_id=${encodeURIComponent(sessionId)}&after=${state.eventSequence}`);
+  state.source.onopen = () => {
+    if (state.session?.session_id !== sessionId) return;
+    state.eventConnected = true;
+    $("#telemetryState").textContent = state.streaming ? "LIVE" : "STREAM CONNECTED";
+    $("#sessionState").textContent = state.streaming ? "ACTIVE" : "READY";
+  };
   state.source.addEventListener("cortex", event => handleEvent(JSON.parse(event.data)));
-  state.source.onerror = () => { if (state.streaming) $("#sessionState").textContent = "RECONNECTING"; };
+  state.source.onerror = () => {
+    if (state.session?.session_id !== sessionId) return;
+    state.eventConnected = false;
+    $("#telemetryState").textContent = "RECONNECTING";
+    if (state.streaming) $("#sessionState").textContent = "RECONNECTING";
+    reconcileLiveState("event-stream-error");
+  };
 }
 
 function handleEvent(event) {
+  const sequence = Number(event.sequence || 0);
+  if (sequence && sequence <= state.eventSequence) return;
+  const gap = sequence && state.eventSequence && sequence > state.eventSequence + 1;
+  if (sequence) state.eventSequence = sequence;
+  if (gap) reconcileLiveState("event-gap");
   state.events.push(event);
   if (state.events.length > 400) state.events.shift();
   logEvent(event);
@@ -520,6 +553,7 @@ function handleEvent(event) {
       $("#contextLoad").textContent = Number(payload.estimated_tokens).toLocaleString();
       $("#contextMetric").textContent = Number(payload.estimated_tokens).toLocaleString();
     }
+    scheduleIntelligenceRefresh();
   }
   if (type === "model.requested") setCoreState("thinking", "THINKING", `${providerLabel(state.session.provider)} / ${state.session.model_id}`);
   if (type === "model.delta") {
@@ -542,6 +576,7 @@ function handleEvent(event) {
       addHistory(state.latencyHistory, payload.model_latency_ms);
     }
     drawCharts();
+    scheduleIntelligenceRefresh();
   }
   if (type === "tool.requested" || type === "tool.started") {
     setCoreState("tool", "TOOL ACTIVE", payload.tool_name || payload.name || "Bounded capability");
@@ -553,6 +588,7 @@ function handleEvent(event) {
     setCoreState("thinking", "THINKING", "Tool observation returned");
     logTool(event);
   }
+  if (type === "trajectory.sealed") scheduleIntelligenceRefresh();
   if (type === "chat.interrupt.requested" || type === "model.interrupted") setCoreState("interrupt", "INTERRUPTED", "Operator cancellation received");
   if (type === "chat.turn.completed") {
     state.streaming = false;
@@ -560,7 +596,7 @@ function handleEvent(event) {
     $("#telemetryState").textContent = "TURN COMPLETE";
     $("#healthMetric").textContent = payload.status === "interrupted" ? "STOPPED" : "HEALTHY";
     setCoreState("idle", payload.status === "interrupted" ? "STOPPED" : "SEALED", payload.status === "interrupted" ? "Generation interrupted" : "Trajectory recorded by Cortex");
-    reloadCurrent();
+    reloadCurrent().catch(error => toast(error.message, true));
     toast(payload.status === "interrupted" ? "Generation interrupted." : "Trajectory sealed.");
   }
   if (type === "chat.turn.failed") {
@@ -591,6 +627,44 @@ function logTool(event) {
   const duration = event.payload.duration_ms != null ? ` · ${event.payload.duration_ms} ms` : "";
   node.textContent = `${event.event_type} · ${event.payload.tool_name || event.payload.name || ""} · ${event.payload.status || ""}${duration}`;
   root.prepend(node);
+}
+
+let intelligenceRefreshTimer = null;
+function scheduleIntelligenceRefresh(delay = 120) {
+  clearTimeout(intelligenceRefreshTimer);
+  intelligenceRefreshTimer = setTimeout(() => {
+    refreshIntelligence().catch(error => toast(error.message, true));
+  }, delay);
+}
+
+async function reconcileLiveState(reason = "watchdog") {
+  if (!state.session || state.reconciling) return;
+  state.reconciling = true;
+  const sessionId = state.session.session_id;
+  try {
+    const live = await api(`/v1/sessions/${sessionId}/live`);
+    if (state.session?.session_id !== sessionId) return;
+    const backendSequence = Number(live.last_sequence || 0);
+    if (backendSequence < state.eventSequence) state.eventSequence = backendSequence;
+    if (backendSequence > state.eventSequence) state.eventSequence = backendSequence;
+    applyTelemetry(live.telemetry);
+    if (live.active && !state.streaming) {
+      state.streaming = true;
+      state.callStartedAt ||= performance.now();
+      setCoreState("thinking", "THINKING", "Recovered active Cortex turn");
+      updateHeader();
+    } else if (!live.active && state.streaming) {
+      await reloadCurrent();
+      $("#telemetryState").textContent = "RECOVERED · TURN COMPLETE";
+      $("#healthMetric").textContent = "HEALTHY";
+      setCoreState("idle", "SEALED", `Canonical state reconciled · ${reason}`);
+      toast("Live view recovered from canonical Cortex state.");
+    }
+  } catch (error) {
+    if (state.streaming) $("#sessionState").textContent = "RECONNECTING";
+  } finally {
+    state.reconciling = false;
+  }
 }
 
 async function reloadCurrent() {
@@ -811,5 +885,18 @@ function renderUptime() {
   $("#uptimeMetric").textContent = `${hours}:${minutes}:${seconds}`;
 }
 setInterval(renderUptime, 1000);
+setInterval(() => {
+  if (!state.session) return;
+  if (state.streaming && state.callStartedAt && !state.firstDeltaAt) {
+    const elapsed = performance.now() - state.callStartedAt;
+    $("#latencyMetric").textContent = elapsed.toFixed(0);
+    $("#latencyClass").textContent = "LOCAL ELAPSED · AWAITING TOKEN";
+  }
+  if (state.streaming || !state.eventConnected) reconcileLiveState("watchdog");
+}, 1000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) reconcileLiveState("page-resumed");
+});
+window.addEventListener("online", () => reconcileLiveState("network-restored"));
 window.addEventListener("resize", drawCharts);
 loadInitial();

@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from cortex.bootstrap import bootstrap_repository
-from cortex.chat_service import CortexChatService, UI_ROOT, serve_cortex_ui
+from cortex.chat_service import CortexChatService, SessionEventBus, UI_ROOT, serve_cortex_ui
 from cortex.config import ensure_home
 from cortex.native_agent import ScriptedAgentAdapter
 from cortex.provider_fabric import (
@@ -288,6 +288,10 @@ class Alpha2InterfaceTests(unittest.TestCase):
         self.assertIn("core-plasma-canvas", css)
         self.assertIn("drawCorePlasma", js)
         self.assertIn("coreEnergy", js)
+        self.assertIn("eventSequence", js)
+        self.assertIn("reconcileLiveState", js)
+        self.assertIn("/live", js)
+        self.assertIn("LAST TURN · AWAITING LIVE", js)
         self.assertIn("updateLiveDelta", js)
         self.assertNotIn("api.openai.com", js)
         self.assertNotIn("openrouter.ai/api", js)
@@ -306,6 +310,48 @@ class Alpha2InterfaceTests(unittest.TestCase):
         self.assertEqual(telemetry["metrics"]["context_tokens"]["measurement"], "unavailable")
         self.assertEqual(telemetry["metrics"]["confidence"]["measurement"], "unavailable")
         self.assertFalse(telemetry["authority"]["execution_authorized"])
+
+    def test_event_sequences_remain_monotonic_when_history_is_bounded(self) -> None:
+        bus = SessionEventBus()
+        for index in range(2_005):
+            bus.publish("session", "model.delta", {"index": index})
+        retained = bus.since("session", 0)
+        self.assertEqual(len(retained), 2_000)
+        self.assertEqual(retained[0]["sequence"], 6)
+        self.assertEqual(retained[-1]["sequence"], 2_005)
+        self.assertEqual(bus.publish("session", "model.responded", {})["sequence"], 2_006)
+        self.assertEqual(bus.latest_sequence("session"), 2_006)
+
+    def test_live_reconciliation_surface_tracks_active_then_complete(self) -> None:
+        slow = FixtureProvider(wait=True)
+        fabric = ProviderFabric(self.store, self.secrets, providers={"openai": slow})
+        service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=fabric)
+        session = service.create_session({"provider": "openai", "model_id": "fixture-chat"})
+        initial = service.live_state(session["session_id"])
+        self.assertFalse(initial["active"])
+        self.assertGreaterEqual(initial["last_sequence"], 1)
+        service.send_message(session["session_id"], "measure live state")
+        active = service.live_state(session["session_id"])
+        self.assertTrue(active["active"])
+        deadline = time.time() + 10
+        while service.is_active(session["session_id"]) and time.time() < deadline:
+            time.sleep(0.02)
+        completed = service.live_state(session["session_id"])
+        self.assertFalse(completed["active"])
+        self.assertEqual(completed["telemetry"]["state"], "COMPLETE")
+        self.assertGreater(completed["last_sequence"], initial["last_sequence"])
+        self.assertFalse(completed["authority"]["host_mutate_authorized"])
+
+    def test_telemetry_counts_only_the_latest_turn_chunks(self) -> None:
+        service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=self.fabric)
+        session = service.create_session({"provider": "openai", "model_id": "fixture-chat"})
+        for prompt in ("first", "second"):
+            service.send_message(session["session_id"], prompt)
+            deadline = time.time() + 10
+            while service.is_active(session["session_id"]) and time.time() < deadline:
+                time.sleep(0.02)
+        telemetry = service.telemetry(session["session_id"])
+        self.assertEqual(telemetry["metrics"]["stream_chunks"]["value"], 3)
 
     def test_real_loopback_http_e2e_uses_cortex_service(self) -> None:
         server = serve_cortex_ui(
@@ -331,6 +377,29 @@ class Alpha2InterfaceTests(unittest.TestCase):
             self.assertIn("text/html", content_type)
             session_json, _ = request("/v1/sessions", "POST", {"provider": "openai", "model_id": "fixture-chat"})
             session_id = json.loads(session_json)["session_id"]
+            first_cursor = server.cortex_service.events.latest_sequence(session_id)
+            published = server.cortex_service.events.publish(session_id, "test.transport.one", {"ok": True})
+
+            def read_sse(after, last_event_id=None):
+                headers = {"Accept": "text/event-stream"}
+                if last_event_id is not None:
+                    headers["Last-Event-ID"] = str(last_event_id)
+                req = urllib.request.Request(
+                    f"{base}/v1/events?session_id={session_id}&after={after}",
+                    headers=headers,
+                )
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    for _ in range(12):
+                        line = response.readline().decode("utf-8").strip()
+                        if line.startswith("data: "):
+                            return json.loads(line[6:])
+                self.fail("SSE stream did not yield a Cortex event")
+
+            replayed = read_sse(first_cursor)
+            self.assertEqual(replayed["sequence"], published["sequence"])
+            second = server.cortex_service.events.publish(session_id, "test.transport.two", {"ok": True})
+            resumed = read_sse(0, last_event_id=published["sequence"])
+            self.assertEqual(resumed["sequence"], second["sequence"])
             request(f"/v1/sessions/{session_id}/messages", "POST", {"text": "hello"})
             deadline = time.time() + 10
             trajectory = {}
@@ -342,6 +411,11 @@ class Alpha2InterfaceTests(unittest.TestCase):
                 time.sleep(0.03)
             self.assertEqual(trajectory.get("state"), "SEALED")
             self.assertEqual(trajectory.get("continuity_id"), session_id)
+            live_json, _ = request(f"/v1/sessions/{session_id}/live")
+            live = json.loads(live_json)
+            self.assertFalse(live["active"])
+            self.assertEqual(live["telemetry"]["state"], "COMPLETE")
+            self.assertGreater(live["last_sequence"], 0)
         finally:
             server.shutdown()
             server.server_close()

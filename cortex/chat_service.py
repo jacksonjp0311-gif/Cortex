@@ -34,23 +34,31 @@ class SessionEventBus:
     def __init__(self) -> None:
         self._events: dict[str, list[dict[str, Any]]] = defaultdict(list)
         self._conditions: dict[str, threading.Condition] = defaultdict(threading.Condition)
+        self._sequences: dict[str, int] = defaultdict(int)
 
     def publish(self, session_id: str, event_type: str, payload: Mapping[str, Any]) -> dict[str, Any]:
-        event = {
-            "schema_version": SERVICE_SCHEMA,
-            "sequence": len(self._events[session_id]) + 1,
-            "session_id": session_id,
-            "event_type": str(event_type),
-            "payload": _json_safe(dict(payload)),
-            "emitted_at": time.time(),
-        }
         condition = self._conditions[session_id]
         with condition:
+            self._sequences[session_id] += 1
+            sequence = self._sequences[session_id]
+            event = {
+                "schema_version": SERVICE_SCHEMA,
+                "sequence": sequence,
+                "session_id": session_id,
+                "event_type": str(event_type),
+                "payload": _json_safe(dict(payload)),
+                "emitted_at": time.time(),
+            }
             self._events[session_id].append(event)
             if len(self._events[session_id]) > 2_000:
                 self._events[session_id] = self._events[session_id][-2_000:]
             condition.notify_all()
         return event
+
+    def latest_sequence(self, session_id: str) -> int:
+        condition = self._conditions[session_id]
+        with condition:
+            return int(self._sequences[session_id])
 
     def since(self, session_id: str, sequence: int) -> list[dict[str, Any]]:
         return [event for event in self._events[session_id] if int(event["sequence"]) > sequence]
@@ -391,16 +399,25 @@ class CortexChatService:
 
         context_event: Mapping[str, Any] = {}
         response_event: Mapping[str, Any] = {}
+        latest_delta: Mapping[str, Any] = {}
         seal_event: Mapping[str, Any] = {}
         delta_count = 0
         tool_calls = 0
         for event in source_events:
             event_type = str(event.get("event_type") or "")
             payload = event.get("payload") if isinstance(event.get("payload"), Mapping) else {}
-            if event_type == "context.prepared":
+            if event_type == "chat.message.accepted":
+                context_event = {}
+                response_event = {}
+                seal_event = {}
+                latest_delta = {}
+                delta_count = 0
+                tool_calls = 0
+            elif event_type == "context.prepared":
                 context_event = payload
             elif event_type == "model.delta":
                 delta_count += 1
+                latest_delta = payload
             elif event_type == "model.responded":
                 response_event = payload
             elif event_type == "trajectory.sealed":
@@ -434,8 +451,12 @@ class CortexChatService:
                 "output_tokens": metric(output_tokens, "provider_reported", "tokens"),
                 "total_tokens": metric(total_tokens, "provider_reported", "tokens"),
                 "tokens_per_second": metric(response_event.get("tokens_per_second"), str(response_event.get("token_rate_measurement") or "measured"), "tokens/s"),
-                "first_token_latency": metric(response_event.get("first_token_latency_ms"), "measured", "ms"),
-                "model_latency": metric(response_event.get("model_latency_ms"), "measured", "ms"),
+                "first_token_latency": metric(response_event.get("first_token_latency_ms", latest_delta.get("first_token_latency_ms")), "measured", "ms"),
+                "model_latency": metric(
+                    response_event.get("model_latency_ms", latest_delta.get("elapsed_ms")),
+                    "measured" if response_event else "measured_elapsed",
+                    "ms",
+                ),
                 "total_latency": metric(seal_event.get("total_latency_ms"), "measured", "ms"),
                 "context_projection_latency": metric(context_event.get("duration_ms"), "measured", "ms"),
                 "context_tokens": metric(context_event.get("estimated_tokens"), "estimated", "tokens"),
@@ -449,6 +470,23 @@ class CortexChatService:
                 "gpu": metric(None),
                 "network": metric(None),
             },
+            "authority": {
+                "host_mutate_authorized": False,
+                "execution_authorized": False,
+                "memory_admission_authorized": False,
+                "policy_effect": False,
+            },
+        }
+
+    def live_state(self, session_id: str) -> dict[str, Any]:
+        """Return the canonical reconciliation surface for the local UI."""
+        session = self.get_session(session_id)
+        return {
+            "schema_version": SERVICE_SCHEMA,
+            "session_id": session_id,
+            "active": self.is_active(session_id),
+            "last_sequence": self.events.latest_sequence(session_id),
+            "telemetry": self.telemetry(session_id),
             "authority": {
                 "host_mutate_authorized": False,
                 "execution_authorized": False,
@@ -545,6 +583,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                         return self._json(200, self.cortex.trajectory(session_id))
                     if len(parts) == 4 and parts[3] == "telemetry":
                         return self._json(200, self.cortex.telemetry(session_id))
+                    if len(parts) == 4 and parts[3] == "live":
+                        return self._json(200, self.cortex.live_state(session_id))
                 return self._json(404, {"error": "Endpoint not found."})
         except Exception as exc:
             self._error(exc)
@@ -598,22 +638,27 @@ class CortexUIHandler(BaseHTTPRequestHandler):
         self.send_header("X-Accel-Buffering", "no")
         self.end_headers()
         try:
-            header_sequence = int(self.headers.get("Last-Event-ID") or 0)
-        except ValueError:
-            header_sequence = 0
-        sequence = max(0, int(after), header_sequence)
-        deadline = time.time() + 25.0
-        while time.time() < deadline:
-            events = self.cortex.events.wait(session_id, sequence, timeout=5.0)
-            if not events:
-                self.wfile.write(b": keepalive\n\n")
-                self.wfile.flush()
-                continue
-            for event in events:
-                sequence = int(event["sequence"])
-                payload = json.dumps(event, separators=(",", ":"), ensure_ascii=False)
-                self.wfile.write(f"id: {sequence}\nevent: cortex\ndata: {payload}\n\n".encode("utf-8"))
-                self.wfile.flush()
+            self.wfile.write(b"retry: 1000\n\n")
+            self.wfile.flush()
+            try:
+                header_sequence = int(self.headers.get("Last-Event-ID") or 0)
+            except ValueError:
+                header_sequence = 0
+            sequence = max(0, int(after), header_sequence)
+            deadline = time.time() + 55.0
+            while time.time() < deadline:
+                events = self.cortex.events.wait(session_id, sequence, timeout=5.0)
+                if not events:
+                    self.wfile.write(b": keepalive\n\n")
+                    self.wfile.flush()
+                    continue
+                for event in events:
+                    sequence = int(event["sequence"])
+                    payload = json.dumps(event, separators=(",", ":"), ensure_ascii=False)
+                    self.wfile.write(f"id: {sequence}\nevent: cortex\ndata: {payload}\n\n".encode("utf-8"))
+                    self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
 
     def _static(self, path: str) -> None:
         relative = "index.html" if path in {"", "/"} else path.lstrip("/")
