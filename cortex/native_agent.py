@@ -126,15 +126,38 @@ class CapabilityGrant:
     max_tool_output_bytes: int = MAX_TOOL_OUTPUT_BYTES
     max_command_seconds: float = 30.0
 
+    def _command_vectors(self) -> list[list[str]]:
+        vectors: list[list[str]] = []
+        for declaration in self.allowed_commands:
+            text = _required(declaration, "allowed command vector")
+            if text.lstrip().startswith("["):
+                try:
+                    value = json.loads(text)
+                except json.JSONDecodeError as exc:
+                    raise ModelAdapterError(
+                        "allowed command vector must be a JSON string array"
+                    ) from exc
+                if (
+                    not isinstance(value, list)
+                    or not value
+                    or not all(isinstance(item, str) and item for item in value)
+                ):
+                    raise ModelAdapterError(
+                        "allowed command vector must be a nonempty JSON string array"
+                    )
+                vectors.append([str(item) for item in value])
+            else:
+                # A plain declaration grants exactly one no-argument command.
+                vectors.append([text])
+        return sorted(vectors, key=_canonical)
+
     def material(self) -> dict[str, Any]:
         root = str(Path(self.workspace_root).expanduser().resolve())
         return {
             "schema_version": "cortex-agent-capability-grant/1.0",
             "workspace_root": root,
             "allowed_tools": sorted({_required(x, "allowed tool") for x in self.allowed_tools}),
-            "allowed_commands": sorted(
-                {_required(x, "allowed command") for x in self.allowed_commands}
-            ),
+            "allowed_command_vectors": self._command_vectors(),
             "max_tool_output_bytes": max(1, min(int(self.max_tool_output_bytes), MAX_TOOL_OUTPUT_BYTES)),
             "max_command_seconds": max(0.1, min(float(self.max_command_seconds), 120.0)),
             "host_mutate_authorized": False,
@@ -438,9 +461,12 @@ class ToolRegistry:
                 if not isinstance(raw_argv, Sequence) or isinstance(raw_argv, (str, bytes)) or not raw_argv:
                     raise ValueError("argv must be a nonempty string array")
                 argv = [str(value) for value in raw_argv]
-                allowed_commands = set(grant.material()["allowed_commands"])
-                if argv[0] not in allowed_commands and Path(argv[0]).name not in allowed_commands:
-                    raise PermissionError("executable is not host-allowed")
+                allowed_vectors = {
+                    tuple(value)
+                    for value in grant.material()["allowed_command_vectors"]
+                }
+                if tuple(argv) not in allowed_vectors:
+                    raise PermissionError("exact command vector is not host-allowed")
                 executable = shutil.which(argv[0]) or (str(Path(argv[0]).resolve()) if Path(argv[0]).is_file() else "")
                 if not executable:
                     raise FileNotFoundError("allowed executable cannot be resolved")

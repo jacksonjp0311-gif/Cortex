@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import sys
 import tempfile
 import unittest
@@ -10,7 +11,13 @@ from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
-from cortex.model_circulation import ModelAdapterError
+from cortex.evaluation import TaskEvaluationContract
+from cortex.model_circulation import (
+    FixtureAdapter,
+    ModelAdapterError,
+    run_model_circulation,
+    verify_model_circulation,
+)
 from cortex.native_agent import (
     AgentModelRequest,
     CapabilityGrant,
@@ -19,6 +26,7 @@ from cortex.native_agent import (
     verify_native_agent_trajectory,
 )
 from cortex.store import Store
+from cortex.symbiosis import open_symbiotic_session
 
 
 class V100NativeAgentTests(unittest.TestCase):
@@ -133,7 +141,12 @@ class V100NativeAgentTests(unittest.TestCase):
         grant = CapabilityGrant(
             workspace_root=str(self.host),
             allowed_tools=("terminal.execute",),
-            allowed_commands=(sys.executable,),
+            allowed_commands=(
+                json.dumps(
+                    [sys.executable, "-c", "print('bounded')"],
+                    separators=(",", ":"),
+                ),
+            ),
         )
         result = NativeAgentRuntime(self.store, self.repo).run(
             "run bounded command", adapter=adapter, grant=grant
@@ -143,6 +156,41 @@ class V100NativeAgentTests(unittest.TestCase):
         self.assertEqual(tool["status"], "completed")
         self.assertEqual(tool["output"]["stdout"].strip(), "bounded")
         self.assertFalse(result["authority"]["execution_authorized"])
+
+    def test_terminal_cannot_change_arguments_under_an_executable_grant(self) -> None:
+        adapter = ScriptedAgentAdapter(
+            [
+                {
+                    "tool_calls": [
+                        {
+                            "id": "terminal-denied",
+                            "name": "terminal.execute",
+                            "arguments": {"argv": [sys.executable, "-c", "print('different')"]},
+                        }
+                    ],
+                    "finish_reason": "tool_calls",
+                },
+                {"public_output": "denial observed", "finish_reason": "stop"},
+            ]
+        )
+        grant = CapabilityGrant(
+            workspace_root=str(self.host),
+            allowed_tools=("terminal.execute",),
+            allowed_commands=(
+                json.dumps(
+                    [sys.executable, "-c", "print('approved')"],
+                    separators=(",", ":"),
+                ),
+            ),
+        )
+        result = NativeAgentRuntime(self.store, self.repo).run(
+            "do not vary argv", adapter=adapter, grant=grant
+        )
+        receipt = self.store.symbiotic_receipt(
+            result["trajectory_receipt_hash"], repo=self.repo
+        )
+        self.assertEqual(receipt["tool_results"][0]["status"], "failed")
+        self.assertIn("exact command vector", receipt["tool_results"][0]["output"])
 
     def test_response_replay_under_wrong_request_fails(self) -> None:
         class ReplayAdapter(ScriptedAgentAdapter):
@@ -193,6 +241,50 @@ class V100NativeAgentTests(unittest.TestCase):
         # Caller mutation cannot alter the canonical row reloaded by the verifier.
         verified = verify_native_agent_trajectory(self.store, self.repo, result["trajectory_receipt_hash"])
         self.assertTrue(verified["valid"])
+
+    def test_representative_v9_receipt_remains_valid_after_v10_append(self) -> None:
+        legacy_session = open_symbiotic_session(self.store, self.repo, task="v9 compatibility")
+        run_model_circulation(
+            self.store,
+            self.repo,
+            legacy_session,
+            adapter=FixtureAdapter(text="LEGACY_OK"),
+            task_contract=TaskEvaluationContract(
+                contract_id="legacy-v9-contract",
+                task_type="text_contains",
+                target_field="text",
+                expected_value="LEGACY_OK",
+            ),
+            observed_result={"text": "LEGACY_OK"},
+        )
+        before = verify_model_circulation(
+            self.store, self.repo, legacy_session["session_id"], turn_id=1
+        )
+        self.assertTrue(before["valid"], before["errors"])
+        legacy_hashes_before = [
+            row["receipt_hash"]
+            for row in self.store.symbiotic_session_receipts(
+                self.repo, legacy_session["session_id"]
+            )
+        ]
+        NativeAgentRuntime(self.store, self.repo).run(
+            "v10 append",
+            adapter=ScriptedAgentAdapter(
+                [{"public_output": "v10 complete", "finish_reason": "stop"}]
+            ),
+            grant=self._grant(),
+        )
+        after = verify_model_circulation(
+            self.store, self.repo, legacy_session["session_id"], turn_id=1
+        )
+        self.assertTrue(after["valid"], after["errors"])
+        legacy_hashes_after = [
+            row["receipt_hash"]
+            for row in self.store.symbiotic_session_receipts(
+                self.repo, legacy_session["session_id"]
+            )
+        ]
+        self.assertEqual(legacy_hashes_before, legacy_hashes_after)
 
 
 if __name__ == "__main__":

@@ -1339,7 +1339,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--allow-command",
         action="append",
         default=[],
-        help="Executable allowed for terminal.execute; repeat as needed.",
+        help=(
+            "Exact terminal argv as a JSON string array; repeat as needed "
+            "(for example '[\"git\",\"status\",\"--short\"]')."
+        ),
     )
     run_p.add_argument("--max-iterations", type=int, default=8)
     run_p.add_argument("--timeout", type=float, default=180.0)

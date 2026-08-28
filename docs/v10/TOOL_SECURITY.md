@@ -1,14 +1,15 @@
 # Tool Security
 
 Tools are unavailable by default. The host constructs a `CapabilityGrant`
-containing allowed tool names, a workspace root, optional executable allowlist,
+containing allowed tool names, a workspace root, optional exact command-vector allowlist,
 and resource limits. The model cannot widen it.
 
 Alpha 1 tools:
 
 - `filesystem.read`: read-only, workspace-contained, bounded bytes.
 - `terminal.execute`: argument-vector execution without a shell, contained
-  working directory, explicit executable allowlist, timeout, bounded output.
+  working directory, exact host-approved argument vector, timeout, and bounded
+  output. Granting an executable does not grant arbitrary arguments.
 
 Tool output is marked `trusted=false`. Success means only that the executor
 completed under its local contract; it does not establish task success or
