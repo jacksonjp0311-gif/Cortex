@@ -1297,6 +1297,54 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ostt_p.add_argument("--json", action="store_true")
 
+    run_p = sub.add_parser(
+        "run",
+        help="Run the v10 provider-neutral native agent loop.",
+    )
+    run_p.add_argument("--repo", required=True)
+    run_p.add_argument(
+        "task_text",
+        nargs="?",
+        default="",
+        help="Task text (the preferred `cortex run \"task\"` form).",
+    )
+    run_p.add_argument("--task", default="", help="Task text (named form).")
+    run_p.add_argument(
+        "--provider-command",
+        required=True,
+        help="Host-selected JSON stdin/stdout provider executable.",
+    )
+    run_p.add_argument(
+        "--provider-arg",
+        action="append",
+        default=[],
+        help="Provider process argument; repeat for multiple arguments.",
+    )
+    run_p.add_argument("--provider", required=True, help="Provider family provenance.")
+    run_p.add_argument("--model", required=True, help="Model identity provenance.")
+    run_p.add_argument("--model-version", default="undeclared")
+    run_p.add_argument(
+        "--workspace",
+        default="",
+        help="Capability root (defaults to the attached repository root).",
+    )
+    run_p.add_argument(
+        "--allow-tool",
+        action="append",
+        default=[],
+        choices=["filesystem.read", "terminal.execute"],
+        help="Explicit host tool grant; repeat as needed.",
+    )
+    run_p.add_argument(
+        "--allow-command",
+        action="append",
+        default=[],
+        help="Executable allowed for terminal.execute; repeat as needed.",
+    )
+    run_p.add_argument("--max-iterations", type=int, default=8)
+    run_p.add_argument("--timeout", type=float, default=180.0)
+    run_p.add_argument("--json", action="store_true")
+
     symbiosis_p = sub.add_parser(
         "symbiosis",
         help="AI–Cortex symbiotic runtime (☍): typed two-timescale receipts.",
@@ -3563,6 +3611,45 @@ def main(argv: list[str] | None = None) -> None:
                     "advisory_only": True,
                     "policy_effect": False,
                 },
+                args.json,
+            )
+
+        elif command == "run":
+            from .native_agent import (
+                CapabilityGrant,
+                JsonSubprocessAgentAdapter,
+                NativeAgentRuntime,
+            )
+
+            repository = store.repo(args.repo)
+            if not repository:
+                raise ValueError(
+                    f"Unknown repository: {args.repo}. Run cortex bootstrap first."
+                )
+            task_text = str(args.task_text or args.task or "").strip()
+            if not task_text:
+                raise ValueError("cortex run requires task text")
+            workspace = Path(args.workspace).expanduser().resolve() if args.workspace else Path(repository["path"]).resolve()
+            adapter = JsonSubprocessAgentAdapter(
+                command=str(args.provider_command),
+                arguments=tuple(args.provider_arg or ()),
+                provider_family=str(args.provider),
+                model_id=str(args.model),
+                model_version=str(args.model_version),
+                cwd=workspace,
+                timeout_seconds=float(args.timeout),
+            )
+            grant = CapabilityGrant(
+                workspace_root=str(workspace),
+                allowed_tools=tuple(args.allow_tool or ()),
+                allowed_commands=tuple(args.allow_command or ()),
+            )
+            emit(
+                NativeAgentRuntime(
+                    store,
+                    args.repo,
+                    max_iterations=int(args.max_iterations),
+                ).run(task_text, adapter=adapter, grant=grant),
                 args.json,
             )
 
