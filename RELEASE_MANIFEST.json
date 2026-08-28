@@ -1,9 +1,9 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.1",
+  "release": "Cortex v10.0.0-alpha.2",
   "release_class": "advanced research prototype",
-  "source_commit": "a0fbd2c6919ecfa1659a25a9ca0f5e98718ab020",
-  "runtime_parent": "a0fbd2c6919ecfa1659a25a9ca0f5e98718ab020",
+  "source_commit": "f6e2f0b0dc083d77e3c44522e98b6340909db328",
+  "runtime_parent": "f6e2f0b0dc083d77e3c44522e98b6340909db328",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
   "phase_document": "docs/v10/README.md",
   "evidence_boundary": {
@@ -17,7 +17,7 @@
     "cost_calibrated_entanglement": "eight targeted canonical live-empirical observations verified; doubled repair depth and complete architecture signature support both screened at 4/4; cross-case cost distributions measured; repeatability and confirmatory competence effects not established; overall CALIBRATION_HELD",
     "semantic_distillation_seal": "current independent atomic-support witness is bound into empirical transfer and production distribution; identifier-only or unsupported abstractions remain UNKNOWN; verified narrowing successors inherit support only through parent witness and canonical revision proof",
     "partial_evidence_calibration": "eight targeted canonical live-empirical observations verified across two four-case panels; 50% and 25% policies each disclosed one resolving coordinate and screened at 4/4; zero-to-one representation discontinuity observed; informative band and competence effect not established",
-    "native_agent_runtime": "provider-neutral headless model/tool/model circulation, bounded host capability grants, versioned events, and immutable trajectory reconstruction verified structurally; empirical agent benefit not established",
+    "native_agent_runtime": "provider-neutral model/tool/model circulation, bounded host capability grants, streamed public events, interruption, local graphical interface, dynamic provider catalogs, and immutable trajectory reconstruction verified structurally; paid live-provider commissioning and empirical agent benefit not established",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
     "production_repository_portability": "not established",
@@ -29,5 +29,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v9.8.7 semantic distillation and partial-evidence calibration"
+  "supersedes": "Cortex v10.0.0-alpha.1 native agent runtime"
 }

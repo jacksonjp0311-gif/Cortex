@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.1-f97316?style=for-the-badge" alt="v10.0.0-alpha.1" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.2-f97316?style=for-the-badge" alt="v10.0.0-alpha.2" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -59,16 +59,15 @@ durable, inspectable, and safer to reuse.
 | **Measurement** | Cortex records and independently checks state transitions instead of treating predictions as facts. |
 | **Local-first privacy** | The durable body lives under `~/.cortex`; your project remains yours. |
 | **Human control** | Suggestions and telemetry never silently rewrite source, change policy, or grant execution authority. |
-| **Native agent runtime** | A replaceable model can now use explicitly granted tools and return a final answer through one reconstructable Cortex trajectory. |
+| **Native Cortex interface** | Open Cortex locally, choose a live OpenAI, Grok, or OpenRouter model, stream a conversation, inspect its activity, and retain one reconstructable trajectory. |
 
 ## Cortex now has an execution body
 
-Version 10 begins the transition from a durable layer around agents to a
-model-independent agent runtime in its own right. The first alpha is small on
-purpose: it accepts a task, projects governed Cortex context, invokes a
-host-selected model adapter, executes explicitly granted filesystem or
-terminal tools, feeds typed untrusted results back to the model, and seals the
-public interaction into Cortex's existing immutable receipt chain.
+Version 10 turns the durable layer around agents into a model-independent agent
+runtime in its own right. Alpha.2 gives that runtime a Cortex-native local
+interface: persistent conversations, live model discovery, streaming,
+interruption, truthful context/evidence panels, and a real-time event lattice.
+OpenAI, xAI/Grok, and OpenRouter sit behind one provider-neutral fabric.
 
 ```text
 task → Cortex context → model → tool → observation → model → answer → receipt
@@ -80,19 +79,23 @@ not become truth, an answer does not become memory, and a successful command
 does not become competence.
 
 ```powershell
-cortex run "analyze this repository" `
-  --repo MyRepo `
-  --provider-command C:\path\to\provider-bridge.exe `
-  --provider openai-compatible `
-  --model your-model `
-  --allow-tool filesystem.read
+cortex ui --repo MyRepo
 ```
 
-The bridge reads a provider-neutral JSON request from stdin and returns a
-provider-neutral JSON response on stdout. Cortex core contains no provider SDK
-or default model. See the [v10 runtime guide](docs/v10/README.md), [provider
-contract](docs/v10/PROVIDER_INTERFACE.md), and [tool security
-boundary](docs/v10/TOOL_SECURITY.md).
+Cortex binds to loopback, opens its operator console, and stores provider keys
+in the operating-system credential vault. Configure OpenAI, xAI/Grok, or
+OpenRouter; Cortex discovers the models currently available to that credential.
+OpenRouter's `openrouter/free` router and current `:free` variants are first-
+class choices in the model browser.
+
+The headless `cortex run` command remains available for automation and JSON
+subprocess adapters.
+
+The interface never calls a provider directly. Every message flows through the
+Cortex session, context projection, native agent/tool loop, and immutable
+trajectory seal. Cortex core contains no provider SDK or default model. See the
+[v10 guide](docs/v10/README.md), [interface architecture](docs/v10/UI_ARCHITECTURE.md),
+[provider fabric](docs/v10/PROVIDER_FABRIC.md), and [secret boundary](docs/v10/SECRET_STORAGE.md).
 
 ## What we just learned: success needs contrast
 

@@ -47,6 +47,7 @@ channels, or browser-control authority.
 
 ## Claim boundary
 
-Alpha 1 proves that the runtime path is executable and auditable. It does not
+Alpha.2 proves that the local interface and provider-neutral runtime path are
+executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
-or safe execution of arbitrary tools.
+safe execution of arbitrary tools, or live cross-provider model quality.

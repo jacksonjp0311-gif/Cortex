@@ -1,3 +1,25 @@
+## 10.0.0-alpha.2 - Native Cortex Interface + Multi-Provider Model Fabric
+
+- Added a custom responsive Cortex operator console served locally on loopback
+  through `cortex` or `cortex ui`, with persistent conversations, live streamed
+  public responses, stop/retry/archive controls, model switching, and truthful
+  lattice/evidence/memory/competence/context/trajectory surfaces.
+- Added live credential-specific OpenAI, xAI/Grok, and OpenRouter model
+  discovery behind one provider-neutral fabric, including conservative
+  capability typing, metadata caching, manual identifiers, OpenRouter free
+  classification, `openrouter/free`, and current `:free` variants.
+- Added environment and operating-system-vault credential resolution. Provider
+  keys are excluded from settings, catalogs, events, model-visible context,
+  logs, and canonical receipts.
+- Extended the native runtime with public token streaming, cooperative
+  cancellation, multi-turn public context, stable Cortex continuity IDs, token
+  metadata, and model-change provenance without changing authority.
+- Added a narrow JSON/SSE service API, serialized UI database access, isolated
+  per-turn Store connections, provider/tool/error integration coverage, local
+  HTTP E2E coverage, and responsive visual verification.
+- Preserved all alpha.1 and v9 evidence semantics. Live paid-provider
+  commissioning remains opt-in and was not required for release verification.
+
 ## 10.0.0-alpha.1 - Native Agent Runtime
 
 - Added the first executable headless agent loop: governed Cortex context,
