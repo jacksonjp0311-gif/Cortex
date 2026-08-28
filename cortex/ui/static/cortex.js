@@ -134,7 +134,7 @@ function drawSparkline(canvas, values, startColor, endColor) {
   const context = canvas.getContext("2d");
   context.scale(dpr, dpr);
   context.clearRect(0, 0, rect.width, rect.height);
-  context.strokeStyle = "rgba(84, 132, 169, .16)";
+  context.strokeStyle = "rgba(84, 132, 169, .24)";
   context.lineWidth = 1;
   for (let row = 1; row < 4; row += 1) {
     const y = rect.height * row / 4;
@@ -152,7 +152,7 @@ function drawSparkline(canvas, values, startColor, endColor) {
   gradient.addColorStop(0, startColor);
   gradient.addColorStop(1, endColor);
   context.strokeStyle = gradient;
-  context.lineWidth = 2;
+  context.lineWidth = 2.6;
   context.shadowBlur = 9;
   context.shadowColor = endColor;
   context.beginPath();

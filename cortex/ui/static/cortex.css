@@ -23,4 +23,103 @@
 @media(max-width:980px){body{overflow:auto}.shell{height:auto;min-height:100vh;grid-template-columns:260px minmax(0,1fr);grid-template-rows:62px minmax(760px,auto);grid-template-areas:"rail rail" "left center"}.right-panel{position:fixed;z-index:45;top:74px;right:0;bottom:0;width:min(360px,92vw);padding:8px;background:#020711;transform:translateX(103%);transition:.2s;overflow:auto}.right-panel.open{transform:none}.command-rail{grid-template-columns:auto 1fr auto}.rail-brand{justify-self:center}.rail-left .rail-divider,.rail-left .rail-pair{display:none}}
 @media(max-width:680px){body{overflow-x:hidden}.shell{display:flex;flex-direction:column;padding:7px;gap:7px}.command-rail{position:sticky;top:0;z-index:35;height:auto;min-height:92px;grid-template-columns:1fr auto;padding:8px}.rail-brand{grid-column:1/-1;grid-row:2;padding:5px}.rail-brand>strong{font-size:23px}.rail-brand>span{display:none}.rail-right{gap:4px}.signal-bars{display:none}.interface-title strong{font-size:11px}.interface-title small{font-size:7px}.center-panel{order:1;min-height:740px}.left-panel{order:2}.core-module{flex-basis:320px}.core-orb{width:205px;height:205px}.core-rings{width:275px;height:275px}.core-rays{width:400px}.chat-stream{min-height:240px}.instrument-column{overflow:visible}.telemetry-module{min-height:auto}.provider-cards{grid-template-columns:1fr}.settings-layout{grid-template-columns:1fr}.settings-layout nav{display:flex;overflow:auto;border:0;border-bottom:1px solid var(--line-soft)}.settings-layout nav button,.settings-layout nav span{width:auto}.model-toolbar{grid-template-columns:1fr}.filter-row{overflow:auto}.filter-row select{margin:0}.model-row{grid-template-columns:1fr 60px}.model-row>:nth-child(3),.model-row>:nth-child(4){display:none}.floating-actions button:not(#drawerToggle):not(.stop){display:none}}
 .provider-shield{background:#061427}
+
+/* v10 alpha.2 readability and density pass. The console stays information-rich,
+   but primary state, chat, and measurements must remain legible at a glance. */
+body{font-size:15px}
+.shell{grid-template-rows:68px minmax(0,1fr)}
+.command-rail{padding-inline:16px}
+.interface-title strong{font-size:17px;letter-spacing:.055em}
+.interface-title small,.rail-pair span{font-size:10px;line-height:1.7}
+.rail-brand>strong{font-size:38px}
+.rail-brand>small{font-size:10px;margin-top:6px}
+.rail-brand>span{top:49px;font-size:9px}
+.module>header{height:39px;padding-inline:15px}
+.module>header strong{font-size:12px}
+.live-label{font-size:10px}
+.module footer{font-size:9px}
+
+.wide-metric{height:88px;padding:11px 16px;grid-template-columns:125px 1fr;gap:14px}
+.metric-copy small,.bar-metric small,.system-module small,.compact-module header strong{font-size:11px}
+.metric-copy strong{font-size:32px}
+.metric-copy span{font-size:13px}
+.chart-wrap>span{font-size:9px}
+.chart-wrap canvas{height:58px;margin-top:9px}
+.bar-metric{height:96px;padding:12px 16px}
+.bar-metric>div:first-child span{font-size:9px}
+.bar-metric p strong{font-size:29px}
+.bar-metric p b{font-size:19px}
+.compact-module p strong{font-size:20px}
+.compact-module p span,.system-module span{font-size:8.5px}
+.system-module strong{font-size:21px}
+.health-module p strong{font-size:16px}
+.health-module p small{font-size:11px}
+
+.core-module{flex-basis:430px}
+.core-stage{inset:0 0 44px}
+.core-rings{width:400px;height:400px}
+.core-orb{width:315px;height:315px;box-shadow:0 0 22px #57d9ff,0 0 65px rgba(50,136,255,.78),0 0 135px rgba(105,58,255,.5),inset 0 0 30px #8bf5ff}
+.core-rays{width:650px;height:270px}
+.core-phases{bottom:21px;font-size:10px;gap:16px}
+.core-detail{font-size:9px}
+.chat-stream{min-height:230px;padding:16px 18px;border:1px solid var(--line-soft);border-radius:5px;background:linear-gradient(160deg,rgba(7,19,38,.74),rgba(2,8,17,.72));box-shadow:inset 0 0 45px rgba(30,100,180,.035)}
+.empty-state{max-width:760px;min-height:190px;display:grid;place-content:center;padding:34px 42px;background:linear-gradient(145deg,rgba(10,27,52,.9),rgba(6,17,34,.94))}
+.empty-state strong{font-size:14px}
+.empty-state p{max-width:670px;margin:15px auto 0;font-size:15px;line-height:1.7}
+.message{padding:17px 21px}
+.message-head{font-size:10px}
+.message-body{font-size:17px;line-height:1.62}
+.composer{height:78px;grid-template-columns:50px 1fr 62px;padding:9px 12px 6px}
+.composer textarea{font-size:17px}
+.composer>#sendButton{width:52px;height:46px;font-size:22px}
+.composer>span{font-size:8px}
+
+.donut{width:116px;height:116px}
+.donut strong{top:34px;font-size:25px}
+.donut span{top:64px;font-size:10px}
+.source-list p{font-size:10px;margin:7px 0}
+.memory-content>strong{font-size:25px}
+.memory-content p{font-size:10px}
+.competence-module>small{font-size:9px}
+.competence-row{font-size:10px;grid-template-columns:130px 1fr 30px;padding-block:4px}
+.context-module>p strong{font-size:12px}
+.context-module>p span,.context-legend{font-size:9px}
+.provider-module p strong{font-size:14px}
+.provider-module p span{font-size:10px;line-height:1.5}
+.uncertainty-module header>b,.uncertainty-module p{font-size:10px}
+
+@media(max-width:1500px){
+  .core-module{flex-basis:390px}
+  .core-rings{width:350px;height:350px}
+  .core-orb{width:275px;height:275px}
+  .core-rays{width:560px;height:235px}
+  .wide-metric{grid-template-columns:112px 1fr}
+  .competence-row{grid-template-columns:110px 1fr 28px}
+}
+@media(max-width:1240px){
+  .interface-title strong{font-size:14px}
+  .rail-brand>strong{font-size:31px}
+  .core-module{flex-basis:350px}
+  .core-rings{width:310px;height:310px}
+  .core-orb{width:240px;height:240px}
+  .core-rays{width:500px;height:215px}
+  .module>header strong{font-size:11px}
+  .competence-row{grid-template-columns:96px 1fr 26px}
+}
+@media(max-width:680px){
+  body{font-size:14px}
+  .shell{grid-template-rows:auto}
+  .interface-title strong{font-size:12px}
+  .interface-title small{font-size:8px}
+  .rail-brand>strong{font-size:25px}
+  .core-module{flex-basis:330px}
+  .core-rings{width:275px;height:275px}
+  .core-orb{width:205px;height:205px}
+  .core-rays{width:400px;height:200px}
+  .core-phases{font-size:8px;gap:9px}
+  .chat-stream{min-height:250px;padding:9px}
+  .empty-state{min-height:170px;padding:24px 18px}
+  .empty-state p{font-size:14px}
+  .composer textarea{font-size:15px}
+}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
