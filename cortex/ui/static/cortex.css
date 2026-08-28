@@ -23,6 +23,23 @@
 @media(max-width:980px){body{overflow:auto}.shell{height:auto;min-height:100vh;grid-template-columns:260px minmax(0,1fr);grid-template-rows:62px minmax(760px,auto);grid-template-areas:"rail rail" "left center"}.right-panel{position:fixed;z-index:45;top:74px;right:0;bottom:0;width:min(360px,92vw);padding:8px;background:#020711;transform:translateX(103%);transition:.2s;overflow:auto}.right-panel.open{transform:none}.command-rail{grid-template-columns:auto 1fr auto}.rail-brand{justify-self:center}.rail-left .rail-divider,.rail-left .rail-pair{display:none}}
 @media(max-width:680px){body{overflow-x:hidden}.shell{display:flex;flex-direction:column;padding:7px;gap:7px}.command-rail{position:sticky;top:0;z-index:35;height:auto;min-height:92px;grid-template-columns:1fr auto;padding:8px}.rail-brand{grid-column:1/-1;grid-row:2;padding:5px}.rail-brand>strong{font-size:23px}.rail-brand>span{display:none}.rail-right{gap:4px}.signal-bars{display:none}.interface-title strong{font-size:11px}.interface-title small{font-size:7px}.center-panel{order:1;min-height:740px}.left-panel{order:2}.core-module{flex-basis:320px}.core-orb{width:205px;height:205px}.core-rings{width:275px;height:275px}.core-rays{width:400px}.chat-stream{min-height:240px}.instrument-column{overflow:visible}.telemetry-module{min-height:auto}.provider-cards{grid-template-columns:1fr}.settings-layout{grid-template-columns:1fr}.settings-layout nav{display:flex;overflow:auto;border:0;border-bottom:1px solid var(--line-soft)}.settings-layout nav button,.settings-layout nav span{width:auto}.model-toolbar{grid-template-columns:1fr}.filter-row{overflow:auto}.filter-row select{margin:0}.model-row{grid-template-columns:1fr 60px}.model-row>:nth-child(3),.model-row>:nth-child(4){display:none}.floating-actions button:not(#drawerToggle):not(.stop){display:none}}
 .provider-shield{background:#061427}
+.core-plasma-canvas{position:absolute;z-index:2;inset:34px 0 35px;width:100%;height:calc(100% - 69px);pointer-events:none;mix-blend-mode:screen;opacity:.96;filter:saturate(1.22) contrast(1.08)}
+.core-stage:before,.core-stage:after{content:"";position:absolute;z-index:1;left:50%;top:51%;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%}
+.core-stage:before{width:460px;height:460px;background:repeating-conic-gradient(from 12deg,rgba(39,193,255,.24) 0 1deg,transparent 1deg 8deg);mask:radial-gradient(circle,transparent 0 67%,#000 68% 69%,transparent 70% 76%,#000 77% 78%,transparent 79%);opacity:.58;animation:coreDial 26s linear infinite}
+.core-stage:after{width:540px;height:130px;border:1px solid rgba(79,202,255,.2);box-shadow:0 0 18px rgba(63,174,255,.12),inset 0 0 18px rgba(123,88,255,.12);transform:translate(-50%,-50%) rotate(-8deg);animation:coreOrbit 8s ease-in-out infinite alternate}
+.core-module>header{z-index:6}
+.core-orb{z-index:1;background:radial-gradient(circle at 50% 50%,#fff 0 1.2%,#bdfcff 2.5%,rgba(70,197,255,.95) 5%,rgba(91,66,235,.84) 22%,rgba(18,94,205,.7) 47%,rgba(3,20,59,.82) 69%,rgba(1,7,18,.95) 77%)}
+.core-orb:before{animation:plasmaSkin 7s linear infinite}
+.core-orb:after{animation:plasmaBreath 4s ease-in-out infinite}
+body[data-core-state=thinking] .core-plasma-canvas,body[data-core-state=context] .core-plasma-canvas{filter:saturate(1.45) contrast(1.12) brightness(1.2)}
+body[data-core-state=streaming] .core-plasma-canvas{filter:saturate(1.7) contrast(1.16) brightness(1.42)}
+body[data-core-state=tool] .core-plasma-canvas{filter:hue-rotate(-13deg) saturate(1.65) brightness(1.3)}
+body[data-core-state=interrupt] .core-plasma-canvas{opacity:.3;filter:grayscale(.7)}
+body[data-core-state=error] .core-plasma-canvas{filter:hue-rotate(105deg) saturate(1.8)}
+@keyframes coreDial{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes coreOrbit{to{transform:translate(-50%,-50%) rotate(8deg) scaleX(.9)}}
+@keyframes plasmaSkin{to{transform:rotate(360deg)}}
+@keyframes plasmaBreath{50%{transform:scale(1.06);opacity:.72}}
 
 /* v10 alpha.2 readability and density pass. The console stays information-rich,
    but primary state, chat, and measurements must remain legible at a glance. */

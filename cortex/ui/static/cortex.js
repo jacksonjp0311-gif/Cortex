@@ -173,6 +173,130 @@ function drawCharts() {
   drawSparkline($("#healthChart"), state.streaming ? [1, 1, 1, 1] : [1], "#23e8ff", "#55ddb2");
 }
 
+const plasmaParticles = Array.from({ length: 92 }, (_, index) => ({
+  phase: (index * 2.399963) % (Math.PI * 2),
+  radius: .54 + ((index * 37) % 100) / 100 * 1.08,
+  speed: .16 + ((index * 17) % 31) / 100,
+  size: .45 + ((index * 29) % 17) / 12,
+  tilt: .48 + ((index * 13) % 24) / 100,
+}));
+
+function coreEnergy() {
+  return ({ idle: .28, context: .58, thinking: .72, streaming: 1, tool: .86, interrupt: .06, error: .5 })[document.body.dataset.coreState] ?? .28;
+}
+
+function drawCorePlasma(now) {
+  const canvas = $("#corePlasmaCanvas");
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const pixelWidth = Math.max(1, Math.round(rect.width * dpr));
+  const pixelHeight = Math.max(1, Math.round(rect.height * dpr));
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+  const context = canvas.getContext("2d");
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.clearRect(0, 0, rect.width, rect.height);
+  const reduced = document.body.classList.contains("reduced-glow") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const time = reduced ? 0 : now / 1000;
+  const energy = coreEnergy();
+  const pulse = .5 + .5 * Math.sin(time * (1.6 + energy * 2.8));
+  const cx = rect.width / 2;
+  const cy = rect.height * .52;
+  const radius = Math.min(rect.height * .405, rect.width * .205);
+  context.globalCompositeOperation = "lighter";
+
+  for (let band = 0; band < 5; band += 1) {
+    const gradient = context.createLinearGradient(cx - radius, cy, cx + radius, cy);
+    gradient.addColorStop(0, `rgba(30,128,255,${.1 + energy * .08})`);
+    gradient.addColorStop(.46, `rgba(74,237,255,${.36 + energy * .18})`);
+    gradient.addColorStop(.62, `rgba(174,91,255,${.34 + energy * .2})`);
+    gradient.addColorStop(1, "rgba(28,113,255,.08)");
+    context.strokeStyle = gradient;
+    context.lineWidth = .8 + band * .34 + energy * .7;
+    context.shadowBlur = 8 + energy * 13;
+    context.shadowColor = band % 2 ? "#9669ff" : "#32dfff";
+    context.beginPath();
+    for (let step = 0; step <= 128; step += 1) {
+      const angle = step / 128 * Math.PI * 2;
+      const turbulence = Math.sin(angle * (3 + band) + time * (1.1 + band * .16)) * radius * (.025 + energy * .018)
+        + Math.sin(angle * 11 - time * 1.7 + band) * radius * .012;
+      const localRadius = radius * (.48 + band * .105) + turbulence;
+      const x = cx + Math.cos(angle + time * (.018 + band * .008)) * localRadius;
+      const y = cy + Math.sin(angle) * localRadius * (.57 + band * .035);
+      if (step === 0) context.moveTo(x, y); else context.lineTo(x, y);
+    }
+    context.closePath();
+    context.stroke();
+  }
+
+  for (let ray = 0; ray < 18; ray += 1) {
+    const angle = ray / 18 * Math.PI * 2 + time * (.05 + energy * .06);
+    const reach = radius * (1.08 + ((ray * 11) % 7) / 12 + pulse * energy * .13);
+    context.beginPath();
+    for (let step = 0; step <= 16; step += 1) {
+      const progress = step / 16;
+      const bend = Math.sin(progress * Math.PI * (2 + ray % 3) + time * 2.2 + ray) * radius * .055 * energy;
+      const r = radius * .23 + (reach - radius * .23) * progress;
+      const x = cx + Math.cos(angle) * r + Math.cos(angle + Math.PI / 2) * bend;
+      const y = cy + Math.sin(angle) * r * .62 + Math.sin(angle + Math.PI / 2) * bend * .62;
+      if (step === 0) context.moveTo(x, y); else context.lineTo(x, y);
+    }
+    context.strokeStyle = ray % 3 === 0
+      ? `rgba(184,104,255,${.1 + energy * .24})`
+      : `rgba(48,211,255,${.08 + energy * .22})`;
+    context.lineWidth = ray % 4 === 0 ? 1.4 : .7;
+    context.shadowBlur = 10 + energy * 12;
+    context.shadowColor = ray % 3 === 0 ? "#a865ff" : "#32d9ff";
+    context.stroke();
+  }
+
+  for (let arc = 0; arc < 24; arc += 1) {
+    const ringRadius = radius * (1.12 + (arc % 4) * .11);
+    const start = arc * .71 + time * (arc % 2 ? -.18 : .24) * (1 + energy);
+    const length = .045 + ((arc * 7) % 10) / 90;
+    context.beginPath();
+    context.ellipse(cx, cy, ringRadius, ringRadius * .62, 0, start, start + length);
+    context.strokeStyle = arc % 3 === 0 ? "rgba(165,102,255,.62)" : "rgba(55,213,255,.55)";
+    context.lineWidth = arc % 5 === 0 ? 2.2 : 1;
+    context.shadowBlur = 7;
+    context.stroke();
+  }
+
+  plasmaParticles.forEach((particle, index) => {
+    const angle = particle.phase + time * particle.speed * (.5 + energy);
+    const radialPulse = 1 + Math.sin(time * 1.8 + index) * .025 * energy;
+    const particleRadius = radius * particle.radius * radialPulse;
+    const x = cx + Math.cos(angle) * particleRadius;
+    const y = cy + Math.sin(angle) * particleRadius * particle.tilt;
+    const alpha = .16 + energy * .46 * (.45 + .55 * Math.sin(angle * 3 + index) ** 2);
+    context.fillStyle = index % 4 === 0 ? `rgba(185,119,255,${alpha})` : `rgba(85,225,255,${alpha})`;
+    context.shadowBlur = 7 + energy * 8;
+    context.shadowColor = index % 4 === 0 ? "#a86cff" : "#42ddff";
+    context.beginPath();
+    context.arc(x, y, particle.size * (1 + energy * .45), 0, Math.PI * 2);
+    context.fill();
+  });
+
+  const coreGradient = context.createRadialGradient(cx, cy, 0, cx, cy, radius * .22);
+  coreGradient.addColorStop(0, `rgba(255,255,255,${.92 - energy * .08})`);
+  coreGradient.addColorStop(.18, `rgba(120,243,255,${.72 + pulse * .2})`);
+  coreGradient.addColorStop(.56, `rgba(77,122,255,${.22 + energy * .2})`);
+  coreGradient.addColorStop(1, "rgba(122,69,255,0)");
+  context.fillStyle = coreGradient;
+  context.shadowBlur = 28 + energy * 25;
+  context.shadowColor = "#63e8ff";
+  context.beginPath();
+  context.arc(cx, cy, radius * (.18 + pulse * energy * .025), 0, Math.PI * 2);
+  context.fill();
+  context.globalCompositeOperation = "source-over";
+  requestAnimationFrame(drawCorePlasma);
+}
+
+requestAnimationFrame(drawCorePlasma);
+
 function resetLiveMetrics() {
   state.callStartedAt = performance.now();
   state.firstDeltaAt = null;
