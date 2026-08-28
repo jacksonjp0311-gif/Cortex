@@ -83,6 +83,7 @@ class CortexChatService:
         self.secrets = secrets or HostSecretStore()
         self.fabric = fabric or ProviderFabric(store, self.secrets)
         self.events = SessionEventBus()
+        self.started_at = time.time()
         self._runs: dict[str, tuple[threading.Thread, threading.Event]] = {}
         self._lock = threading.RLock()
         self._db_lock = threading.RLock()
@@ -97,6 +98,8 @@ class CortexChatService:
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
             "loopback_only": True,
+            "started_at": self.started_at,
+            "uptime_seconds": max(0.0, time.time() - self.started_at),
             "providers": self.fabric.provider_statuses(),
             "authority": {
                 "host_mutate_authorized": False,

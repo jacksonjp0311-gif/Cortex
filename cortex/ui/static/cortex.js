@@ -27,6 +27,8 @@ const state = {
   toolCalls: 0,
   rateHistory: [],
   latencyHistory: [],
+  uptimeBase: 0,
+  uptimeStartedAt: Date.now(),
 };
 
 async function api(path, options = {}) {
@@ -84,6 +86,7 @@ function setCoreState(mode, label, detail) {
   $("#coreState").textContent = label;
   $("#coreDetail").textContent = detail;
   $("#systemState").textContent = label;
+  $("#coreLiveLabel").textContent = mode === "idle" ? "STANDBY" : label;
 }
 
 function updateHeader() {
@@ -95,6 +98,11 @@ function updateHeader() {
   $("#sendButton").disabled = state.streaming;
   $("#providerState").textContent = state.session?.provider ? providerLabel(state.session.provider).toUpperCase() : "NOT SELECTED";
   $("#providerDetail").textContent = state.session?.model_id || "Select a reasoning engine to begin.";
+  $("#providerRail").textContent = state.session?.provider ? providerLabel(state.session.provider) : "—";
+  $("#modelRail").textContent = state.session?.model_id || "—";
+  $("#sessionIdReadout").textContent = state.session?.session_id ? state.session.session_id.slice(-8) : "—";
+  $("#threadCount").textContent = state.sessions.length;
+  $("#providerHealth").textContent = state.session?.provider ? "READY" : "STANDBY";
 }
 
 function measurementLabel(value) {
@@ -159,6 +167,10 @@ function drawSparkline(canvas, values, startColor, endColor) {
 function drawCharts() {
   drawSparkline($("#tokenRateChart"), state.rateHistory, "#43c8ff", "#9a7cff");
   drawSparkline($("#latencyChart"), state.latencyHistory, "#9a7cff", "#4de8ff");
+  ["confidenceChart", "cpuChart", "gpuChart", "networkChart", "uncertaintyChart"].forEach(id => {
+    drawSparkline($(`#${id}`), [], "#249fff", "#23e8ff");
+  });
+  drawSparkline($("#healthChart"), state.streaming ? [1, 1, 1, 1] : [1], "#23e8ff", "#55ddb2");
 }
 
 function resetLiveMetrics() {
@@ -207,6 +219,13 @@ function applyTelemetry(telemetry) {
   setMetric("#costMetric", "#costClass", metrics.cost, value => Number(value).toPrecision(4));
   $("#toolMetric").textContent = metrics.tool_calls?.value ?? 0;
   $("#tokenMetric").textContent = metrics.total_tokens?.value ?? "—";
+  const contextTokens = Number(metrics.context_tokens?.value);
+  const contextLimit = Number(state.selectedDescriptor?.context_length);
+  const hasUtilization = Number.isFinite(contextTokens) && Number.isFinite(contextLimit) && contextLimit > 0;
+  const utilization = hasUtilization ? Math.min(100, contextTokens / contextLimit * 100) : null;
+  $("#contextPercent").textContent = utilization == null ? "—" : `${utilization.toFixed(1)}%`;
+  $("#contextBar").style.width = utilization == null ? "0" : `${utilization}%`;
+  $("#contextLimit").textContent = Number.isFinite(contextLimit) && contextLimit > 0 ? contextLimit.toLocaleString() : "UNKNOWN LIMIT";
   if (metrics.tokens_per_second?.value != null) addHistory(state.rateHistory, metrics.tokens_per_second.value);
   if (metrics.model_latency?.value != null) addHistory(state.latencyHistory, metrics.model_latency.value);
   drawCharts();
@@ -258,6 +277,8 @@ async function loadProviders() {
 async function loadInitial() {
   try {
     state.status = await api("/v1/status");
+    state.uptimeBase = Number(state.status.uptime_seconds || 0);
+    state.uptimeStartedAt = Date.now();
     state.settings = await api("/v1/settings");
     await loadProviders();
     state.sessions = (await api("/v1/sessions")).sessions;
@@ -468,12 +489,31 @@ async function refreshIntelligence() {
   $("#supportedCount").textContent = state.evidence.supported;
   $("#unknownCount").textContent = state.evidence.unknown;
   $("#contradictedCount").textContent = state.evidence.contradicted;
-  $("#trajectoryState").textContent = state.evidence.trajectory;
   $("#trajectoryHash").textContent = state.evidence.receipt_hash || "No completed turn.";
   $("#memoryProjected").textContent = `${state.evidence.memory.projected} projected`;
+  $("#memoryMetric").textContent = state.evidence.memory.projected;
+  $("#memoryConsidered").textContent = state.evidence.memory.considered;
+  $("#memoryProjectedCount").textContent = state.evidence.memory.projected;
+  $("#memoryActivity").textContent = state.evidence.memory.projected ? "ACTIVE" : "INACTIVE";
+  const memoryRatio = state.evidence.memory.considered ? Math.min(100, state.evidence.memory.projected / state.evidence.memory.considered * 100) : 0;
+  $("#memoryBar").style.width = `${memoryRatio}%`;
+  $("#memoryUtilBar").style.width = `${memoryRatio}%`;
   $("#memoryState").textContent = state.evidence.memory.state;
   $("#competenceProjected").textContent = `${state.evidence.competence.projected} projected`;
+  $("#competenceConsidered").textContent = state.evidence.competence.considered;
+  $("#competenceProjectedCount").textContent = state.evidence.competence.projected;
+  $("#competenceConsideredBar").style.width = state.evidence.competence.considered ? "100%" : "0";
+  $("#competenceProjectedBar").style.width = state.evidence.competence.considered ? `${Math.min(100, state.evidence.competence.projected / state.evidence.competence.considered * 100)}%` : "0";
   $("#competenceState").textContent = state.evidence.competence.state;
+  const evidenceCounts = [state.evidence.verified, state.evidence.supported, state.evidence.unknown, state.evidence.contradicted].map(Number);
+  const evidenceTotal = evidenceCounts.reduce((sum, value) => sum + value, 0);
+  $("#evidenceTotal").textContent = evidenceTotal;
+  if (!evidenceTotal) {
+    $("#evidenceDonut").style.background = "conic-gradient(#20344e 0 100%)";
+  } else {
+    const cuts = evidenceCounts.reduce((items, value) => [...items, (items.at(-1) || 0) + value / evidenceTotal * 100], []);
+    $("#evidenceDonut").style.background = `conic-gradient(#249fff 0 ${cuts[0]}%, #23e8ff ${cuts[0]}% ${cuts[1]}%, #8b5cff ${cuts[1]}% ${cuts[2]}%, #ff5e7a ${cuts[2]}% 100%)`;
+  }
   $("#contextState").textContent = state.context.state;
   $("#contextDetail").textContent = `${state.context.projected_items || 0} projected items · ${state.context.token_estimate ?? "—"} estimated tokens`;
   $("#contextPreview").textContent = state.context.projection ? JSON.stringify(state.context.projection, null, 2) : "";
@@ -632,12 +672,20 @@ $$('[data-operator-tab]').forEach(button => button.onclick = () => {
 });
 $("#drawerToggle").onclick = () => $("#operatorDrawer").classList.add("expanded");
 $("#drawerClose").onclick = () => $("#operatorDrawer").classList.remove("expanded");
-$("#cortexStateButton").onclick = () => $(".right-panel").classList.toggle("open");
+$("#sessionToggle").onclick = () => $("#sessionPopover").classList.toggle("hidden");
 $("#cortexUsed").onclick = showCortex;
 $("#closeCortex").onclick = () => $("#cortexDialog").close();
 $$('[data-appearance]').forEach(button => button.onclick = async () => {
   applyAppearance(button.dataset.appearance);
   state.settings = await api("/v1/settings", { method: "PATCH", body: JSON.stringify({ appearance: button.dataset.appearance }) });
 });
+function renderUptime() {
+  const elapsed = Math.max(0, state.uptimeBase + (Date.now() - state.uptimeStartedAt) / 1000);
+  const hours = Math.floor(elapsed / 3600).toString().padStart(2, "0");
+  const minutes = Math.floor(elapsed % 3600 / 60).toString().padStart(2, "0");
+  const seconds = Math.floor(elapsed % 60).toString().padStart(2, "0");
+  $("#uptimeMetric").textContent = `${hours}:${minutes}:${seconds}`;
+}
+setInterval(renderUptime, 1000);
 window.addEventListener("resize", drawCharts);
 loadInitial();

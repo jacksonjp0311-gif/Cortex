@@ -9,132 +9,157 @@
 </head>
 <body data-core-state="idle">
   <div class="shell">
-    <header class="topbar">
-      <button class="brand" id="homeButton" aria-label="Cortex home">
-        <span class="brand-mark"><i></i><i></i><i></i></span>
-        <span><strong>CORTEX</strong><small>NATIVE AGENT RUNTIME</small></span>
+    <header class="command-rail">
+      <section class="rail-left">
+        <button class="interface-seal" id="homeButton" aria-label="Cortex home"><span></span></button>
+        <div class="interface-title"><strong>CORTEX NATIVE INTERFACE</strong><small>SESSION: <b id="sessionIdReadout">—</b> &nbsp; USER: operator</small></div>
+        <div class="rail-divider"></div>
+        <div class="rail-pair"><span>MODE: <b id="systemState">READY</b></span><span>THREADS: <b id="threadCount">0</b></span></div>
+      </section>
+      <button class="rail-brand" id="modelButton">
+        <strong>CORTEX</strong><small>INTELLIGENCE CORE</small><span id="activeModel">Select provider / model</span><em id="freeBadge" class="badge free hidden">FREE</em>
       </button>
-      <div class="top-readout"><span>SYSTEM</span><b id="systemState">READY</b></div>
-      <button class="model-pill" id="modelButton">
-        <span class="signal-dot"></span>
-        <span><small>REASONING ENGINE</small><strong id="activeModel">Select provider / model</strong></span>
-        <span id="freeBadge" class="badge free hidden">FREE</span><b>⌄</b>
-      </button>
-      <div class="top-metrics">
-        <div><small>CONTEXT</small><strong id="contextMetric">—</strong></div>
-        <div><small>TOKENS</small><strong id="tokenMetric">—</strong></div>
-        <button class="cortex-state" id="cortexStateButton"><span></span>CORTEX <b id="sessionState">IDLE</b></button>
-      </div>
-      <button class="icon-button" id="settingsButton" aria-label="Settings">⚙</button>
+      <section class="rail-right">
+        <div class="rail-pair"><span>STATE: <b id="sessionState">IDLE</b></span><span>UPTIME: <b id="uptimeMetric">00:00:00</b></span></div>
+        <div class="rail-divider"></div>
+        <div class="rail-pair model-readout"><span>MODEL: <b id="modelRail">—</b></span><span>PROVIDER: <b id="providerRail">—</b></span></div>
+        <button class="signal-bars" aria-label="Cortex connection"><i></i><i></i><i></i><i></i></button>
+        <button class="sessions-button" id="sessionToggle" aria-label="Conversations">◫</button>
+        <button class="settings-button" id="settingsButton" aria-label="Settings">⚙</button>
+      </section>
     </header>
 
-    <aside class="left-panel panel">
-      <div class="panel-heading"><span>LIVE TELEMETRY</span><b id="telemetryState">AWAITING SIGNAL</b></div>
-      <section class="telemetry-stack" aria-label="Live Cortex metrics">
-        <article class="metric-card primary">
-          <header><span>TOKEN RATE</span><b class="measurement" id="rateClass">UNAVAILABLE</b></header>
-          <div class="metric-value"><strong id="tokenRate">—</strong><small>tok/s</small></div>
-          <canvas id="tokenRateChart" class="metric-chart" aria-label="Token rate history"></canvas>
+    <aside class="left-panel instrument-column">
+      <section class="module telemetry-module">
+        <header><strong>LIVE TELEMETRY</strong><span class="live-label"><i></i><b id="telemetryState">AWAITING SIGNAL</b></span></header>
+        <article class="wide-metric">
+          <div class="metric-copy"><small>TOKEN RATE</small><div><strong id="tokenRate">—</strong><span>t/s</span></div></div>
+          <div class="chart-wrap"><span id="rateClass">UNAVAILABLE</span><canvas id="tokenRateChart" aria-label="Token rate history"></canvas></div>
         </article>
-        <article class="metric-card">
-          <header><span>MODEL LATENCY</span><b class="measurement" id="latencyClass">UNAVAILABLE</b></header>
-          <div class="metric-value"><strong id="latencyMetric">—</strong><small>ms</small></div>
-          <canvas id="latencyChart" class="metric-chart" aria-label="Latency history"></canvas>
+        <article class="wide-metric">
+          <div class="metric-copy"><small>MODEL LATENCY</small><div><strong id="latencyMetric">—</strong><span>ms</span></div></div>
+          <div class="chart-wrap"><span id="latencyClass">UNAVAILABLE</span><canvas id="latencyChart" aria-label="Latency history"></canvas></div>
         </article>
-        <article class="metric-card">
-          <header><span>CONTEXT LOAD</span><b class="measurement" id="contextClass">ESTIMATED</b></header>
-          <div class="metric-value"><strong id="contextLoad">—</strong><small id="contextUnit">tokens</small></div>
+        <article class="bar-metric">
+          <div><small>CONTEXT WINDOW</small><span id="contextClass">ESTIMATED</span></div>
+          <p><strong id="contextLoad">—</strong><b id="contextPercent">—</b></p>
           <div class="meter"><i id="contextBar"></i></div>
+          <footer><span>0</span><span id="contextLimit">UNKNOWN LIMIT</span></footer>
         </article>
-        <div class="metric-grid">
-          <div><span>FIRST TOKEN</span><strong id="firstTokenMetric">—</strong><small>ms</small></div>
-          <div><span>TOOLS</span><strong id="toolMetric">0</strong><small>calls</small></div>
-          <div><span>COST</span><strong id="costMetric">—</strong><small id="costClass">UNAVAILABLE</small></div>
-          <div><span>HEALTH</span><strong id="healthMetric">READY</strong><small>MEASURED</small></div>
-        </div>
-        <p class="truth-note"><i></i> Values are marked measured, provider-reported, estimated, or unavailable.</p>
+        <article class="bar-metric unavailable-panel">
+          <div><small>REASONING DEPTH</small><span>UNAVAILABLE</span></div>
+          <p><strong>—</strong><b>NO SIGNAL</b></p>
+          <div class="micro-bars" aria-label="Reasoning depth unavailable"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </article>
+        <article class="wide-metric confidence-metric unavailable-panel">
+          <div class="metric-copy"><small>CONFIDENCE</small><div><strong>—</strong><span>%</span></div></div>
+          <div class="chart-wrap"><span>UNAVAILABLE</span><canvas id="confidenceChart" aria-label="Confidence unavailable"></canvas></div>
+        </article>
       </section>
-      <div class="sessions-heading"><span>CONVERSATIONS</span><button id="newConversation" title="New conversation">＋</button></div>
-      <nav id="sessionList" class="session-list" aria-label="Recent Cortex conversations"></nav>
+
+      <section class="split-modules">
+        <article class="module compact-module"><header><strong>MEMORY</strong></header><p><strong id="memoryMetric">0</strong><span>projected</span></p><div class="meter"><i id="memoryBar"></i></div></article>
+        <article class="module compact-module"><header><strong>COST ESTIMATE</strong></header><p><strong id="costMetric">—</strong><span id="costClass">UNAVAILABLE</span></p><div class="micro-bars cost-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+      </section>
+
+      <section class="module system-module">
+        <article><small>CPU</small><strong>—</strong><span>UNAVAILABLE</span><canvas id="cpuChart"></canvas></article>
+        <article><small>GPU</small><strong>—</strong><span>UNAVAILABLE</span><canvas id="gpuChart"></canvas></article>
+        <article><small>NETWORK</small><strong>—</strong><span>UNAVAILABLE</span><canvas id="networkChart"></canvas></article>
+      </section>
+
+      <section class="module health-module">
+        <header><strong>SESSION HEALTH</strong></header>
+        <div><span class="health-heart">◆</span><p><strong id="healthMetric">READY</strong><small id="healthDetail">Cortex service connected</small></p><canvas id="healthChart"></canvas></div>
+      </section>
     </aside>
 
-    <main class="chat-panel panel">
-      <div class="chat-heading">
-        <div><small>CORTEX CHANNEL</small><h1 id="conversationTitle">New conversation</h1></div>
-        <div class="chat-actions"><button id="archiveButton" class="quiet">Archive</button><button id="retryButton" class="quiet" disabled>↻ Retry</button><button id="stopButton" class="stop hidden">■ Stop</button></div>
-      </div>
-      <section class="core-stage" aria-label="Cortex activity core">
-        <div class="core-field"><i></i><i></i><i></i></div>
-        <div class="core-orb"><span></span></div>
-        <div class="core-caption"><small>COGNITIVE STATE</small><strong id="coreState">IDLE</strong><span id="coreDetail">Waiting for a reasoning engine</span></div>
-      </section>
-      <section class="messages" id="messages" aria-live="polite">
-        <div class="empty-state" id="emptyState">
-          <h2>Cortex is ready.</h2>
-          <p>Select a reasoning engine and begin. Context, evidence, continuity, and trajectory remain governed by Cortex.</p>
+    <main class="center-panel">
+      <section class="module core-module">
+        <header><strong>CORTEX CORE</strong><span class="live-label"><i></i><b id="coreLiveLabel">STANDBY</b></span></header>
+        <div class="core-stage" aria-label="Cortex activity core">
+          <div class="core-grid"></div>
+          <div class="core-rings"><i></i><i></i><i></i><i></i></div>
+          <div class="core-orb"><span></span><span></span><span></span></div>
+          <div class="core-rays"></div>
         </div>
+        <div class="core-phases"><span>THINKING</span><i></i><span>PROJECTING CONTEXT</span><i></i><span class="active" id="coreState">IDLE</span><i></i><span>TOOL ACCESS</span></div>
+        <p class="core-detail" id="coreDetail">Waiting for a reasoning engine</p>
       </section>
+
+      <section class="chat-stream" id="messages" aria-live="polite">
+        <div class="empty-state" id="emptyState"><strong>CORTEX CHANNEL READY</strong><p>Choose a reasoning engine and message Cortex. Governed context and trajectory evidence remain attached to the session.</p></div>
+      </section>
+
       <form class="composer" id="composer">
+        <button type="button" class="voice-button" aria-label="Voice unavailable">♩</button>
         <textarea id="prompt" rows="1" placeholder="Message Cortex…" aria-label="Message Cortex"></textarea>
-        <div class="composer-footer"><span>Enter to send · Shift+Enter for newline · Esc to stop</span><button id="sendButton" type="submit">SEND <b>↗</b></button></div>
+        <button id="sendButton" type="submit" aria-label="Send message">➤</button>
+        <span>Enter to send · Shift+Enter for newline · Esc to interrupt</span>
       </form>
     </main>
 
-    <aside class="right-panel panel">
-      <div class="tab-row" role="tablist">
-        <button class="active" data-side-tab="evidence">EVIDENCE</button>
-        <button data-side-tab="memory">MEMORY</button>
-        <button data-side-tab="competence">COMPETENCE</button>
-        <button data-side-tab="context">CONTEXT</button>
-      </div>
-      <section id="sideEvidence" class="side-view active">
-        <div class="section-label">EVIDENCE & SOURCES</div>
-        <div class="evidence-grid">
-          <div><span class="verified">VERIFIED</span><strong id="verifiedCount">0</strong></div>
-          <div><span>SUPPORTED</span><strong id="supportedCount">0</strong></div>
-          <div><span>UNKNOWN</span><strong id="unknownCount">0</strong></div>
-          <div><span class="failure">CONTRADICTED</span><strong id="contradictedCount">0</strong></div>
+    <aside class="right-panel instrument-column">
+      <section class="module evidence-module">
+        <header><strong>EVIDENCE & SOURCES</strong><span class="live-label"><i></i><b>LIVE</b></span></header>
+        <div class="evidence-content">
+          <div class="donut" id="evidenceDonut"><strong id="evidenceTotal">0</strong><span>SOURCES</span></div>
+          <div class="source-list"><p><i class="blue"></i><span>Verified</span><b id="verifiedCount">0</b></p><p><i class="cyan"></i><span>Supported</span><b id="supportedCount">0</b></p><p><i class="violet"></i><span>Unknown</span><b id="unknownCount">0</b></p><p><i class="red"></i><span>Contradicted</span><b id="contradictedCount">0</b></p></div>
         </div>
-        <div class="instrument"><small>TRAJECTORY</small><strong id="trajectoryState">UNSEALED</strong><p id="trajectoryHash">No completed turn.</p></div>
-        <div class="instrument"><small>MODEL & PROVIDER</small><strong id="providerState">NOT SELECTED</strong><p id="providerDetail">Select a reasoning engine to begin.</p></div>
-        <div class="instrument"><small>UNCERTAINTY INDEX</small><strong id="uncertaintyState">UNAVAILABLE</strong><p>Cortex will not infer confidence from visual activity or model fluency.</p></div>
+        <footer id="trajectoryHash">No completed turn.</footer>
       </section>
-      <section id="sideMemory" class="side-view"><div class="section-label">MEMORY</div><div class="instrument"><small>GOVERNED MEMORY</small><strong id="memoryProjected">0 projected</strong><p id="memoryState">No governed memory projected.</p></div></section>
-      <section id="sideCompetence" class="side-view"><div class="section-label">COMPETENCE PROFILE</div><div class="instrument"><small>VERIFIED COMPETENCE</small><strong id="competenceProjected">0 projected</strong><p id="competenceState">No verified competence projected.</p></div></section>
-      <section id="sideContext" class="side-view"><div class="section-label">CONTEXT BREAKDOWN</div><div class="instrument"><small>CONTEXT PROJECTION</small><strong id="contextState">INACTIVE</strong><p id="contextDetail">No context projected yet.</p></div><pre id="contextPreview" class="context-preview"></pre></section>
-      <button class="cortex-used" id="cortexUsed"><span>CORTEX <i></i></span><small>Inspect this response</small></button>
+
+      <section class="module memory-module">
+        <header><strong>MEMORY</strong><span class="live-label"><i></i><b id="memoryActivity">INACTIVE</b></span></header>
+        <div class="memory-content"><strong id="memoryProjected">0 projected</strong><div><p><span>Considered</span><b id="memoryConsidered">0</b></p><p><span>Projected</span><b id="memoryProjectedCount">0</b></p></div></div>
+        <div class="meter"><i id="memoryUtilBar"></i></div><footer id="memoryState">No governed memory projected.</footer>
+      </section>
+
+      <section class="module competence-module">
+        <header><strong>COMPETENCE PROFILE</strong></header>
+        <small>VERIFIED PROJECTION</small>
+        <div class="competence-row"><span>Considered</span><div><i id="competenceConsideredBar"></i></div><b id="competenceConsidered">0</b></div>
+        <div class="competence-row"><span>Projected</span><div><i id="competenceProjectedBar"></i></div><b id="competenceProjectedCount">0</b></div>
+        <div class="competence-row unavailable"><span>Semantic support</span><div><i></i></div><b>—</b></div>
+        <footer id="competenceState">No verified competence projected.</footer>
+        <span class="hidden" id="competenceProjected">0 projected</span>
+      </section>
+
+      <section class="module context-module">
+        <header><strong>CONTEXT BREAKDOWN</strong></header>
+        <p><strong id="contextState">INACTIVE</strong><span id="contextDetail">No context projected yet.</span></p>
+        <div class="context-segments"><i id="contextSegmentSystem"></i><i id="contextSegmentMessages"></i><i id="contextSegmentEvidence"></i><i id="contextSegmentFree"></i></div>
+        <div class="context-legend"><span>Projection</span><span>Messages</span><span>Evidence</span><span>Unknown</span></div>
+        <pre id="contextPreview" class="context-preview"></pre>
+      </section>
+
+      <section class="module provider-module">
+        <header><strong>MODEL & PROVIDER</strong><span class="live-label"><i></i><b id="providerHealth">READY</b></span></header>
+        <div><p><strong id="providerState">NOT SELECTED</strong><span id="providerDetail">Select a reasoning engine.</span></p><button class="provider-shield" id="cortexUsed" aria-label="Inspect Cortex provenance">◇</button></div>
+      </section>
+
+      <section class="module uncertainty-module">
+        <header><strong>UNCERTAINTY INDEX</strong><b id="uncertaintyState">UNAVAILABLE</b></header>
+        <p>Cortex does not infer confidence from model fluency.</p><canvas id="uncertaintyChart"></canvas>
+      </section>
     </aside>
 
-    <section class="operator panel" id="operatorDrawer">
-      <button class="operator-handle" id="drawerToggle">OPERATOR <span>⌃</span></button>
-      <div class="operator-tabs" role="tablist">
-        <button class="active" data-operator-tab="events">EVENTS</button><button data-operator-tab="tools">TOOLS</button><button data-operator-tab="terminal">TERMINAL</button><button data-operator-tab="subagents">SUBAGENTS</button><button data-operator-tab="trajectory">TRAJECTORY</button>
-        <button class="drawer-close" id="drawerClose">×</button>
-      </div>
-      <div class="operator-body" id="operatorBody"><div id="eventLog" class="event-log"><p class="muted">Waiting for Cortex events.</p></div><div id="toolLog" class="event-log hidden"></div><div id="terminalLog" class="event-log hidden"><p class="muted">No terminal capability granted.</p></div><div id="subagentLog" class="event-log hidden"><p class="muted">No subagents active.</p></div><pre id="trajectoryLog" class="event-log hidden">No sealed trajectory.</pre></div>
-    </section>
+    <div class="session-popover hidden" id="sessionPopover">
+      <header><strong>CONVERSATIONS</strong><div><button id="archiveButton">ARCHIVE</button><button id="retryButton" disabled>↻ RETRY</button><button id="newConversation">＋ NEW</button></div></header>
+      <nav id="sessionList" class="session-list"></nav>
+    </div>
+
+    <div class="floating-actions"><button id="stopButton" class="stop hidden">■ STOP</button><button id="drawerToggle">OPERATOR</button></div>
+    <section class="operator" id="operatorDrawer"><header><div><button class="active" data-operator-tab="events">EVENTS</button><button data-operator-tab="tools">TOOLS</button><button data-operator-tab="terminal">TERMINAL</button><button data-operator-tab="subagents">SUBAGENTS</button><button data-operator-tab="trajectory">TRAJECTORY</button></div><button id="drawerClose">×</button></header><div id="operatorBody"><div id="eventLog" class="event-log"><p class="muted">Waiting for Cortex events.</p></div><div id="toolLog" class="event-log hidden"></div><div id="terminalLog" class="event-log hidden"><p class="muted">No terminal capability granted.</p></div><div id="subagentLog" class="event-log hidden"><p class="muted">No subagents active.</p></div><pre id="trajectoryLog" class="event-log hidden">No sealed trajectory.</pre></div></section>
   </div>
 
-  <dialog id="settingsDialog" class="modal settings-modal">
-    <form method="dialog" class="modal-frame"><header><div><small>LOCAL CORTEX CONFIGURATION</small><h2>Settings</h2></div><button value="close" class="icon-button">×</button></header>
-      <div class="settings-layout"><nav><button type="button" class="active">PROVIDERS</button><button type="button" data-settings="appearance">APPEARANCE</button><span>MODELS</span><span>ADVANCED</span></nav>
-        <section><div class="privacy-note"><strong>HOST SECRETS</strong><p>Keys live in your operating-system credential vault. They never enter Cortex memory, evidence, trajectories, logs, telemetry, or model context.</p></div><div id="providerCards" class="provider-cards"></div>
-        <div class="appearance-card"><small>APPEARANCE</small><h3>Instrument intensity</h3><div class="segmented"><button type="button" data-appearance="standard" class="active">STRUCTURAL GLOW</button><button type="button" data-appearance="reduced">REDUCED GLOW</button></div></div></section>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="settingsDialog" class="modal settings-modal"><form method="dialog" class="modal-frame"><header><div><small>LOCAL CORTEX CONFIGURATION</small><h2>Settings</h2></div><button value="close">×</button></header><div class="settings-layout"><nav><button type="button" class="active">PROVIDERS</button><button type="button" data-settings="appearance">APPEARANCE</button><span>MODELS</span><span>ADVANCED</span></nav><section><div class="privacy-note"><strong>HOST SECRETS</strong><p>Keys live in the operating-system credential vault. They never enter Cortex memory, evidence, trajectories, logs, telemetry, or model context.</p></div><div id="providerCards" class="provider-cards"></div><div class="appearance-card"><small>APPEARANCE</small><h3>Instrument intensity</h3><div class="segmented"><button type="button" data-appearance="standard" class="active">STRUCTURAL GLOW</button><button type="button" data-appearance="reduced">REDUCED GLOW</button></div></div></section></div></form></dialog>
 
-  <dialog id="modelDialog" class="modal model-modal">
-    <div class="modal-frame"><header><div><small>CORTEX MODEL FABRIC</small><h2>Select reasoning engine</h2></div><button class="icon-button" id="closeModels">×</button></header>
-      <div class="model-toolbar"><select id="providerFilter"><option value="openai">OpenAI</option><option value="xai">xAI / Grok</option><option value="openrouter">OpenRouter</option></select><input id="modelSearch" placeholder="Search models or enter an exact model ID"><button id="refreshModels">↻ REFRESH</button></div>
-      <div class="filter-row"><button class="active" data-filter="all">ALL</button><button data-filter="free">FREE</button><button data-filter="tools">TOOLS</button><button data-filter="vision">VISION</button><button data-filter="reasoning">REASONING</button><select id="modelSort"><option value="">Provider order</option><option value="context-high-to-low">Largest context</option><option value="pricing-low-to-high">Lowest price</option><option value="newest">Newest</option><option value="most-popular">Most popular</option></select></div>
-      <div id="modelStatus" class="model-status">Choose a configured provider.</div><div id="modelList" class="model-list"></div>
-      <footer class="manual-model"><span>Model absent from catalog?</span><button id="manualModel">USE EXACT ID</button></footer>
-    </div>
-  </dialog>
+  <dialog id="modelDialog" class="modal model-modal"><div class="modal-frame"><header><div><small>CORTEX MODEL FABRIC</small><h2>Select reasoning engine</h2></div><button id="closeModels">×</button></header><div class="model-toolbar"><select id="providerFilter"><option value="openai">OpenAI</option><option value="xai">xAI / Grok</option><option value="openrouter">OpenRouter</option></select><input id="modelSearch" placeholder="Search models or enter an exact model ID"><button id="refreshModels">↻ REFRESH</button></div><div class="filter-row"><button class="active" data-filter="all">ALL</button><button data-filter="free">FREE</button><button data-filter="tools">TOOLS</button><button data-filter="vision">VISION</button><button data-filter="reasoning">REASONING</button><select id="modelSort"><option value="">Provider order</option><option value="context-high-to-low">Largest context</option><option value="pricing-low-to-high">Lowest price</option><option value="newest">Newest</option><option value="most-popular">Most popular</option></select></div><div id="modelStatus" class="model-status">Choose a configured provider.</div><div id="modelList" class="model-list"></div><footer class="manual-model"><span>Model absent from catalog?</span><button id="manualModel">USE EXACT ID</button></footer></div></dialog>
 
-  <dialog id="cortexDialog" class="modal cortex-modal"><div class="modal-frame"><header><div><small>RESPONSE PROVENANCE</small><h2>Cortex used for this response</h2></div><button class="icon-button" id="closeCortex">×</button></header><div id="cortexSummary" class="cortex-summary"></div></div></dialog>
+  <dialog id="cortexDialog" class="modal cortex-modal"><div class="modal-frame"><header><div><small>RESPONSE PROVENANCE</small><h2>Cortex used for this response</h2></div><button id="closeCortex">×</button></header><div id="cortexSummary" class="cortex-summary"></div></div></dialog>
   <div id="toast" class="toast" role="status"></div>
+  <span class="hidden" id="tokenMetric">—</span><span class="hidden" id="contextMetric">—</span><span class="hidden" id="firstTokenMetric">—</span><span class="hidden" id="toolMetric">0</span><span class="hidden" id="contextUnit">tokens</span><span class="hidden" id="conversationTitle">New conversation</span>
   <script src="/cortex.js" defer></script>
 </body>
 </html>
