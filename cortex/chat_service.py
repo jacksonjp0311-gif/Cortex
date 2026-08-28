@@ -378,6 +378,82 @@ class CortexChatService:
             },
         }
 
+    def telemetry(self, session_id: str) -> dict[str, Any]:
+        """Return truthful call telemetry without turning estimates into measurements."""
+        session = self.get_session(session_id)
+        events = self.events.since(session_id, 0)
+        receipt = self._trajectory(session_id)
+        persisted_events = list(receipt.get("events") or ()) if receipt else []
+        source_events = events or persisted_events
+
+        context_event: Mapping[str, Any] = {}
+        response_event: Mapping[str, Any] = {}
+        seal_event: Mapping[str, Any] = {}
+        delta_count = 0
+        tool_calls = 0
+        for event in source_events:
+            event_type = str(event.get("event_type") or "")
+            payload = event.get("payload") if isinstance(event.get("payload"), Mapping) else {}
+            if event_type == "context.prepared":
+                context_event = payload
+            elif event_type == "model.delta":
+                delta_count += 1
+            elif event_type == "model.responded":
+                response_event = payload
+            elif event_type == "trajectory.sealed":
+                seal_event = payload
+            elif event_type == "tool.completed":
+                tool_calls += 1
+
+        usage = response_event.get("token_usage") if isinstance(response_event.get("token_usage"), Mapping) else {}
+        cost = response_event.get("cost") if isinstance(response_event.get("cost"), Mapping) else {}
+        input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", usage.get("input")))
+        output_tokens = usage.get("output_tokens", usage.get("completion_tokens", usage.get("output")))
+        total_tokens = usage.get("total_tokens", usage.get("total"))
+        if total_tokens is None and isinstance(input_tokens, (int, float)) and isinstance(output_tokens, (int, float)):
+            total_tokens = input_tokens + output_tokens
+
+        def metric(value: Any, measurement: str = "measured", unit: str = "") -> dict[str, Any]:
+            return {
+                "value": value,
+                "measurement": measurement if value is not None else "unavailable",
+                "unit": unit,
+            }
+
+        return {
+            "schema_version": SERVICE_SCHEMA,
+            "session_id": session_id,
+            "state": "STREAMING" if self.is_active(session_id) else ("COMPLETE" if receipt else "IDLE"),
+            "provider": session.get("provider") or "",
+            "model_id": session.get("model_id") or "",
+            "metrics": {
+                "input_tokens": metric(input_tokens, "provider_reported", "tokens"),
+                "output_tokens": metric(output_tokens, "provider_reported", "tokens"),
+                "total_tokens": metric(total_tokens, "provider_reported", "tokens"),
+                "tokens_per_second": metric(response_event.get("tokens_per_second"), str(response_event.get("token_rate_measurement") or "measured"), "tokens/s"),
+                "first_token_latency": metric(response_event.get("first_token_latency_ms"), "measured", "ms"),
+                "model_latency": metric(response_event.get("model_latency_ms"), "measured", "ms"),
+                "total_latency": metric(seal_event.get("total_latency_ms"), "measured", "ms"),
+                "context_projection_latency": metric(context_event.get("duration_ms"), "measured", "ms"),
+                "context_tokens": metric(context_event.get("estimated_tokens"), "estimated", "tokens"),
+                "projected_items": metric(context_event.get("projected_item_count"), "measured", "items"),
+                "stream_chunks": metric(delta_count, "measured", "chunks"),
+                "tool_calls": metric(tool_calls, "measured", "calls"),
+                "cost": metric(cost.get("total", cost.get("total_cost")), "provider_reported", "provider currency"),
+                "confidence": metric(None),
+                "reasoning_depth": metric(None),
+                "cpu": metric(None),
+                "gpu": metric(None),
+                "network": metric(None),
+            },
+            "authority": {
+                "host_mutate_authorized": False,
+                "execution_authorized": False,
+                "memory_admission_authorized": False,
+                "policy_effect": False,
+            },
+        }
+
 
 class CortexUIHandler(BaseHTTPRequestHandler):
     server_version = "CortexNativeInterface/1.0"
@@ -464,6 +540,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                         return self._json(200, self.cortex.evidence(session_id))
                     if len(parts) == 4 and parts[3] == "trajectory":
                         return self._json(200, self.cortex.trajectory(session_id))
+                    if len(parts) == 4 and parts[3] == "telemetry":
+                        return self._json(200, self.cortex.telemetry(session_id))
                 return self._json(404, {"error": "Endpoint not found."})
         except Exception as exc:
             self._error(exc)

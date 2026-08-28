@@ -19,16 +19,18 @@ typed commands. They may not mutate canonical runtime state directly.
 ## Visual system
 
 The graphite and near-black foundation represents inactive structure. Ice blue
-marks hierarchy, cyan marks live telemetry, and cybernetic orange marks active
-energy or an intentional operator action. Verified green is reserved for
+marks hierarchy, cyan marks live telemetry, and electric violet marks active
+energy or an intentional operator action. The blue-to-violet transition is the
+visual language of Cortex circulation. Verified green is reserved for
 canonical verification; red is reserved for real failure or blocking state.
 
 Glow is a state signal. Active computation may pulse; inactive panels do not.
 Typography separates readable conversation from compact monospace telemetry.
-The 2D lattice contains only nodes backed by runtime events. Alpha.2 therefore
-shows one Cortex node unless real subagent events exist.
+The central plasma core is a state instrument. Its ambient, context, thinking,
+streaming, tool, interrupt, and failure modes are selected only from runtime
+events. Motion never implies confidence, cognition quality, or authority.
 
-Desktop uses lattice, chat, intelligence, and operator regions. At smaller
-breakpoints the lattice becomes a compact conversation strip, intelligence
-moves to a drawer, and operator tabs remain horizontally accessible. The same
-truthful state is preserved rather than replaced by mobile-only estimates.
+Desktop uses telemetry, core/chat, intelligence, and optional operator regions.
+At smaller breakpoints telemetry becomes a compact grid, intelligence moves to
+a drawer, and the same truthful state is preserved rather than replaced by
+mobile-only estimates.

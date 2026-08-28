@@ -276,13 +276,32 @@ class Alpha2InterfaceTests(unittest.TestCase):
         html = (UI_ROOT / "index.html").read_text(encoding="utf-8")
         css = (UI_ROOT / "cortex.css").read_text(encoding="utf-8")
         js = (UI_ROOT / "cortex.js").read_text(encoding="utf-8")
-        for marker in ("CORTEX CHAT", "CORTEX LATTICE", "EVIDENCE", "MEMORY", "COMPETENCE", "TRAJECTORY"):
+        for marker in ("CORTEX CHANNEL", "LIVE TELEMETRY", "TOKEN RATE", "MODEL LATENCY", "EVIDENCE", "MEMORY", "COMPETENCE", "TRAJECTORY"):
             self.assertIn(marker, html)
         self.assertIn("@media", css)
         self.assertIn("--cortex-cyan", css)
+        self.assertIn("--cortex-violet", css)
+        self.assertNotIn("--cortex-orange", css)
         self.assertIn("/v1/sessions/", js)
+        self.assertIn("data-core-state", html)
+        self.assertIn("updateLiveDelta", js)
         self.assertNotIn("api.openai.com", js)
         self.assertNotIn("openrouter.ai/api", js)
+
+    def test_live_telemetry_is_derived_from_runtime_events(self) -> None:
+        service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=self.fabric)
+        session = service.create_session({"provider": "openai", "model_id": "fixture-chat"})
+        service.send_message(session["session_id"], "measure this turn")
+        deadline = time.time() + 10
+        while service.is_active(session["session_id"]) and time.time() < deadline:
+            time.sleep(0.02)
+        telemetry = service.telemetry(session["session_id"])
+        self.assertEqual(telemetry["state"], "COMPLETE")
+        self.assertEqual(telemetry["metrics"]["model_latency"]["measurement"], "measured")
+        self.assertGreaterEqual(telemetry["metrics"]["model_latency"]["value"], 0)
+        self.assertEqual(telemetry["metrics"]["context_tokens"]["measurement"], "unavailable")
+        self.assertEqual(telemetry["metrics"]["confidence"]["measurement"], "unavailable")
+        self.assertFalse(telemetry["authority"]["execution_authorized"])
 
     def test_real_loopback_http_e2e_uses_cortex_service(self) -> None:
         server = serve_cortex_ui(

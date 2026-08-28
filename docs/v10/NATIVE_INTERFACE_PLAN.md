@@ -30,7 +30,8 @@ tool execution, trajectory persistence, or provider invocation.
    context/evidence/trajectory views.
 4. **Native interface** — ship a responsive dependency-light web console as
    Cortex package data. It includes provider setup, live model browsing,
-   streaming Cortex chat, a truthful event-driven lattice, evidence/context
+   streaming Cortex chat, a truthful event-driven plasma core and telemetry,
+   evidence/context
    panels, and operator drawers.
 5. **Launch** — `cortex ui` starts the service on loopback, chooses a safe port,
    opens the system browser by default, and never enables remote exposure
