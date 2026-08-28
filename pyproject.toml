@@ -19,7 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
-dependencies = []
+dependencies = ["keyring>=25,<26"]
 
 [project.optional-dependencies]
 semantic = ["sentence-transformers>=3.0"]
@@ -40,6 +40,7 @@ include = ["cortex*", "thalamus*"]
   "vendor/**/.*",
   "vendor/.github/workflows/*.yml",
 ]
+"cortex.ui" = ["static/*.html", "static/*.css", "static/*.js"]
 
 [tool.setuptools.exclude-package-data]
 "cortex.aria_meta" = [

@@ -82,7 +82,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Repository assimilation and selective memory for AI coding agents.",
     )
     parser.add_argument("--home", help="Override CORTEX_HOME.")
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(dest="command", required=False)
 
     init = sub.add_parser("init", help="Initialize the global Cortex home and database.")
     init.add_argument("--json", action="store_true")
@@ -1348,6 +1348,14 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--timeout", type=float, default=180.0)
     run_p.add_argument("--json", action="store_true")
 
+    ui_p = sub.add_parser(
+        "ui",
+        help="Launch the loopback-only Cortex native operator interface.",
+    )
+    ui_p.add_argument("--repo", default="", help="Attached repository (latest when omitted).")
+    ui_p.add_argument("--port", type=int, default=0, help="Loopback port (0 chooses a free port).")
+    ui_p.add_argument("--no-browser", action="store_true", help="Start without opening the browser.")
+
     symbiosis_p = sub.add_parser(
         "symbiosis",
         help="AI–Cortex symbiotic runtime (☍): typed two-timescale receipts.",
@@ -1614,8 +1622,35 @@ def main(argv: list[str] | None = None) -> None:
     store = Store(home / "cortex.db")
     governor = Governor(home, store)
     try:
-        command = args.command
-        if command == "init":
+        command = args.command or "ui"
+        if command == "ui":
+            from .chat_service import serve_cortex_ui
+
+            repo = str(getattr(args, "repo", "") or "").strip()
+            if not repo:
+                row = store.db.execute(
+                    "SELECT name FROM repositories ORDER BY attached_at DESC LIMIT 1"
+                ).fetchone()
+                if not row:
+                    raise ValueError("No attached repository. Run cortex bootstrap first.")
+                repo = str(row["name"])
+            server = serve_cortex_ui(
+                store,
+                repo,
+                port=int(getattr(args, "port", 0) or 0),
+                open_browser=not bool(getattr(args, "no_browser", False)),
+            )
+            url = f"http://127.0.0.1:{server.server_address[1]}/"
+            print(f"CORTEX Native Agent Runtime — {url}")
+            print("Loopback only. Press Ctrl+C to stop.")
+            try:
+                server.serve_forever(poll_interval=0.25)
+            except KeyboardInterrupt:
+                pass
+            finally:
+                server.server_close()
+
+        elif command == "init":
             emit({
                 "initialized": True,
                 "home": str(home),

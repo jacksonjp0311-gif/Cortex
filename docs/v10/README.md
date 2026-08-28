@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.1`
+Version target: `10.0.0-alpha.2`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -20,11 +20,12 @@ The model supplies temporary cognition. Cortex supplies durable context,
 identity, evidence, ordering, and audit. The host supplies authority. None of
 those roles may impersonate another.
 
-Alpha 1 is deliberately headless and narrow. It supports provider-neutral
-model turns, bounded filesystem reads and shell-free terminal processes,
-versioned public events, and a reconstructable trajectory. It does not add a
-second memory system, autonomous memory admission, skills, delegation, cron,
-gateway channels, browser control, or a graphical interface.
+Alpha.2 adds a loopback-only Cortex graphical interface, persistent
+conversations, live OpenAI/xAI/OpenRouter model discovery, OS-vault-backed
+credentials, streamed public output, and real cancellation while preserving
+the alpha.1 circulation and evidence boundary. It does not add a second memory
+system, autonomous memory admission, skills, delegation, cron, remote gateway
+channels, or browser-control authority.
 
 ## Documents
 
@@ -35,6 +36,12 @@ gateway channels, browser control, or a graphical interface.
 - [Provider interface](PROVIDER_INTERFACE.md)
 - [Cortex runtime bridge](CORTEX_RUNTIME_BRIDGE.md)
 - [UI design language](UI_DESIGN_LANGUAGE.md)
+- [Native interface plan](NATIVE_INTERFACE_PLAN.md)
+- [UI architecture](UI_ARCHITECTURE.md)
+- [Provider fabric](PROVIDER_FABRIC.md)
+- [Secret storage](SECRET_STORAGE.md)
+- [Model discovery](MODEL_DISCOVERY.md)
+- [Cortex chat](CORTEX_CHAT.md)
 - [Benchmark plan](BENCHMARK_PLAN.md)
 - [Third-party notices](../../THIRD_PARTY_NOTICES.md)
 

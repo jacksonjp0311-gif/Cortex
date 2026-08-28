@@ -1130,7 +1130,10 @@ class Store:
     def __init__(self, path: Path) -> None:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(path)
+        # The local Cortex UI serializes its shared connection and gives active
+        # model turns independent Store connections. Disabling Python's thread
+        # affinity guard permits that governed loopback-service boundary.
+        self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA busy_timeout=5000")
         self.db.executescript(SCHEMA)
@@ -1805,6 +1808,20 @@ class Store:
         )
         self.db.commit()
 
+    def update_session_metadata(self, session_id: str, metadata: dict[str, Any]) -> None:
+        self.db.execute(
+            "UPDATE sessions SET metadata=? WHERE session_id=?",
+            (json.dumps(metadata, sort_keys=True), session_id),
+        )
+        self.db.commit()
+
+    def update_session_task(self, session_id: str, task: str) -> None:
+        self.db.execute(
+            "UPDATE sessions SET task=? WHERE session_id=?",
+            (str(task), session_id),
+        )
+        self.db.commit()
+
     def session(self, session_id: str) -> sqlite3.Row | None:
         return self.db.execute(
             "SELECT * FROM sessions WHERE session_id=?", (session_id,)
@@ -1814,6 +1831,12 @@ class Store:
         return self.db.execute(
             "SELECT * FROM sessions WHERE repo=? ORDER BY started_at DESC LIMIT 1", (repo,)
         ).fetchone()
+
+    def list_sessions(self, repo: str, limit: int = 100) -> list[sqlite3.Row]:
+        return self.db.execute(
+            "SELECT * FROM sessions WHERE repo=? ORDER BY started_at DESC LIMIT ?",
+            (repo, max(1, min(int(limit), 500))),
+        ).fetchall()
 
     def add_event(
         self,
