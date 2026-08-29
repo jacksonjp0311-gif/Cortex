@@ -11,12 +11,16 @@ import hashlib
 import json
 import subprocess
 import sys
+import tempfile
+import time
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 PROPOSAL_SCHEMA = "cortex-coding-patch-proposal/1.0"
 APPLICATION_SCHEMA = "cortex-coding-patch-application/1.0"
+VERIFICATION_SCHEMA = "cortex-coding-patch-verification/1.0"
+CONTRACT_SCHEMA = "cortex-host-verification-contract/1.0"
 MAX_PATCH_BYTES = 262_144
 ZERO_HASH = "0" * 64
 
@@ -60,7 +64,9 @@ def _targets(patch_text: str, root: Path) -> tuple[str, ...]:
         left, right = parts[2][2:], parts[3][2:]
         if left != right:
             raise ValueError("patch target identity must remain stable")
-        if right.startswith((".git/", ".cortex/")) or right in {"README_STAR_HISTORY.md"}:
+        if right.startswith((".git/", ".cortex/", ".github/", "tests/", "scripts/ci/")) or right in {
+            "README_STAR_HISTORY.md", "conftest.py", "pyproject.toml", "pytest.ini", "setup.cfg", "tox.ini",
+        }:
             raise ValueError("patch targets a protected runtime/generated surface")
         _contained(root, right)
         targets.append(right)
@@ -132,6 +138,168 @@ def _git(root: Path, arguments: list[str], patch: str | None = None) -> subproce
         check=False,
         shell=False,
     )
+
+
+def repository_head(root: str | Path) -> str:
+    result = _git(Path(root).resolve(), ["rev-parse", "HEAD"])
+    if result.returncode != 0 or not result.stdout.strip():
+        raise ValueError("workspace does not have a resolvable Git HEAD")
+    return result.stdout.strip()
+
+
+def default_verification_contract(root: str | Path, targets: list[str]) -> dict[str, Any]:
+    """Build the host-owned verification policy for one proposal scope.
+
+    The model and HTTP caller never contribute command vectors.  The tokens in
+    this receipt are portable declarations; ``{python}`` resolves only at the
+    host execution edge.
+    """
+    workspace = Path(root).resolve()
+    normalized = sorted({_contained(workspace, target).relative_to(workspace).as_posix() for target in targets})
+    steps: list[dict[str, Any]] = [
+        {"id": "git_diff_check", "argv": ["git", "diff", "--check", "--", *normalized], "timeout_seconds": 120},
+    ]
+    runtime_change = any(target.startswith(("cortex/", "scripts/")) for target in normalized)
+    if runtime_change:
+        steps.extend([
+            {"id": "compileall", "argv": ["{python}", "-m", "compileall", "-q", "cortex", "tests"], "timeout_seconds": 300},
+            {"id": "repository_tests", "argv": ["{python}", "-m", "pytest", "-q"], "timeout_seconds": 1800},
+        ])
+    body = {
+        "schema_version": CONTRACT_SCHEMA,
+        "policy_id": "cortex-host-verification/default-v1",
+        "targets": normalized,
+        "steps": steps,
+        "model_selected": False,
+        "caller_selected": False,
+        "promotion_authorized": False,
+    }
+    body["contract_hash"] = _sha(body)
+    return body
+
+
+def _verify_contract(contract: Mapping[str, Any], targets: list[str]) -> dict[str, Any]:
+    material = {key: value for key, value in dict(contract).items() if key != "contract_hash"}
+    expected = _sha(material)
+    errors: list[str] = []
+    if contract.get("schema_version") != CONTRACT_SCHEMA:
+        errors.append("verification_contract_schema_invalid")
+    if contract.get("contract_hash") != expected:
+        errors.append("verification_contract_hash_invalid")
+    if sorted(contract.get("targets") or []) != sorted(targets):
+        errors.append("verification_contract_scope_mismatch")
+    if contract.get("model_selected") is not False or contract.get("caller_selected") is not False:
+        errors.append("verification_contract_authority_invalid")
+    if not isinstance(contract.get("steps"), list) or not contract.get("steps"):
+        errors.append("verification_contract_steps_missing")
+    return {"valid": not errors, "errors": errors}
+
+
+def _run_contract_step(root: Path, step: Mapping[str, Any]) -> dict[str, Any]:
+    raw = step.get("argv")
+    if not isinstance(raw, list) or not raw or not all(isinstance(value, str) and value for value in raw):
+        return {"id": str(step.get("id") or "invalid"), "passed": False, "returncode": -1, "output": "invalid host command vector"}
+    argv = [sys.executable if value == "{python}" else value for value in raw]
+    started = time.perf_counter()
+    try:
+        result = subprocess.run(
+            argv,
+            cwd=root,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=max(1, min(int(step.get("timeout_seconds") or 120), 1800)),
+            check=False,
+            shell=False,
+        )
+        return {
+            "id": str(step.get("id") or "step"),
+            "argv": list(raw),
+            "returncode": result.returncode,
+            "passed": result.returncode == 0,
+            "duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
+            "output": (result.stdout + result.stderr).strip()[-4000:],
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "id": str(step.get("id") or "step"),
+            "argv": list(raw),
+            "returncode": -1,
+            "passed": False,
+            "duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
+            "output": "host verification step timed out",
+        }
+
+
+def verify_patch_in_isolated_worktree(
+    root: str | Path,
+    proposal: Mapping[str, Any],
+    contract: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Evaluate an immutable proposal away from the operator's active tree."""
+    workspace = Path(root).resolve()
+    proposal_check = verify_patch_proposal(workspace, proposal)
+    if not proposal_check["valid"] or not proposal_check["current"]:
+        raise ValueError("patch proposal is invalid or stale: " + ",".join(proposal_check["errors"]))
+    canonical = proposal_check["rebuilt"]
+    targets = [str(value) for value in canonical["targets"]]
+    numstat = _git(workspace, ["apply", "--numstat", "-"], str(canonical["patch"]))
+    if numstat.returncode != 0:
+        raise ValueError("git could not parse the proposed patch")
+    git_targets = [line.split("\t")[-1].strip() for line in numstat.stdout.splitlines() if line.strip()]
+    if sorted(git_targets) != sorted(targets):
+        raise ValueError("git patch targets do not match the canonical proposal scope")
+    contract_check = _verify_contract(contract, targets)
+    if not contract_check["valid"]:
+        raise ValueError("host verification contract invalid: " + ",".join(contract_check["errors"]))
+    source_head = repository_head(workspace)
+
+    with tempfile.TemporaryDirectory(prefix="cortex-verify-") as parent:
+        candidate = Path(parent) / "candidate"
+        added = _git(workspace, ["worktree", "add", "--detach", str(candidate), source_head])
+        if added.returncode != 0:
+            raise RuntimeError("isolated verification worktree could not be created")
+        steps: list[dict[str, Any]] = []
+        try:
+            for target, digest in canonical["preimage_hashes"].items():
+                if _file_hash(_contained(candidate, target)) != digest:
+                    raise ValueError("proposal preimage does not match isolated source HEAD")
+            applied = _git(candidate, ["apply", "--check", "--whitespace=error-all", "-"], str(canonical["patch"]))
+            if applied.returncode != 0:
+                raise ValueError("proposal does not apply to isolated source HEAD")
+            applied = _git(candidate, ["apply", "--whitespace=error-all", "-"], str(canonical["patch"]))
+            if applied.returncode != 0:
+                raise RuntimeError("isolated proposal application failed")
+            for step in contract["steps"]:
+                result = _run_contract_step(candidate, step)
+                steps.append(result)
+                if not result["passed"]:
+                    break
+            postimages = {target: _file_hash(_contained(candidate, target)) for target in targets}
+        finally:
+            removed = _git(workspace, ["worktree", "remove", "--force", str(candidate)])
+            if removed.returncode != 0:
+                _git(workspace, ["worktree", "prune"])
+
+    passed = len(steps) == len(contract["steps"]) and all(step["passed"] for step in steps)
+    return {
+        "schema_version": VERIFICATION_SCHEMA,
+        "proposal_hash": canonical["proposal_hash"],
+        "source_head": source_head,
+        "contract_hash": contract["contract_hash"],
+        "contract": dict(contract),
+        "steps": steps,
+        "postimage_hashes": postimages,
+        "status": "verified" if passed else "held",
+        "isolated_worktree": True,
+        "active_tree_mutated": False,
+        "operator_promotion_required": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
 
 
 def apply_approved_patch(root: str | Path, proposal: Mapping[str, Any]) -> dict[str, Any]:
@@ -216,7 +384,8 @@ def rollback_applied_patch(root: str | Path, proposal: Mapping[str, Any]) -> Non
 
 
 __all__ = [
-    "APPLICATION_SCHEMA", "PROPOSAL_SCHEMA", "apply_approved_patch",
-    "approval_challenge", "create_patch_proposal", "rollback_applied_patch",
-    "verify_patch_proposal",
+    "APPLICATION_SCHEMA", "CONTRACT_SCHEMA", "PROPOSAL_SCHEMA", "VERIFICATION_SCHEMA",
+    "apply_approved_patch", "approval_challenge", "create_patch_proposal",
+    "default_verification_contract", "rollback_applied_patch",
+    "repository_head", "verify_patch_in_isolated_worktree", "verify_patch_proposal",
 ]

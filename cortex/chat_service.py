@@ -14,10 +14,17 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
-from .coding_workspace import apply_approved_patch, approval_challenge, rollback_applied_patch
+from .coding_workspace import (
+    apply_approved_patch,
+    approval_challenge,
+    default_verification_contract,
+    repository_head,
+    rollback_applied_patch,
+    verify_patch_in_isolated_worktree,
+)
 from .native_agent import AgentMessage, CapabilityGrant, NativeAgentRuntime
 from .provider_fabric import ProviderError, ProviderFabric
 from .secret_store import HostSecretStore, SecretStore
@@ -83,6 +90,7 @@ class CortexChatService:
         *,
         secrets: SecretStore | None = None,
         fabric: ProviderFabric | None = None,
+        verification_contract_factory: Callable[[str | Path, list[str]], Mapping[str, Any]] | None = None,
     ) -> None:
         repository = store.repo(repo)
         if not repository:
@@ -92,6 +100,7 @@ class CortexChatService:
         self.repository_path = str(Path(repository["path"]).resolve())
         self.secrets = secrets or HostSecretStore()
         self.fabric = fabric or ProviderFabric(store, self.secrets)
+        self.verification_contract_factory = verification_contract_factory or default_verification_contract
         self.events = SessionEventBus()
         self.started_at = time.time()
         self._runs: dict[str, tuple[threading.Thread, threading.Event]] = {}
@@ -103,7 +112,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.3",
+            "version": "10.0.0-alpha.4",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -438,6 +447,11 @@ class CortexChatService:
             for item in self.store.symbiotic_session_receipts(self.repo, str(receipt.get("session_id") or ""))
             if item.get("kind") == "coding_patch_application"
         }
+        verifications = {
+            str(item.get("proposal_hash") or ""): item
+            for item in self.store.symbiotic_session_receipts(self.repo, str(receipt.get("session_id") or ""))
+            if item.get("kind") == "coding_patch_verification"
+        }
         proposals = []
         for index, result in enumerate(receipt.get("tool_results") or ()):
             if not isinstance(result, Mapping) or result.get("tool_name") != "workspace.propose_patch":
@@ -452,9 +466,17 @@ class CortexChatService:
                 "source_session_id": receipt.get("session_id"),
                 "proposal_index": index,
                 "approval_challenge": approval_challenge(session_id, proposal_hash),
+                "verification": verifications.get(proposal_hash),
                 "application": applications.get(proposal_hash),
             })
-        return {"state": "REVIEW_REQUIRED" if proposals else "NO_PROPOSAL", "proposals": proposals}
+        state = "NO_PROPOSAL"
+        if proposals:
+            state = "REVIEW_REQUIRED"
+            if any((item.get("verification") or {}).get("status") == "verified" and not item.get("application") for item in proposals):
+                state = "VERIFIED_AWAITING_PROMOTION"
+            if all(item.get("application") for item in proposals):
+                state = "APPLIED"
+        return {"state": state, "proposals": proposals}
 
     def _application_targets_current(self, application: Mapping[str, Any]) -> bool:
         root = Path(self.repository_path).resolve()
@@ -469,11 +491,51 @@ class CortexChatService:
                 return False
         return True
 
+    def verify_workspace_patch(self, session_id: str, values: Mapping[str, Any]) -> dict[str, Any]:
+        if self.is_active(session_id):
+            raise RuntimeError("Stop the active generation before verifying a proposal.")
+        proposal_hash = str(values.get("proposal_hash") or "")
+        challenge = str(values.get("approval_challenge") or "")
+        proposal = next((item for item in self.workspace(session_id)["proposals"] if item.get("proposal_hash") == proposal_hash), None)
+        if not proposal:
+            raise ValueError("Canonical patch proposal was not found.")
+        if challenge != approval_challenge(session_id, proposal_hash):
+            raise ValueError("Operator approval challenge does not match this proposal.")
+        native_session_id = str(proposal["source_session_id"])
+        turn_id = 100 + int(proposal["proposal_index"])
+        existing = next((item for item in self.store.symbiotic_session_receipts(self.repo, native_session_id) if item.get("kind") == "coding_patch_verification" and int(item.get("turn_id") or 0) == turn_id), None)
+        if existing:
+            if existing.get("proposal_hash") != proposal_hash:
+                raise RuntimeError("Verification receipt slot already contains different content.")
+            return {**existing, "duplicate": True}
+        contract = self.verification_contract_factory(self.repository_path, list(proposal["targets"]))
+        result = verify_patch_in_isolated_worktree(self.repository_path, proposal, contract)
+        trajectory = self._trajectory(session_id) or {}
+        receipt = self.store.append_symbiotic_receipt(self.repo, {
+            **result,
+            "kind": "coding_patch_verification",
+            "session_id": native_session_id,
+            "turn_id": turn_id,
+            "event_id": f"coding_verify_{proposal_hash[:24]}",
+            "body_epoch_id": str(trajectory.get("body_epoch_id") or ""),
+            "source_trajectory_hash": proposal["source_trajectory_hash"],
+            "advisory_only": True,
+            "update_authorized": False,
+        })
+        self.events.publish(session_id, "workspace.patch.verified", {
+            "proposal_hash": proposal_hash,
+            "receipt_hash": receipt["receipt_hash"],
+            "status": receipt["status"],
+            "active_tree_mutated": False,
+        })
+        return receipt
+
     def apply_workspace_patch(self, session_id: str, values: Mapping[str, Any]) -> dict[str, Any]:
         if self.is_active(session_id):
             raise RuntimeError("Stop the active generation before applying a proposal.")
         proposal_hash = str(values.get("proposal_hash") or "")
         challenge = str(values.get("approval_challenge") or "")
+        verification_hash = str(values.get("verification_receipt_hash") or "")
         surface = self.workspace(session_id)
         proposal = next(
             (item for item in surface["proposals"] if item.get("proposal_hash") == proposal_hash),
@@ -483,6 +545,19 @@ class CortexChatService:
             raise ValueError("Canonical patch proposal was not found.")
         if challenge != approval_challenge(session_id, proposal_hash):
             raise ValueError("Operator approval challenge does not match this proposal.")
+        verified = self.store.verify_symbiotic_receipt(self.repo, verification_hash)
+        verification_receipt = verified.get("receipt") if verified.get("valid") else None
+        if not isinstance(verification_receipt, Mapping):
+            raise ValueError("Canonical verification receipt is required before promotion.")
+        if (
+            verification_receipt.get("kind") != "coding_patch_verification"
+            or verification_receipt.get("status") != "verified"
+            or verification_receipt.get("proposal_hash") != proposal_hash
+            or verification_receipt.get("session_id") != proposal.get("source_session_id")
+        ):
+            raise ValueError("Verification receipt does not authorize this proposal promotion.")
+        if verification_receipt.get("source_head") != repository_head(self.repository_path):
+            raise ValueError("Repository HEAD changed after isolated verification.")
 
         native_session_id = str(proposal["source_session_id"])
         turn_id = 100 + int(proposal["proposal_index"])
@@ -511,6 +586,8 @@ class CortexChatService:
                     "event_id": f"coding_apply_{proposal_hash[:24]}",
                     "body_epoch_id": str(trajectory.get("body_epoch_id") or ""),
                     "source_trajectory_hash": proposal["source_trajectory_hash"],
+                    "verification_receipt_hash": verification_hash,
+                    "verification_contract_hash": verification_receipt.get("contract_hash"),
                     "advisory_only": True,
                     "update_authorized": False,
                 },
@@ -760,6 +837,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                         return self._json(200, self.cortex.switch_model(session_id, str(body.get("provider") or ""), str(body.get("model_id") or "")))
                 if len(parts) == 5 and parts[:2] == ["v1", "sessions"] and parts[3:] == ["workspace", "apply"]:
                     return self._json(200, self.cortex.apply_workspace_patch(parts[2], body))
+                if len(parts) == 5 and parts[:2] == ["v1", "sessions"] and parts[3:] == ["workspace", "verify"]:
+                    return self._json(200, self.cortex.verify_workspace_patch(parts[2], body))
                 self._json(404, {"error": "Endpoint not found."})
         except Exception as exc:
             self._error(exc)

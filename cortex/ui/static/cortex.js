@@ -741,29 +741,57 @@ function renderWorkspace() {
     details.append(summary, pre);
     const approve = document.createElement("button");
     approve.type = "button";
-    approve.textContent = proposal.application ? (proposal.application.targets_current ? "APPLIED & VERIFIED" : "APPLIED · TARGET DRIFT") : "APPROVE & APPLY";
+    const verified = proposal.verification?.status === "verified";
+    approve.textContent = proposal.application
+      ? (proposal.application.targets_current ? "PROMOTED & VERIFIED" : "PROMOTED · TARGET DRIFT")
+      : verified ? "PROMOTE VERIFIED PATCH" : proposal.verification ? "VERIFICATION HELD" : "APPROVE & VERIFY";
     approve.disabled = Boolean(proposal.application);
-    if (!proposal.application) approve.onclick = () => applyWorkspaceProposal(proposal, approve);
+    if (!proposal.application && !proposal.verification) approve.onclick = () => verifyWorkspaceProposal(proposal, approve);
+    if (!proposal.application && verified) approve.onclick = () => promoteWorkspaceProposal(proposal, approve);
+    if (proposal.verification && !verified) approve.disabled = true;
     card.append(title, meta, details, approve);
     root.prepend(card);
   }
 }
 
-async function applyWorkspaceProposal(proposal, button) {
-  if (!confirm(`Apply this exact Cortex patch?\n\n${proposal.summary}\n\nTargets: ${proposal.targets.join(", ")}\n\nThe diff will be verified and rolled back if fixed checks fail.`)) return;
+async function verifyWorkspaceProposal(proposal, button) {
+  if (!confirm(`Verify this exact Cortex patch in an isolated worktree?\n\n${proposal.summary}\n\nTargets: ${proposal.targets.join(", ")}\n\nThe active repository will not be changed. Verification may execute the reviewed candidate through host-selected checks.`)) return;
   button.disabled = true;
   button.textContent = "VERIFYING…";
   try {
-    const result = await api(`/v1/sessions/${state.session.session_id}/workspace/apply`, {
+    const result = await api(`/v1/sessions/${state.session.session_id}/workspace/verify`, {
       method: "POST",
       body: JSON.stringify({ proposal_hash: proposal.proposal_hash, approval_challenge: proposal.approval_challenge }),
     });
-    button.textContent = "APPLIED & VERIFIED";
-    toast(`Patch applied and sealed · ${String(result.receipt_hash).slice(0, 16)}`);
+    button.textContent = result.status === "verified" ? "PROMOTE VERIFIED PATCH" : "VERIFICATION HELD";
+    toast(`Isolated verification ${result.status} · ${String(result.receipt_hash).slice(0, 16)}`, result.status !== "verified");
     await refreshIntelligence();
   } catch (error) {
     button.disabled = false;
-    button.textContent = "APPROVE & APPLY";
+    button.textContent = "APPROVE & VERIFY";
+    toast(error.message, true);
+  }
+}
+
+async function promoteWorkspaceProposal(proposal, button) {
+  if (!confirm(`Promote this independently verified patch into the active checkout?\n\n${proposal.summary}\n\nThis is a second, explicit operator decision.`)) return;
+  button.disabled = true;
+  button.textContent = "PROMOTING…";
+  try {
+    const result = await api(`/v1/sessions/${state.session.session_id}/workspace/apply`, {
+      method: "POST",
+      body: JSON.stringify({
+        proposal_hash: proposal.proposal_hash,
+        approval_challenge: proposal.approval_challenge,
+        verification_receipt_hash: proposal.verification.receipt_hash,
+      }),
+    });
+    button.textContent = "PROMOTED & VERIFIED";
+    toast(`Verified patch promoted · ${String(result.receipt_hash).slice(0, 16)}`);
+    await refreshIntelligence();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "PROMOTE VERIFIED PATCH";
     toast(error.message, true);
   }
 }

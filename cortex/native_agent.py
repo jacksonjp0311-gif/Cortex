@@ -24,7 +24,7 @@ from .symbiosis import open_symbiotic_session
 
 SCHEMA = "cortex-native-agent/1.0"
 EVENT_SCHEMA = "cortex-agent-event/1.0"
-VERSION = "10.0.0-alpha.3"
+VERSION = "10.0.0-alpha.4"
 ZERO_HASH = "0" * 64
 MAX_PROVIDER_OUTPUT_BYTES = 1_048_576
 MAX_TOOL_OUTPUT_BYTES = 262_144

@@ -1,3 +1,22 @@
+## 10.0.0-alpha.4 - Verified Improvement Circulation
+
+- Split source changes into isolated verification and separately authorized
+  promotion. Candidate patches run in detached Git worktrees and cannot mutate
+  the active operator checkout during evaluation.
+- Added immutable host verification contracts and receipts binding the exact
+  proposal, source HEAD, target scope, command vectors, step outcomes,
+  durations, and postimage hashes. Models and API callers cannot select or
+  replace the verification commands.
+- Added a second explicit promotion edge that requires a canonical passing
+  verification receipt, unchanged repository HEAD, and fresh target preimages
+  before bounded application.
+- Added UI states for review, isolated verification, held candidates, and
+  verified promotion, plus adversarial tests for caller-supplied policy
+  substitution, failed verification, active-tree purity, and HEAD drift.
+- Preserved `host_mutate_authorized=false`, `execution_authorized=false`,
+  `memory_admission_authorized=false`, and `policy_effect=false`. Alpha.4
+  verifies changes; it does not claim a measured capability improvement.
+
 ## 10.0.0-alpha.3 - Governed Coding Workspace
 
 - Added a repository-contained patch-proposal tool that records exact unified

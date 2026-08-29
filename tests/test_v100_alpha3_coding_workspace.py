@@ -99,11 +99,25 @@ class CodingWorkspaceTests(unittest.TestCase):
         proposal = surface["proposals"][0]
         with self.assertRaisesRegex(ValueError, "approval challenge"):
             service.apply_workspace_patch(chat["session_id"], {"proposal_hash": proposal["proposal_hash"], "approval_challenge": "wrong"})
+        with self.assertRaisesRegex(ValueError, "verification receipt"):
+            service.apply_workspace_patch(
+                chat["session_id"],
+                {"proposal_hash": proposal["proposal_hash"], "approval_challenge": proposal["approval_challenge"]},
+            )
+        verification = service.verify_workspace_patch(
+            chat["session_id"],
+            {"proposal_hash": proposal["proposal_hash"], "approval_challenge": proposal["approval_challenge"]},
+        )
+        self.assertEqual(verification["status"], "verified")
+        self.assertTrue(verification["isolated_worktree"])
+        self.assertFalse(verification["active_tree_mutated"])
+        self.assertEqual((self.host / "README.md").read_text(encoding="utf-8"), "# Before\n")
         receipt = service.apply_workspace_patch(
             chat["session_id"],
             {
                 "proposal_hash": proposal["proposal_hash"],
                 "approval_challenge": proposal["approval_challenge"],
+                "verification_receipt_hash": verification["receipt_hash"],
                 "patch": "caller substitution must be ignored",
             },
         )
@@ -114,7 +128,11 @@ class CodingWorkspaceTests(unittest.TestCase):
         self.assertFalse(receipt["model_execution_authorized"])
         duplicate = service.apply_workspace_patch(
             chat["session_id"],
-            {"proposal_hash": proposal["proposal_hash"], "approval_challenge": proposal["approval_challenge"]},
+            {
+                "proposal_hash": proposal["proposal_hash"],
+                "approval_challenge": proposal["approval_challenge"],
+                "verification_receipt_hash": verification["receipt_hash"],
+            },
         )
         self.assertTrue(duplicate["duplicate"])
         self.assertEqual((self.host / "README.md").read_text(encoding="utf-8"), "# After\n")
@@ -137,6 +155,11 @@ class CodingWorkspaceTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "protected"):
             create_patch_proposal(self.host, protected, "unsafe")
+        evaluator = (
+            "diff --git a/tests/test_gate.py b/tests/test_gate.py\n--- a/tests/test_gate.py\n+++ b/tests/test_gate.py\n@@ -1 +1 @@\n-a\n+b\n"
+        )
+        with self.assertRaisesRegex(ValueError, "protected"):
+            create_patch_proposal(self.host, evaluator, "weaken evaluator")
 
     def test_failed_python_verification_rolls_back_source(self) -> None:
         patch = (

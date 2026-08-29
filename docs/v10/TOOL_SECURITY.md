@@ -1,7 +1,7 @@
 # Tool Security
 
-The local Cortex UI defaults to a repository-scoped read-only profile and lets
-the operator turn that profile off. Other runtime callers receive only the
+The local Cortex UI defaults to a repository-scoped proposal profile and lets
+the operator reduce it to read-only or turn it off. Other runtime callers receive only the
 `CapabilityGrant` they explicitly construct. The host grant contains allowed
 tool names, a workspace root, optional exact command-vector allowlist, and
 resource limits. The model cannot widen it.
@@ -14,8 +14,11 @@ Native tools:
 - `workspace.propose_patch`: records a bounded unified diff and target preimage
   hashes for review. It cannot apply its own proposal. Application is a
   separate loopback operator action that reloads the exact canonical proposal,
-  verifies a session-bound approval challenge, checks freshness, applies the
-  diff, runs fixed verification, and rolls back failures.
+  verifies a session-bound approval challenge, checks freshness, and evaluates
+  the diff in an isolated Git worktree under a host-owned command contract. A
+  second operator decision is required to promote a verified candidate into
+  the active checkout. Repository HEAD and target preimages are rechecked;
+  failed active-tree checks roll back.
 - `terminal.execute`: argument-vector execution without a shell, contained
   working directory, exact host-approved argument vector, timeout, and bounded
   output. Granting an executable does not grant arbitrary arguments.

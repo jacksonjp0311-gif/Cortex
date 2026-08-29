@@ -1,6 +1,8 @@
 # Governed Coding Workspace
 
-Cortex 10.0.0-alpha.3 closes the first operator-mediated source-change loop.
+Cortex 10.0.0-alpha.3 closed the first operator-mediated source-change loop.
+Alpha.4 separates isolated verification from active-checkout promotion; see
+`VERIFIED_IMPROVEMENT_CIRCULATION.md`.
 The reasoning model may inspect the attached repository and submit an exact git
 unified diff through `workspace.propose_patch`. That tool is observational: it
 records the summary, patch, target paths, file preimage hashes, and proposal

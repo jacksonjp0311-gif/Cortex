@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.3`
+Version target: `10.0.0-alpha.4`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -34,6 +34,7 @@ channels, or browser-control authority.
 - [Agent protocol](AGENT_PROTOCOL.md)
 - [Tool security](TOOL_SECURITY.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
+- [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Provider interface](PROVIDER_INTERFACE.md)
 - [Cortex runtime bridge](CORTEX_RUNTIME_BRIDGE.md)
 - [UI design language](UI_DESIGN_LANGUAGE.md)
