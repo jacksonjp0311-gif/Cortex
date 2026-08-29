@@ -62,6 +62,20 @@
         <article class="module compact-module"><header><strong>COST ESTIMATE</strong></header><p><strong id="costMetric">—</strong><span id="costClass">UNAVAILABLE</span></p><div class="micro-bars cost-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
       </section>
 
+      <section class="module call-observability-module">
+        <header><strong>CALL OBSERVABILITY</strong><span class="live-label"><i></i><b id="callMetricState">NO TURN</b></span></header>
+        <div class="call-metric-grid">
+          <article><small>INPUT</small><strong id="inputTokenMetric">—</strong><span id="inputTokenClass">UNAVAILABLE</span></article>
+          <article><small>OUTPUT</small><strong id="outputTokenMetric">—</strong><span id="outputTokenClass">UNAVAILABLE</span></article>
+          <article><small>TOTAL TOKENS</small><strong id="totalTokenMetric">—</strong><span id="totalTokenClass">UNAVAILABLE</span></article>
+          <article><small>FIRST TOKEN</small><strong id="firstTokenMetric">—</strong><span id="firstTokenClass">UNAVAILABLE</span></article>
+          <article><small>TOTAL TIME</small><strong id="totalLatencyMetric">—</strong><span id="totalLatencyClass">UNAVAILABLE</span></article>
+          <article><small>CONTEXT PREP</small><strong id="contextProjectionMetric">—</strong><span id="contextProjectionClass">UNAVAILABLE</span></article>
+          <article><small>STREAM CHUNKS</small><strong id="streamChunkMetric">—</strong><span id="streamChunkClass">UNAVAILABLE</span></article>
+          <article><small>TOOL CALLS</small><strong id="toolMetric">0</strong><span id="toolMetricClass">MEASURED</span></article>
+        </div>
+      </section>
+
       <section class="module system-module">
         <article><small>CPU</small><strong>—</strong><span>UNAVAILABLE</span><canvas id="cpuChart"></canvas></article>
         <article><small>GPU</small><strong>—</strong><span>UNAVAILABLE</span><canvas id="gpuChart"></canvas></article>
@@ -160,7 +174,7 @@
 
   <dialog id="cortexDialog" class="modal cortex-modal"><div class="modal-frame"><header><div><small>RESPONSE PROVENANCE</small><h2>Cortex used for this response</h2></div><button id="closeCortex">×</button></header><div id="cortexSummary" class="cortex-summary"></div></div></dialog>
   <div id="toast" class="toast" role="status"></div>
-  <span class="hidden" id="tokenMetric">—</span><span class="hidden" id="contextMetric">—</span><span class="hidden" id="firstTokenMetric">—</span><span class="hidden" id="toolMetric">0</span><span class="hidden" id="contextUnit">tokens</span><span class="hidden" id="conversationTitle">New conversation</span>
+  <span class="hidden" id="tokenMetric">—</span><span class="hidden" id="contextMetric">—</span><span class="hidden" id="contextUnit">tokens</span><span class="hidden" id="conversationTitle">New conversation</span>
   <script src="/cortex.js" defer></script>
 </body>
 </html>

@@ -25,6 +25,7 @@ const state = {
   callStartedAt: null,
   firstDeltaAt: null,
   streamedCharacters: 0,
+  streamChunks: 0,
   toolCalls: 0,
   rateHistory: [],
   latencyHistory: [],
@@ -317,10 +318,26 @@ function resetLiveMetrics() {
   state.callStartedAt = performance.now();
   state.firstDeltaAt = null;
   state.streamedCharacters = 0;
+  state.streamChunks = 0;
   state.toolCalls = 0;
+  for (const [valueId, classId, label] of [
+    ["#inputTokenMetric", "#inputTokenClass", "AWAITING PROVIDER"],
+    ["#outputTokenMetric", "#outputTokenClass", "AWAITING PROVIDER"],
+    ["#totalTokenMetric", "#totalTokenClass", "AWAITING PROVIDER"],
+    ["#totalLatencyMetric", "#totalLatencyClass", "MEASURING"],
+    ["#contextProjectionMetric", "#contextProjectionClass", "MEASURING"],
+  ]) {
+    $(valueId).textContent = "—";
+    $(classId).textContent = label;
+  }
   $("#rateClass").textContent = $("#tokenRate").textContent === "—" ? "AWAITING USAGE" : "LAST TURN · AWAITING LIVE";
   $("#latencyClass").textContent = $("#latencyMetric").textContent === "—" ? "MEASURING" : "LAST TURN · MEASURING";
   $("#toolMetric").textContent = "0";
+  $("#streamChunkMetric").textContent = "0";
+  $("#streamChunkClass").textContent = "MEASURED LIVE";
+  $("#firstTokenMetric").textContent = "—";
+  $("#firstTokenClass").textContent = "AWAITING FIRST DELTA";
+  $("#callMetricState").textContent = "LIVE";
   $("#costClass").textContent = $("#costMetric").textContent === "—" ? "UNAVAILABLE" : "LAST TURN";
   $("#telemetryState").textContent = "LIVE";
   $("#healthMetric").textContent = "ACTIVE";
@@ -329,9 +346,12 @@ function resetLiveMetrics() {
 function updateLiveDelta(payload) {
   const elapsedMs = Number(payload.elapsed_ms) || (performance.now() - state.callStartedAt);
   state.streamedCharacters = Number(payload.streamed_characters) || (state.streamedCharacters + String(payload.text || "").length);
+  state.streamChunks += 1;
+  $("#streamChunkMetric").textContent = state.streamChunks;
   if (!state.firstDeltaAt) {
     state.firstDeltaAt = elapsedMs;
     $("#firstTokenMetric").textContent = elapsedMs.toFixed(0);
+    $("#firstTokenClass").textContent = "MEASURED";
   }
   const estimatedTokens = state.streamedCharacters / 4;
   const estimatedRate = elapsedMs > 0 ? estimatedTokens / (elapsedMs / 1000) : 0;
@@ -350,10 +370,30 @@ function applyTelemetry(telemetry) {
   const metrics = telemetry?.metrics || {};
   setMetric("#tokenRate", "#rateClass", metrics.tokens_per_second, value => Number(value).toFixed(1));
   setMetric("#latencyMetric", "#latencyClass", metrics.model_latency, value => Number(value).toFixed(0));
-  setMetric("#firstTokenMetric", null, metrics.first_token_latency, value => Number(value).toFixed(0));
+  setMetric("#inputTokenMetric", "#inputTokenClass", metrics.input_tokens, value => Number(value).toLocaleString());
+  setMetric("#outputTokenMetric", "#outputTokenClass", metrics.output_tokens, value => Number(value).toLocaleString());
+  setMetric("#totalTokenMetric", "#totalTokenClass", metrics.total_tokens, value => Number(value).toLocaleString());
+  setMetric("#firstTokenMetric", "#firstTokenClass", metrics.first_token_latency, value => `${Number(value).toFixed(0)} ms`);
+  setMetric("#totalLatencyMetric", "#totalLatencyClass", metrics.total_latency, value => `${Number(value).toFixed(0)} ms`);
+  setMetric("#contextProjectionMetric", "#contextProjectionClass", metrics.context_projection_latency, value => `${Number(value).toFixed(0)} ms`);
+  setMetric("#streamChunkMetric", "#streamChunkClass", metrics.stream_chunks, value => Number(value).toLocaleString());
   setMetric("#contextLoad", "#contextClass", metrics.context_tokens, value => Number(value).toLocaleString());
   setMetric("#costMetric", "#costClass", metrics.cost, value => Number(value).toPrecision(4));
+  if (telemetry?.state === "STREAMING") {
+    for (const [metricName, classId, pendingLabel] of [
+      ["input_tokens", "#inputTokenClass", "AWAITING PROVIDER"],
+      ["output_tokens", "#outputTokenClass", "AWAITING PROVIDER"],
+      ["total_tokens", "#totalTokenClass", "AWAITING PROVIDER"],
+      ["first_token_latency", "#firstTokenClass", "AWAITING FIRST DELTA"],
+      ["total_latency", "#totalLatencyClass", "MEASURING"],
+      ["context_projection_latency", "#contextProjectionClass", "MEASURING"],
+    ]) {
+      if (metrics[metricName]?.value == null) $(classId).textContent = pendingLabel;
+    }
+  }
   $("#toolMetric").textContent = metrics.tool_calls?.value ?? 0;
+  $("#toolMetricClass").textContent = measurementLabel(metrics.tool_calls?.measurement);
+  $("#callMetricState").textContent = telemetry?.state || "NO TURN";
   $("#tokenMetric").textContent = metrics.total_tokens?.value ?? "—";
   const contextTokens = Number(metrics.context_tokens?.value);
   const contextLimit = Number(state.selectedDescriptor?.context_length);
@@ -570,6 +610,10 @@ function handleEvent(event) {
       $("#contextLoad").textContent = Number(payload.estimated_tokens).toLocaleString();
       $("#contextMetric").textContent = Number(payload.estimated_tokens).toLocaleString();
     }
+    if (payload.duration_ms != null) {
+      $("#contextProjectionMetric").textContent = `${Number(payload.duration_ms).toFixed(0)} ms`;
+      $("#contextProjectionClass").textContent = "MEASURED";
+    }
     scheduleIntelligenceRefresh();
   }
   if (type === "model.requested") setCoreState("thinking", "THINKING", `${providerLabel(state.session.provider)} / ${state.session.model_id}`);
@@ -582,6 +626,12 @@ function handleEvent(event) {
   if (type === "model.responded") {
     const usage = payload.token_usage || {};
     $("#tokenMetric").textContent = usage.total_tokens ?? usage.total ?? usage.output_tokens ?? usage.completion_tokens ?? "—";
+    const input = usage.input_tokens ?? usage.prompt_tokens ?? usage.input;
+    const output = usage.output_tokens ?? usage.completion_tokens ?? usage.output;
+    const total = usage.total_tokens ?? usage.total ?? (Number.isFinite(Number(input)) && Number.isFinite(Number(output)) ? Number(input) + Number(output) : null);
+    if (input != null) { $("#inputTokenMetric").textContent = Number(input).toLocaleString(); $("#inputTokenClass").textContent = "PROVIDER REPORTED"; }
+    if (output != null) { $("#outputTokenMetric").textContent = Number(output).toLocaleString(); $("#outputTokenClass").textContent = "PROVIDER REPORTED"; }
+    if (total != null) { $("#totalTokenMetric").textContent = Number(total).toLocaleString(); $("#totalTokenClass").textContent = "PROVIDER REPORTED"; }
     if (payload.tokens_per_second != null) {
       $("#tokenRate").textContent = Number(payload.tokens_per_second).toFixed(1);
       $("#rateClass").textContent = "MEASURED";
@@ -605,7 +655,13 @@ function handleEvent(event) {
     setCoreState("thinking", "THINKING", "Tool observation returned");
     logTool(event);
   }
-  if (type === "trajectory.sealed") scheduleIntelligenceRefresh();
+  if (type === "trajectory.sealed") {
+    if (payload.total_latency_ms != null) {
+      $("#totalLatencyMetric").textContent = `${Number(payload.total_latency_ms).toFixed(0)} ms`;
+      $("#totalLatencyClass").textContent = "MEASURED";
+    }
+    scheduleIntelligenceRefresh();
+  }
   if (type === "chat.interrupt.requested" || type === "model.interrupted") setCoreState("interrupt", "INTERRUPTED", "Operator cancellation received");
   if (type === "chat.turn.completed") {
     state.streaming = false;

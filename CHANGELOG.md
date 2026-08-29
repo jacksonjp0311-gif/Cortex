@@ -1418,3 +1418,7 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
   tool, open a grant, bypass schema checks, forge a receipt, exceed a budget, or
   retain a cancelled subprocess. Alpha.6 does not grant autonomous execution,
   mutation, memory admission, competence promotion, or self-improvement.
+- Exposed the complete measured call panel in the native UI and added a focused
+  two-second telemetry smoke compiler that checks runtime events, loopback API
+  values, visible DOM targets, and JavaScript bindings without running the full
+  repository suite.

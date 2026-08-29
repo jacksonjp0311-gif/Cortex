@@ -24,7 +24,24 @@ The native runtime emits measured context-projection duration, first public
 delta latency, model latency, streamed character count, tool duration, and
 total turn latency. Provider token usage and cost remain separately typed as
 provider-reported. `GET /v1/sessions/{id}/telemetry` reconstructs the latest
-truthful summary from current events or the sealed trajectory.
+truthful summary from current events or the sealed trajectory. The visible
+call-observability panel shows input, output, and total tokens; first-token and
+total latency; context preparation; stream chunks; and tool calls. Missing
+provider usage remains explicitly unavailable.
+
+## Focused smoke compiler
+
+UI telemetry has a dedicated fast gate. It starts an isolated loopback Cortex
+service, streams one deterministic provider-neutral fixture turn, and compiles
+every available backend metric against its visible DOM and JavaScript binding.
+It does not contact a model provider or run the full repository suite.
+
+```powershell
+python scripts/ci/ui_telemetry_smoke.py
+```
+
+Use `--json` only when the complete diagnostic receipt is needed. The default
+output is deliberately one line so routine UI checks remain inexpensive.
 
 ## Visual binding
 
