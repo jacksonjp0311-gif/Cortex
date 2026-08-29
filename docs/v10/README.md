@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.5`
+Version target: `10.0.0-alpha.6`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -27,12 +27,19 @@ the alpha.1 circulation and evidence boundary. It does not add a second memory
 system, autonomous memory admission, skills, delegation, cron, remote gateway
 channels, or browser-control authority.
 
+Alpha.6 closes the first governed tool-fabric boundary. Host-registered,
+provider-neutral manifests define exact input/output schemas, authority class,
+side effects, and cancellation behavior. Per-turn host grants are bounded by
+workspace, tool set, exact command vectors, time, and call count. Each result is
+an immutable, hash-bound observation—not truth, memory, or standing authority.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
 - [Hermes extraction audit](HERMES_EXTRACTION_AUDIT.md)
 - [Agent protocol](AGENT_PROTOCOL.md)
 - [Tool security](TOOL_SECURITY.md)
+- [Governed tool fabric](GOVERNED_TOOL_FABRIC.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -50,8 +57,9 @@ channels, or browser-control authority.
 
 ## Claim boundary
 
-Alpha.5 proves that the local interface, provider-neutral runtime path, and
+Alpha.6 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
-safe execution of arbitrary tools, or live cross-provider model quality.
+safe execution of arbitrary tools, self-improvement, or live cross-provider
+model quality.

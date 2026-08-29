@@ -1,7 +1,8 @@
 # Agent Protocol
 
-The protocol has four immutable public objects: `AgentMessage`,
-`AgentModelRequest`, `AgentModelResponse`, and `AgentEvent`.
+The protocol has six immutable public objects: `AgentMessage`,
+`AgentModelRequest`, `AgentModelResponse`, `AgentEvent`, `ToolManifest`, and
+`ToolExecutionReceipt`.
 
 Events use schema `cortex-agent-event/1.0` and are monotonically sequenced.
 Each event hash covers the prior event hash, creating a per-trajectory chain.
@@ -18,7 +19,8 @@ trajectory.sealed
 ```
 
 A model response must bind the exact request hash. A tool result must bind the
-exact tool-call ID. Duplicate call IDs, missing pairs, malformed arguments,
+exact tool-call ID, registered manifest hash, host grant hash, argument hash,
+and output hash. Duplicate call IDs, missing pairs, malformed arguments,
 context hash drift, and response replay fail closed.
 
 Terminal capability hashes cover exact argument vectors. A model cannot retain

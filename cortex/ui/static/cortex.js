@@ -4,6 +4,7 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 const state = {
   status: null,
   providers: [],
+  tools: [],
   settings: {},
   sessions: [],
   session: null,
@@ -409,12 +410,27 @@ async function loadProviders() {
   renderProviders();
 }
 
+function renderToolCatalog() {
+  const card = document.querySelector(".appearance-card");
+  if (!card) return;
+  let root = $("#toolCatalog");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "toolCatalog";
+    root.className = "tool-catalog";
+    card.insertBefore(root, card.querySelector(".segmented"));
+  }
+  root.innerHTML = state.tools.map(tool => `<div class="tool-manifest"><span><strong>${escapeHtml(tool.tool_id)}</strong><small>v${escapeHtml(tool.version)} · ${escapeHtml(tool.authority_class)}</small></span><code>${escapeHtml(tool.manifest_hash.slice(0, 12))}</code></div>`).join("") || '<span class="muted">No host tools registered.</span>';
+}
+
 async function loadInitial() {
   try {
     state.status = await api("/v1/status");
     state.uptimeBase = Number(state.status.uptime_seconds || 0);
     state.uptimeStartedAt = Date.now();
     state.settings = await api("/v1/settings");
+    state.tools = (await api("/v1/tools")).tools;
+    renderToolCatalog();
     await loadProviders();
     state.sessions = (await api("/v1/sessions")).sessions;
     renderSessions();
@@ -626,7 +642,9 @@ function logTool(event) {
   const node = document.createElement("div");
   node.className = "tool-unit";
   const duration = event.payload.duration_ms != null ? ` · ${event.payload.duration_ms} ms` : "";
-  node.textContent = `${event.event_type} · ${event.payload.tool_name || event.payload.name || ""} · ${event.payload.status || ""}${duration}`;
+  const authority = event.payload.authority_class ? ` · ${event.payload.authority_class}` : "";
+  const manifest = event.payload.manifest_hash ? ` · ${event.payload.manifest_hash.slice(0, 12)}` : "";
+  node.textContent = `${event.event_type} · ${event.payload.tool_name || event.payload.name || ""}${authority}${manifest} · ${event.payload.status || ""}${duration}`;
   root.prepend(node);
 }
 

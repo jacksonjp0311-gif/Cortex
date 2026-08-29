@@ -1400,3 +1400,21 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Preserved human promotion authority and all closed authority flags. A single
   paired source result is bounded repair evidence, not general, autonomous,
   cognitive, or conscious self-improvement.
+## 10.0.0-alpha.6 - Governed Tool Fabric
+
+- Replaced implicit native-tool definitions with host-owned, versioned,
+  content-addressed manifests carrying conservative schemas, authority class,
+  side effects, and cancellation metadata.
+- Extended per-turn capability grants with principal, purpose, freshness, call,
+  and total-time bounds while preserving exact command-vector scope and all
+  closed authority flags.
+- Added immutable execution receipts binding each tool call to its manifest,
+  grant, arguments, output, status, and chronology, with deep reconstruction
+  through the canonical native-agent trajectory.
+- Added cooperative terminal cancellation, fail-closed unknown/extra arguments,
+  runtime budgets, a truthful `/v1/tools` surface, and operator-console manifest
+  visibility.
+- Added adversarial coverage proving model/caller assertions cannot register a
+  tool, open a grant, bypass schema checks, forge a receipt, exceed a budget, or
+  retain a cancelled subprocess. Alpha.6 does not grant autonomous execution,
+  mutation, memory admission, competence promotion, or self-improvement.

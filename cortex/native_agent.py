@@ -21,10 +21,19 @@ from typing import Any, Protocol
 from .coding_workspace import create_patch_proposal
 from .model_circulation import ModelAdapterError, project_task_context
 from .symbiosis import open_symbiotic_session
+from .tool_fabric import (
+    GRANT_SCHEMA,
+    EXECUTION_SCHEMA,
+    ToolCatalog,
+    ToolManifest,
+    create_execution_receipt,
+    validate_arguments,
+    verify_execution_receipt,
+)
 
 SCHEMA = "cortex-native-agent/1.0"
 EVENT_SCHEMA = "cortex-agent-event/1.0"
-VERSION = "10.0.0-alpha.5"
+VERSION = "10.0.0-alpha.6"
 ZERO_HASH = "0" * 64
 MAX_PROVIDER_OUTPUT_BYTES = 1_048_576
 MAX_TOOL_OUTPUT_BYTES = 262_144
@@ -127,6 +136,12 @@ class CapabilityGrant:
     allowed_commands: tuple[str, ...] = ()
     max_tool_output_bytes: int = MAX_TOOL_OUTPUT_BYTES
     max_command_seconds: float = 30.0
+    principal_id: str = "local_operator"
+    purpose: str = "native_agent_turn"
+    issued_at: float = 0.0
+    expires_at: float | None = None
+    max_tool_calls: int = 16
+    max_total_tool_seconds: float = 120.0
 
     def _command_vectors(self) -> list[list[str]]:
         vectors: list[list[str]] = []
@@ -156,13 +171,22 @@ class CapabilityGrant:
     def material(self) -> dict[str, Any]:
         root = str(Path(self.workspace_root).expanduser().resolve())
         return {
-            "schema_version": "cortex-agent-capability-grant/1.0",
+            "schema_version": GRANT_SCHEMA,
+            "principal_id": _required(self.principal_id, "principal_id"),
+            "purpose": _required(self.purpose, "purpose"),
             "workspace_root": root,
             "allowed_tools": sorted({_required(x, "allowed tool") for x in self.allowed_tools}),
             "allowed_command_vectors": self._command_vectors(),
             "max_tool_output_bytes": max(1, min(int(self.max_tool_output_bytes), MAX_TOOL_OUTPUT_BYTES)),
             "max_command_seconds": max(0.1, min(float(self.max_command_seconds), 120.0)),
+            "issued_at": float(self.issued_at),
+            "expires_at": float(self.expires_at) if self.expires_at is not None else None,
+            "max_tool_calls": max(0, min(int(self.max_tool_calls), 128)),
+            "max_total_tool_seconds": max(0.0, min(float(self.max_total_tool_seconds), 1800.0)),
+            "host_issued": True,
+            "delegable": False,
             "host_mutate_authorized": False,
+            "execution_authorized": False,
             "memory_admission_authorized": False,
             "policy_effect": False,
         }
@@ -170,6 +194,18 @@ class CapabilityGrant:
     @property
     def grant_hash(self) -> str:
         return _sha(self.material())
+
+    def verify(self, *, now: float | None = None) -> dict[str, Any]:
+        material = self.material()
+        checked_at = float(now if now is not None else time.time())
+        errors: list[str] = []
+        if material["issued_at"] > 0 and checked_at < material["issued_at"]:
+            errors.append("grant_not_yet_current")
+        if material["expires_at"] is not None and checked_at > material["expires_at"]:
+            errors.append("grant_expired")
+        if material["delegable"] is not False:
+            errors.append("grant_delegation_open")
+        return {"valid": not errors, "errors": errors, "grant_hash": self.grant_hash}
 
 
 @dataclass(frozen=True)
@@ -423,52 +459,97 @@ def _adapter_identity(adapter: AgentModelAdapter) -> dict[str, str]:
 
 
 class ToolRegistry:
-    def definitions(self, grant: CapabilityGrant) -> tuple[Mapping[str, Any], ...]:
-        definitions = {
-            "filesystem.list": {
-                "name": "filesystem.list",
-                "description": "List files and directories inside the granted Cortex workspace. This is read-only and bounded.",
-                "input_schema": {
+    """Host-owned catalog and executor used by every native-agent adapter."""
+
+    def __init__(self) -> None:
+        output_object = {"oneOf": [{"type": "object"}, {"type": "string"}]}
+        self.catalog = ToolCatalog((
+            ToolManifest(
+                "filesystem.list", "1.0",
+                "List files and directories inside the granted Cortex workspace. This is read-only and bounded.",
+                {
                     "type": "object",
                     "properties": {
-                        "path": {"type": "string", "description": "Workspace-relative directory; defaults to the repository root."},
+                        "path": {"type": "string"},
                         "recursive": {"type": "boolean"},
                         "max_entries": {"type": "integer", "minimum": 1, "maximum": 500},
                     },
                 },
-            },
-            "filesystem.read": {
-                "name": "filesystem.read",
-                "description": "Read a UTF-8 text file inside the granted workspace.",
-                "input_schema": {"type": "object", "required": ["path"], "properties": {"path": {"type": "string"}}},
-            },
-            "workspace.propose_patch": {
-                "name": "workspace.propose_patch",
-                "description": "Submit an exact git unified diff for operator review. This never applies the patch or grants mutation authority.",
-                "input_schema": {
-                    "type": "object",
-                    "required": ["summary", "patch"],
+                output_object, "observational", supports_cancellation=True,
+            ),
+            ToolManifest(
+                "filesystem.read", "1.0",
+                "Read a UTF-8 text file inside the granted workspace.",
+                {"type": "object", "required": ["path"], "properties": {"path": {"type": "string"}}},
+                output_object, "observational", supports_cancellation=True,
+            ),
+            ToolManifest(
+                "workspace.propose_patch", "1.0",
+                "Submit an exact git unified diff for operator review. This never applies the patch or grants mutation authority.",
+                {
+                    "type": "object", "required": ["summary", "patch"],
                     "properties": {"summary": {"type": "string"}, "patch": {"type": "string"}},
                 },
-            },
-            "terminal.execute": {
-                "name": "terminal.execute",
-                "description": "Run one host-allowed executable without a shell.",
-                "input_schema": {
-                    "type": "object",
-                    "required": ["argv"],
-                    "properties": {"argv": {"type": "array", "items": {"type": "string"}}, "cwd": {"type": "string"}, "timeout_seconds": {"type": "number"}},
+                output_object, "proposal", side_effects=("advisory_proposal",),
+            ),
+            ToolManifest(
+                "terminal.execute", "1.0",
+                "Run one exact host-allowed argument vector without a shell.",
+                {
+                    "type": "object", "required": ["argv"],
+                    "properties": {
+                        "argv": {"type": "array", "items": {"type": "string"}},
+                        "cwd": {"type": "string"},
+                        "timeout_seconds": {"type": "number", "minimum": 0.1, "maximum": 120.0},
+                    },
                 },
-            },
-        }
-        return tuple(definitions[name] for name in grant.material()["allowed_tools"] if name in definitions)
+                output_object, "execution", side_effects=("subprocess",),
+                requires_explicit_scope=True, supports_cancellation=True,
+            ),
+        ))
 
-    def execute(self, call: AgentToolCall, grant: CapabilityGrant) -> dict[str, Any]:
-        started = time.time()
+    def definitions(self, grant: CapabilityGrant) -> tuple[Mapping[str, Any], ...]:
         allowed = set(grant.material()["allowed_tools"])
-        base = Path(grant.material()["workspace_root"])
-        if call.name not in allowed:
-            return self._result(call, "denied", "tool_not_granted", started)
+        return tuple(
+            manifest.provider_definition()
+            for descriptor in self.catalog.descriptors()
+            if descriptor["tool_id"] in allowed
+            for manifest in (self.catalog.resolve(descriptor["tool_id"]),)
+            if manifest is not None
+        )
+
+    def manifests(self) -> tuple[dict[str, Any], ...]:
+        return self.catalog.descriptors()
+
+    def deny(self, call: AgentToolCall, grant: CapabilityGrant, reason: str) -> dict[str, Any]:
+        started = time.time()
+        manifest = self.catalog.resolve(call.name)
+        if manifest is None:
+            return self._unknown_denial(call, grant, started)
+        return self._result(call, manifest, grant, "denied", str(reason), started)
+
+    def execute(
+        self,
+        call: AgentToolCall,
+        grant: CapabilityGrant,
+        cancel_event: threading.Event | None = None,
+    ) -> dict[str, Any]:
+        started = time.time()
+        cancellation = cancel_event or threading.Event()
+        manifest = self.catalog.resolve(call.name)
+        if manifest is None:
+            return self._unknown_denial(call, grant, started)
+        if not grant.verify(now=started)["valid"]:
+            return self._result(call, manifest, grant, "denied", "capability_grant_inactive", started)
+        material = grant.material()
+        if call.name not in set(material["allowed_tools"]):
+            return self._result(call, manifest, grant, "denied", "tool_not_granted", started)
+        argument_errors = validate_arguments(manifest, call.arguments)
+        if argument_errors:
+            return self._result(call, manifest, grant, "denied", {"argument_errors": argument_errors}, started)
+        if cancellation.is_set():
+            return self._result(call, manifest, grant, "cancelled", "operator_cancelled", started)
+        base = Path(material["workspace_root"])
         try:
             if call.name == "filesystem.list":
                 path = _contained(base, str(call.arguments.get("path") or "."))
@@ -480,13 +561,14 @@ class ToolRegistry:
                 pending = [path]
                 entries: list[dict[str, Any]] = []
                 while pending and len(entries) < max_entries:
+                    if cancellation.is_set():
+                        return self._result(call, manifest, grant, "cancelled", "operator_cancelled", started)
                     directory = pending.pop(0)
                     for child in sorted(directory.iterdir(), key=lambda item: (not item.is_dir(), item.name.lower())):
                         if child.name in excluded:
                             continue
-                        relative = child.relative_to(base)
                         entries.append({
-                            "path": relative.as_posix(),
+                            "path": child.relative_to(base).as_posix(),
                             "kind": "directory" if child.is_dir() else "file",
                             "bytes": child.stat().st_size if child.is_file() else None,
                         })
@@ -494,7 +576,7 @@ class ToolRegistry:
                             break
                         if recursive and child.is_dir() and not child.is_symlink():
                             pending.append(child)
-                output = {
+                output: Any = {
                     "path": path.relative_to(base).as_posix() or ".",
                     "entries": entries,
                     "truncated": bool(pending) or len(entries) >= max_entries,
@@ -503,26 +585,16 @@ class ToolRegistry:
                 path = _contained(base, str(call.arguments.get("path") or ""))
                 if not path.is_file():
                     raise FileNotFoundError("requested file does not exist")
-                limit = int(grant.material()["max_tool_output_bytes"])
                 data = path.read_bytes()
-                if len(data) > limit:
+                if len(data) > int(material["max_tool_output_bytes"]):
                     raise ValueError("file exceeds bounded tool output")
-                output: Any = {"path": str(path.relative_to(base)), "text": data.decode("utf-8", errors="replace")}
+                output = {"path": str(path.relative_to(base)), "text": data.decode("utf-8", errors="replace")}
             elif call.name == "workspace.propose_patch":
-                output = create_patch_proposal(
-                    base,
-                    str(call.arguments.get("patch") or ""),
-                    str(call.arguments.get("summary") or ""),
-                )
+                output = create_patch_proposal(base, str(call.arguments.get("patch") or ""), str(call.arguments.get("summary") or ""))
             elif call.name == "terminal.execute":
                 raw_argv = call.arguments.get("argv")
-                if not isinstance(raw_argv, Sequence) or isinstance(raw_argv, (str, bytes)) or not raw_argv:
-                    raise ValueError("argv must be a nonempty string array")
                 argv = [str(value) for value in raw_argv]
-                allowed_vectors = {
-                    tuple(value)
-                    for value in grant.material()["allowed_command_vectors"]
-                }
+                allowed_vectors = {tuple(value) for value in material["allowed_command_vectors"]}
                 if tuple(argv) not in allowed_vectors:
                     raise PermissionError("exact command vector is not host-allowed")
                 executable = shutil.which(argv[0]) or (str(Path(argv[0]).resolve()) if Path(argv[0]).is_file() else "")
@@ -531,36 +603,90 @@ class ToolRegistry:
                 cwd = _contained(base, str(call.arguments.get("cwd") or "."))
                 if not cwd.is_dir():
                     raise FileNotFoundError("working directory does not exist")
-                timeout = min(float(call.arguments.get("timeout_seconds") or grant.max_command_seconds), grant.max_command_seconds)
-                completed = subprocess.run(
-                    [executable, *argv[1:]], cwd=cwd, text=True, capture_output=True,
-                    encoding="utf-8", errors="replace", timeout=max(0.1, timeout), check=False, shell=False,
+                timeout = min(float(call.arguments.get("timeout_seconds") or material["max_command_seconds"]), material["max_command_seconds"])
+                process = subprocess.Popen(
+                    [executable, *argv[1:]], cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    encoding="utf-8", errors="replace", shell=False,
                 )
-                limit = int(grant.material()["max_tool_output_bytes"])
-                stdout = completed.stdout.encode("utf-8")
-                stderr = completed.stderr.encode("utf-8")
-                if len(stdout) + len(stderr) > limit:
+                deadline = time.monotonic() + max(0.1, timeout)
+                stdout_text = ""
+                stderr_text = ""
+                while True:
+                    if cancellation.is_set():
+                        process.terminate()
+                        try:
+                            stdout_text, stderr_text = process.communicate(timeout=1.0)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            stdout_text, stderr_text = process.communicate()
+                        return self._result(
+                            call, manifest, grant, "cancelled",
+                            {"returncode": process.returncode, "stdout": stdout_text, "stderr": stderr_text, "reason": "operator_cancelled"},
+                            started,
+                        )
+                    if time.monotonic() >= deadline:
+                        process.kill()
+                        stdout_text, stderr_text = process.communicate()
+                        return self._result(call, manifest, grant, "failed", "tool_timeout", started)
+                    try:
+                        stdout_text, stderr_text = process.communicate(timeout=0.05)
+                        break
+                    except subprocess.TimeoutExpired:
+                        continue
+                if len(stdout_text.encode("utf-8")) + len(stderr_text.encode("utf-8")) > int(material["max_tool_output_bytes"]):
                     raise ValueError("terminal output exceeds bounded tool output")
-                output = {"returncode": completed.returncode, "stdout": completed.stdout, "stderr": completed.stderr}
-            else:
-                return self._result(call, "denied", "unknown_tool", started)
-            return self._result(call, "completed", output, started)
-        except subprocess.TimeoutExpired:
-            return self._result(call, "failed", "tool_timeout", started)
+                output = {"returncode": process.returncode, "stdout": stdout_text, "stderr": stderr_text}
+            else:  # pragma: no cover - catalog and handlers are maintained together
+                return self._result(call, manifest, grant, "denied", "handler_missing", started)
+            return self._result(call, manifest, grant, "completed", output, started)
         except (OSError, PermissionError, ValueError) as exc:
-            return self._result(call, "failed", f"{type(exc).__name__}: {exc}", started)
+            return self._result(call, manifest, grant, "failed", f"{type(exc).__name__}: {exc}", started)
 
     @staticmethod
-    def _result(call: AgentToolCall, status: str, output: Any, started: float) -> dict[str, Any]:
+    def _result(
+        call: AgentToolCall,
+        manifest: ToolManifest,
+        grant: CapabilityGrant,
+        status: str,
+        output: Any,
+        started: float,
+    ) -> dict[str, Any]:
+        return create_execution_receipt(
+            tool_call_id=call.call_id,
+            manifest=manifest,
+            capability_grant_hash=grant.grant_hash,
+            arguments=call.arguments,
+            status=status,
+            output=output,
+            started_at=started,
+            completed_at=time.time(),
+        )
+
+    @staticmethod
+    def _unknown_denial(call: AgentToolCall, grant: CapabilityGrant, started: float) -> dict[str, Any]:
         body = {
-            "schema_version": "cortex-agent-tool-result/1.0",
+            "schema_version": EXECUTION_SCHEMA,
             "tool_call_id": call.call_id,
             "tool_name": call.name,
-            "status": status,
-            "output": _safe(output),
+            "tool_version": "",
+            "manifest_hash": "",
+            "capability_grant_hash": grant.grant_hash,
+            "authority_class": "unknown",
+            "arguments": _safe(dict(call.arguments)),
+            "arguments_hash": _sha(dict(call.arguments)),
+            "status": "denied",
+            "output": "unknown_tool",
+            "output_hash": _sha("unknown_tool"),
             "trusted": False,
-            "elapsed_ms": round((time.time() - started) * 1000.0, 3),
+            "started_at": started,
+            "completed_at": time.time(),
+            "elapsed_ms": 0.0,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "memory_admission_authorized": False,
+            "policy_effect": False,
         }
+        body["elapsed_ms"] = round(max(0.0, body["completed_at"] - started) * 1000.0, 3)
         body["result_hash"] = _sha(body)
         return body
 
@@ -658,6 +784,9 @@ class NativeAgentRuntime:
         turn_started = time.perf_counter()
         cancellation = cancel_event or threading.Event()
         identity = _adapter_identity(adapter)
+        grant_check = grant.verify()
+        if not grant_check["valid"]:
+            raise PermissionError("capability grant is not current: " + ",".join(grant_check["errors"]))
         session, context = self.bridge.open(task, adapter, grant)
         context_duration_ms = round((time.perf_counter() - turn_started) * 1000.0, 3)
         stream = AgentEventStream(self.event_sink)
@@ -696,6 +825,10 @@ class NativeAgentRuntime:
             },
         )
         granted_tools = list(grant.material()["allowed_tools"])
+        granted_manifests = [
+            descriptor for descriptor in self.tools.manifests()
+            if descriptor["tool_id"] in set(granted_tools)
+        ]
         system_context = {
             "identity": {
                 "name": "Cortex",
@@ -707,6 +840,11 @@ class NativeAgentRuntime:
             "capabilities": {
                 "tools": granted_tools,
                 "workspace_scope": "the attached Cortex repository only",
+                "capability_grant_hash": grant.grant_hash,
+                "tool_manifests": [
+                    {"tool_id": item["tool_id"], "version": item["version"], "manifest_hash": item["manifest_hash"], "authority_class": item["authority_class"]}
+                    for item in granted_manifests
+                ],
                 "host_mutate_authorized": False,
                 "execution_authorized": False,
                 "memory_admission_authorized": False,
@@ -879,17 +1017,35 @@ class NativeAgentRuntime:
                     if call.call_id in used_call_ids:
                         raise ModelAdapterError("tool call id replayed across iterations")
                     used_call_ids.add(call.call_id)
-                    stream.emit("tool.requested", {"iteration": iteration, **call.to_dict()})
+                    manifest = self.tools.catalog.resolve(call.name)
+                    manifest_payload = {
+                        "manifest_hash": manifest.manifest_hash if manifest else "",
+                        "authority_class": manifest.authority_class if manifest else "unknown",
+                        "capability_grant_hash": grant.grant_hash,
+                    }
+                    stream.emit("tool.requested", {"iteration": iteration, **call.to_dict(), **manifest_payload})
                     tool_started = time.perf_counter()
                     stream.emit(
                         "tool.started",
-                        {"iteration": iteration, "tool_call_id": call.call_id, "tool_name": call.name},
+                        {"iteration": iteration, "tool_call_id": call.call_id, "tool_name": call.name, **manifest_payload},
                     )
-                    result = self.tools.execute(call, grant)
+                    elapsed_tool_seconds = sum(float(item.get("elapsed_ms") or 0.0) for item in tool_results) / 1000.0
+                    if len(tool_results) >= grant.material()["max_tool_calls"]:
+                        result = self.tools.deny(call, grant, "tool_call_budget_exhausted")
+                    elif elapsed_tool_seconds >= grant.material()["max_total_tool_seconds"]:
+                        result = self.tools.deny(call, grant, "tool_time_budget_exhausted")
+                    else:
+                        result = self.tools.execute(call, grant, cancellation)
                     tool_duration_ms = round((time.perf_counter() - tool_started) * 1000.0, 3)
                     tool_results.append(result)
-                    stream.emit("tool.completed", {"iteration": iteration, "tool_call_id": call.call_id, "tool_name": call.name, "status": result["status"], "result_hash": result["result_hash"], "duration_ms": tool_duration_ms, "measurement": "measured"})
+                    stream.emit("tool.completed", {"iteration": iteration, "tool_call_id": call.call_id, "tool_name": call.name, "status": result["status"], "result_hash": result["result_hash"], "duration_ms": tool_duration_ms, **manifest_payload, "measurement": "measured"})
                     messages.append(AgentMessage("tool", _canonical(result), tool_call_id=call.call_id, name=call.name))
+                    if result["status"] == "cancelled" or cancellation.is_set():
+                        status = "interrupted"
+                        final_text = "Tool execution interrupted by operator."
+                        break
+                if status == "interrupted":
+                    break
                 continue
             final_text = response.public_text
             status = "completed" if response.finish_reason == "stop" else response.finish_reason
@@ -909,6 +1065,8 @@ class NativeAgentRuntime:
             "provider_identity": identity,
             "context_projection_hash": context["projection_hash"],
             "capability_grant_hash": grant.grant_hash,
+            "capability_grant": grant.material(),
+            "tool_manifests": list(self.tools.manifests()),
             "requests": requests,
             "responses": responses,
             "tool_results": tool_results,
@@ -935,7 +1093,7 @@ class NativeAgentRuntime:
         receipt = self.bridge.seal(session, trajectory_body)
         verification = verify_native_agent_trajectory(self.store, self.repo, receipt["receipt_hash"])
         if not verification["valid"]:
-            raise RuntimeError("native agent trajectory failed canonical verification")
+            raise RuntimeError("native agent trajectory failed canonical verification: " + ",".join(verification["errors"]))
         return {
             "schema_version": SCHEMA,
             "version": VERSION,
@@ -967,10 +1125,32 @@ def verify_native_agent_trajectory(store: Any, repo: str, receipt_hash: str) -> 
     material = {k: v for k, v in receipt.items() if k not in ledger_fields and k != "content_hash"}
     if str(receipt.get("content_hash") or "") != _sha(material):
         errors.append("trajectory_content_hash_invalid")
+    modern_tool_fabric = isinstance(receipt.get("capability_grant"), Mapping)
+    grant_material = dict(receipt.get("capability_grant") or {}) if modern_tool_fabric else {}
+    if modern_tool_fabric:
+        if grant_material.get("schema_version") != GRANT_SCHEMA:
+            errors.append("capability_grant_schema_invalid")
+        if str(receipt.get("capability_grant_hash") or "") != _sha(grant_material):
+            errors.append("capability_grant_hash_invalid")
+        for field_name in ("host_mutate_authorized", "execution_authorized", "memory_admission_authorized", "policy_effect"):
+            if grant_material.get(field_name) is not False:
+                errors.append(f"grant_authority_open:{field_name}")
+        if grant_material.get("delegable") is not False:
+            errors.append("grant_delegation_open")
+    catalog = ToolCatalog()
+    for descriptor in receipt.get("tool_manifests") or ():
+        if not isinstance(descriptor, Mapping):
+            errors.append("tool_manifest_not_mapping")
+            continue
+        try:
+            catalog.register(ToolManifest.from_descriptor(descriptor))
+        except (TypeError, ValueError):
+            errors.append("tool_manifest_invalid")
     previous = ZERO_HASH
     expected_sequence = 1
     tool_requests: dict[str, str] = {}
     tool_completions: dict[str, str] = {}
+    tool_completion_hashes: dict[str, str] = {}
     event_types: list[str] = []
     for event in receipt.get("events") or ():
         if not isinstance(event, Mapping):
@@ -992,6 +1172,7 @@ def verify_native_agent_trajectory(store: Any, repo: str, receipt_hash: str) -> 
             tool_requests[str(payload.get("call_id") or "")] = str(payload.get("name") or "")
         if event_type == "tool.completed":
             tool_completions[str(payload.get("tool_call_id") or "")] = str(payload.get("tool_name") or "")
+            tool_completion_hashes[str(payload.get("tool_call_id") or "")] = str(payload.get("result_hash") or "")
     if tool_requests != tool_completions:
         errors.append("tool_call_result_pairing_invalid")
     if event_types[:2] != ["session.started", "context.prepared"]:
@@ -1004,11 +1185,35 @@ def verify_native_agent_trajectory(store: Any, repo: str, receipt_hash: str) -> 
         errors.append("request_response_panel_invalid")
     else:
         for request, response in zip(requests, responses):
+            request_material = {k: v for k, v in request.items() if k != "request_hash"}
+            if str(request.get("request_hash") or "") != _sha(request_material):
+                errors.append("request_hash_invalid")
+            if request.get("capability_grant_hash") != receipt.get("capability_grant_hash"):
+                errors.append("request_grant_binding_invalid")
             if str(response.get("request_hash") or "") != str(request.get("request_hash") or ""):
                 errors.append("response_request_binding_invalid")
             response_material = {k: v for k, v in response.items() if k != "response_hash"}
             if str(response.get("response_hash") or "") != _sha(response_material):
                 errors.append("response_hash_invalid")
+    tool_results = receipt.get("tool_results") or []
+    if len(tool_results) != len(tool_requests):
+        errors.append("tool_result_count_invalid")
+    result_call_ids: set[str] = set()
+    for result in tool_results:
+        if not isinstance(result, Mapping):
+            errors.append("tool_result_not_mapping")
+            continue
+        call_id = str(result.get("tool_call_id") or "")
+        if not call_id or call_id in result_call_ids:
+            errors.append("tool_result_identity_invalid")
+        result_call_ids.add(call_id)
+        if modern_tool_fabric:
+            verification = verify_execution_receipt(result, catalog, grant_material)
+            errors.extend(f"tool_result:{call_id}:{error}" for error in verification["errors"])
+        if tool_requests.get(call_id) != result.get("tool_name"):
+            errors.append(f"tool_result_request_binding_invalid:{call_id}")
+        if tool_completion_hashes.get(call_id) != result.get("result_hash"):
+            errors.append(f"tool_result_event_binding_invalid:{call_id}")
     if str(receipt.get("final_answer_hash") or "") != _sha(str(receipt.get("final_answer") or "")):
         errors.append("final_answer_hash_invalid")
     for field_name in ("host_mutate_authorized", "execution_authorized", "memory_admission_authorized", "competence_promotion_authorized", "policy_effect", "update_authorized"):
@@ -1023,6 +1228,7 @@ def verify_native_agent_trajectory(store: Any, repo: str, receipt_hash: str) -> 
         "chain_valid": bool(chain.get("valid")),
         "event_count": len(receipt.get("events") or ()),
         "tool_pair_count": len(tool_requests),
+        "tool_fabric_state": "verified" if modern_tool_fabric else "legacy_partial",
         "policy_effect": False,
         "host_mutate_authorized": False,
         "execution_authorized": False,

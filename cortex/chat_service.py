@@ -25,7 +25,7 @@ from .coding_workspace import (
     rollback_applied_patch,
     verify_patch_in_isolated_worktree,
 )
-from .native_agent import AgentMessage, CapabilityGrant, NativeAgentRuntime
+from .native_agent import AgentMessage, CapabilityGrant, NativeAgentRuntime, ToolRegistry
 from .provider_fabric import ProviderError, ProviderFabric
 from .secret_store import HostSecretStore, SecretStore
 from .source_improvement import (
@@ -106,6 +106,7 @@ class CortexChatService:
         self.repository_path = str(Path(repository["path"]).resolve())
         self.secrets = secrets or HostSecretStore()
         self.fabric = fabric or ProviderFabric(store, self.secrets)
+        self.tool_registry = ToolRegistry()
         self.verification_contract_factory = verification_contract_factory or default_verification_contract
         self.improvement_contract_factory = improvement_contract_factory or create_source_improvement_contract
         self.events = SessionEventBus()
@@ -119,7 +120,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.5",
+            "version": "10.0.0-alpha.6",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -144,6 +145,17 @@ class CortexChatService:
         defaults = {"default_tool_mode": "proposal", "appearance": "standard"}
         defaults.update({key: current[key] for key in allowed if key in current})
         return defaults
+
+    def tools(self) -> dict[str, Any]:
+        return {
+            "schema_version": "cortex-tool-catalog-surface/1.0",
+            "tools": list(self.tool_registry.manifests()),
+            "mode": self.settings().get("default_tool_mode", "proposal"),
+            "registration_authority": "host_only",
+            "model_registration_authorized": False,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+        }
 
     def update_settings(self, values: Mapping[str, Any]) -> dict[str, Any]:
         current = self.settings()
@@ -296,6 +308,10 @@ class CortexChatService:
             grant = CapabilityGrant(
                 workspace_root=self.repository_path,
                 allowed_tools=allowed_tools,
+                principal_id="local_operator",
+                purpose=f"chat_session:{session_id}",
+                issued_at=time.time(),
+                expires_at=time.time() + 1800.0,
             )
 
             def receive(event: Mapping[str, Any]) -> None:
@@ -306,6 +322,7 @@ class CortexChatService:
             result = NativeAgentRuntime(
                 worker_store,
                 self.repo,
+                tools=self.tool_registry,
                 event_sink=receive,
             ).run(
                 text,
@@ -872,6 +889,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                     return self._json(200, {"providers": self.cortex.fabric.provider_statuses()})
                 if path == "/v1/settings":
                     return self._json(200, self.cortex.settings())
+                if path == "/v1/tools":
+                    return self._json(200, self.cortex.tools())
                 if path == "/v1/sessions":
                     return self._json(200, {"sessions": self.cortex.list_sessions()})
                 parts = [part for part in path.split("/") if part]

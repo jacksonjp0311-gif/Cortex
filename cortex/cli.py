@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -3681,6 +3682,10 @@ def main(argv: list[str] | None = None) -> None:
                 workspace_root=str(workspace),
                 allowed_tools=tuple(args.allow_tool or ()),
                 allowed_commands=tuple(args.allow_command or ()),
+                principal_id="local_cli_operator",
+                purpose=f"cli_run:{args.repo}",
+                issued_at=time.time(),
+                expires_at=time.time() + float(args.timeout) * max(1, int(args.max_iterations)),
             )
             emit(
                 NativeAgentRuntime(
