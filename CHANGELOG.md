@@ -1,3 +1,20 @@
+## 10.0.0-alpha.3 - Governed Coding Workspace
+
+- Added a repository-contained patch-proposal tool that records exact unified
+  diffs, target files, preimage hashes, and a canonical proposal identity
+  without changing source or granting model authority.
+- Added an operator review surface and loopback approval endpoint that resolves
+  the proposal from its sealed native-agent trajectory rather than trusting a
+  caller-supplied patch body.
+- Added bounded application using preimage freshness, `git apply --check`,
+  target-scoped whitespace validation, Python syntax verification when
+  applicable, automatic rollback on failed verification, and immutable
+  application receipts.
+- Preserved `model_host_mutate_authorized=false`,
+  `model_execution_authorized=false`, `memory_admission_authorized=false`, and
+  `policy_effect=false`. Alpha.3 is operator-mediated coding, not autonomous
+  self-modification.
+
 ## 10.0.0-alpha.2 - Native Cortex Interface + Multi-Provider Model Fabric
 
 - Added a custom responsive Cortex operator console served locally on loopback

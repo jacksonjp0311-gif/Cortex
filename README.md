@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.2-f97316?style=for-the-badge" alt="v10.0.0-alpha.2" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.3-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.3" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -64,13 +64,13 @@ durable, inspectable, and safer to reuse.
 ## Cortex now has an execution body
 
 Version 10 turns the durable layer around agents into a model-independent agent
-runtime in its own right. Alpha.2 gives that runtime a Cortex-native local
+runtime in its own right. Alpha.3 gives that runtime a Cortex-native local
 interface: persistent conversations, live model discovery, streaming,
 interruption, truthful context/evidence panels, and a real-time event lattice.
 OpenAI, xAI/Grok, and OpenRouter sit behind one provider-neutral fabric.
 
 ```text
-task → Cortex context → model → tool → observation → model → answer → receipt
+task → Cortex context → model → proposal → operator review → bounded change → receipt
 ```
 
 The model, provider, tools, and future interface are replaceable. Cortex owns
@@ -90,6 +90,14 @@ class choices in the model browser.
 
 The headless `cortex run` command remains available for automation and JSON
 subprocess adapters.
+
+When **Proposal** mode is enabled, Cortex may inspect the attached repository
+and submit an exact unified diff. The interface shows the complete diff and its
+canonical hash before anything changes. Only the local operator's explicit
+approval may apply that exact proposal. Cortex checks file preimages, validates
+the patch, runs fixed verification, rolls back a failed change, and seals the
+application receipt. The model never receives standing write or execution
+authority.
 
 The interface never calls a provider directly. Every message flows through the
 Cortex session, context projection, native agent/tool loop, and immutable

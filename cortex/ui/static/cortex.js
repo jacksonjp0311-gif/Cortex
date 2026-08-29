@@ -419,7 +419,7 @@ async function loadInitial() {
     state.sessions = (await api("/v1/sessions")).sessions;
     renderSessions();
     applyAppearance(state.settings.appearance || "standard");
-    $$('[data-tool-mode]').forEach(button => button.classList.toggle("active", button.dataset.toolMode === (state.settings.default_tool_mode || "read_only")));
+    $$('[data-tool-mode]').forEach(button => button.classList.toggle("active", button.dataset.toolMode === (state.settings.default_tool_mode || "proposal")));
     drawCharts();
     if (state.sessions.length) await openSession(state.sessions[0].session_id);
     else if (!state.providers.some(provider => provider.configured)) $("#settingsDialog").showModal();
@@ -680,9 +680,10 @@ async function reloadCurrent() {
 async function refreshIntelligence() {
   if (!state.session) return;
   const id = state.session.session_id;
-  [state.context, state.evidence, state.trajectory, state.telemetry] = await Promise.all([
+  [state.context, state.evidence, state.trajectory, state.telemetry, state.workspace] = await Promise.all([
     api(`/v1/sessions/${id}/context`), api(`/v1/sessions/${id}/evidence`),
     api(`/v1/sessions/${id}/trajectory`), api(`/v1/sessions/${id}/telemetry`),
+    api(`/v1/sessions/${id}/workspace`),
   ]);
   $("#verifiedCount").textContent = state.evidence.verified;
   $("#supportedCount").textContent = state.evidence.supported;
@@ -718,7 +719,53 @@ async function refreshIntelligence() {
   $("#contextPreview").textContent = state.context.projection ? JSON.stringify(state.context.projection, null, 2) : "";
   $("#contextMetric").textContent = state.context.token_estimate ?? "—";
   $("#trajectoryLog").textContent = JSON.stringify(state.trajectory, null, 2);
+  renderWorkspace();
   applyTelemetry(state.telemetry);
+}
+
+function renderWorkspace() {
+  const root = $("#toolLog");
+  root.querySelectorAll(".workspace-proposal").forEach(node => node.remove());
+  for (const proposal of state.workspace?.proposals || []) {
+    const card = document.createElement("article");
+    card.className = "tool-unit workspace-proposal";
+    const title = document.createElement("strong");
+    title.textContent = `PATCH REVIEW · ${proposal.summary}`;
+    const meta = document.createElement("p");
+    meta.textContent = `${proposal.targets.join(", ")} · ${proposal.proposal_hash.slice(0, 16)}`;
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = "INSPECT EXACT DIFF";
+    const pre = document.createElement("pre");
+    pre.textContent = proposal.patch;
+    details.append(summary, pre);
+    const approve = document.createElement("button");
+    approve.type = "button";
+    approve.textContent = proposal.application ? (proposal.application.targets_current ? "APPLIED & VERIFIED" : "APPLIED · TARGET DRIFT") : "APPROVE & APPLY";
+    approve.disabled = Boolean(proposal.application);
+    if (!proposal.application) approve.onclick = () => applyWorkspaceProposal(proposal, approve);
+    card.append(title, meta, details, approve);
+    root.prepend(card);
+  }
+}
+
+async function applyWorkspaceProposal(proposal, button) {
+  if (!confirm(`Apply this exact Cortex patch?\n\n${proposal.summary}\n\nTargets: ${proposal.targets.join(", ")}\n\nThe diff will be verified and rolled back if fixed checks fail.`)) return;
+  button.disabled = true;
+  button.textContent = "VERIFYING…";
+  try {
+    const result = await api(`/v1/sessions/${state.session.session_id}/workspace/apply`, {
+      method: "POST",
+      body: JSON.stringify({ proposal_hash: proposal.proposal_hash, approval_challenge: proposal.approval_challenge }),
+    });
+    button.textContent = "APPLIED & VERIFIED";
+    toast(`Patch applied and sealed · ${String(result.receipt_hash).slice(0, 16)}`);
+    await refreshIntelligence();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "APPROVE & APPLY";
+    toast(error.message, true);
+  }
 }
 
 async function stop() {
@@ -882,7 +929,7 @@ $$('[data-tool-mode]').forEach(button => button.onclick = async () => {
   const mode = button.dataset.toolMode;
   $$('[data-tool-mode]').forEach(item => item.classList.toggle("active", item === button));
   state.settings = await api("/v1/settings", { method: "PATCH", body: JSON.stringify({ default_tool_mode: mode }) });
-  toast(mode === "read_only" ? "Repository inspection enabled. Execution and writes remain blocked." : "Repository inspection disabled.");
+  toast(mode === "proposal" ? "Cortex may propose exact diffs. Only operator approval can apply them." : mode === "read_only" ? "Repository inspection enabled. Execution and writes remain blocked." : "Repository tools disabled.");
 });
 function renderUptime() {
   const elapsed = Math.max(0, state.uptimeBase + (Date.now() - state.uptimeStartedAt) / 1000);

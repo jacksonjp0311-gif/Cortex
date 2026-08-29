@@ -11,6 +11,11 @@ Native tools:
 - `filesystem.list`: read-only, workspace-contained, bounded directory listing;
   generated/runtime-heavy directories are excluded.
 - `filesystem.read`: read-only, workspace-contained, bounded bytes.
+- `workspace.propose_patch`: records a bounded unified diff and target preimage
+  hashes for review. It cannot apply its own proposal. Application is a
+  separate loopback operator action that reloads the exact canonical proposal,
+  verifies a session-bound approval challenge, checks freshness, applies the
+  diff, runs fixed verification, and rolls back failures.
 - `terminal.execute`: argument-vector execution without a shell, contained
   working directory, exact host-approved argument vector, timeout, and bounded
   output. Granting an executable does not grant arbitrary arguments.
@@ -24,3 +29,6 @@ Cortex execution authority.
 
 Path traversal, shell command strings, ungranted tools, executable mismatch,
 oversized output, duplicate call IDs, and timeouts fail closed.
+
+The model never receives `workspace.apply`, arbitrary command execution, or a
+reusable write grant. One operator approval covers one exact proposal hash.

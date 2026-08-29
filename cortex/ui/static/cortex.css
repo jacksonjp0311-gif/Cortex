@@ -140,3 +140,4 @@ body{font-size:15px}
   .composer textarea{font-size:15px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+.workspace-proposal{display:grid;gap:8px;margin-bottom:8px}.workspace-proposal strong{color:var(--cyan)}.workspace-proposal p{margin:0;color:var(--muted)}.workspace-proposal summary{cursor:pointer;color:var(--ice)}.workspace-proposal pre{max-height:260px;overflow:auto;padding:10px;border:1px solid var(--line-soft);background:#020812;color:#a9c9ed;white-space:pre-wrap}.workspace-proposal button{justify-self:start;padding:8px 12px;border:1px solid var(--violet);background:#101a38;color:var(--ice);font:9px var(--mono)}.workspace-proposal button:disabled{opacity:.55}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import mimetypes
 import threading
@@ -16,6 +17,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from .coding_workspace import apply_approved_patch, approval_challenge, rollback_applied_patch
 from .native_agent import AgentMessage, CapabilityGrant, NativeAgentRuntime
 from .provider_fabric import ProviderError, ProviderFabric
 from .secret_store import HostSecretStore, SecretStore
@@ -101,7 +103,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.2",
+            "version": "10.0.0-alpha.3",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -123,7 +125,7 @@ class CortexChatService:
             "selected_provider", "selected_model", "reasoning_effort",
             "temperature", "max_output_tokens", "default_tool_mode", "appearance",
         }
-        defaults = {"default_tool_mode": "read_only", "appearance": "standard"}
+        defaults = {"default_tool_mode": "proposal", "appearance": "standard"}
         defaults.update({key: current[key] for key in allowed if key in current})
         return defaults
 
@@ -135,8 +137,8 @@ class CortexChatService:
         }
         for key, value in values.items():
             if key in allowed:
-                if key == "default_tool_mode" and value not in {"off", "read_only"}:
-                    raise ValueError("default_tool_mode must be off or read_only")
+                if key == "default_tool_mode" and value not in {"off", "read_only", "proposal"}:
+                    raise ValueError("default_tool_mode must be off, read_only, or proposal")
                 current[key] = _json_safe(value)
         self.store.set_setting(f"ui:settings:{self.repo}", current)
         return current
@@ -269,7 +271,12 @@ class CortexChatService:
         worker_store = Store(Path(self.store.path))
         try:
             adapter = self.fabric.adapter(provider, model_id)
-            allowed_tools = ("filesystem.list", "filesystem.read") if tool_mode == "read_only" else ()
+            if tool_mode == "proposal":
+                allowed_tools = ("filesystem.list", "filesystem.read", "workspace.propose_patch")
+            elif tool_mode == "read_only":
+                allowed_tools = ("filesystem.list", "filesystem.read")
+            else:
+                allowed_tools = ()
             grant = CapabilityGrant(
                 workspace_root=self.repository_path,
                 allowed_tools=allowed_tools,
@@ -415,6 +422,113 @@ class CortexChatService:
                 "policy_effect": False,
             },
         }
+
+    def workspace(self, session_id: str) -> dict[str, Any]:
+        receipt = self._trajectory(session_id)
+        if not receipt:
+            return {"state": "NO_PROPOSAL", "proposals": []}
+        verification = self.store.verify_symbiotic_session(self.repo, str(receipt.get("session_id") or ""))
+        if not verification.get("valid"):
+            return {"state": "INVALID_TRAJECTORY", "proposals": []}
+        applications = {
+            str(item.get("proposal_hash") or ""): {
+                **item,
+                "targets_current": self._application_targets_current(item),
+            }
+            for item in self.store.symbiotic_session_receipts(self.repo, str(receipt.get("session_id") or ""))
+            if item.get("kind") == "coding_patch_application"
+        }
+        proposals = []
+        for index, result in enumerate(receipt.get("tool_results") or ()):
+            if not isinstance(result, Mapping) or result.get("tool_name") != "workspace.propose_patch":
+                continue
+            output = result.get("output") if isinstance(result.get("output"), Mapping) else {}
+            proposal_hash = str(output.get("proposal_hash") or "")
+            if not proposal_hash:
+                continue
+            proposals.append({
+                **dict(output),
+                "source_trajectory_hash": receipt.get("receipt_hash"),
+                "source_session_id": receipt.get("session_id"),
+                "proposal_index": index,
+                "approval_challenge": approval_challenge(session_id, proposal_hash),
+                "application": applications.get(proposal_hash),
+            })
+        return {"state": "REVIEW_REQUIRED" if proposals else "NO_PROPOSAL", "proposals": proposals}
+
+    def _application_targets_current(self, application: Mapping[str, Any]) -> bool:
+        root = Path(self.repository_path).resolve()
+        for relative, expected in dict(application.get("postimage_hashes") or {}).items():
+            path = (root / str(relative)).resolve()
+            try:
+                path.relative_to(root)
+            except ValueError:
+                return False
+            current = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else "MISSING"
+            if current != expected:
+                return False
+        return True
+
+    def apply_workspace_patch(self, session_id: str, values: Mapping[str, Any]) -> dict[str, Any]:
+        if self.is_active(session_id):
+            raise RuntimeError("Stop the active generation before applying a proposal.")
+        proposal_hash = str(values.get("proposal_hash") or "")
+        challenge = str(values.get("approval_challenge") or "")
+        surface = self.workspace(session_id)
+        proposal = next(
+            (item for item in surface["proposals"] if item.get("proposal_hash") == proposal_hash),
+            None,
+        )
+        if not proposal:
+            raise ValueError("Canonical patch proposal was not found.")
+        if challenge != approval_challenge(session_id, proposal_hash):
+            raise ValueError("Operator approval challenge does not match this proposal.")
+
+        native_session_id = str(proposal["source_session_id"])
+        turn_id = 100 + int(proposal["proposal_index"])
+        existing = next(
+            (
+                item for item in self.store.symbiotic_session_receipts(self.repo, native_session_id)
+                if item.get("kind") == "coding_patch_application" and int(item.get("turn_id") or 0) == turn_id
+            ),
+            None,
+        )
+        if existing:
+            if existing.get("proposal_hash") != proposal_hash:
+                raise RuntimeError("Application receipt slot already contains different content.")
+            return {**existing, "duplicate": True}
+
+        application = apply_approved_patch(self.repository_path, proposal)
+        trajectory = self._trajectory(session_id) or {}
+        try:
+            receipt = self.store.append_symbiotic_receipt(
+                self.repo,
+                {
+                    **application,
+                    "kind": "coding_patch_application",
+                    "session_id": native_session_id,
+                    "turn_id": turn_id,
+                    "event_id": f"coding_apply_{proposal_hash[:24]}",
+                    "body_epoch_id": str(trajectory.get("body_epoch_id") or ""),
+                    "source_trajectory_hash": proposal["source_trajectory_hash"],
+                    "advisory_only": True,
+                    "update_authorized": False,
+                },
+            )
+        except Exception:
+            rollback_applied_patch(self.repository_path, proposal)
+            raise
+        self.events.publish(
+            session_id,
+            "workspace.patch.applied",
+            {
+                "proposal_hash": proposal_hash,
+                "receipt_hash": receipt["receipt_hash"],
+                "targets": proposal["targets"],
+                "status": receipt["status"],
+            },
+        )
+        return receipt
 
     def telemetry(self, session_id: str) -> dict[str, Any]:
         """Return truthful call telemetry without turning estimates into measurements."""
@@ -608,6 +722,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                         return self._json(200, self.cortex.evidence(session_id))
                     if len(parts) == 4 and parts[3] == "trajectory":
                         return self._json(200, self.cortex.trajectory(session_id))
+                    if len(parts) == 4 and parts[3] == "workspace":
+                        return self._json(200, self.cortex.workspace(session_id))
                     if len(parts) == 4 and parts[3] == "telemetry":
                         return self._json(200, self.cortex.telemetry(session_id))
                     if len(parts) == 4 and parts[3] == "live":
@@ -642,6 +758,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                         return self._json(200, self.cortex.archive(session_id))
                     if action == "model":
                         return self._json(200, self.cortex.switch_model(session_id, str(body.get("provider") or ""), str(body.get("model_id") or "")))
+                if len(parts) == 5 and parts[:2] == ["v1", "sessions"] and parts[3:] == ["workspace", "apply"]:
+                    return self._json(200, self.cortex.apply_workspace_patch(parts[2], body))
                 self._json(404, {"error": "Endpoint not found."})
         except Exception as exc:
             self._error(exc)

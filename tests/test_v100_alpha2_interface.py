@@ -243,7 +243,7 @@ class Alpha2InterfaceTests(unittest.TestCase):
             providers={"openai": ToolFixtureProvider()},
         )
         service = CortexChatService(self.store, self.repo, secrets=self.secrets, fabric=fabric)
-        self.assertEqual(service.settings()["default_tool_mode"], "read_only")
+        self.assertEqual(service.settings()["default_tool_mode"], "proposal")
         session = service.create_session({"provider": "openai", "model_id": "fixture-chat"})
         service.send_message(session["session_id"], "inspect")
         deadline = time.time() + 10
@@ -306,6 +306,8 @@ class Alpha2InterfaceTests(unittest.TestCase):
         self.assertIn("core-plasma-canvas", css)
         self.assertIn("drawCorePlasma", js)
         self.assertIn("coreEnergy", js)
+        self.assertIn("APPROVE & APPLY", js)
+        self.assertIn("/workspace/apply", js)
         self.assertIn("eventSequence", js)
         self.assertIn("reconcileLiveState", js)
         self.assertIn("/live", js)
