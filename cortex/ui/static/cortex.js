@@ -742,14 +742,30 @@ function renderWorkspace() {
     const approve = document.createElement("button");
     approve.type = "button";
     const verified = proposal.verification?.status === "verified";
+    const trial = proposal.improvement_trial;
+    const promotableTrial = ["REPAIR_MEASURED", "VERIFIED_MAINTENANCE"].includes(trial?.status);
     approve.textContent = proposal.application
       ? (proposal.application.targets_current ? "PROMOTED & VERIFIED" : "PROMOTED · TARGET DRIFT")
-      : verified ? "PROMOTE VERIFIED PATCH" : proposal.verification ? "VERIFICATION HELD" : "APPROVE & VERIFY";
+      : promotableTrial ? (trial.status === "REPAIR_MEASURED" ? "PROMOTE MEASURED REPAIR" : "PROMOTE VERIFIED MAINTENANCE")
+      : trial ? `${trial.status.replaceAll("_", " ")} · BLOCKED`
+      : verified ? "MEASURE AGAINST BASELINE" : proposal.verification ? "VERIFICATION HELD" : "APPROVE & VERIFY";
     approve.disabled = Boolean(proposal.application);
     if (!proposal.application && !proposal.verification) approve.onclick = () => verifyWorkspaceProposal(proposal, approve);
-    if (!proposal.application && verified) approve.onclick = () => promoteWorkspaceProposal(proposal, approve);
+    if (!proposal.application && verified && !trial) approve.onclick = () => measureWorkspaceProposal(proposal, approve);
+    if (!proposal.application && promotableTrial) approve.onclick = () => promoteWorkspaceProposal(proposal, approve);
     if (proposal.verification && !verified) approve.disabled = true;
-    card.append(title, meta, details, approve);
+    if (trial && !promotableTrial) approve.disabled = true;
+    let comparison = null;
+    if (trial) {
+      comparison = document.createElement("p");
+      const baseline = trial.arms?.baseline?.all_host_checks_pass ? "PASS" : "FAIL";
+      const candidate = trial.arms?.candidate?.all_host_checks_pass ? "PASS" : "FAIL";
+      comparison.textContent = `COUNTERFACTUAL · baseline ${baseline} → candidate ${candidate} · Δ ${trial.paired_effect}`;
+      comparison.className = "muted";
+    }
+    card.append(title, meta, details);
+    if (comparison) card.append(comparison);
+    card.append(approve);
     root.prepend(card);
   }
 }
@@ -763,12 +779,30 @@ async function verifyWorkspaceProposal(proposal, button) {
       method: "POST",
       body: JSON.stringify({ proposal_hash: proposal.proposal_hash, approval_challenge: proposal.approval_challenge }),
     });
-    button.textContent = result.status === "verified" ? "PROMOTE VERIFIED PATCH" : "VERIFICATION HELD";
+    button.textContent = result.status === "verified" ? "MEASURE AGAINST BASELINE" : "VERIFICATION HELD";
     toast(`Isolated verification ${result.status} · ${String(result.receipt_hash).slice(0, 16)}`, result.status !== "verified");
     await refreshIntelligence();
   } catch (error) {
     button.disabled = false;
     button.textContent = "APPROVE & VERIFY";
+    toast(error.message, true);
+  }
+}
+
+async function measureWorkspaceProposal(proposal, button) {
+  if (!confirm(`Measure this verified change against an unchanged baseline from the same Git HEAD?\n\n${proposal.summary}\n\nBoth arms use the same host-frozen evaluator. The active repository will not be changed.`)) return;
+  button.disabled = true;
+  button.textContent = "MEASURING…";
+  try {
+    const result = await api(`/v1/sessions/${state.session.session_id}/workspace/trial`, {
+      method: "POST",
+      body: JSON.stringify({ proposal_hash: proposal.proposal_hash, approval_challenge: proposal.approval_challenge }),
+    });
+    toast(`Counterfactual result ${result.status} · baseline ${result.arms.baseline.all_host_checks_pass ? "PASS" : "FAIL"} → candidate ${result.arms.candidate.all_host_checks_pass ? "PASS" : "FAIL"}`, !["REPAIR_MEASURED", "VERIFIED_MAINTENANCE"].includes(result.status));
+    await refreshIntelligence();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "MEASURE AGAINST BASELINE";
     toast(error.message, true);
   }
 }
@@ -784,6 +818,7 @@ async function promoteWorkspaceProposal(proposal, button) {
         proposal_hash: proposal.proposal_hash,
         approval_challenge: proposal.approval_challenge,
         verification_receipt_hash: proposal.verification.receipt_hash,
+        improvement_result_hash: proposal.improvement_trial?.receipt_hash || "",
       }),
     });
     button.textContent = "PROMOTED & VERIFIED";
@@ -791,7 +826,7 @@ async function promoteWorkspaceProposal(proposal, button) {
     await refreshIntelligence();
   } catch (error) {
     button.disabled = false;
-    button.textContent = "PROMOTE VERIFIED PATCH";
+    button.textContent = proposal.improvement_trial?.status === "REPAIR_MEASURED" ? "PROMOTE MEASURED REPAIR" : "PROMOTE VERIFIED MAINTENANCE";
     toast(error.message, true);
   }
 }

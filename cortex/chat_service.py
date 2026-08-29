@@ -28,6 +28,11 @@ from .coding_workspace import (
 from .native_agent import AgentMessage, CapabilityGrant, NativeAgentRuntime
 from .provider_fabric import ProviderError, ProviderFabric
 from .secret_store import HostSecretStore, SecretStore
+from .source_improvement import (
+    create_source_improvement_contract,
+    run_source_improvement_trial,
+    verify_source_improvement_result,
+)
 from .store import Store
 
 SERVICE_SCHEMA = "cortex-native-interface/1.0"
@@ -91,6 +96,7 @@ class CortexChatService:
         secrets: SecretStore | None = None,
         fabric: ProviderFabric | None = None,
         verification_contract_factory: Callable[[str | Path, list[str]], Mapping[str, Any]] | None = None,
+        improvement_contract_factory: Callable[[str | Path, Mapping[str, Any], Mapping[str, Any]], Mapping[str, Any]] | None = None,
     ) -> None:
         repository = store.repo(repo)
         if not repository:
@@ -101,6 +107,7 @@ class CortexChatService:
         self.secrets = secrets or HostSecretStore()
         self.fabric = fabric or ProviderFabric(store, self.secrets)
         self.verification_contract_factory = verification_contract_factory or default_verification_contract
+        self.improvement_contract_factory = improvement_contract_factory or create_source_improvement_contract
         self.events = SessionEventBus()
         self.started_at = time.time()
         self._runs: dict[str, tuple[threading.Thread, threading.Event]] = {}
@@ -112,7 +119,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.4",
+            "version": "10.0.0-alpha.5",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -452,6 +459,11 @@ class CortexChatService:
             for item in self.store.symbiotic_session_receipts(self.repo, str(receipt.get("session_id") or ""))
             if item.get("kind") == "coding_patch_verification"
         }
+        trials = {
+            str(item.get("proposal_hash") or ""): item
+            for item in self.store.symbiotic_session_receipts(self.repo, str(receipt.get("session_id") or ""))
+            if item.get("kind") == "coding_improvement_trial"
+        }
         proposals = []
         for index, result in enumerate(receipt.get("tool_results") or ()):
             if not isinstance(result, Mapping) or result.get("tool_name") != "workspace.propose_patch":
@@ -467,6 +479,7 @@ class CortexChatService:
                 "proposal_index": index,
                 "approval_challenge": approval_challenge(session_id, proposal_hash),
                 "verification": verifications.get(proposal_hash),
+                "improvement_trial": trials.get(proposal_hash),
                 "application": applications.get(proposal_hash),
             })
         state = "NO_PROPOSAL"
@@ -474,6 +487,17 @@ class CortexChatService:
             state = "REVIEW_REQUIRED"
             if any((item.get("verification") or {}).get("status") == "verified" and not item.get("application") for item in proposals):
                 state = "VERIFIED_AWAITING_PROMOTION"
+            if any(
+                (item.get("improvement_trial") or {}).get("status") in {"REPAIR_MEASURED", "VERIFIED_MAINTENANCE"}
+                and not item.get("application") for item in proposals
+            ):
+                state = "MEASURED_AWAITING_PROMOTION"
+            if any(
+                item.get("improvement_trial")
+                and (item.get("improvement_trial") or {}).get("status") not in {"REPAIR_MEASURED", "VERIFIED_MAINTENANCE"}
+                and not item.get("application") for item in proposals
+            ):
+                state = "IMPROVEMENT_BLOCKED"
             if all(item.get("application") for item in proposals):
                 state = "APPLIED"
         return {"state": state, "proposals": proposals}
@@ -530,12 +554,59 @@ class CortexChatService:
         })
         return receipt
 
+    def run_workspace_improvement_trial(self, session_id: str, values: Mapping[str, Any]) -> dict[str, Any]:
+        if self.is_active(session_id):
+            raise RuntimeError("Stop the active generation before running an improvement trial.")
+        proposal_hash = str(values.get("proposal_hash") or "")
+        challenge = str(values.get("approval_challenge") or "")
+        proposal = next((item for item in self.workspace(session_id)["proposals"] if item.get("proposal_hash") == proposal_hash), None)
+        if not proposal:
+            raise ValueError("Canonical patch proposal was not found.")
+        if challenge != approval_challenge(session_id, proposal_hash):
+            raise ValueError("Operator approval challenge does not match this proposal.")
+        verification_receipt = proposal.get("verification")
+        if not isinstance(verification_receipt, Mapping) or verification_receipt.get("status") != "verified":
+            raise ValueError("Canonical passing patch verification is required before measurement.")
+        native_session_id = str(proposal["source_session_id"])
+        turn_id = 200 + int(proposal["proposal_index"])
+        existing = next((item for item in self.store.symbiotic_session_receipts(self.repo, native_session_id) if item.get("kind") == "coding_improvement_trial" and int(item.get("turn_id") or 0) == turn_id), None)
+        if existing:
+            if existing.get("proposal_hash") != proposal_hash:
+                raise RuntimeError("Improvement trial slot already contains different content.")
+            return {**existing, "duplicate": True}
+        contract = self.improvement_contract_factory(self.repository_path, proposal, verification_receipt)
+        result = run_source_improvement_trial(self.repository_path, proposal, verification_receipt, contract)
+        result_check = verify_source_improvement_result(result)
+        if not result_check["valid"]:
+            raise RuntimeError("Source improvement result failed reconstruction: " + ",".join(result_check["errors"]))
+        trajectory = self._trajectory(session_id) or {}
+        receipt = self.store.append_symbiotic_receipt(self.repo, {
+            **result,
+            "kind": "coding_improvement_trial",
+            "session_id": native_session_id,
+            "turn_id": turn_id,
+            "event_id": f"coding_trial_{proposal_hash[:24]}",
+            "body_epoch_id": str(trajectory.get("body_epoch_id") or ""),
+            "source_trajectory_hash": proposal["source_trajectory_hash"],
+            "advisory_only": True,
+            "update_authorized": False,
+        })
+        self.events.publish(session_id, "workspace.improvement.measured", {
+            "proposal_hash": proposal_hash,
+            "receipt_hash": receipt["receipt_hash"],
+            "status": receipt["status"],
+            "paired_effect": receipt["paired_effect"],
+            "active_tree_mutated": False,
+        })
+        return receipt
+
     def apply_workspace_patch(self, session_id: str, values: Mapping[str, Any]) -> dict[str, Any]:
         if self.is_active(session_id):
             raise RuntimeError("Stop the active generation before applying a proposal.")
         proposal_hash = str(values.get("proposal_hash") or "")
         challenge = str(values.get("approval_challenge") or "")
         verification_hash = str(values.get("verification_receipt_hash") or "")
+        improvement_hash = str(values.get("improvement_result_hash") or "")
         surface = self.workspace(session_id)
         proposal = next(
             (item for item in surface["proposals"] if item.get("proposal_hash") == proposal_hash),
@@ -558,6 +629,24 @@ class CortexChatService:
             raise ValueError("Verification receipt does not authorize this proposal promotion.")
         if verification_receipt.get("source_head") != repository_head(self.repository_path):
             raise ValueError("Repository HEAD changed after isolated verification.")
+        improvement_receipt = proposal.get("improvement_trial")
+        if not improvement_receipt or not improvement_hash:
+            raise ValueError("Canonical improvement result is required before alpha.5 promotion.")
+        if improvement_receipt:
+            checked_improvement = self.store.verify_symbiotic_receipt(self.repo, improvement_hash)
+            resolved_improvement = checked_improvement.get("receipt") if checked_improvement.get("valid") else None
+            if (
+                not isinstance(resolved_improvement, Mapping)
+                or resolved_improvement.get("kind") != "coding_improvement_trial"
+                or resolved_improvement.get("proposal_hash") != proposal_hash
+                or resolved_improvement.get("session_id") != proposal.get("source_session_id")
+                or resolved_improvement.get("verification_receipt_hash") != verification_hash
+                or resolved_improvement.get("source_head") != repository_head(self.repository_path)
+                or not verify_source_improvement_result(resolved_improvement).get("valid")
+                or resolved_improvement.get("status") not in {"REPAIR_MEASURED", "VERIFIED_MAINTENANCE"}
+            ):
+                raise ValueError("Improvement result blocks or does not bind this promotion.")
+            change_classification = str(resolved_improvement["status"])
 
         native_session_id = str(proposal["source_session_id"])
         turn_id = 100 + int(proposal["proposal_index"])
@@ -588,6 +677,8 @@ class CortexChatService:
                     "source_trajectory_hash": proposal["source_trajectory_hash"],
                     "verification_receipt_hash": verification_hash,
                     "verification_contract_hash": verification_receipt.get("contract_hash"),
+                    "improvement_result_hash": improvement_hash or None,
+                    "change_classification": change_classification,
                     "advisory_only": True,
                     "update_authorized": False,
                 },
@@ -839,6 +930,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                     return self._json(200, self.cortex.apply_workspace_patch(parts[2], body))
                 if len(parts) == 5 and parts[:2] == ["v1", "sessions"] and parts[3:] == ["workspace", "verify"]:
                     return self._json(200, self.cortex.verify_workspace_patch(parts[2], body))
+                if len(parts) == 5 and parts[:2] == ["v1", "sessions"] and parts[3:] == ["workspace", "trial"]:
+                    return self._json(200, self.cortex.run_workspace_improvement_trial(parts[2], body))
                 self._json(404, {"error": "Endpoint not found."})
         except Exception as exc:
             self._error(exc)

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.4-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.4" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.5-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.5" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -64,13 +64,13 @@ durable, inspectable, and safer to reuse.
 ## Cortex now has an execution body
 
 Version 10 turns the durable layer around agents into a model-independent agent
-runtime in its own right. Alpha.4 gives that runtime a Cortex-native local
+runtime in its own right. Alpha.5 gives that runtime a Cortex-native local
 interface: persistent conversations, live model discovery, streaming,
 interruption, truthful context/evidence panels, and a real-time event lattice.
 OpenAI, xAI/Grok, and OpenRouter sit behind one provider-neutral fabric.
 
 ```text
-task → Cortex context → model proposal → isolated verification → operator promotion → receipt
+task → Cortex context → model proposal → isolated verification → paired measurement → operator promotion
 ```
 
 The model, provider, tools, and future interface are replaceable. Cortex owns
@@ -101,6 +101,25 @@ decision. Cortex rechecks file preimages and repository HEAD, applies the exact
 patch, rolls back a failed active-tree check, and seals both verification and
 application receipts. The model never receives standing write, test-selection,
 promotion, or execution authority.
+
+Alpha.5 inserts a counterfactual measurement before promotion. Cortex creates
+two disposable worktrees from the same Git HEAD, applies the exact proposal to
+the candidate only, and runs the same host-frozen evaluator on both:
+
+```text
+Δrepair = I(candidate passes) - I(baseline passes)
+
+baseline FAIL → candidate PASS  = REPAIR_MEASURED
+baseline PASS → candidate PASS  = VERIFIED_MAINTENANCE
+baseline PASS → candidate FAIL  = REGRESSION_DETECTED
+baseline FAIL → candidate FAIL  = IMPROVEMENT_HELD
+```
+
+This is the threshold Cortex has crossed: it can distinguish “the candidate
+works” from “the candidate repaired a measured defect.” One paired source
+counterfactual is bounded repair evidence—not proof of general intelligence,
+consciousness, autonomous self-improvement, or improved cognition. Promotion
+still requires a separate human decision.
 
 The interface never calls a provider directly. Every message flows through the
 Cortex session, context projection, native agent/tool loop, and immutable

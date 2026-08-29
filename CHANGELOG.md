@@ -1383,3 +1383,20 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
   informative continuous band.
 - Preserved all authority flags as false. No competence lift, general semantic
   entailment, confirmatory causal effect, consciousness, or agency is claimed.
+## 10.0.0-alpha.5 - Counterfactual Source Improvement
+
+- Added a host-preregistered source-improvement contract that freezes the
+  source HEAD, exact proposal, prior isolated verification, evaluator steps,
+  runtime environment, primary binary metric, and claim boundary before either
+  comparison arm runs.
+- Added matched baseline and candidate worktrees from the same Git commit. The
+  proposal is applied only to the candidate and both arms execute the same
+  host-owned checks without changing the active checkout.
+- Added typed `REPAIR_MEASURED`, `VERIFIED_MAINTENANCE`,
+  `REGRESSION_DETECTED`, and `IMPROVEMENT_HELD` results with reconstructable
+  hashes and a noncompensatory promotion gate.
+- Added the native UI measurement step between verification and promotion,
+  including explicit baseline/candidate states and paired effect.
+- Preserved human promotion authority and all closed authority flags. A single
+  paired source result is bounded repair evidence, not general, autonomous,
+  cognitive, or conscious self-improvement.

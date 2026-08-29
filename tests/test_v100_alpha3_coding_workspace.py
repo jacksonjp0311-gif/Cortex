@@ -112,12 +112,18 @@ class CodingWorkspaceTests(unittest.TestCase):
         self.assertTrue(verification["isolated_worktree"])
         self.assertFalse(verification["active_tree_mutated"])
         self.assertEqual((self.host / "README.md").read_text(encoding="utf-8"), "# Before\n")
+        improvement = service.run_workspace_improvement_trial(
+            chat["session_id"],
+            {"proposal_hash": proposal["proposal_hash"], "approval_challenge": proposal["approval_challenge"]},
+        )
+        self.assertEqual(improvement["status"], "VERIFIED_MAINTENANCE")
         receipt = service.apply_workspace_patch(
             chat["session_id"],
             {
                 "proposal_hash": proposal["proposal_hash"],
                 "approval_challenge": proposal["approval_challenge"],
                 "verification_receipt_hash": verification["receipt_hash"],
+                "improvement_result_hash": improvement["receipt_hash"],
                 "patch": "caller substitution must be ignored",
             },
         )
@@ -132,6 +138,7 @@ class CodingWorkspaceTests(unittest.TestCase):
                 "proposal_hash": proposal["proposal_hash"],
                 "approval_challenge": proposal["approval_challenge"],
                 "verification_receipt_hash": verification["receipt_hash"],
+                "improvement_result_hash": improvement["receipt_hash"],
             },
         )
         self.assertTrue(duplicate["duplicate"])

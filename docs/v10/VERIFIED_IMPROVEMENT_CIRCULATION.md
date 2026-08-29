@@ -47,10 +47,10 @@ receipt does not become reusable mutation authority.
 
 ## Claim boundary
 
-Alpha.4 establishes independently tested source-change circulation. It does
-not establish autonomous self-improvement or a positive capability delta. A
-future improvement trial must freeze a baseline, metric, minimally important
-effect, and comparison method before execution.
+Alpha.4 establishes independently tested source-change circulation. Alpha.5
+adds the paired baseline/candidate experiment described in
+[Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md).
+Neither phase establishes autonomous or general self-improvement.
 
 All evidence surfaces preserve:
 

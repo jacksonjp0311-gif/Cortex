@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.4`
+Version target: `10.0.0-alpha.5`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -35,6 +35,7 @@ channels, or browser-control authority.
 - [Tool security](TOOL_SECURITY.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
+- [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
 - [Provider interface](PROVIDER_INTERFACE.md)
 - [Cortex runtime bridge](CORTEX_RUNTIME_BRIDGE.md)
 - [UI design language](UI_DESIGN_LANGUAGE.md)
@@ -49,7 +50,8 @@ channels, or browser-control authority.
 
 ## Claim boundary
 
-Alpha.2 proves that the local interface and provider-neutral runtime path are
+Alpha.5 proves that the local interface, provider-neutral runtime path, and
+host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
 safe execution of arbitrary tools, or live cross-provider model quality.

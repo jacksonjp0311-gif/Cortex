@@ -195,7 +195,8 @@ def _verify_contract(contract: Mapping[str, Any], targets: list[str]) -> dict[st
     return {"valid": not errors, "errors": errors}
 
 
-def _run_contract_step(root: Path, step: Mapping[str, Any]) -> dict[str, Any]:
+def run_host_verification_step(root: str | Path, step: Mapping[str, Any]) -> dict[str, Any]:
+    root = Path(root).resolve()
     raw = step.get("argv")
     if not isinstance(raw, list) or not raw or not all(isinstance(value, str) and value for value in raw):
         return {"id": str(step.get("id") or "invalid"), "passed": False, "returncode": -1, "output": "invalid host command vector"}
@@ -272,7 +273,7 @@ def verify_patch_in_isolated_worktree(
             if applied.returncode != 0:
                 raise RuntimeError("isolated proposal application failed")
             for step in contract["steps"]:
-                result = _run_contract_step(candidate, step)
+                result = run_host_verification_step(candidate, step)
                 steps.append(result)
                 if not result["passed"]:
                     break
@@ -387,5 +388,6 @@ __all__ = [
     "APPLICATION_SCHEMA", "CONTRACT_SCHEMA", "PROPOSAL_SCHEMA", "VERIFICATION_SCHEMA",
     "apply_approved_patch", "approval_challenge", "create_patch_proposal",
     "default_verification_contract", "rollback_applied_patch",
-    "repository_head", "verify_patch_in_isolated_worktree", "verify_patch_proposal",
+    "repository_head", "run_host_verification_step",
+    "verify_patch_in_isolated_worktree", "verify_patch_proposal",
 ]

@@ -307,8 +307,13 @@ class Alpha2InterfaceTests(unittest.TestCase):
         self.assertIn("drawCorePlasma", js)
         self.assertIn("coreEnergy", js)
         self.assertIn("APPROVE & VERIFY", js)
-        self.assertIn("PROMOTE VERIFIED PATCH", js)
+        # Alpha.5 inserts a matched baseline/candidate measurement before the
+        # promotion edge; isolated verification alone is no longer the UI's
+        # terminal evidence state.
+        self.assertIn("MEASURE AGAINST BASELINE", js)
+        self.assertIn("PROMOTE MEASURED REPAIR", js)
         self.assertIn("/workspace/verify", js)
+        self.assertIn("/workspace/trial", js)
         self.assertIn("/workspace/apply", js)
         self.assertIn("eventSequence", js)
         self.assertIn("reconcileLiveState", js)
