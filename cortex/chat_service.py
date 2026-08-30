@@ -120,7 +120,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.7",
+            "version": "10.0.0-alpha.8",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -135,6 +135,7 @@ class CortexChatService:
                 "policy_effect": False,
             },
             "storm": self.storm(),
+            "autonomy": self.autonomy(),
         }
 
     def settings(self) -> dict[str, Any]:
@@ -181,6 +182,30 @@ class CortexChatService:
             ],
             "model_may_spawn_agents": False,
             "model_may_mint_grants": False,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "memory_admission_authorized": False,
+            "competence_promotion_authorized": False,
+            "policy_effect": False,
+        }
+
+    @staticmethod
+    def autonomy() -> dict[str, Any]:
+        """Read-only autonomy ladder; authority requires a canonical policy."""
+
+        return {
+            "schema_version": "cortex-autonomy-surface/1.0",
+            "state": "POLICY_BOUND",
+            "storm_synthesis": "AVAILABLE",
+            "improvement_campaigns": "AVAILABLE",
+            "candidate_tournaments": "AVAILABLE",
+            "automatic_promotion": "HOST_POLICY_REQUIRED",
+            "canary_rollback": "REQUIRED",
+            "recursive_generation": "PARENT_VERIFICATION_REQUIRED",
+            "improvement_memory": "HISTORICAL_EVIDENCE_ONLY",
+            "model_may_self_authorize": False,
+            "policy_may_widen_itself": False,
+            "unbounded_autonomy": False,
             "host_mutate_authorized": False,
             "execution_authorized": False,
             "memory_admission_authorized": False,
@@ -924,6 +949,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                     return self._json(200, self.cortex.tools())
                 if path == "/v1/storm":
                     return self._json(200, self.cortex.storm())
+                if path == "/v1/autonomy":
+                    return self._json(200, self.cortex.autonomy())
                 if path == "/v1/sessions":
                     return self._json(200, {"sessions": self.cortex.list_sessions()})
                 parts = [part for part in path.split("/") if part]

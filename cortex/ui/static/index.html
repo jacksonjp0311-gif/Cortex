@@ -153,9 +153,14 @@
         <div><p><strong id="providerState">NOT SELECTED</strong><span id="providerDetail">Select a reasoning engine.</span></p><button class="provider-shield" id="cortexUsed" aria-label="Inspect Cortex provenance">◇</button></div>
       </section>
 
-      <section class="module uncertainty-module">
-        <header><strong>UNCERTAINTY INDEX</strong><b id="uncertaintyState">UNAVAILABLE</b></header>
-        <p>Cortex does not infer confidence from model fluency.</p><canvas id="uncertaintyChart"></canvas>
+      <section class="module uncertainty-module autonomy-module">
+        <header><strong>AUTONOMY BOUNDARY</strong><b id="autonomyState">POLICY BOUND</b></header>
+        <div class="autonomy-grid">
+          <span>CAMPAIGNS</span><b id="autonomyCampaigns">AVAILABLE</b>
+          <span>AUTO PROMOTION</span><b id="autonomyPromotion">HOST POLICY REQUIRED</b>
+          <span>ROLLBACK</span><b id="autonomyRollback">REQUIRED</b>
+          <span>MODEL AUTHORITY</span><b id="autonomyModelAuthority">NONE</b>
+        </div>
       </section>
     </aside>
 

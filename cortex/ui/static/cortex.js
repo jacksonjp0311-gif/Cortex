@@ -184,7 +184,7 @@ function drawSparkline(canvas, values, startColor, endColor) {
 function drawCharts() {
   drawSparkline($("#tokenRateChart"), state.rateHistory, "#43c8ff", "#9a7cff");
   drawSparkline($("#latencyChart"), state.latencyHistory, "#9a7cff", "#4de8ff");
-  ["confidenceChart", "cpuChart", "gpuChart", "networkChart", "uncertaintyChart"].forEach(id => {
+  ["confidenceChart", "cpuChart", "gpuChart", "networkChart"].forEach(id => {
     drawSparkline($(`#${id}`), [], "#249fff", "#23e8ff");
   });
   drawSparkline($("#healthChart"), state.streaming ? [1, 1, 1, 1] : [1], "#23e8ff", "#55ddb2");
@@ -466,6 +466,7 @@ function renderToolCatalog() {
 async function loadInitial() {
   try {
     state.status = await api("/v1/status");
+    renderAutonomy();
     state.uptimeBase = Number(state.status.uptime_seconds || 0);
     state.uptimeStartedAt = Date.now();
     state.settings = await api("/v1/settings");
@@ -480,6 +481,15 @@ async function loadInitial() {
     if (state.sessions.length) await openSession(state.sessions[0].session_id);
     else if (!state.providers.some(provider => provider.configured)) $("#settingsDialog").showModal();
   } catch (error) { toast(error.message, true); setCoreState("error", "OFFLINE", "Cortex service unavailable"); }
+}
+
+function renderAutonomy() {
+  const autonomy = state.status?.autonomy || {};
+  $("#autonomyState").textContent = String(autonomy.state || "UNKNOWN").replaceAll("_", " ");
+  $("#autonomyCampaigns").textContent = String(autonomy.improvement_campaigns || "UNKNOWN").replaceAll("_", " ");
+  $("#autonomyPromotion").textContent = String(autonomy.automatic_promotion || "UNKNOWN").replaceAll("_", " ");
+  $("#autonomyRollback").textContent = String(autonomy.canary_rollback || "UNKNOWN").replaceAll("_", " ");
+  $("#autonomyModelAuthority").textContent = autonomy.model_may_self_authorize === false ? "NONE" : "UNKNOWN";
 }
 
 function renderSessions() {

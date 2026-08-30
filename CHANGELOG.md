@@ -1442,3 +1442,27 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Added a read-only `/v1/storm` capability surface and adversarial tests for
   provider replacement, Boolean-shaped self-legitimacy, scope broadening,
   identity mismatch, expiry, cancellation, and canonical reconstruction.
+
+## 10.0.0-alpha.8 - Policy-Bound Autonomous Improvement
+
+- Added independence-aware Storm claim synthesis that maps agreement,
+  contradiction, and shared evidence roots while keeping semantic truth
+  explicitly unknown pending independent verification.
+- Added autonomous Storm patch collection from canonical child tool receipts,
+  host-frozen isolated verification, matched baseline/candidate trials, and
+  deterministic multi-candidate tournaments. Tournament selection grants no
+  promotion authority.
+- Added immutable HMAC-authenticated autonomy policies bound to registered
+  Cortex principals. Policies freeze allowed and forbidden paths, file/line
+  budgets, accepted trial states, canary commands, freshness, auto-promotion,
+  and recursive-generation rights.
+- Added policy-bound winner promotion with source freshness checks and exact
+  rollback when a signed canary fails. Models cannot create, modify, widen, or
+  verify the policy that authorizes the transition.
+- Added parent-generation verification for recursive changes and immutable
+  improvement episodes that remain historical evidence rather than automatic
+  memory, competence, or policy.
+- Added read-only `/v1/autonomy` diagnostics and adversarial temporary-Git tests
+  covering forged secrets, unrelated observations, non-authorizing consensus,
+  measured tournaments, promotion holds, successful canaries, exact rollback,
+  self-verification rejection, and end-to-end Storm campaign circulation.

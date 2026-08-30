@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.7`
+Version target: `10.0.0-alpha.8`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -38,6 +38,11 @@ manifests and a nondelegable Storm ceiling bind bounded parallel native-agent
 runs to exact task contracts. Child answers return as untrusted observations;
 deep trajectory verification does not make their semantic claims true.
 
+Alpha.8 composes Storm with isolated verification, counterfactual source
+measurement, candidate tournaments, signed policy envelopes, canary rollback,
+parent-generation verification, and historical improvement episodes. Autonomy
+is real inside the signed envelope and nonexistent outside it.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -46,6 +51,7 @@ deep trajectory verification does not make their semantic claims true.
 - [Tool security](TOOL_SECURITY.md)
 - [Governed tool fabric](GOVERNED_TOOL_FABRIC.md)
 - [Governed Storm fabric](GOVERNED_STORM_FABRIC.md)
+- [Governed autonomous improvement](GOVERNED_AUTONOMOUS_IMPROVEMENT.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -63,7 +69,7 @@ deep trajectory verification does not make their semantic claims true.
 
 ## Claim boundary
 
-Alpha.7 proves that the local interface, provider-neutral runtime path, and
+Alpha.8 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
