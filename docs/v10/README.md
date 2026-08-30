@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.6`
+Version target: `10.0.0-alpha.7`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -33,6 +33,11 @@ side effects, and cancellation behavior. Per-turn host grants are bounded by
 workspace, tool set, exact command vectors, time, and call count. Each result is
 an immutable, hash-bound observation—not truth, memory, or standing authority.
 
+Alpha.7 begins governed Cortex Storm coordination. Host-declared agent
+manifests and a nondelegable Storm ceiling bind bounded parallel native-agent
+runs to exact task contracts. Child answers return as untrusted observations;
+deep trajectory verification does not make their semantic claims true.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -40,6 +45,7 @@ an immutable, hash-bound observation—not truth, memory, or standing authority.
 - [Agent protocol](AGENT_PROTOCOL.md)
 - [Tool security](TOOL_SECURITY.md)
 - [Governed tool fabric](GOVERNED_TOOL_FABRIC.md)
+- [Governed Storm fabric](GOVERNED_STORM_FABRIC.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -57,7 +63,7 @@ an immutable, hash-bound observation—not truth, memory, or standing authority.
 
 ## Claim boundary
 
-Alpha.6 proves that the local interface, provider-neutral runtime path, and
+Alpha.7 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,

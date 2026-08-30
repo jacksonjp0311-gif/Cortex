@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.6-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.6" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.7-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.7" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -64,7 +64,7 @@ durable, inspectable, and safer to reuse.
 ## Cortex now has an execution body
 
 Version 10 turns the durable layer around agents into a model-independent agent
-runtime in its own right. Alpha.6 gives that runtime a Cortex-native local
+runtime in its own right. Alpha.7 gives that runtime a Cortex-native local
 interface: persistent conversations, live model discovery, streaming,
 interruption, truthful context/evidence panels, and a real-time event lattice.
 OpenAI, xAI/Grok, and OpenRouter sit behind one provider-neutral fabric.
@@ -131,6 +131,15 @@ request a capability; it cannot register one, widen its scope, or turn
 completion into authority. See the
 [v10 guide](docs/v10/README.md), [interface architecture](docs/v10/UI_ARCHITECTURE.md),
 [provider fabric](docs/v10/PROVIDER_FABRIC.md), and [secret boundary](docs/v10/SECRET_STORAGE.md).
+
+Alpha.7 begins Cortex Storm: multiple replaceable reasoning engines can execute
+host-declared child tasks concurrently under distinct, attenuated grants. Each
+child has a content-addressed agent manifest, task contract, bounded native
+trajectory, cancellation path, and immutable observation receipt. Storm does
+not let a model spawn agents, mint grants, accept another agent's answer as
+truth, or promote observations into memory or source changes. It creates the
+verified coordination substrate on which an operator-approved agent mesh can
+later reason together. See the [Storm architecture](docs/v10/GOVERNED_STORM_FABRIC.md).
 
 ## What we just learned: success needs contrast
 

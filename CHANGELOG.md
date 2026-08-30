@@ -1422,3 +1422,23 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
   two-second telemetry smoke compiler that checks runtime events, loopback API
   values, visible DOM targets, and JavaScript bindings without running the full
   repository suite.
+
+## 10.0.0-alpha.7 - Governed Cortex Storm Foundation
+
+- Added content-addressed, provider-neutral agent manifests and host-issued
+  Storm grants with explicit agent, role, tool, concurrency, iteration, call,
+  tool-time, freshness, and wall-time ceilings.
+- Added bounded parallel child circulation by reusing the native-agent runtime
+  rather than creating a second model or tool pathway. Every child receives an
+  attenuated, nondelegable grant and retains its actual provider/model only as
+  trajectory provenance.
+- Added hash-linked Storm lifecycle events for real lattice rendering,
+  cooperative cancellation, immutable task-plan/observation/summary receipts,
+  and deep reconstruction of child trajectories, epoch binding, continuity,
+  event linkage, and authority closure.
+- Defined child answers as untrusted observations pending independent semantic
+  verification. Models cannot spawn agents, mint grants, authorize tools,
+  admit memory, promote competence, alter policy, or mutate host source.
+- Added a read-only `/v1/storm` capability surface and adversarial tests for
+  provider replacement, Boolean-shaped self-legitimacy, scope broadening,
+  identity mismatch, expiry, cancellation, and canonical reconstruction.

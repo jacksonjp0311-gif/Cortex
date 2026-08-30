@@ -120,7 +120,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.6",
+            "version": "10.0.0-alpha.7",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -134,6 +134,7 @@ class CortexChatService:
                 "memory_admission_authorized": False,
                 "policy_effect": False,
             },
+            "storm": self.storm(),
         }
 
     def settings(self) -> dict[str, Any]:
@@ -155,6 +156,36 @@ class CortexChatService:
             "model_registration_authorized": False,
             "host_mutate_authorized": False,
             "execution_authorized": False,
+        }
+
+    @staticmethod
+    def storm() -> dict[str, Any]:
+        """Truthful capability surface; invocation remains host-controlled."""
+
+        return {
+            "schema_version": "cortex-storm-surface/1.0",
+            "available": True,
+            "state": "GOVERNED",
+            "orchestration": "bounded_parallel",
+            "agent_identity": "host_manifest",
+            "model_binding": "runtime_provenance_only",
+            "child_results": "untrusted_observation_pending_verification",
+            "events": [
+                "storm.started",
+                "agent.spawned",
+                "agent.started",
+                "agent.child.event",
+                "agent.completed",
+                "agent.failed",
+                "storm.completed",
+            ],
+            "model_may_spawn_agents": False,
+            "model_may_mint_grants": False,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "memory_admission_authorized": False,
+            "competence_promotion_authorized": False,
+            "policy_effect": False,
         }
 
     def update_settings(self, values: Mapping[str, Any]) -> dict[str, Any]:
@@ -806,7 +837,7 @@ class CortexChatService:
 
     def live_state(self, session_id: str) -> dict[str, Any]:
         """Return the canonical reconciliation surface for the local UI."""
-        session = self.get_session(session_id)
+        self.get_session(session_id)
         return {
             "schema_version": SERVICE_SCHEMA,
             "session_id": session_id,
@@ -891,6 +922,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                     return self._json(200, self.cortex.settings())
                 if path == "/v1/tools":
                     return self._json(200, self.cortex.tools())
+                if path == "/v1/storm":
+                    return self._json(200, self.cortex.storm())
                 if path == "/v1/sessions":
                     return self._json(200, {"sessions": self.cortex.list_sessions()})
                 parts = [part for part in path.split("/") if part]
