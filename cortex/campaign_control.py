@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import secrets
+import sqlite3
 import time
 from typing import Any, Mapping, Sequence
 from urllib.parse import urlparse
@@ -23,6 +24,7 @@ SESSION_SCHEMA = "cortex-campaign-control-session/1.0"
 ACTION_SCHEMA = "cortex-campaign-control-action/1.0"
 REVOCATION_SCHEMA = "cortex-campaign-control-revocation/1.0"
 LIFECYCLE_SCHEMA = "cortex-campaign-lifecycle/1.0"
+LIFECYCLE_VERIFICATION_SCHEMA = "cortex-campaign-lifecycle-verification/1.0"
 
 ALLOWED_CONTROL_ACTIONS = frozenset(
     {
@@ -107,7 +109,10 @@ def verify_control_action(
     expected_action: str,
     expected_request: Mapping[str, Any],
     consumed_kinds: Sequence[str] = ("campaign_lifecycle",),
+    now: float | None = None,
 ) -> dict[str, Any]:
+    """Verify an action at spend time, including its live parent capability."""
+
     receipt_hash = str(action_authorization.get("receipt_hash") or "")
     canonical = store.symbiotic_receipt(receipt_hash, repo=repo)
     errors: list[str] = []
@@ -120,6 +125,38 @@ def verify_control_action(
             errors.append("canonical_action_mismatch")
         if canonical.get("request_hash") != _sha(dict(expected_request)):
             errors.append("canonical_action_request_mismatch")
+        parent_hash = str(canonical.get("control_session_receipt_hash") or "")
+        parent = store.symbiotic_receipt(parent_hash, repo=repo)
+        checked_at = time.time() if now is None else float(now)
+        if not parent or parent.get("kind") != "campaign_control_session":
+            errors.append("parent_control_session_missing")
+        else:
+            if store.verify_symbiotic_receipt(repo, parent_hash).get("valid") is not True:
+                errors.append("parent_control_session_invalid")
+            if canonical.get("principal_id") != parent.get("principal_id"):
+                errors.append("parent_control_principal_mismatch")
+            if checked_at < float(canonical.get("authorized_at") or 0):
+                errors.append("canonical_action_not_yet_current")
+            spend_expires_at = float(
+                canonical.get("spend_expires_at")
+                or parent.get("expires_at")
+                or 0
+            )
+            if checked_at > spend_expires_at:
+                errors.append("canonical_action_expired")
+            epoch = observe_current_epoch(store, repo)
+            if epoch.get("verified") is not True:
+                errors.append("current_epoch_unverified")
+            elif parent.get("bound_body_epoch_id") != epoch.get("epoch_id"):
+                errors.append("parent_control_session_epoch_stale")
+            revocations = store.symbiotic_receipts_by_kind(
+                repo, "campaign_control_revocation"
+            )
+            if any(
+                item.get("control_session_receipt_hash") == parent_hash
+                for item in revocations
+            ):
+                errors.append("parent_control_session_revoked")
         for kind in consumed_kinds:
             used = store.symbiotic_receipts_by_kind(repo, str(kind))
             if any(
@@ -133,17 +170,156 @@ def verify_control_action(
     return canonical
 
 
-def campaign_state(store: Any, repo: str, campaign_id: str) -> dict[str, Any] | None:
-    """Return the latest immutable lifecycle state for one campaign."""
+def verify_campaign_lifecycle(
+    store: Any,
+    repo: str,
+    campaign_id: str,
+    *,
+    require_current_epoch: bool = True,
+) -> dict[str, Any]:
+    """Reconstruct and semantically verify one immutable campaign chain."""
 
+    campaign_id = str(campaign_id)
     rows = [
         item
         for item in store.symbiotic_receipts_by_kind(repo, "campaign_lifecycle")
-        if item.get("campaign_id") == str(campaign_id)
+        if item.get("campaign_id") == campaign_id
     ]
+    errors: list[str] = []
     if not rows:
+        return {
+            "schema_version": LIFECYCLE_VERIFICATION_SCHEMA,
+            "campaign_id": campaign_id,
+            "valid": False,
+            "state": None,
+            "receipt_count": 0,
+            "errors": ["campaign_lifecycle_missing"],
+        }
+    ordered = sorted(
+        rows,
+        key=lambda item: (int(item.get("state_sequence") or 0), item["receipt_hash"]),
+    )
+    expected_transitions = {
+        (None, "prepared_request"): "campaign.prepare",
+        ("prepared_request", "start_requested"): "campaign.start",
+        ("prepared_request", "cancel_requested"): "campaign.cancel",
+        ("start_requested", "cancel_requested"): "campaign.cancel",
+    }
+    root_policy = str(ordered[0].get("policy_receipt_hash") or "")
+    root_storm = str(ordered[0].get("storm_summary_receipt_hash") or "")
+    seen_sequences: set[int] = set()
+    prior: dict[str, Any] | None = None
+    for index, row in enumerate(ordered):
+        sequence = int(row.get("state_sequence") or 0)
+        if sequence in seen_sequences:
+            errors.append(f"conflicting_state_sequence:{sequence}")
+        seen_sequences.add(sequence)
+        if sequence != index:
+            errors.append(f"state_sequence_gap:{sequence}")
+        if store.verify_symbiotic_receipt(repo, str(row["receipt_hash"])).get("valid") is not True:
+            errors.append(f"lifecycle_receipt_invalid:{sequence}")
+        expected_previous = str((prior or {}).get("receipt_hash") or "")
+        if str(row.get("previous_state_receipt_hash") or "") != expected_previous:
+            errors.append(f"previous_state_mismatch:{sequence}")
+        if row.get("campaign_id") != campaign_id:
+            errors.append(f"campaign_identity_mismatch:{sequence}")
+        if str(row.get("policy_receipt_hash") or "") != root_policy:
+            errors.append(f"policy_root_drift:{sequence}")
+        if str(row.get("storm_summary_receipt_hash") or "") != root_storm:
+            errors.append(f"storm_root_drift:{sequence}")
+        prior_status = str(prior.get("status") or "") if prior else None
+        status = str(row.get("status") or "")
+        expected_action = expected_transitions.get((prior_status, status))
+        if expected_action is None:
+            errors.append(f"illegal_transition:{prior_status or 'genesis'}->{status}")
+        action_hash = str(row.get("action_authorization_receipt_hash") or "")
+        action = store.symbiotic_receipt(action_hash, repo=repo)
+        if not action or action.get("kind") != "campaign_control_action":
+            errors.append(f"lifecycle_action_missing:{sequence}")
+        else:
+            if store.verify_symbiotic_receipt(repo, action_hash).get("valid") is not True:
+                errors.append(f"lifecycle_action_invalid:{sequence}")
+            if expected_action and action.get("action") != expected_action:
+                errors.append(f"lifecycle_action_mismatch:{sequence}")
+            request = campaign_action_request(
+                campaign_id,
+                expected_action or "",
+                prior_state_receipt_hash=expected_previous,
+                policy_receipt_hash=root_policy,
+                storm_summary_receipt_hash=root_storm,
+            )
+            if action.get("request_hash") != _sha(request):
+                errors.append(f"lifecycle_request_mismatch:{sequence}")
+            parent = store.symbiotic_receipt(
+                str(action.get("control_session_receipt_hash") or ""), repo=repo
+            )
+            if not parent or parent.get("kind") != "campaign_control_session":
+                errors.append(f"lifecycle_parent_session_missing:{sequence}")
+            else:
+                consumed_at = float(row.get("created_at") or 0)
+                if consumed_at < float(action.get("authorized_at") or 0):
+                    errors.append(f"lifecycle_chronology_invalid:{sequence}")
+                if consumed_at > float(
+                    action.get("spend_expires_at")
+                    or parent.get("expires_at")
+                    or 0
+                ):
+                    errors.append(f"lifecycle_action_expired_at_spend:{sequence}")
+                revocations = store.symbiotic_receipts_by_kind(
+                    repo, "campaign_control_revocation"
+                )
+                if any(
+                    item.get("control_session_receipt_hash")
+                    == parent.get("receipt_hash")
+                    and float(item.get("revoked_at") or 0) <= consumed_at
+                    for item in revocations
+                ):
+                    errors.append(f"lifecycle_session_revoked_at_spend:{sequence}")
+        prior = row
+
+    for label, kind, receipt_hash in (
+        ("policy", "autonomy_policy", root_policy),
+        ("storm", "storm_summary", root_storm),
+    ):
+        canonical = store.symbiotic_receipt(receipt_hash, repo=repo)
+        if (
+            not canonical
+            or canonical.get("kind") != kind
+            or store.verify_symbiotic_receipt(repo, receipt_hash).get("valid") is not True
+        ):
+            errors.append(f"canonical_{label}_root_invalid")
+    if require_current_epoch:
+        epoch = observe_current_epoch(store, repo)
+        if epoch.get("verified") is not True:
+            errors.append("current_epoch_unverified")
+        elif any(row.get("body_epoch_id") != epoch.get("epoch_id") for row in ordered):
+            errors.append("campaign_lifecycle_epoch_stale")
+    return {
+        "schema_version": LIFECYCLE_VERIFICATION_SCHEMA,
+        "campaign_id": campaign_id,
+        "valid": not errors,
+        "state": ordered[-1] if not errors else None,
+        "latest_observed_state": ordered[-1],
+        "receipt_count": len(ordered),
+        "policy_receipt_hash": root_policy,
+        "storm_summary_receipt_hash": root_storm,
+        "errors": sorted(set(errors)),
+        **_closed_authority(),
+    }
+
+
+def campaign_state(store: Any, repo: str, campaign_id: str) -> dict[str, Any] | None:
+    """Return the latest state only after full lifecycle reconstruction."""
+
+    verification = verify_campaign_lifecycle(store, repo, campaign_id)
+    if verification.get("errors") == ["campaign_lifecycle_missing"]:
         return None
-    return max(rows, key=lambda item: int(item.get("state_sequence") or -1))
+    if verification.get("valid") is not True:
+        raise PermissionError(
+            "campaign lifecycle held: "
+            + ",".join(verification.get("errors") or ())
+        )
+    return verification["state"]
 
 
 def _append_campaign_state(
@@ -419,9 +595,10 @@ def authorize_control_action(
         raise PermissionError("control action held: " + ",".join(sorted(set(errors))))
     request_hash = _sha(dict(request))
     session = _session(store, repo, f"authorize {action}")
-    return store.append_symbiotic_receipt(
-        repo,
-        {
+    try:
+        return store.append_symbiotic_receipt(
+            repo,
+            {
             "schema_version": ACTION_SCHEMA,
             "kind": "campaign_control_action",
             "status": "authorized_once",
@@ -435,11 +612,16 @@ def authorize_control_action(
             "action_nonce": nonce,
             "request_hash": request_hash,
             "authorized_at": checked_at,
+            "spend_expires_at": float(receipt.get("expires_at") or 0),
             "exactly_once": True,
             "host_control_authorized": True,
             **_closed_authority(),
-        },
-    )
+            },
+        )
+    except sqlite3.IntegrityError as exc:
+        if "idx_campaign_control_nonce_once" in str(exc) or "UNIQUE constraint" in str(exc):
+            raise PermissionError("control action held: action_nonce_replayed") from exc
+        raise
 
 
 def revoke_control_session(
@@ -506,4 +688,5 @@ __all__ = [
     "revoke_control_session",
     "transition_campaign_control",
     "verify_control_action",
+    "verify_campaign_lifecycle",
 ]

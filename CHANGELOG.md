@@ -1504,3 +1504,24 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Added adversarial coverage for forged Storm validity, noncanonical promotion
   inputs, empty canaries, policy revocation, epoch drift, and pre-apply canary
   failure.
+## 10.0.0-alpha.11 - Revocable Capability Closure & External Worker Seal
+
+- Revalidated every one-shot campaign action at spend time against its
+  canonical parent control session, current epoch, expiry, and revocation
+  history. A valid action can no longer outlive the authority that minted it.
+- Added database uniqueness constraints for action nonces, action spends, and
+  process launch/exit receipts so concurrent callers cannot defeat exactly-once
+  semantics with separate ledger sessions.
+- Added full campaign lifecycle reconstruction covering monotonic sequence,
+  hash links, legal transitions, invariant policy/Storm roots, canonical action
+  bindings, chronology, and epoch freshness.
+- Added a fixed, shell-free external worker entry point. Cortex now seals the
+  process launch, PID, exit code, timeout/termination path, bounded output
+  hashes, and linked worker terminal without treating process exit as campaign
+  success or integration authority.
+- Repaired package/runtime version drift and added adversarial tests for stale
+  pre-minted actions, revocation, epoch drift, parallel nonce replay, illegal
+  lifecycle rows, external exit observation, and duplicate supervision.
+- Preserved `model_host_mutate_authorized=false`,
+  `model_execution_authorized=false`, `memory_admission_authorized=false`, and
+  `policy_effect=false` across every new proof surface.

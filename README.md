@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.10-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.10" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.11-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.11" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -169,6 +169,16 @@ decision, and rollback creates a history-preserving reverse commit whose full
 tree must match the recovery anchor. Raw control secrets remain only in browser
 memory, while models retain no execution, mutation, memory, or policy authority.
 See [authenticated campaign control](docs/v10/AUTHENTICATED_CAMPAIGN_CONTROL.md).
+
+Alpha.11 closes the capability lifetime and worker-observation seams. A
+pre-authorized action is revalidated when it is spent: expiry, revocation,
+current epoch, exact request, and database-enforced one-shot consumption must
+all still hold. Campaign state is reconstructed as a legal, hash-linked state
+machine rather than selected by sequence alone. A fixed Cortex worker can now
+run in a separate OS process whose PID, exit status, timeout path, and bounded
+output hashes are sealed independently; process exit still does not prove
+campaign utility or authorize integration. See the
+[revocable capability and worker seal](docs/v10/REVOCABLE_CAPABILITY_WORKER_SEAL.md).
 
 ## What we just learned: success needs contrast
 

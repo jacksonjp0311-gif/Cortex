@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.10`
+Version: `10.0.0-alpha.11`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -60,6 +60,14 @@ host action, and recoverable through a verified history-preserving revert. The
 web mutation surface accepts only these authenticated operations; it grants no
 standing authority to models or callers.
 
+Alpha.11 makes those one-shot control capabilities revocable through their
+entire lifetime. Spending an action rechecks its canonical parent session,
+expiry, revocation, epoch, request, and unique database consumption. Campaign
+reads reconstruct and verify every lifecycle edge. The canonical campaign
+worker may run through a fixed subprocess entry point, with immutable launch
+and exit observations that distinguish an OS process exit from campaign
+success or integration authority.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -71,6 +79,7 @@ standing authority to models or callers.
 - [Governed autonomous improvement](GOVERNED_AUTONOMOUS_IMPROVEMENT.md)
 - [Canonical autonomous campaign seal](CANONICAL_AUTONOMOUS_CAMPAIGN.md)
 - [Authenticated campaign control](AUTHENTICATED_CAMPAIGN_CONTROL.md)
+- [Revocable capability and worker seal](REVOCABLE_CAPABILITY_WORKER_SEAL.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -88,7 +97,7 @@ standing authority to models or callers.
 
 ## Claim boundary
 
-Alpha.10 proves that the local interface, provider-neutral runtime path, and
+Alpha.11 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,

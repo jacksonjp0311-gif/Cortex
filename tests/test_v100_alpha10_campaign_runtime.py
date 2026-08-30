@@ -21,6 +21,7 @@ from cortex.campaign_runtime import (
     claim_campaign_worker,
     observe_campaign_runtime,
     record_worker_heartbeat,
+    run_claimed_campaign_in_process,
     run_claimed_improvement_campaign,
 )
 from cortex.native_agent import CapabilityGrant, ScriptedAgentAdapter
@@ -442,6 +443,41 @@ class V100Alpha10CampaignRuntimeTests(V100Alpha8AutonomyTests):
         self.assertNotIn("error_message", result["terminal"])
         self.assertTrue(result["terminal"]["error_hash"])
         self.assertFalse(result["terminal"]["integration_authorized"])
+
+    def test_external_worker_process_exit_is_independently_observed(self) -> None:
+        _policy, _storm, _control, _started = self.start_request()
+        claim = self.claim(now=time.time())
+        result = run_claimed_campaign_in_process(
+            self.store,
+            self.repo,
+            self.host,
+            claim_receipt_hash=claim["receipt_hash"],
+            policy_secret=self.secret,
+            timeout_seconds=30,
+        )
+        self.assertEqual(result["status"], "process_exited")
+        self.assertTrue(result["exit"]["os_process_exit_verified"])
+        self.assertTrue(result["exit"]["worker_terminal_valid"])
+        self.assertTrue(result["exit"]["campaign_semantics_verified"])
+        self.assertFalse(result["exit"]["campaign_success"])
+        self.assertFalse(result["exit"]["model_execution_authorized"])
+        self.assertFalse(result["exit"]["model_host_mutate_authorized"])
+        observed = observe_campaign_runtime(
+            self.store, self.repo, "campaign-runtime"
+        )
+        self.assertTrue(observed["os_process_exit_verified"])
+        replay = run_claimed_campaign_in_process(
+            self.store,
+            self.repo,
+            self.host,
+            claim_receipt_hash=claim["receipt_hash"],
+            policy_secret=self.secret,
+            timeout_seconds=30,
+        )
+        self.assertEqual(replay["status"], "already_supervised")
+        self.assertEqual(
+            replay["exit"]["receipt_hash"], result["exit"]["receipt_hash"]
+        )
 
 
 if __name__ == "__main__":

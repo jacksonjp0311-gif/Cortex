@@ -9,6 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import sqlite3
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Mapping
@@ -23,6 +27,8 @@ CLAIM_SCHEMA = "cortex-campaign-worker-claim/1.0"
 HEARTBEAT_SCHEMA = "cortex-campaign-worker-heartbeat/1.0"
 CANCELLATION_SCHEMA = "cortex-campaign-cancellation-ack/1.0"
 TERMINAL_SCHEMA = "cortex-campaign-worker-terminal/1.0"
+PROCESS_LAUNCH_SCHEMA = "cortex-campaign-worker-process-launch/1.0"
+PROCESS_EXIT_SCHEMA = "cortex-campaign-worker-process-exit/1.0"
 
 WORKER_STAGES = frozenset(
     {
@@ -531,6 +537,200 @@ def run_claimed_improvement_campaign(
     }
 
 
+def run_claimed_campaign_in_process(
+    store: Any,
+    repo: str,
+    root: str | Path,
+    *,
+    claim_receipt_hash: str,
+    policy_secret: str,
+    timeout_seconds: float = 900.0,
+) -> dict[str, Any]:
+    """Run one claimed campaign in a fixed, independently observed process.
+
+    The worker command is owned by Cortex, uses ``shell=False``, and receives
+    the policy secret only over its private stdin pipe. Canonical receipts store
+    hashes and process observations, never the secret or raw worker output.
+    """
+
+    claim = _verified_receipt(
+        store, repo, claim_receipt_hash, "campaign_worker_claim"
+    )
+    control = campaign_state(store, repo, str(claim["campaign_id"]))
+    if not control or control.get("status") != "start_requested":
+        raise PermissionError("canonical start_requested state required")
+    if claim.get("start_request_receipt_hash") != control.get("receipt_hash"):
+        raise PermissionError("worker claim is not bound to current start request")
+    if repository_head(root) != claim.get("source_head"):
+        raise CampaignSourceDrift("campaign source HEAD changed before process launch")
+    existing_launches = [
+        item
+        for item in store.symbiotic_receipts_by_kind(
+            repo, "campaign_worker_process_launch"
+        )
+        if item.get("claim_receipt_hash") == claim_receipt_hash
+    ]
+    if existing_launches:
+        exits = [
+            item
+            for item in store.symbiotic_receipts_by_kind(
+                repo, "campaign_worker_process_exit"
+            )
+            if item.get("process_launch_receipt_hash")
+            == existing_launches[0].get("receipt_hash")
+        ]
+        return {
+            "status": "already_supervised",
+            "launch": {**existing_launches[0], "inserted": False, "duplicate": True},
+            "exit": ({**exits[0], "inserted": False, "duplicate": True} if exits else None),
+            **_closed_authority(),
+        }
+
+    command = (sys.executable, "-m", "cortex.campaign_worker_process")
+    command_hash = _sha(list(command))
+    launch_session = _session(
+        store, repo, f"launch external campaign worker {claim['campaign_id']}"
+    )
+    try:
+        launch = store.append_symbiotic_receipt(
+            repo,
+            {
+                "schema_version": PROCESS_LAUNCH_SCHEMA,
+                "kind": "campaign_worker_process_launch",
+                "status": "launch_committed",
+                "session_id": launch_session["session_id"],
+                "turn_id": 0,
+                "event_id": f"campaign_process_launch_{str(claim['campaign_id'])}",
+                "body_epoch_id": launch_session["body_epoch_id"],
+                "campaign_id": claim["campaign_id"],
+                "worker_id": claim["worker_id"],
+                "claim_receipt_hash": claim_receipt_hash,
+                "start_request_receipt_hash": claim["start_request_receipt_hash"],
+                "source_head": claim["source_head"],
+                "worker_command_hash": command_hash,
+                "worker_module": "cortex.campaign_worker_process",
+                "shell_enabled": False,
+                "launched_at": time.time(),
+                "host_process_launch_authorized": True,
+                "campaign_success": False,
+                "integration_authorized": False,
+                **_closed_authority(),
+            },
+        )
+    except sqlite3.IntegrityError as exc:
+        raise PermissionError("campaign process launch already committed") from exc
+
+    payload = {
+        "database_path": str(Path(store.path).resolve()),
+        "repo": repo,
+        "root": str(Path(root).resolve()),
+        "claim_receipt_hash": claim_receipt_hash,
+        "policy_secret": str(policy_secret),
+    }
+    environment = dict(os.environ)
+    package_root = str(Path(__file__).resolve().parent.parent)
+    prior_pythonpath = environment.get("PYTHONPATH", "")
+    environment["PYTHONPATH"] = os.pathsep.join(
+        item for item in (package_root, prior_pythonpath) if item
+    )
+    started = time.monotonic()
+    process = subprocess.Popen(
+        command,
+        cwd=Path(root).resolve(),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        shell=False,
+        env=environment,
+    )
+    timed_out = False
+    termination_requested = False
+    kill_required = False
+    try:
+        stdout, stderr = process.communicate(
+            _canonical(payload), timeout=max(1.0, float(timeout_seconds))
+        )
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        termination_requested = True
+        process.terminate()
+        try:
+            stdout, stderr = process.communicate(timeout=5.0)
+        except subprocess.TimeoutExpired:
+            kill_required = True
+            process.kill()
+            stdout, stderr = process.communicate(timeout=5.0)
+    duration_ms = (time.monotonic() - started) * 1000.0
+    terminal = next(
+        (
+            item
+            for item in _campaign_receipts(
+                store, repo, "campaign_worker_terminal", str(claim["campaign_id"])
+            )
+            if item.get("claim_receipt_hash") == claim_receipt_hash
+        ),
+        None,
+    )
+    terminal_valid = bool(
+        terminal
+        and store.verify_symbiotic_receipt(repo, str(terminal["receipt_hash"])).get(
+            "valid"
+        )
+        is True
+    )
+    exit_session = _session(
+        store, repo, f"observe external campaign worker exit {claim['campaign_id']}"
+    )
+    exit_receipt = store.append_symbiotic_receipt(
+        repo,
+        {
+            "schema_version": PROCESS_EXIT_SCHEMA,
+            "kind": "campaign_worker_process_exit",
+            "status": (
+                "process_timed_out"
+                if timed_out
+                else "process_exited"
+                if process.returncode == 0
+                else "process_failed"
+            ),
+            "session_id": exit_session["session_id"],
+            "turn_id": 0,
+            "event_id": f"campaign_process_exit_{str(claim['campaign_id'])}",
+            "body_epoch_id": exit_session["body_epoch_id"],
+            "campaign_id": claim["campaign_id"],
+            "worker_id": claim["worker_id"],
+            "claim_receipt_hash": claim_receipt_hash,
+            "process_launch_receipt_hash": launch["receipt_hash"],
+            "worker_command_hash": command_hash,
+            "pid": int(process.pid),
+            "exit_code": int(process.returncode),
+            "duration_ms": duration_ms,
+            "timed_out": timed_out,
+            "termination_requested": termination_requested,
+            "kill_required": kill_required,
+            "stdout_hash": _sha(stdout),
+            "stderr_hash": _sha(stderr),
+            "worker_terminal_receipt_hash": str((terminal or {}).get("receipt_hash") or ""),
+            "worker_terminal_valid": terminal_valid,
+            "os_process_exit_verified": process.poll() is not None,
+            "campaign_semantics_verified": bool(process.returncode == 0 and terminal_valid),
+            "campaign_success": False,
+            "integration_authorized": False,
+            **_closed_authority(),
+        },
+    )
+    return {
+        "status": str(exit_receipt["status"]),
+        "launch": launch,
+        "exit": exit_receipt,
+        "terminal": terminal,
+        **_closed_authority(),
+    }
+
+
 def observe_campaign_runtime(
     store: Any, repo: str, campaign_id: str, *, now: float | None = None
 ) -> dict[str, Any]:
@@ -548,6 +748,9 @@ def observe_campaign_runtime(
     terminals = _campaign_receipts(
         store, repo, "campaign_worker_terminal", campaign_id
     )
+    process_exits = _campaign_receipts(
+        store, repo, "campaign_worker_process_exit", campaign_id
+    )
     claim = claims[0] if claims else None
     heartbeat = max(
         heartbeats,
@@ -555,6 +758,7 @@ def observe_campaign_runtime(
         default=None,
     )
     terminal = terminals[0] if terminals else None
+    process_exit = process_exits[0] if process_exits else None
     if terminal and terminal.get("status") == "cooperative_cancel_observed":
         state = "cancellation_verified"
     elif terminal and terminal.get("status") == "worker_failed":
@@ -587,6 +791,12 @@ def observe_campaign_runtime(
             (acknowledgements[0] if acknowledgements else {}).get("receipt_hash") or ""
         ),
         "terminal_receipt_hash": str((terminal or {}).get("receipt_hash") or ""),
+        "process_exit_receipt_hash": str(
+            (process_exit or {}).get("receipt_hash") or ""
+        ),
+        "os_process_exit_verified": bool(
+            process_exit and process_exit.get("os_process_exit_verified") is True
+        ),
         "observed_at": checked_at,
         "read_only": True,
         "campaign_execution_success": False,
@@ -604,5 +814,6 @@ __all__ = [
     "claim_campaign_worker",
     "observe_campaign_runtime",
     "record_worker_heartbeat",
+    "run_claimed_campaign_in_process",
     "run_claimed_improvement_campaign",
 ]

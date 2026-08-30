@@ -462,6 +462,35 @@ CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_repo_created
 ON symbiotic_circulation_receipts(repo, created_at DESC, receipt_hash);
 CREATE INDEX IF NOT EXISTS idx_symbiotic_receipts_turn
 ON symbiotic_circulation_receipts(repo, session_id, turn_id, kind);
+-- Alpha.11 control capabilities are exactly-once across sessions as well as
+-- within one symbiotic chain. JSON expressions target only canonical control
+-- fields and leave historical receipts untouched.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_control_nonce_once
+ON symbiotic_circulation_receipts(
+    repository_id,
+    json_extract(receipt_json, '$.control_session_receipt_hash'),
+    json_extract(receipt_json, '$.action_nonce')
+)
+WHERE kind = 'campaign_control_action';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_control_spend_once
+ON symbiotic_circulation_receipts(
+    repository_id,
+    json_extract(receipt_json, '$.action_authorization_receipt_hash')
+)
+WHERE json_extract(receipt_json, '$.action_authorization_receipt_hash') IS NOT NULL
+  AND json_extract(receipt_json, '$.action_authorization_receipt_hash') <> '';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_worker_process_launch_once
+ON symbiotic_circulation_receipts(
+    repository_id,
+    json_extract(receipt_json, '$.claim_receipt_hash')
+)
+WHERE kind = 'campaign_worker_process_launch';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_worker_process_exit_once
+ON symbiotic_circulation_receipts(
+    repository_id,
+    json_extract(receipt_json, '$.process_launch_receipt_hash')
+)
+WHERE kind = 'campaign_worker_process_exit';
 
 CREATE TABLE IF NOT EXISTS symbiotic_circulation_chain_tips(
     repository_id TEXT NOT NULL,
