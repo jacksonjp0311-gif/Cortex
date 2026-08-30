@@ -21,6 +21,7 @@ from cortex.campaign_runtime import (
     claim_campaign_worker,
     observe_campaign_runtime,
     record_worker_heartbeat,
+    run_claimed_improvement_campaign,
 )
 from cortex.native_agent import CapabilityGrant, ScriptedAgentAdapter
 from cortex.storm import (
@@ -89,6 +90,9 @@ class V100Alpha10CampaignRuntimeTests(V100Alpha8AutonomyTests):
                 "campaign.prepare",
                 "campaign.start",
                 "campaign.cancel",
+                "campaign.promote",
+                "campaign.integrate",
+                "campaign.rollback",
             ),
             origin="http://127.0.0.1:8791",
         )
@@ -363,6 +367,81 @@ class V100Alpha10CampaignRuntimeTests(V100Alpha8AutonomyTests):
         )
         with self.assertRaises(CampaignSourceDrift):
             guard("candidate", {})
+
+    def test_host_wrapper_seals_normal_terminal_exactly_once(self) -> None:
+        policy, storm, _control, _started = self.start_request()
+        claim = self.claim(now=time.time())
+        result = run_claimed_improvement_campaign(
+            self.store,
+            self.repo,
+            self.host,
+            claim_receipt_hash=claim["receipt_hash"],
+            storm_result=storm,
+            policy_receipt_hash=policy["receipt_hash"],
+            policy_secret=self.secret,
+        )
+        self.assertEqual(result["status"], "terminal_observed")
+        self.assertEqual(result["terminal"]["status"], "completed_boundary_return")
+        self.assertTrue(result["terminal"]["in_process_boundary_unwound"])
+        self.assertFalse(result["terminal"]["os_process_exit_verified"])
+        self.assertFalse(result["terminal"]["campaign_success"])
+        replay = run_claimed_improvement_campaign(
+            self.store,
+            self.repo,
+            self.host,
+            claim_receipt_hash=claim["receipt_hash"],
+            storm_result=storm,
+            policy_receipt_hash=policy["receipt_hash"],
+            policy_secret=self.secret,
+        )
+        self.assertEqual(replay["status"], "already_terminal")
+        self.assertEqual(
+            replay["terminal"]["receipt_hash"], result["terminal"]["receipt_hash"]
+        )
+        self.assertEqual(replay["heartbeats"], [])
+
+    def test_host_wrapper_seals_cancellation_after_unwind(self) -> None:
+        policy, storm, control, started = self.start_request()
+        claim = self.claim(now=time.time())
+        self.cancel_request(policy, storm, control, started)
+        result = run_claimed_improvement_campaign(
+            self.store,
+            self.repo,
+            self.host,
+            claim_receipt_hash=claim["receipt_hash"],
+            storm_result=storm,
+            policy_receipt_hash=policy["receipt_hash"],
+            policy_secret=self.secret,
+        )
+        self.assertEqual(result["status"], "cancellation_verified")
+        self.assertEqual(
+            result["terminal"]["status"], "cooperative_cancel_observed"
+        )
+        self.assertEqual(
+            observe_campaign_runtime(
+                self.store, self.repo, "campaign-runtime"
+            )["state"],
+            "cancellation_verified",
+        )
+
+    def test_host_wrapper_records_failure_without_raw_error(self) -> None:
+        policy, storm, _control, _started = self.start_request()
+        claim = self.claim(now=time.time())
+        result = run_claimed_improvement_campaign(
+            self.store,
+            self.repo,
+            self.host,
+            claim_receipt_hash=claim["receipt_hash"],
+            storm_result=storm,
+            policy_receipt_hash=policy["receipt_hash"],
+            policy_secret="attacker",
+        )
+        self.assertEqual(result["status"], "worker_failed")
+        self.assertEqual(result["terminal"]["status"], "worker_failed")
+        self.assertEqual(result["error_type"], "PermissionError")
+        self.assertNotIn("error_message", result["terminal"])
+        self.assertTrue(result["terminal"]["error_hash"])
+        self.assertFalse(result["terminal"]["integration_authorized"])
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ from .symbiosis import open_symbiotic_session
 CLAIM_SCHEMA = "cortex-campaign-worker-claim/1.0"
 HEARTBEAT_SCHEMA = "cortex-campaign-worker-heartbeat/1.0"
 CANCELLATION_SCHEMA = "cortex-campaign-cancellation-ack/1.0"
+TERMINAL_SCHEMA = "cortex-campaign-worker-terminal/1.0"
 
 WORKER_STAGES = frozenset(
     {
@@ -368,6 +369,168 @@ def acknowledge_campaign_cancellation(
     )
 
 
+def _record_worker_terminal(
+    store: Any,
+    repo: str,
+    *,
+    claim: Mapping[str, Any],
+    heartbeat_receipt_hash: str,
+    status: str,
+    result_hash: str = "",
+    error_type: str = "",
+    error_hash: str = "",
+    tournament_receipt_hash: str = "",
+) -> dict[str, Any]:
+    """Seal the host-observed return from one in-process campaign boundary."""
+
+    existing = _campaign_receipts(
+        store, repo, "campaign_worker_terminal", str(claim["campaign_id"])
+    )
+    if existing:
+        return {**existing[0], "inserted": False, "duplicate": True}
+    if heartbeat_receipt_hash:
+        heartbeat = _verified_receipt(
+            store, repo, heartbeat_receipt_hash, "campaign_worker_heartbeat"
+        )
+        if heartbeat.get("claim_receipt_hash") != claim.get("receipt_hash"):
+            raise PermissionError("terminal heartbeat belongs to another worker")
+    session = _session(store, repo, f"seal campaign terminal {claim['campaign_id']}")
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            "schema_version": TERMINAL_SCHEMA,
+            "kind": "campaign_worker_terminal",
+            "status": status,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"campaign_terminal_{str(claim['campaign_id'])}",
+            "body_epoch_id": session["body_epoch_id"],
+            "campaign_id": claim["campaign_id"],
+            "worker_id": claim["worker_id"],
+            "claim_receipt_hash": claim["receipt_hash"],
+            "heartbeat_receipt_hash": heartbeat_receipt_hash,
+            "result_hash": result_hash,
+            "error_type": error_type,
+            "error_hash": error_hash,
+            "tournament_receipt_hash": tournament_receipt_hash,
+            "observed_at": time.time(),
+            "in_process_boundary_unwound": True,
+            "os_process_exit_verified": False,
+            "campaign_success": False,
+            "integration_authorized": False,
+            **_closed_authority(),
+        },
+    )
+
+
+def run_claimed_improvement_campaign(
+    store: Any,
+    repo: str,
+    root: str | Path,
+    *,
+    claim_receipt_hash: str,
+    storm_result: Mapping[str, Any],
+    policy_receipt_hash: str,
+    policy_secret: str,
+    auto_promote: bool = False,
+) -> dict[str, Any]:
+    """Run the canonical campaign and seal exactly one host terminal receipt."""
+
+    claim = _verified_receipt(
+        store, repo, claim_receipt_hash, "campaign_worker_claim"
+    )
+    prior_terminal = _campaign_receipts(
+        store, repo, "campaign_worker_terminal", str(claim["campaign_id"])
+    )
+    if prior_terminal:
+        return {
+            "status": "already_terminal",
+            "terminal": {**prior_terminal[0], "inserted": False, "duplicate": True},
+            "campaign_result": None,
+            "heartbeats": [],
+            **_closed_authority(),
+        }
+    guard = CampaignRuntimeGuard(
+        store, repo, root, claim_receipt_hash
+    )
+    try:
+        from .autonomous_improvement import run_autonomous_improvement_campaign
+
+        result = run_autonomous_improvement_campaign(
+            store,
+            repo,
+            root,
+            storm_result=storm_result,
+            policy_receipt_hash=policy_receipt_hash,
+            secret=policy_secret,
+            auto_promote=auto_promote,
+            checkpoint=guard,
+        )
+    except CampaignCancellationRequested as exc:
+        acknowledgement = acknowledge_campaign_cancellation(
+            store,
+            repo,
+            claim_receipt_hash=claim_receipt_hash,
+            heartbeat_receipt_hash=exc.heartbeat["receipt_hash"],
+            exit_state="cooperative_stop",
+        )
+        terminal = _record_worker_terminal(
+            store,
+            repo,
+            claim=claim,
+            heartbeat_receipt_hash=exc.heartbeat["receipt_hash"],
+            status="cooperative_cancel_observed",
+        )
+        return {
+            "status": "cancellation_verified",
+            "terminal": terminal,
+            "cancellation_acknowledgement": acknowledgement,
+            "campaign_result": None,
+            "heartbeats": [item["receipt_hash"] for item in guard.heartbeats],
+            **_closed_authority(),
+        }
+    except Exception as exc:  # bounded host receipt; no raw exception is persisted
+        terminal = _record_worker_terminal(
+            store,
+            repo,
+            claim=claim,
+            heartbeat_receipt_hash=str(
+                guard.heartbeats[-1]["receipt_hash"] if guard.heartbeats else ""
+            ),
+            status="worker_failed",
+            error_type=type(exc).__name__,
+            error_hash=_sha({"type": type(exc).__name__, "message": str(exc)}),
+        )
+        return {
+            "status": "worker_failed",
+            "terminal": terminal,
+            "campaign_result": None,
+            "heartbeats": [item["receipt_hash"] for item in guard.heartbeats],
+            "error_type": type(exc).__name__,
+            **_closed_authority(),
+        }
+    terminal = _record_worker_terminal(
+        store,
+        repo,
+        claim=claim,
+        heartbeat_receipt_hash=str(
+            guard.heartbeats[-1]["receipt_hash"] if guard.heartbeats else ""
+        ),
+        status="completed_boundary_return",
+        result_hash=_sha(result),
+        tournament_receipt_hash=str(
+            (result.get("tournament") or {}).get("receipt_hash") or ""
+        ),
+    )
+    return {
+        "status": "terminal_observed",
+        "terminal": terminal,
+        "campaign_result": result,
+        "heartbeats": [item["receipt_hash"] for item in guard.heartbeats],
+        **_closed_authority(),
+    }
+
+
 def observe_campaign_runtime(
     store: Any, repo: str, campaign_id: str, *, now: float | None = None
 ) -> dict[str, Any]:
@@ -382,13 +545,23 @@ def observe_campaign_runtime(
     acknowledgements = _campaign_receipts(
         store, repo, "campaign_cancellation_ack", campaign_id
     )
+    terminals = _campaign_receipts(
+        store, repo, "campaign_worker_terminal", campaign_id
+    )
     claim = claims[0] if claims else None
     heartbeat = max(
         heartbeats,
         key=lambda item: int(item.get("heartbeat_sequence") or 0),
         default=None,
     )
-    if acknowledgements:
+    terminal = terminals[0] if terminals else None
+    if terminal and terminal.get("status") == "cooperative_cancel_observed":
+        state = "cancellation_verified"
+    elif terminal and terminal.get("status") == "worker_failed":
+        state = "worker_failed"
+    elif terminal:
+        state = "terminal_observed"
+    elif acknowledgements:
         state = "cancellation_acknowledged"
     elif control and control.get("status") == "cancel_requested":
         state = "cancelling"
@@ -413,6 +586,7 @@ def observe_campaign_runtime(
         "cancellation_ack_receipt_hash": str(
             (acknowledgements[0] if acknowledgements else {}).get("receipt_hash") or ""
         ),
+        "terminal_receipt_hash": str((terminal or {}).get("receipt_hash") or ""),
         "observed_at": checked_at,
         "read_only": True,
         "campaign_execution_success": False,
@@ -430,4 +604,5 @@ __all__ = [
     "claim_campaign_worker",
     "observe_campaign_runtime",
     "record_worker_heartbeat",
+    "run_claimed_improvement_campaign",
 ]

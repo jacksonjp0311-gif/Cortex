@@ -26,6 +26,7 @@ def main() -> int:
             "-q",
             "tests/test_v100_alpha10_campaign_control.py",
             "tests/test_v100_alpha10_campaign_runtime.py",
+            "tests/test_v100_alpha10_campaign_integration.py::V100Alpha10CampaignIntegrationTests::test_candidate_commit_is_off_tree_then_fast_forward_integrated",
             "--tb=short",
         ]
     )
@@ -36,6 +37,7 @@ def main() -> int:
             "py_compile",
             "cortex/campaign_control.py",
             "cortex/campaign_runtime.py",
+            "cortex/campaign_integration.py",
             "tests/test_v100_alpha10_campaign_control.py",
             "tests/test_v100_alpha10_campaign_runtime.py",
         ]

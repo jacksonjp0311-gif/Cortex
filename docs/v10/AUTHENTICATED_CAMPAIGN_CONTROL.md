@@ -122,6 +122,21 @@ signal before the next stage begins.
 The callback's arbitrary payload is intentionally discarded. A model or
 campaign stage cannot inject its own evidence through checkpoint details.
 
+## Candidate-commit integration
+
+The integration path now creates the winning proposal as a detached candidate
+commit in an isolated Git worktree. Cortex pins that commit under a dedicated
+`refs/cortex/candidates/` reference and persists its base, tree, targets,
+preimages, postimages, policy, trial, tournament, terminal, and recovery anchor.
+The active worktree remains untouched during preparation.
+
+Applying the integration requires a second one-shot `campaign.integrate`
+authorization. Cortex refuses a changed HEAD, dirty worktree, or substituted
+candidate ref, then uses a fast-forward merge to preserve the exact candidate
+identity. Postimage hashes and `git diff --check` are recomputed before the
+result may say `verified_complete`. This verifies source integration, not
+campaign utility or model competence.
+
 ## Replay and revocation
 
 Each action consumes a caller-provided nonce exactly once within the control

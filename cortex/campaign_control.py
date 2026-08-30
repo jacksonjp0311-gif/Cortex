@@ -30,6 +30,7 @@ ALLOWED_CONTROL_ACTIONS = frozenset(
         "campaign.start",
         "campaign.cancel",
         "campaign.promote",
+        "campaign.integrate",
         "campaign.rollback",
         "control.revoke",
     }
@@ -98,13 +99,14 @@ def campaign_action_request(
     }
 
 
-def _canonical_action(
+def verify_control_action(
     store: Any,
     repo: str,
     action_authorization: Mapping[str, Any],
     *,
     expected_action: str,
     expected_request: Mapping[str, Any],
+    consumed_kinds: Sequence[str] = ("campaign_lifecycle",),
 ) -> dict[str, Any]:
     receipt_hash = str(action_authorization.get("receipt_hash") or "")
     canonical = store.symbiotic_receipt(receipt_hash, repo=repo)
@@ -118,12 +120,14 @@ def _canonical_action(
             errors.append("canonical_action_mismatch")
         if canonical.get("request_hash") != _sha(dict(expected_request)):
             errors.append("canonical_action_request_mismatch")
-        used = store.symbiotic_receipts_by_kind(repo, "campaign_lifecycle")
-        if any(
-            item.get("action_authorization_receipt_hash") == receipt_hash
-            for item in used
-        ):
-            errors.append("canonical_action_already_consumed")
+        for kind in consumed_kinds:
+            used = store.symbiotic_receipts_by_kind(repo, str(kind))
+            if any(
+                item.get("action_authorization_receipt_hash") == receipt_hash
+                for item in used
+            ):
+                errors.append("canonical_action_already_consumed")
+                break
     if errors:
         raise PermissionError("campaign transition held: " + ",".join(errors))
     return canonical
@@ -222,7 +226,7 @@ def prepare_campaign(
         policy_receipt_hash=policy_receipt_hash,
         storm_summary_receipt_hash=storm_summary_receipt_hash,
     )
-    action = _canonical_action(
+    action = verify_control_action(
         store,
         repo,
         action_authorization,
@@ -271,7 +275,7 @@ def transition_campaign_control(
             prior.get("storm_summary_receipt_hash") or ""
         ),
     )
-    canonical_action = _canonical_action(
+    canonical_action = verify_control_action(
         store,
         repo,
         action_authorization,
@@ -501,4 +505,5 @@ __all__ = [
     "prepare_campaign",
     "revoke_control_session",
     "transition_campaign_control",
+    "verify_control_action",
 ]
