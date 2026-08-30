@@ -33,6 +33,20 @@ from .source_improvement import (
     run_source_improvement_trial,
     verify_source_improvement_result,
 )
+from .campaign_control import (
+    ALLOWED_CONTROL_ACTIONS,
+    authorize_control_action,
+    campaign_action_request,
+    campaign_state,
+    issue_control_session,
+    prepare_campaign,
+    transition_campaign_control,
+)
+from .campaign_integration import (
+    apply_campaign_integration,
+    integration_request,
+    rollback_campaign_integration,
+)
 from .store import Store
 
 SERVICE_SCHEMA = "cortex-native-interface/1.0"
@@ -120,7 +134,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.9",
+            "version": "10.0.0-alpha.10",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -219,7 +233,8 @@ class CortexChatService:
             "model_may_self_authorize": False,
             "policy_may_widen_itself": False,
             "unbounded_autonomy": False,
-            "mutation_api_exposed": False,
+            "mutation_api_exposed": True,
+            "mutation_api_authority": "authenticated_host_control_only",
             "ledger": {
                 "policy_count": len(policies),
                 "revocation_count": len(revocations),
@@ -232,6 +247,161 @@ class CortexChatService:
             "competence_promotion_authorized": False,
             "policy_effect": False,
         }
+
+    def campaigns(self) -> dict[str, Any]:
+        """Return immutable campaign state without granting control authority."""
+
+        lifecycle = self.store.symbiotic_receipts_by_kind(
+            self.repo, "campaign_lifecycle"
+        )
+        latest: dict[str, dict[str, Any]] = {}
+        for receipt in lifecycle:
+            campaign_id = str(receipt.get("campaign_id") or "")
+            if not campaign_id:
+                continue
+            prior = latest.get(campaign_id)
+            if prior is None or int(receipt.get("state_sequence") or -1) > int(
+                prior.get("state_sequence") or -1
+            ):
+                latest[campaign_id] = receipt
+
+        related_kinds = (
+            "campaign_worker_claim",
+            "campaign_worker_terminal",
+            "campaign_integration_preparation",
+            "campaign_integration_result",
+            "campaign_integration_rollback",
+        )
+        related: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+        for kind in related_kinds:
+            for receipt in self.store.symbiotic_receipts_by_kind(self.repo, kind):
+                campaign_id = str(receipt.get("campaign_id") or "")
+                if campaign_id:
+                    related[campaign_id][kind] = receipt
+
+        rows = []
+        for campaign_id, state in sorted(latest.items()):
+            evidence = related.get(campaign_id, {})
+            rows.append(
+                {
+                    "campaign_id": campaign_id,
+                    "status": state.get("status"),
+                    "state_sequence": state.get("state_sequence"),
+                    "state_receipt_hash": state.get("receipt_hash"),
+                    "policy_receipt_hash": state.get("policy_receipt_hash"),
+                    "storm_summary_receipt_hash": state.get(
+                        "storm_summary_receipt_hash"
+                    ),
+                    "worker": evidence.get("campaign_worker_claim"),
+                    "terminal": evidence.get("campaign_worker_terminal"),
+                    "integration_preparation": evidence.get(
+                        "campaign_integration_preparation"
+                    ),
+                    "integration_result": evidence.get(
+                        "campaign_integration_result"
+                    ),
+                    "rollback": evidence.get("campaign_integration_rollback"),
+                }
+            )
+        return {
+            "schema_version": "cortex-campaign-operator-surface/1.0",
+            "campaigns": rows,
+            "control_actions": sorted(ALLOWED_CONTROL_ACTIONS),
+            "authority": {
+                "model_host_mutate_authorized": False,
+                "model_execution_authorized": False,
+                "memory_admission_authorized": False,
+                "policy_effect": False,
+            },
+        }
+
+    def open_campaign_control(
+        self, values: Mapping[str, Any], *, origin: str
+    ) -> dict[str, Any]:
+        """Authenticate a human principal and return ephemeral secrets once."""
+
+        return issue_control_session(
+            self.store,
+            self.repo,
+            principal_id=str(values.get("principal_id") or ""),
+            principal_secret=str(values.get("principal_secret") or ""),
+            allowed_actions=tuple(values.get("allowed_actions") or ()),
+            origin=origin,
+            ttl_seconds=float(values.get("ttl_seconds") or 600.0),
+        )
+
+    def authorize_campaign_action(
+        self,
+        *,
+        control_session_receipt_hash: str,
+        control_token: str,
+        csrf_token: str,
+        origin: str,
+        action: str,
+        action_nonce: str,
+        request: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return authorize_control_action(
+            self.store,
+            self.repo,
+            control_session_receipt_hash=control_session_receipt_hash,
+            control_token=control_token,
+            csrf_token=csrf_token,
+            origin=origin,
+            action=action,
+            action_nonce=action_nonce,
+            request=request,
+        )
+
+    def campaign_command(
+        self,
+        campaign_id: str,
+        command: str,
+        values: Mapping[str, Any],
+        action_authorization: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Execute one already-authenticated campaign control command."""
+
+        if command == "prepare":
+            return prepare_campaign(
+                self.store,
+                self.repo,
+                campaign_id=campaign_id,
+                policy_receipt_hash=str(values.get("policy_receipt_hash") or ""),
+                storm_summary_receipt_hash=str(
+                    values.get("storm_summary_receipt_hash") or ""
+                ),
+                action_authorization=action_authorization,
+            )
+        if command in {"start", "cancel"}:
+            return transition_campaign_control(
+                self.store,
+                self.repo,
+                campaign_id=campaign_id,
+                action=f"campaign.{command}",
+                action_authorization=action_authorization,
+            )
+        if command == "integrate":
+            return apply_campaign_integration(
+                self.store,
+                self.repo,
+                self.repository_path,
+                preparation_receipt_hash=str(
+                    values.get("preparation_receipt_hash") or ""
+                ),
+                action_authorization=action_authorization,
+            )
+        if command == "rollback":
+            return rollback_campaign_integration(
+                self.store,
+                self.repo,
+                self.repository_path,
+                integration_result_receipt_hash=str(
+                    values.get("integration_result_hash") or ""
+                ),
+                action_authorization=action_authorization,
+            )
+        raise ValueError("Unsupported campaign command")
 
     def update_settings(self, values: Mapping[str, Any]) -> dict[str, Any]:
         current = self.settings()
@@ -937,16 +1107,106 @@ class CortexUIHandler(BaseHTTPRequestHandler):
             raise ValueError("Request body must be an object.")
         return value
 
+    def _origin(self) -> str:
+        origin = str(self.headers.get("Origin") or "").strip()
+        if not origin:
+            raise PermissionError("loopback Origin header required")
+        return origin
+
+    def _control_action(
+        self, campaign_id: str, command: str, body: Mapping[str, Any]
+    ) -> tuple[str, dict[str, str], dict[str, Any]]:
+        action = f"campaign.{command}"
+        if command == "prepare":
+            request = campaign_action_request(
+                campaign_id,
+                action,
+                policy_receipt_hash=str(body.get("policy_receipt_hash") or ""),
+                storm_summary_receipt_hash=str(
+                    body.get("storm_summary_receipt_hash") or ""
+                ),
+            )
+        elif command in {"start", "cancel"}:
+            prior = campaign_state(self.cortex.store, self.cortex.repo, campaign_id)
+            if not prior:
+                raise ValueError("campaign is not prepared")
+            request = campaign_action_request(
+                campaign_id,
+                action,
+                prior_state_receipt_hash=str(prior.get("receipt_hash") or ""),
+                policy_receipt_hash=str(prior.get("policy_receipt_hash") or ""),
+                storm_summary_receipt_hash=str(
+                    prior.get("storm_summary_receipt_hash") or ""
+                ),
+            )
+        elif command == "integrate":
+            preparation_hash = str(body.get("preparation_receipt_hash") or "")
+            prepared = self.cortex.store.symbiotic_receipt(
+                preparation_hash, repo=self.cortex.repo
+            )
+            if not prepared or prepared.get("kind") != "campaign_integration_preparation":
+                raise PermissionError("canonical integration preparation required")
+            if str(prepared.get("campaign_id") or "") != campaign_id:
+                raise PermissionError("integration preparation campaign mismatch")
+            request = integration_request(
+                campaign_id,
+                action,
+                preparation_hash=preparation_hash,
+                candidate_commit=str(prepared.get("candidate_commit") or ""),
+            )
+        elif command == "rollback":
+            result_hash = str(body.get("integration_result_hash") or "")
+            result = self.cortex.store.symbiotic_receipt(
+                result_hash, repo=self.cortex.repo
+            )
+            if not result or result.get("kind") != "campaign_integration_result":
+                raise PermissionError("canonical integration result required")
+            if str(result.get("campaign_id") or "") != campaign_id:
+                raise PermissionError("integration result campaign mismatch")
+            preparation_hash = str(result.get("preparation_receipt_hash") or "")
+            prepared = self.cortex.store.symbiotic_receipt(
+                preparation_hash, repo=self.cortex.repo
+            )
+            if not prepared or prepared.get("kind") != "campaign_integration_preparation":
+                raise PermissionError("canonical integration preparation required")
+            request = integration_request(
+                campaign_id,
+                action,
+                preparation_hash=preparation_hash,
+                candidate_commit=str(prepared.get("candidate_commit") or ""),
+                integration_result_hash=result_hash,
+            )
+        else:
+            raise ValueError("Unsupported campaign command")
+
+        bearer = str(self.headers.get("Authorization") or "")
+        if not bearer.startswith("Bearer "):
+            raise PermissionError("campaign control bearer required")
+        authorization = self.cortex.authorize_campaign_action(
+            control_session_receipt_hash=str(
+                self.headers.get("X-Cortex-Control-Session") or ""
+            ),
+            control_token=bearer[7:],
+            csrf_token=str(self.headers.get("X-Cortex-CSRF") or ""),
+            origin=self._origin(),
+            action=action,
+            action_nonce=str(self.headers.get("X-Cortex-Action-Nonce") or ""),
+            request=request,
+        )
+        return action, request, authorization
+
     def _error(self, exc: Exception) -> None:
         if isinstance(exc, KeyError):
             status = HTTPStatus.NOT_FOUND
         elif isinstance(exc, ProviderError):
             status = HTTPStatus.BAD_GATEWAY
+        elif isinstance(exc, PermissionError):
+            status = HTTPStatus.FORBIDDEN
         elif isinstance(exc, (ValueError, RuntimeError)):
             status = HTTPStatus.BAD_REQUEST
         else:
             status = HTTPStatus.INTERNAL_SERVER_ERROR
-        message = str(exc) if isinstance(exc, (KeyError, ValueError, RuntimeError, ProviderError)) else "Cortex service error."
+        message = str(exc) if isinstance(exc, (KeyError, PermissionError, ValueError, RuntimeError, ProviderError)) else "Cortex service error."
         self._json(status, {"error": message, "state": getattr(exc, "state", "ERROR")})
 
     def do_GET(self) -> None:
@@ -971,6 +1231,8 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                     return self._json(200, self.cortex.storm())
                 if path == "/v1/autonomy":
                     return self._json(200, self.cortex.autonomy())
+                if path == "/v1/campaigns":
+                    return self._json(200, self.cortex.campaigns())
                 if path == "/v1/sessions":
                     return self._json(200, {"sessions": self.cortex.list_sessions()})
                 parts = [part for part in path.split("/") if part]
@@ -1006,6 +1268,13 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                 body = self._body()
                 if path == "/v1/sessions":
                     return self._json(201, self.cortex.create_session(body))
+                if path == "/v1/control/sessions":
+                    return self._json(
+                        201,
+                        self.cortex.open_campaign_control(
+                            body, origin=self._origin()
+                        ),
+                    )
                 parts = [part for part in path.split("/") if part]
                 if len(parts) == 4 and parts[:2] == ["v1", "providers"]:
                     provider, action = parts[2], parts[3]
@@ -1031,6 +1300,17 @@ class CortexUIHandler(BaseHTTPRequestHandler):
                     return self._json(200, self.cortex.verify_workspace_patch(parts[2], body))
                 if len(parts) == 5 and parts[:2] == ["v1", "sessions"] and parts[3:] == ["workspace", "trial"]:
                     return self._json(200, self.cortex.run_workspace_improvement_trial(parts[2], body))
+                if len(parts) == 4 and parts[:2] == ["v1", "campaigns"]:
+                    campaign_id, command = parts[2], parts[3]
+                    _action, _request, authorization = self._control_action(
+                        campaign_id, command, body
+                    )
+                    return self._json(
+                        200,
+                        self.cortex.campaign_command(
+                            campaign_id, command, body, authorization
+                        ),
+                    )
                 self._json(404, {"error": "Endpoint not found."})
         except Exception as exc:
             self._error(exc)

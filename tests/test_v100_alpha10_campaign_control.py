@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+import threading
 import unittest
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
@@ -18,6 +21,7 @@ from cortex.campaign_control import (
     revoke_control_session,
     transition_campaign_control,
 )
+from cortex.chat_service import serve_cortex_ui
 from cortex.config import ensure_home
 from cortex.epoch import ensure_current_epoch
 from cortex.store import Store
@@ -117,6 +121,80 @@ class V100Alpha10CampaignControlTests(unittest.TestCase):
             nonce=nonce,
             request=request,
         )
+
+    def test_loopback_operator_api_requires_origin_bearer_csrf_and_nonce(self) -> None:
+        policy = self.canonical_root("autonomy_policy")
+        storm = self.canonical_root("storm_summary")
+        server = serve_cortex_ui(
+            self.store, self.repo, open_browser=False
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_address[1]}"
+
+        def post(path, body, headers=None):
+            request = urllib.request.Request(
+                base + path,
+                data=json.dumps(body).encode("utf-8"),
+                method="POST",
+                headers={"Content-Type": "application/json", **(headers or {})},
+            )
+            with urllib.request.urlopen(request, timeout=10) as response:
+                return json.loads(response.read())
+
+        try:
+            with self.assertRaises(urllib.error.HTTPError) as missing_origin:
+                post(
+                    "/v1/control/sessions",
+                    {
+                        "principal_id": "operator",
+                        "principal_secret": self.secret,
+                        "allowed_actions": ["campaign.prepare", "campaign.start"],
+                    },
+                )
+            self.assertEqual(missing_origin.exception.code, 403)
+
+            control = post(
+                "/v1/control/sessions",
+                {
+                    "principal_id": "operator",
+                    "principal_secret": self.secret,
+                    "allowed_actions": ["campaign.prepare", "campaign.start"],
+                },
+                {"Origin": base},
+            )
+            self.assertIn("control_token", control)
+            headers = {
+                "Origin": base,
+                "Authorization": f"Bearer {control['control_token']}",
+                "X-Cortex-Control-Session": control["receipt_hash"],
+                "X-Cortex-CSRF": control["csrf_token"],
+                "X-Cortex-Action-Nonce": "prepare-api-1",
+            }
+            prepared = post(
+                "/v1/campaigns/api-campaign/prepare",
+                {
+                    "policy_receipt_hash": policy["receipt_hash"],
+                    "storm_summary_receipt_hash": storm["receipt_hash"],
+                },
+                headers,
+            )
+            self.assertEqual(prepared["status"], "prepared_request")
+
+            headers["X-Cortex-Action-Nonce"] = "start-api-1"
+            started = post(
+                "/v1/campaigns/api-campaign/start", {}, headers
+            )
+            self.assertEqual(started["status"], "start_requested")
+            surface = server.cortex_service.campaigns()
+            self.assertEqual(surface["campaigns"][0]["status"], "start_requested")
+            self.assertFalse(
+                surface["authority"]["model_host_mutate_authorized"]
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
 
     def test_secrets_are_returned_once_but_never_persisted(self) -> None:
         session = self.session()

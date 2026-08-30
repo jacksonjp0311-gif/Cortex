@@ -1,3 +1,25 @@
+## 10.0.0-alpha.10 - Authenticated Recoverable Campaign Interconnect
+
+- Added short-lived principal-authenticated loopback control sessions with
+  exact Origin and CSRF binding, epoch freshness, immutable revocation, scoped
+  actions, request hashes, and exactly-once nonces. Raw bearer and CSRF tokens
+  are returned once and are never persisted.
+- Added canonical worker claims, chained leases and heartbeats, cooperative
+  cancellation observation, bounded terminal receipts, and real checkpoint
+  hooks around expensive autonomous-improvement stages.
+- Added off-tree candidate commits pinned under Cortex refs, separately
+  authorized fast-forward integration, immutable integration results, and
+  history-preserving rollback receipts that verify target preimages and the
+  complete restored Git tree against the recovery anchor.
+- Interconnected the native operator drawer with a truthful campaign ledger and
+  authenticated prepare/start/cancel/integrate/rollback commands. The UI never
+  calls an autonomous mutation path directly and keeps control tokens only in
+  browser memory.
+- Preserved `model_host_mutate_authorized=false`,
+  `model_execution_authorized=false`, `memory_admission_authorized=false`, and
+  `policy_effect=false`. An in-process terminal receipt does not claim external
+  process-exit verification, campaign utility, or self-improvement.
+
 ## 10.0.0-alpha.4 - Verified Improvement Circulation
 
 - Split source changes into isolated verification and separately authorized

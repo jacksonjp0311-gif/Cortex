@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.9`
+Version: `10.0.0-alpha.10`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -50,13 +50,15 @@ and signed canaries run in an isolated candidate worktree before the active
 tree is touched. The web service stays observational until Cortex has a
 separately authenticated host-control protocol.
 
-Alpha.10 is now in development. Its first landed boundary is a short-lived,
-principal-authenticated, loopback-only campaign-control session with exact
-origin and CSRF binding, epoch freshness, immutable revocation, and
-replay-resistant one-shot action authorization. Canonical worker claims now
-reverify signed policy and Storm evidence, while chained leases distinguish
-claimed, live, stale, cancelling, and acknowledged states without inferring
-success. No web mutation endpoint is opened by this foundation.
+Alpha.10 closes authenticated host control, guarded execution, recoverable
+integration, and the native operator interconnect. Short-lived control sessions
+bind principal, exact loopback origin, CSRF proof, body epoch, action scope,
+request hash, and a unique nonce. Canonical workers reverify signed policy and
+Storm evidence and emit chained leases, checkpoints, and terminal receipts.
+Candidate changes are committed off-tree, fast-forwarded only after a second
+host action, and recoverable through a verified history-preserving revert. The
+web mutation surface accepts only these authenticated operations; it grants no
+standing authority to models or callers.
 
 ## Documents
 
@@ -86,7 +88,7 @@ success. No web mutation endpoint is opened by this foundation.
 
 ## Claim boundary
 
-Alpha.9 proves that the local interface, provider-neutral runtime path, and
+Alpha.10 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,

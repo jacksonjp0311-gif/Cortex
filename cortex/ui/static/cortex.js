@@ -34,6 +34,8 @@ const state = {
   eventSequence: 0,
   eventConnected: false,
   reconciling: false,
+  campaignControl: null,
+  campaigns: [],
 };
 
 async function api(path, options = {}) {
@@ -492,6 +494,81 @@ function renderAutonomy() {
   $("#autonomyPromotion").textContent = String(autonomy.automatic_promotion || "UNKNOWN").replaceAll("_", " ");
   $("#autonomyRollback").textContent = String(autonomy.canary_rollback || "UNKNOWN").replaceAll("_", " ");
   $("#autonomyModelAuthority").textContent = autonomy.model_may_self_authorize === false ? "NONE" : "UNKNOWN";
+}
+
+async function loadCampaigns() {
+  const surface = await api("/v1/campaigns");
+  state.campaigns = surface.campaigns || [];
+  const root = $("#campaignRows");
+  root.innerHTML = state.campaigns.map(campaign => {
+    const prepared = campaign.integration_preparation;
+    const integrated = campaign.integration_result;
+    const rollback = campaign.rollback;
+    const lifecycle = campaign.status === "prepared_request"
+      ? '<button data-campaign-command="start">START</button><button data-campaign-command="cancel">CANCEL</button>'
+      : campaign.status === "start_requested"
+        ? '<button data-campaign-command="cancel">CANCEL</button>' : "";
+    const integration = prepared && !integrated
+      ? '<button data-campaign-command="integrate">INTEGRATE</button>' : "";
+    const recovery = integrated && !rollback
+      ? '<button data-campaign-command="rollback">ROLL BACK</button>' : "";
+    return `<article class="campaign-row" data-campaign="${escapeHtml(campaign.campaign_id)}"><div><strong>${escapeHtml(campaign.campaign_id)}</strong><small>${escapeHtml(campaign.status || "UNKNOWN")} · STATE ${escapeHtml(campaign.state_sequence ?? "—")}</small></div><code>${escapeHtml(String(campaign.state_receipt_hash || "").slice(0, 16))}</code><div>${lifecycle}${integration}${recovery}</div></article>`;
+  }).join("") || '<p class="muted">No canonical campaigns.</p>';
+  root.querySelectorAll("[data-campaign-command]").forEach(button => {
+    button.onclick = () => runCampaignCommand(button.closest("[data-campaign]").dataset.campaign, button.dataset.campaignCommand);
+  });
+}
+
+function campaignHeaders() {
+  if (!state.campaignControl) throw new Error("Authenticate host control first.");
+  return {
+    "Authorization": `Bearer ${state.campaignControl.control_token}`,
+    "X-Cortex-Control-Session": state.campaignControl.receipt_hash,
+    "X-Cortex-CSRF": state.campaignControl.csrf_token,
+    "X-Cortex-Action-Nonce": crypto.randomUUID(),
+  };
+}
+
+async function authenticateCampaignControl() {
+  const principal_id = $("#campaignPrincipal").value.trim();
+  const principal_secret = $("#campaignSecret").value;
+  if (!principal_id || !principal_secret) return toast("Principal ID and secret are required.", true);
+  try {
+    state.campaignControl = await api("/v1/control/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        principal_id,
+        principal_secret,
+        allowed_actions: ["campaign.prepare", "campaign.start", "campaign.cancel", "campaign.promote", "campaign.integrate", "campaign.rollback"],
+      }),
+    });
+    $("#campaignSecret").value = "";
+    $("#campaignControlState").textContent = "AUTHENTICATED · EPHEMERAL";
+    toast("Campaign control authenticated. Tokens remain in browser memory only.");
+  } catch (error) { state.campaignControl = null; $("#campaignControlState").textContent = "LOCKED"; toast(error.message, true); }
+}
+
+async function runCampaignCommand(campaignId, command, explicit = {}) {
+  try {
+    const campaign = state.campaigns.find(item => item.campaign_id === campaignId) || {};
+    const body = { ...explicit };
+    if (command === "integrate") body.preparation_receipt_hash = campaign.integration_preparation?.receipt_hash || "";
+    if (command === "rollback") body.integration_result_hash = campaign.integration_result?.receipt_hash || "";
+    await api(`/v1/campaigns/${encodeURIComponent(campaignId)}/${command}`, {
+      method: "POST", headers: campaignHeaders(), body: JSON.stringify(body),
+    });
+    toast(`${campaignId}: ${command} recorded canonically.`);
+    await loadCampaigns();
+  } catch (error) { toast(error.message, true); }
+}
+
+async function prepareCampaignFromUI() {
+  const campaignId = $("#campaignId").value.trim();
+  if (!campaignId) return toast("Campaign ID is required.", true);
+  await runCampaignCommand(campaignId, "prepare", {
+    policy_receipt_hash: $("#campaignPolicyHash").value.trim(),
+    storm_summary_receipt_hash: $("#campaignStormHash").value.trim(),
+  });
 }
 
 function renderSessions() {
@@ -1064,7 +1141,11 @@ $$('[data-operator-tab]').forEach(button => button.onclick = () => {
   $$('[data-operator-tab]').forEach(item => item.classList.toggle("active", item === button));
   $$("#operatorBody > div, #operatorBody > pre").forEach(item => item.classList.add("hidden"));
   $(`#${button.dataset.operatorTab}Log`).classList.remove("hidden");
+  if (button.dataset.operatorTab === "campaigns") loadCampaigns().catch(error => toast(error.message, true));
 });
+$("#campaignAuthenticate").onclick = authenticateCampaignControl;
+$("#campaignRefresh").onclick = () => loadCampaigns().catch(error => toast(error.message, true));
+$("#campaignPrepare").onclick = prepareCampaignFromUI;
 $("#drawerToggle").onclick = () => $("#operatorDrawer").classList.add("expanded");
 $("#drawerClose").onclick = () => $("#operatorDrawer").classList.remove("expanded");
 $("#sessionToggle").onclick = () => $("#sessionPopover").classList.toggle("hidden");

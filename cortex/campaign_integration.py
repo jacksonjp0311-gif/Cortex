@@ -58,12 +58,14 @@ def _receipt(store: Any, repo: str, receipt_hash: str, kind: str) -> dict[str, A
 def integration_request(
     campaign_id: str, action: str, *, terminal_hash: str = "",
     preparation_hash: str = "", candidate_commit: str = "",
+    integration_result_hash: str = "",
 ) -> dict[str, str]:
     return {
         "campaign_id": str(campaign_id), "action": str(action),
         "terminal_receipt_hash": str(terminal_hash),
         "preparation_receipt_hash": str(preparation_hash),
         "candidate_commit": str(candidate_commit),
+        "integration_result_hash": str(integration_result_hash),
     }
 
 
@@ -192,8 +194,118 @@ def apply_campaign_integration(
     })
 
 
+def rollback_campaign_integration(
+    store: Any,
+    repo: str,
+    root: str | Path,
+    *,
+    integration_result_receipt_hash: str,
+    action_authorization: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Create a reverse commit and verify the full tree against its anchor."""
+
+    workspace = Path(root).resolve()
+    integrated = _receipt(
+        store, repo, integration_result_receipt_hash, "campaign_integration_result"
+    )
+    if integrated.get("status") not in {"verified_complete", "recovery_required"}:
+        raise PermissionError("integration is not rollback eligible")
+    prepared = _receipt(
+        store,
+        repo,
+        str(integrated["preparation_receipt_hash"]),
+        "campaign_integration_preparation",
+    )
+    request = integration_request(
+        str(integrated["campaign_id"]),
+        "campaign.rollback",
+        preparation_hash=str(prepared["receipt_hash"]),
+        candidate_commit=str(prepared["candidate_commit"]),
+        integration_result_hash=integration_result_receipt_hash,
+    )
+    action = verify_control_action(
+        store,
+        repo,
+        action_authorization,
+        expected_action="campaign.rollback",
+        expected_request=request,
+        consumed_kinds=("campaign_integration_rollback",),
+    )
+    if repository_head(workspace) != integrated.get("integrated_head"):
+        raise PermissionError("active head changed after integration")
+    if _git(
+        workspace, ["status", "--porcelain=v1", "--untracked-files=all"]
+    ).stdout.strip():
+        raise PermissionError("active worktree must be clean for rollback")
+    reverted = _git(
+        workspace,
+        ["revert", "--no-edit", str(prepared["candidate_commit"])],
+        check=False,
+    )
+    if reverted.returncode:
+        _git(workspace, ["revert", "--abort"], check=False)
+        raise RuntimeError("recovery commit failed: " + (reverted.stderr or reverted.stdout).strip()[:300])
+    recovery_commit = repository_head(workspace)
+    errors: list[str] = []
+    for target, expected in (prepared.get("preimage_hashes") or {}).items():
+        path = (workspace / str(target)).resolve()
+        try:
+            path.relative_to(workspace)
+        except ValueError:
+            errors.append(f"target_outside_workspace:{target}")
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else ""
+        if actual != expected:
+            errors.append(f"preimage_mismatch:{target}")
+    anchor_tree = _git(
+        workspace, ["rev-parse", f"{prepared['recovery_anchor']}^{{tree}}"]
+    ).stdout.strip()
+    restored_tree = _git(workspace, ["rev-parse", "HEAD^{tree}"]).stdout.strip()
+    if restored_tree != anchor_tree:
+        errors.append("full_tree_mismatch")
+    status = "rollback_verified" if not errors else "manual_recovery_required"
+    session = open_symbiotic_session(
+        store,
+        repo,
+        task="rollback campaign integration",
+        provider="host-integration",
+        model_id="none",
+        capability_profile={},
+        tool_scopes=(),
+        persist=True,
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            "schema_version": SCHEMA,
+            "kind": "campaign_integration_rollback",
+            "status": status,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"integration_rollback_{_sha([integration_result_receipt_hash, recovery_commit])[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+            "campaign_id": integrated["campaign_id"],
+            "integration_result_receipt_hash": integration_result_receipt_hash,
+            "preparation_receipt_hash": prepared["receipt_hash"],
+            "candidate_commit": prepared["candidate_commit"],
+            "recovery_anchor": prepared["recovery_anchor"],
+            "pre_rollback_head": integrated["integrated_head"],
+            "recovery_commit": recovery_commit,
+            "anchor_tree": anchor_tree,
+            "restored_tree": restored_tree,
+            "verification_errors": errors,
+            "action_authorization_receipt_hash": action["receipt_hash"],
+            "history_preserving_revert": True,
+            "rollback_verified": not errors,
+            "campaign_success": False,
+            **_closed(),
+        },
+    )
+
+
 __all__ = [
     "apply_campaign_integration",
     "integration_request",
     "prepare_campaign_integration",
+    "rollback_campaign_integration",
 ]

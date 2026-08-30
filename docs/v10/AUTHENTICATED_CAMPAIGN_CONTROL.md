@@ -1,6 +1,6 @@
 # Authenticated Campaign Control
 
-Status: **alpha.10 foundation in development**
+Status: **sealed in Cortex 10.0.0-alpha.10**
 
 Alpha.9 intentionally kept the loopback web service observational. Alpha.10
 begins closing the next boundary: a human operator may authorize a narrowly
@@ -47,10 +47,10 @@ competence_promotion_authorized = false
 policy_effect = false
 ```
 
-The model cannot read, hold, or spend the control session. The UI does not yet
-expose a mutation endpoint. That exposure remains closed until durable campaign
-lifecycle execution, cooperative cancellation acknowledgement, and integration
-recovery are implemented and verified.
+The model cannot read, hold, or spend the control session. The native operator
+drawer now exposes only this authenticated path. Raw bearer and CSRF values
+remain in browser memory and every mutation consumes a fresh one-shot action
+receipt; there is no direct UI-to-worker or UI-to-Git shortcut.
 
 ## Durable lifecycle foundation
 
@@ -137,6 +137,33 @@ identity. Postimage hashes and `git diff --check` are recomputed before the
 result may say `verified_complete`. This verifies source integration, not
 campaign utility or model competence.
 
+Rollback is a third independent host action. Cortex reloads the canonical
+integration and preparation, requires the active HEAD to equal the integrated
+candidate and the worktree to be clean, then creates a normal Git revert
+commit. It checks every recorded preimage and compares the complete restored
+tree to the recovery anchor. A mismatch is recorded as
+`manual_recovery_required`; it is never relabeled as success.
+
+## Native operator interconnect
+
+The loopback service now provides a narrow campaign plane:
+
+```text
+POST /v1/control/sessions
+GET  /v1/campaigns
+POST /v1/campaigns/{id}/prepare
+POST /v1/campaigns/{id}/start
+POST /v1/campaigns/{id}/cancel
+POST /v1/campaigns/{id}/integrate
+POST /v1/campaigns/{id}/rollback
+```
+
+Mutation calls require `Authorization: Bearer`,
+`X-Cortex-Control-Session`, `X-Cortex-CSRF`, `X-Cortex-Action-Nonce`, and the
+exact loopback `Origin`. The server reconstructs action material from canonical
+receipts before authorizing it. Caller-provided candidate identities cannot
+replace the prepared candidate.
+
 ## Replay and revocation
 
 Each action consumes a caller-provided nonce exactly once within the control
@@ -176,11 +203,18 @@ The focused adversarial suite covers:
 - real campaign-stage checkpoint wiring;
 - source-HEAD drift blocking between stages;
 - cancellation interruption between expensive operations.
+- off-tree candidate identity and active-tree purity;
+- fast-forward integration under a clean unchanged base;
+- history-preserving rollback with full-tree verification;
+- loopback API rejection without Origin, bearer, CSRF, and fresh nonce;
+- native operator ledger visibility without model authority.
 
-## Remaining alpha.10 work
+## Claim boundary and remaining work
 
-Before alpha.10 can be sealed, Cortex still needs to wire these receipts into
-the campaign loop at every expensive boundary, add an external process-exit
-observation, implement commit-level integration/recovery receipts, and expose a
-UI/API surface that can invoke only these authenticated operations. Until those
-gates close, alpha.9 remains the product version.
+Alpha.10 verifies an in-process campaign boundary, not an independently
+supervised operating-system process. Terminal receipts therefore preserve
+`os_process_exit_verified=false`. The release also does not establish that a
+campaign improved Cortex, that a model is autonomous, or that rollback can
+repair arbitrary conflicts after unrelated commits. A future process supervisor
+may add externally observed process lifecycle evidence without weakening these
+locks.

@@ -38,8 +38,10 @@ def main() -> int:
             "cortex/campaign_control.py",
             "cortex/campaign_runtime.py",
             "cortex/campaign_integration.py",
+            "cortex/chat_service.py",
             "tests/test_v100_alpha10_campaign_control.py",
             "tests/test_v100_alpha10_campaign_runtime.py",
+            "tests/test_v100_alpha10_campaign_integration.py",
         ]
     )
     print("ALPHA10_CONTROL_RUNTIME_SMOKE=PASS", flush=True)

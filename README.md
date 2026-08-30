@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.9-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.9" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.10-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.10" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -159,6 +159,16 @@ isolated candidate worktree before the active tree changes. The native UI
 reports the real ledger state but deliberately exposes no mutation endpoint:
 host authentication for remote control remains the next boundary. See the
 [canonical campaign seal](docs/v10/CANONICAL_AUTONOMOUS_CAMPAIGN.md).
+
+Alpha.10 adds the human control and recovery boundary. A registered principal
+can open a short-lived loopback control session and issue exact, replay-proof
+campaign commands from the operator drawer. Workers reverify policy, Storm,
+epoch, and source state at canonical checkpoints. Winning changes are prepared
+as detached candidate commits; integration requires a separate one-shot host
+decision, and rollback creates a history-preserving reverse commit whose full
+tree must match the recovery anchor. Raw control secrets remain only in browser
+memory, while models retain no execution, mutation, memory, or policy authority.
+See [authenticated campaign control](docs/v10/AUTHENTICATED_CAMPAIGN_CONTROL.md).
 
 ## What we just learned: success needs contrast
 

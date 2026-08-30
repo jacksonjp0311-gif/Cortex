@@ -230,14 +230,20 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
                 ({"observation_receipt_hash": "x", "claim_key": "x", "stance": "affirm"},),
             )
 
-    def test_autonomy_service_surface_is_read_only_and_policy_bound(self) -> None:
+    def test_autonomy_service_surface_exposes_only_authenticated_host_control(self) -> None:
         surface = CortexChatService(self.store, self.repo).autonomy()
         self.assertEqual(surface["state"], "POLICY_REQUIRED")
         self.assertEqual(surface["automatic_promotion"], "HOST_POLICY_REQUIRED")
         self.assertFalse(surface["model_may_self_authorize"])
         self.assertFalse(surface["policy_may_widen_itself"])
         self.assertFalse(surface["unbounded_autonomy"])
-        self.assertFalse(surface["mutation_api_exposed"])
+        self.assertTrue(surface["mutation_api_exposed"])
+        self.assertEqual(
+            surface["mutation_api_authority"],
+            "authenticated_host_control_only",
+        )
+        self.assertFalse(surface["host_mutate_authorized"])
+        self.assertFalse(surface["execution_authorized"])
 
     def test_policy_requires_registered_principal_secret(self) -> None:
         policy = self.policy()

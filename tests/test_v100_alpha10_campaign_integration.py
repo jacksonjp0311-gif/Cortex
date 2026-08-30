@@ -11,6 +11,7 @@ from cortex.campaign_integration import (
     integration_request,
     prepare_campaign_integration,
 )
+from cortex.chat_service import CortexChatService
 from cortex.campaign_runtime import claim_campaign_worker, run_claimed_improvement_campaign
 from cortex.bootstrap import bootstrap_repository
 from cortex.epoch import ensure_current_epoch
@@ -139,6 +140,25 @@ class V100Alpha10CampaignIntegrationTests(V100Alpha10CampaignRuntimeTests):
         self.assertEqual((self.host / "app" / "value.txt").read_text().strip(), "good")
         self.assertFalse(integrated["campaign_success"])
         self.assertFalse(integrated["model_host_mutate_authorized"])
+        rollback_request = integration_request(
+            "campaign-runtime",
+            "campaign.rollback",
+            preparation_hash=prepared["receipt_hash"],
+            candidate_commit=prepared["candidate_commit"],
+            integration_result_hash=integrated["receipt_hash"],
+        )
+        rolled_back = CortexChatService(self.store, self.repo).campaign_command(
+            "campaign-runtime",
+            "rollback",
+            {"integration_result_hash": integrated["receipt_hash"]},
+            self.authorize(
+                control, "campaign.rollback", "rollback", rollback_request
+            ),
+        )
+        self.assertEqual(rolled_back["status"], "rollback_verified")
+        self.assertTrue(rolled_back["history_preserving_revert"])
+        self.assertEqual(rolled_back["anchor_tree"], rolled_back["restored_tree"])
+        self.assertEqual((self.host / "app" / "value.txt").read_text().strip(), "bad")
 
 
 if __name__ == "__main__":

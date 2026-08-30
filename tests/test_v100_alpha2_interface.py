@@ -320,6 +320,10 @@ class Alpha2InterfaceTests(unittest.TestCase):
         self.assertIn("/live", js)
         self.assertIn("LAST TURN · AWAITING LIVE", js)
         self.assertIn("updateLiveDelta", js)
+        self.assertIn("/v1/control/sessions", js)
+        self.assertIn("/v1/campaigns/", js)
+        self.assertIn("CAMPAIGNS", html)
+        self.assertIn("campaignControl", js)
         self.assertNotIn("api.openai.com", js)
         self.assertNotIn("openrouter.ai/api", js)
 
