@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.2",
+  "release": "Cortex v10.0.0-alpha.11",
   "release_class": "advanced research prototype",
-  "source_commit": "f6e2f0b0dc083d77e3c44522e98b6340909db328",
-  "runtime_parent": "f6e2f0b0dc083d77e3c44522e98b6340909db328",
+  "source_commit": "033898ad3b939c4548eeb4584eb448846a5449c3",
+  "runtime_parent": "033898ad3b939c4548eeb4584eb448846a5449c3",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/README.md",
+  "phase_document": "docs/v10/REVOCABLE_CAPABILITY_WORKER_SEAL.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -18,6 +18,9 @@
     "semantic_distillation_seal": "current independent atomic-support witness is bound into empirical transfer and production distribution; identifier-only or unsupported abstractions remain UNKNOWN; verified narrowing successors inherit support only through parent witness and canonical revision proof",
     "partial_evidence_calibration": "eight targeted canonical live-empirical observations verified across two four-case panels; 50% and 25% policies each disclosed one resolving coordinate and screened at 4/4; zero-to-one representation discontinuity observed; informative band and competence effect not established",
     "native_agent_runtime": "provider-neutral model/tool/model circulation, bounded host capability grants, streamed public events, interruption, local graphical interface, dynamic provider catalogs, and immutable trajectory reconstruction verified structurally; paid live-provider commissioning and empirical agent benefit not established",
+    "revocable_control_capability": "one-shot action spend revalidates canonical parent session, current epoch, expiry, revocation, exact request, and database-enforced uniqueness",
+    "campaign_lifecycle": "complete immutable lifecycle reconstruction verifies sequence, prior links, legal transitions, invariant policy and Storm roots, action binding, chronology, and epoch freshness",
+    "external_worker_observation": "fixed shell-free worker subprocess launch and OS exit are independently sealed with PID, timeout path, exit status, output hashes, and canonical terminal binding; process exit is not campaign utility or integration authority",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
     "production_repository_portability": "not established",
@@ -29,5 +32,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.1 native agent runtime"
+  "supersedes": "Cortex v10.0.0-alpha.10 authenticated recoverable campaign interconnect"
 }
