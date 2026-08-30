@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.8-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.8" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.9-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.9" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -150,6 +150,15 @@ time, and recursive-generation limits. Canary failure reverses the exact patch.
 Improvement episodes remain historical evidence rather than automatically
 becoming memory or competence. See the
 [autonomous improvement architecture](docs/v10/GOVERNED_AUTONOMOUS_IMPROVEMENT.md).
+
+Alpha.9 seals that loop against caller-described legitimacy. Campaigns now
+reconstruct Storm from its immutable summary, promotion reloads the exact
+persisted tournament and trial, signed policies are epoch-bound and revocable,
+and every automatic promotion requires a host-declared canary executed in an
+isolated candidate worktree before the active tree changes. The native UI
+reports the real ledger state but deliberately exposes no mutation endpoint:
+host authentication for remote control remains the next boundary. See the
+[canonical campaign seal](docs/v10/CANONICAL_AUTONOMOUS_CAMPAIGN.md).
 
 ## What we just learned: success needs contrast
 

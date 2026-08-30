@@ -30,12 +30,14 @@ from cortex.coding_workspace import (
 )
 from cortex.chat_service import CortexChatService
 from cortex.config import ensure_home
+from cortex.epoch import ensure_current_epoch
 from cortex.native_agent import CapabilityGrant, ScriptedAgentAdapter
 from cortex.source_improvement import (
     create_source_improvement_contract,
     run_source_improvement_trial,
 )
 from cortex.store import Store
+from cortex.symbiosis import open_symbiotic_session
 from cortex.storm import (
     AgentManifest,
     DelegatedTask,
@@ -79,6 +81,7 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
             "Local Operator",
             secret=self.secret,
         )
+        ensure_current_epoch(self.store, self.repo, reason="alpha9-policy-test")
 
     def tearDown(self) -> None:
         self.store.close()
@@ -158,6 +161,45 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
             self.store, self.repo, envelope, secret=self.secret
         )
 
+    def canonical_promotion_inputs(self, policy, proposal, trial):
+        session = open_symbiotic_session(
+            self.store,
+            self.repo,
+            task="canonical promotion fixture",
+            provider="fixture",
+            model_id="fixture",
+            capability_profile={},
+            tool_scopes=(),
+            persist=True,
+        )
+        canonical_trial = self.store.append_symbiotic_receipt(
+            self.repo,
+            {
+                **trial,
+                "kind": "coding_improvement_trial",
+                "session_id": session["session_id"],
+                "turn_id": 1,
+                "event_id": f"trial_{trial['result_hash'][:24]}",
+                "body_epoch_id": session["body_epoch_id"],
+            },
+        )
+        tournament = run_improvement_tournament(
+            self.host, ({"proposal": proposal, "trial": canonical_trial},)
+        )
+        canonical_tournament = self.store.append_symbiotic_receipt(
+            self.repo,
+            {
+                **tournament,
+                "kind": "improvement_tournament",
+                "session_id": session["session_id"],
+                "turn_id": 2,
+                "event_id": f"tournament_{tournament['tournament_hash'][:24]}",
+                "body_epoch_id": session["body_epoch_id"],
+                "policy_receipt_hash": policy["receipt_hash"],
+            },
+        )
+        return canonical_tournament, canonical_trial
+
     def test_storm_synthesis_maps_independence_and_conflict_without_truth(self) -> None:
         observations = [
             {"receipt_hash": "a" * 64, "observation_hash": "1" * 64, "agent_id": "a"},
@@ -190,11 +232,12 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
 
     def test_autonomy_service_surface_is_read_only_and_policy_bound(self) -> None:
         surface = CortexChatService(self.store, self.repo).autonomy()
-        self.assertEqual(surface["state"], "POLICY_BOUND")
+        self.assertEqual(surface["state"], "POLICY_REQUIRED")
         self.assertEqual(surface["automatic_promotion"], "HOST_POLICY_REQUIRED")
         self.assertFalse(surface["model_may_self_authorize"])
         self.assertFalse(surface["policy_may_widen_itself"])
         self.assertFalse(surface["unbounded_autonomy"])
+        self.assertFalse(surface["mutation_api_exposed"])
 
     def test_policy_requires_registered_principal_secret(self) -> None:
         policy = self.policy()
@@ -232,10 +275,8 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
 
     def test_policy_bound_winner_promotes_and_canary_passes(self) -> None:
         proposal, trial = self.proposal_trial()
-        tournament = run_improvement_tournament(
-            self.host, ({"proposal": proposal, "trial": trial},)
-        )
         policy = self.policy(canary_pass=True)
+        tournament, trial = self.canonical_promotion_inputs(policy, proposal, trial)
         receipt = promote_tournament_winner(
             self.store,
             self.repo,
@@ -253,10 +294,8 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
 
     def test_canary_failure_rolls_back_exact_patch(self) -> None:
         proposal, trial = self.proposal_trial()
-        tournament = run_improvement_tournament(
-            self.host, ({"proposal": proposal, "trial": trial},)
-        )
         policy = self.policy(canary_pass=False)
+        tournament, trial = self.canonical_promotion_inputs(policy, proposal, trial)
         receipt = promote_tournament_winner(
             self.store,
             self.repo,
@@ -273,10 +312,8 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
 
     def test_policy_without_auto_promotion_holds_winner(self) -> None:
         proposal, trial = self.proposal_trial()
-        tournament = run_improvement_tournament(
-            self.host, ({"proposal": proposal, "trial": trial},)
-        )
         policy = self.policy(auto=False)
+        tournament, trial = self.canonical_promotion_inputs(policy, proposal, trial)
         with self.assertRaisesRegex(PermissionError, "auto_promotion_not_delegated"):
             promote_tournament_winner(
                 self.store,
@@ -292,10 +329,8 @@ class V100Alpha8AutonomyTests(unittest.TestCase):
 
     def test_improvement_episode_is_history_not_admitted_memory(self) -> None:
         proposal, trial = self.proposal_trial()
-        tournament = run_improvement_tournament(
-            self.host, ({"proposal": proposal, "trial": trial},)
-        )
         policy = self.policy()
+        tournament, trial = self.canonical_promotion_inputs(policy, proposal, trial)
         promotion = promote_tournament_winner(
             self.store,
             self.repo,

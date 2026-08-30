@@ -1466,3 +1466,19 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
   covering forged secrets, unrelated observations, non-authorizing consensus,
   measured tournaments, promotion holds, successful canaries, exact rollback,
   self-verification rejection, and end-to-end Storm campaign circulation.
+
+## 10.0.0-alpha.9 - Canonical Autonomous Campaign Seal
+
+- Replaced caller-carried Storm verification with canonical reconstruction
+  from the immutable Storm summary and its linked observations.
+- Required promotion to reload and verify the exact persisted tournament and
+  counterfactual trial selected by the campaign.
+- Bound autonomy policies to a current verified body epoch and added immutable,
+  principal-authenticated policy revocation.
+- Made a nonempty host canary mandatory for automatic promotion and moved the
+  canary into an isolated candidate worktree before active-tree application.
+- Added ledger-backed autonomy diagnostics while keeping the loopback web
+  interface observational; no unauthenticated mutation endpoint was added.
+- Added adversarial coverage for forged Storm validity, noncanonical promotion
+  inputs, empty canaries, policy revocation, epoch drift, and pre-apply canary
+  failure.

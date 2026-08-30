@@ -18,17 +18,17 @@ from .coding_workspace import (
     apply_approved_patch,
     default_verification_contract,
     repository_head,
-    rollback_applied_patch,
-    run_host_verification_step,
     verify_patch_in_isolated_worktree,
     verify_patch_proposal,
 )
+from .epoch import observe_current_epoch
 from .source_improvement import (
     create_source_improvement_contract,
     run_source_improvement_trial,
     verify_source_improvement_result,
 )
 from .symbiosis import open_symbiotic_session
+from .storm import verify_storm_session
 
 
 SCHEMA = "cortex-autonomous-improvement/1.0"
@@ -37,6 +37,7 @@ TOURNAMENT_SCHEMA = "cortex-improvement-tournament/1.0"
 PROMOTION_SCHEMA = "cortex-policy-promotion/1.0"
 EPISODE_SCHEMA = "cortex-improvement-episode/1.0"
 GENERATION_SCHEMA = "cortex-generation-transition/1.0"
+REVOCATION_SCHEMA = "cortex-autonomy-policy-revocation/1.0"
 
 PERMANENTLY_PROTECTED_PREFIXES = (
     ".github/",
@@ -219,6 +220,12 @@ def issue_autonomy_policy(
     supplied_hash = hashlib.sha256(secret.encode("utf-8")).hexdigest()
     if not principal or not hmac.compare_digest(supplied_hash, str(principal["secret_hash"])):
         raise PermissionError("principal secret does not match the canonical registration")
+    if body["allow_auto_promotion"] and not body["canary_steps"]:
+        raise ValueError("automatic promotion requires at least one host canary")
+    epoch = observe_current_epoch(store, repo)
+    if epoch.get("verified") is not True:
+        raise RuntimeError("a current verified body epoch is required")
+    body["bound_body_epoch_id"] = str(epoch.get("epoch_id") or "")
     body["policy_hash"] = _sha(body)
     body["signature"] = hmac.new(secret.encode("utf-8"), body["policy_hash"].encode("utf-8"), hashlib.sha256).hexdigest()
     session = _session(store, repo, f"issue autonomy policy {body['policy_id']}")
@@ -270,7 +277,86 @@ def verify_autonomy_policy(
         errors.append("policy_not_yet_current")
     if receipt.get("expires_at") is not None and checked_at > float(receipt["expires_at"]):
         errors.append("policy_expired")
+    epoch = observe_current_epoch(store, repo)
+    if epoch.get("verified") is not True:
+        errors.append("current_epoch_unverified")
+    elif str(receipt.get("bound_body_epoch_id") or "") != str(epoch.get("epoch_id") or ""):
+        errors.append("policy_epoch_stale")
+    revocations = [
+        item
+        for item in store.symbiotic_receipts_by_kind(repo, "autonomy_policy_revocation")
+        if item.get("policy_receipt_hash") == receipt_hash
+    ]
+    for revocation in revocations:
+        revocation_material = {
+            key: revocation.get(key)
+            for key in (
+                "schema_version",
+                "policy_receipt_hash",
+                "policy_hash",
+                "principal_id",
+                "reason",
+                "revoked_at",
+                "bound_body_epoch_id",
+            )
+        }
+        revocation_hash = _sha(revocation_material)
+        signature = hmac.new(
+            secret.encode("utf-8"), revocation_hash.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
+        revocation_check = store.verify_symbiotic_receipt(
+            repo, str(revocation.get("receipt_hash") or "")
+        )
+        if (
+            revocation_check.get("valid") is not True
+            or revocation.get("revocation_hash") != revocation_hash
+            or not hmac.compare_digest(str(revocation.get("signature") or ""), signature)
+            or revocation.get("principal_id") != receipt.get("principal_id")
+        ):
+            errors.append("policy_revocation_invalid")
+        elif revocation.get("status") == "revoked":
+            errors.append("policy_revoked")
     return {"valid": not errors, "errors": errors, "receipt": receipt}
+
+
+def revoke_autonomy_policy(
+    store: Any, repo: str, policy_receipt_hash: str, *, secret: str, reason: str
+) -> dict[str, Any]:
+    """Append an immutable principal-authenticated policy revocation."""
+
+    check = verify_autonomy_policy(store, repo, policy_receipt_hash, secret=secret)
+    if not check["valid"]:
+        raise PermissionError("autonomy policy invalid: " + ",".join(check["errors"]))
+    policy = check["receipt"]
+    session = _session(store, repo, f"revoke autonomy policy {policy.get('policy_id')}")
+    material = {
+        "schema_version": REVOCATION_SCHEMA,
+        "policy_receipt_hash": policy_receipt_hash,
+        "policy_hash": str(policy.get("policy_hash") or ""),
+        "principal_id": str(policy.get("principal_id") or ""),
+        "reason": str(reason or "operator_revocation").strip(),
+        "revoked_at": time.time(),
+        "bound_body_epoch_id": str(policy.get("bound_body_epoch_id") or ""),
+    }
+    material["revocation_hash"] = _sha(material)
+    material["signature"] = hmac.new(
+        secret.encode("utf-8"), material["revocation_hash"].encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    return store.append_symbiotic_receipt(
+        repo,
+        _receipt_body(
+            {
+                **material,
+                "kind": "autonomy_policy_revocation",
+                "status": "revoked",
+                "session_id": session["session_id"],
+                "turn_id": 0,
+                "event_id": f"autonomy_revoke_{policy_receipt_hash[:24]}",
+                "body_epoch_id": session["body_epoch_id"],
+                **_closed_authority(),
+            }
+        ),
+    )
 
 
 def run_improvement_tournament(
@@ -367,6 +453,38 @@ def collect_storm_patch_candidates(
     return candidates
 
 
+def resolve_canonical_storm_result(
+    store: Any, repo: str, summary_receipt_hash: str
+) -> dict[str, Any]:
+    """Reconstruct a Storm result exclusively from its immutable ledger."""
+
+    verification = verify_storm_session(store, repo, summary_receipt_hash)
+    if verification.get("valid") is not True:
+        raise ValueError(
+            "canonical Storm verification failed: "
+            + ",".join(verification.get("errors") or ())
+        )
+    summary = store.symbiotic_receipt(summary_receipt_hash, repo=repo)
+    if not summary:
+        raise ValueError("canonical Storm summary is missing")
+    observations = []
+    for receipt_hash in summary.get("observation_receipt_hashes") or ():
+        observation = store.symbiotic_receipt(str(receipt_hash), repo=repo)
+        if not observation:
+            raise ValueError("canonical Storm observation is missing")
+        observations.append(observation)
+    return {
+        "schema_version": str(summary.get("schema_version") or ""),
+        "session_id": str(summary.get("session_id") or ""),
+        "status": str(summary.get("status") or ""),
+        "plan_receipt_hash": str(summary.get("plan_receipt_hash") or ""),
+        "summary_receipt_hash": summary_receipt_hash,
+        "observations": observations,
+        "verification": verification,
+        "authority": _closed_authority(),
+    }
+
+
 def run_autonomous_improvement_campaign(
     store: Any,
     repo: str,
@@ -384,7 +502,10 @@ def run_autonomous_improvement_campaign(
     if not policy_check["valid"]:
         raise PermissionError("autonomy policy invalid: " + ",".join(policy_check["errors"]))
     policy = policy_check["receipt"]
-    candidates = collect_storm_patch_candidates(store, repo, storm_result)
+    canonical_storm = resolve_canonical_storm_result(
+        store, repo, str(storm_result.get("summary_receipt_hash") or "")
+    )
+    candidates = collect_storm_patch_candidates(store, repo, canonical_storm)
     session = _session(store, repo, "autonomous Storm improvement campaign")
     evaluated: list[dict[str, Any]] = []
     for index, candidate in enumerate(candidates, 1):
@@ -474,7 +595,7 @@ def run_autonomous_improvement_campaign(
                 "event_id": f"campaign_tournament_{tournament['tournament_hash'][:24]}",
                 "body_epoch_id": session["body_epoch_id"],
                 "storm_summary_receipt_hash": str(
-                    storm_result.get("summary_receipt_hash") or ""
+                    canonical_storm.get("summary_receipt_hash") or ""
                 ),
                 "policy_receipt_hash": policy_receipt_hash,
                 "advisory_only": True,
@@ -496,14 +617,14 @@ def run_autonomous_improvement_campaign(
             workspace,
             policy_receipt_hash=policy_receipt_hash,
             secret=secret,
-            tournament=tournament,
+            tournament=tournament_receipt,
             proposal=winner["proposal"],
             trial=winner["trial"],
         )
     return {
         "schema_version": SCHEMA,
         "campaign_session_id": session["session_id"],
-        "storm_summary_receipt_hash": str(storm_result.get("summary_receipt_hash") or ""),
+        "storm_summary_receipt_hash": str(canonical_storm.get("summary_receipt_hash") or ""),
         "candidate_count": len(candidates),
         "evaluated": evaluated,
         "tournament": tournament_receipt,
@@ -550,35 +671,62 @@ def promote_tournament_winner(
     if not policy_check["valid"]:
         raise PermissionError("autonomy policy invalid: " + ",".join(policy_check["errors"]))
     policy = policy_check["receipt"]
+    tournament_hash = str(tournament.get("receipt_hash") or "")
+    canonical_tournament = store.symbiotic_receipt(tournament_hash, repo=repo)
+    if not canonical_tournament or canonical_tournament.get("kind") != "improvement_tournament":
+        raise PermissionError("promotion held: canonical_tournament_missing")
+    tournament_receipt_check = store.verify_symbiotic_receipt(repo, tournament_hash)
+    if tournament_receipt_check.get("valid") is not True:
+        raise PermissionError("promotion held: canonical_tournament_invalid")
+    trial_receipt_hash = str(trial.get("receipt_hash") or "")
+    canonical_trial = store.symbiotic_receipt(trial_receipt_hash, repo=repo)
+    if not canonical_trial or canonical_trial.get("kind") != "coding_improvement_trial":
+        raise PermissionError("promotion held: canonical_trial_missing")
+    trial_receipt_check = store.verify_symbiotic_receipt(repo, trial_receipt_hash)
+    if trial_receipt_check.get("valid") is not True:
+        raise PermissionError("promotion held: canonical_trial_invalid")
     errors = _policy_scope_errors(policy, proposal)
-    trial_check = verify_source_improvement_result(trial)
+    trial_check = verify_source_improvement_result(canonical_trial)
     if not trial_check["valid"]:
         errors.append("improvement_trial_invalid")
-    if trial.get("status") not in set(policy.get("allowed_trial_statuses") or ()):
+    if canonical_trial.get("status") not in set(policy.get("allowed_trial_statuses") or ()):
         errors.append("improvement_status_not_authorized")
-    if tournament.get("tournament_hash") != _sha({k: v for k, v in tournament.items() if k != "tournament_hash"}):
-        errors.append("tournament_hash_invalid")
-    if tournament.get("selected_proposal_hash") != proposal.get("proposal_hash"):
+    if canonical_tournament.get("policy_receipt_hash") != policy_receipt_hash:
+        errors.append("tournament_policy_mismatch")
+    if canonical_tournament.get("selected_proposal_hash") != proposal.get("proposal_hash"):
         errors.append("proposal_is_not_tournament_winner")
+    selected_row = next(
+        (
+            row
+            for row in canonical_tournament.get("candidates") or ()
+            if isinstance(row, Mapping)
+            and row.get("proposal_hash") == proposal.get("proposal_hash")
+        ),
+        None,
+    )
+    if not selected_row or selected_row.get("trial_hash") != canonical_trial.get("result_hash"):
+        errors.append("tournament_trial_binding_invalid")
     if policy.get("allow_auto_promotion") is not True:
         errors.append("auto_promotion_not_delegated")
-    if repository_head(root) != tournament.get("source_head"):
+    if repository_head(root) != canonical_tournament.get("source_head"):
         errors.append("source_head_changed")
+    if not policy.get("canary_steps"):
+        errors.append("canary_contract_missing")
     if errors:
         raise PermissionError("promotion held: " + ",".join(sorted(set(errors))))
 
-    application = apply_approved_patch(root, proposal)
-    canary_results: list[dict[str, Any]] = []
-    rolled_back = False
-    try:
-        for step in policy.get("canary_steps") or ():
-            result = run_host_verification_step(root, step)
-            canary_results.append(result)
-            if not result["passed"]:
-                raise RuntimeError("canary_failed")
-    except Exception:
-        rollback_applied_patch(root, proposal)
-        rolled_back = True
+    canary_contract = default_verification_contract(
+        root, list(proposal.get("targets") or ())
+    )
+    canary_contract["policy_id"] = str(policy.get("policy_id") or "")
+    canary_contract["steps"] = json.loads(_canonical(policy.get("canary_steps") or ()))
+    canary_contract["contract_hash"] = _sha(
+        {key: value for key, value in canary_contract.items() if key != "contract_hash"}
+    )
+    canary = verify_patch_in_isolated_worktree(root, proposal, canary_contract)
+    canary_results = list(canary.get("steps") or ())
+    rolled_back = canary.get("status") != "verified"
+    application = None if rolled_back else apply_approved_patch(root, proposal)
     status = "promoted_canary_pass" if not rolled_back else "rolled_back_canary_failed"
     session = _session(store, repo, f"policy promotion {proposal.get('proposal_hash')}")
     receipt = store.append_symbiotic_receipt(
@@ -593,11 +741,14 @@ def promote_tournament_winner(
                 "event_id": f"policy_promotion_{str(proposal.get('proposal_hash'))[:24]}",
                 "body_epoch_id": session["body_epoch_id"],
                 "policy_receipt_hash": policy_receipt_hash,
-                "tournament_hash": tournament["tournament_hash"],
+                "tournament_receipt_hash": tournament_hash,
+                "tournament_hash": canonical_tournament["tournament_hash"],
                 "proposal_hash": proposal["proposal_hash"],
-                "trial_hash": trial["result_hash"],
+                "trial_receipt_hash": trial_receipt_hash,
+                "trial_hash": canonical_trial["result_hash"],
                 "application": application,
                 "canary_results": canary_results,
+                "canary_isolated_before_active_apply": True,
                 "rolled_back": rolled_back,
                 "host_policy_authorized": True,
                 "autonomous_within_policy": True,
@@ -687,6 +838,8 @@ __all__ = [
     "collect_storm_patch_candidates",
     "promote_tournament_winner",
     "record_improvement_episode",
+    "resolve_canonical_storm_result",
+    "revoke_autonomy_policy",
     "run_improvement_tournament",
     "run_autonomous_improvement_campaign",
     "synthesize_storm_claims",

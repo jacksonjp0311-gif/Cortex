@@ -3663,6 +3663,29 @@ class Store:
         ).fetchall()
         return [self._decode_symbiotic_row(row) for row in rows]
 
+    def symbiotic_receipts_by_kind(
+        self, repo: str, kind: str, *, limit: int = 1000
+    ) -> list[dict[str, Any]]:
+        """Read immutable receipts of one canonical kind, newest first."""
+
+        repository = self.db.execute(
+            "SELECT repository_id FROM repositories WHERE name=?", (repo,)
+        ).fetchone()
+        if repository is None:
+            return []
+        rows = self.db.execute(
+            """SELECT * FROM symbiotic_circulation_receipts
+               WHERE repository_id=? AND repo=? AND kind=?
+               ORDER BY created_at DESC, receipt_hash DESC LIMIT ?""",
+            (
+                str(repository["repository_id"]),
+                str(repo),
+                str(kind),
+                max(1, min(int(limit), 10_000)),
+            ),
+        ).fetchall()
+        return [self._decode_symbiotic_row(row) for row in rows]
+
     def append_interconnect_frame(
         self, repo: str, frame: dict[str, Any]
     ) -> dict[str, Any]:

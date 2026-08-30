@@ -120,7 +120,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.8",
+            "version": "10.0.0-alpha.9",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -189,13 +189,26 @@ class CortexChatService:
             "policy_effect": False,
         }
 
-    @staticmethod
-    def autonomy() -> dict[str, Any]:
+    def autonomy(self) -> dict[str, Any]:
         """Read-only autonomy ladder; authority requires a canonical policy."""
 
+        policies = self.store.symbiotic_receipts_by_kind(self.repo, "autonomy_policy")
+        revocations = self.store.symbiotic_receipts_by_kind(
+            self.repo, "autonomy_policy_revocation"
+        )
+        tournaments = self.store.symbiotic_receipts_by_kind(
+            self.repo, "improvement_tournament"
+        )
+        promotions = self.store.symbiotic_receipts_by_kind(
+            self.repo, "policy_bound_promotion"
+        )
         return {
-            "schema_version": "cortex-autonomy-surface/1.0",
-            "state": "POLICY_BOUND",
+            "schema_version": "cortex-autonomy-surface/1.1",
+            "state": (
+                "POLICY_REQUIRED"
+                if not policies
+                else "POLICY_PRESENT_REQUIRES_AUTHENTICATION"
+            ),
             "storm_synthesis": "AVAILABLE",
             "improvement_campaigns": "AVAILABLE",
             "candidate_tournaments": "AVAILABLE",
@@ -206,6 +219,13 @@ class CortexChatService:
             "model_may_self_authorize": False,
             "policy_may_widen_itself": False,
             "unbounded_autonomy": False,
+            "mutation_api_exposed": False,
+            "ledger": {
+                "policy_count": len(policies),
+                "revocation_count": len(revocations),
+                "tournament_count": len(tournaments),
+                "promotion_count": len(promotions),
+            },
             "host_mutate_authorized": False,
             "execution_authorized": False,
             "memory_admission_authorized": False,

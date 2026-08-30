@@ -486,7 +486,9 @@ async function loadInitial() {
 function renderAutonomy() {
   const autonomy = state.status?.autonomy || {};
   $("#autonomyState").textContent = String(autonomy.state || "UNKNOWN").replaceAll("_", " ");
-  $("#autonomyCampaigns").textContent = String(autonomy.improvement_campaigns || "UNKNOWN").replaceAll("_", " ");
+  const tournamentCount = autonomy.ledger?.tournament_count;
+  const campaignState = String(autonomy.improvement_campaigns || "UNKNOWN").replaceAll("_", " ");
+  $("#autonomyCampaigns").textContent = Number.isInteger(tournamentCount) ? `${campaignState} · ${tournamentCount} TOURNAMENTS` : campaignState;
   $("#autonomyPromotion").textContent = String(autonomy.automatic_promotion || "UNKNOWN").replaceAll("_", " ");
   $("#autonomyRollback").textContent = String(autonomy.canary_rollback || "UNKNOWN").replaceAll("_", " ");
   $("#autonomyModelAuthority").textContent = autonomy.model_may_self_authorize === false ? "NONE" : "UNKNOWN";

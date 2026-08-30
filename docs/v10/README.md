@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version target: `10.0.0-alpha.8`
+Version target: `10.0.0-alpha.9`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -43,6 +43,13 @@ measurement, candidate tournaments, signed policy envelopes, canary rollback,
 parent-generation verification, and historical improvement episodes. Autonomy
 is real inside the signed envelope and nonexistent outside it.
 
+Alpha.9 closes the canonical campaign boundary. Storm input is reconstructed
+from its immutable summary, promotion reloads the persisted tournament and
+trial, policies bind to a current body epoch and support immutable revocation,
+and signed canaries run in an isolated candidate worktree before the active
+tree is touched. The web service stays observational until Cortex has a
+separately authenticated host-control protocol.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -52,6 +59,7 @@ is real inside the signed envelope and nonexistent outside it.
 - [Governed tool fabric](GOVERNED_TOOL_FABRIC.md)
 - [Governed Storm fabric](GOVERNED_STORM_FABRIC.md)
 - [Governed autonomous improvement](GOVERNED_AUTONOMOUS_IMPROVEMENT.md)
+- [Canonical autonomous campaign seal](CANONICAL_AUTONOMOUS_CAMPAIGN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -69,7 +77,7 @@ is real inside the signed envelope and nonexistent outside it.
 
 ## Claim boundary
 
-Alpha.8 proves that the local interface, provider-neutral runtime path, and
+Alpha.9 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
