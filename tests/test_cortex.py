@@ -88,6 +88,8 @@ class CortexIntegrationTests(unittest.TestCase):
         self.assertIn(str(Path(sys.executable)), powershell_wrapper)
         self.assertNotIn("__CORTEX_", bash_wrapper)
         self.assertNotIn("__CORTEX_", powershell_wrapper)
+        self.assertIn("--refresh packet-fast", bash_wrapper)
+        self.assertIn('"--refresh", "packet-fast"', powershell_wrapper)
         agents = (self.repo / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("CORTEX:MANAGED:BEGIN", agents)
         self.assertIn(r".\.cortex\bin\cortex.ps1 activate -Task", agents)

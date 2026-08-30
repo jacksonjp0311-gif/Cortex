@@ -50,6 +50,12 @@ and signed canaries run in an isolated candidate worktree before the active
 tree is touched. The web service stays observational until Cortex has a
 separately authenticated host-control protocol.
 
+Alpha.10 is now in development. Its first landed boundary is a short-lived,
+principal-authenticated, loopback-only campaign-control session with exact
+origin and CSRF binding, epoch freshness, immutable revocation, and
+replay-resistant one-shot action authorization. No web mutation endpoint is
+opened by this foundation.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -60,6 +66,7 @@ separately authenticated host-control protocol.
 - [Governed Storm fabric](GOVERNED_STORM_FABRIC.md)
 - [Governed autonomous improvement](GOVERNED_AUTONOMOUS_IMPROVEMENT.md)
 - [Canonical autonomous campaign seal](CANONICAL_AUTONOMOUS_CAMPAIGN.md)
+- [Authenticated campaign control](AUTHENTICATED_CAMPAIGN_CONTROL.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

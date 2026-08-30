@@ -132,7 +132,7 @@ if ($LASTEXITCODE -ne 0) {
 $ArgsList = @("-m", "cortex", "--home", $CortexHome)
 if ($Command -eq "activate") {
     if ([string]::IsNullOrWhiteSpace($Task)) { throw "-Task is required for activate." }
-    $ArgsList += @("activate", "--repo", $RepoName, "--task", $Task, "--budget", "$Budget", "--json")
+    $ArgsList += @("activate", "--repo", $RepoName, "--task", $Task, "--budget", "$Budget", "--refresh", "packet-fast", "--json")
 }
 if ($Command -eq "bootstrap") { $ArgsList += @("bootstrap", $RepoRoot, "--name", $RepoName, "--json") }
 if ($Command -eq "query") {
@@ -303,7 +303,7 @@ case "$COMMAND" in
       esac
     done
     [[ -n "$TASK" ]] || { echo "--task is required" >&2; exit 2; }
-    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" activate --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --json
+    exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" activate --repo "$REPO_NAME" --task "$TASK" --budget "$BUDGET" --refresh packet-fast --json
     ;;
   bootstrap)
     exec "$ENGINE_PYTHON" -m cortex --home "$CORTEX_HOME_PATH" bootstrap "$REPO_ROOT" --name "$REPO_NAME" --json
