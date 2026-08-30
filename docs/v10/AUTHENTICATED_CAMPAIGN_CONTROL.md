@@ -70,6 +70,34 @@ state sequence and previous-state hash. The
 `cancel_requested` state explicitly requires cooperative stop; it does not
 falsely claim the worker has already stopped.
 
+## Worker observation boundary
+
+The runtime now has separate immutable receipts for worker claims, heartbeats,
+and cooperative cancellation acknowledgement.
+
+A worker claim is admitted only after the worker independently reloads and
+verifies:
+
+- the exact canonical `start_requested` state;
+- the signed autonomy policy with the registered principal secret;
+- the complete canonical Storm plan/observation/summary relationship;
+- the current repository source HEAD.
+
+The claim is exactly once per campaign. A second worker cannot take over by
+presenting the campaign ID. The receipt records a bounded lease but explicitly
+keeps execution success and integration authority false.
+
+Heartbeats form their own monotonic previous-hash chain. Each one records a
+bounded stage and lease. Read-only observation derives `worker_claimed`,
+`running`, `stale`, `cancelling`, or `cancellation_acknowledged` without writing
+new state. A missing process or expired lease therefore becomes `stale`, never
+`completed`.
+
+Cancellation acknowledgement requires both the canonical cancel request and a
+worker heartbeat that records cancellation observation. It still reports
+`independent_process_exit_verified=false`: cooperative acknowledgement is not
+yet an external proof that the process has exited.
+
 ## Replay and revocation
 
 Each action consumes a caller-provided nonce exactly once within the control
@@ -79,6 +107,12 @@ the same revocation returns the existing receipt instead of creating a second
 canonical row.
 
 ## Current verification
+
+Fast iteration uses the focused harness rather than the full repository suite:
+
+```powershell
+python scripts/ci/alpha10_runtime_smoke.py
+```
 
 The focused adversarial suite covers:
 
@@ -96,11 +130,15 @@ The focused adversarial suite covers:
 - persistent closure of all model authority flags.
 - exact request binding and lifecycle-action consumption;
 - durable prepared/start/cancel request-state linkage.
+- independent policy and Storm reverification at worker claim;
+- exactly-once worker ownership;
+- monotonic heartbeat linkage and read-only stale detection;
+- cancellation-observation ordering and cooperative acknowledgement.
 
 ## Remaining alpha.10 work
 
-Before alpha.10 can be sealed, Cortex still needs to wire the durable lifecycle
-into campaign workers, record cooperative stop acknowledgement, add commit-level
-integration/recovery receipts, and expose a UI/API surface that can invoke only
-these authenticated operations. Until those gates close, alpha.9 remains the
-product version.
+Before alpha.10 can be sealed, Cortex still needs to wire these receipts into
+the campaign loop at every expensive boundary, add an external process-exit
+observation, implement commit-level integration/recovery receipts, and expose a
+UI/API surface that can invoke only these authenticated operations. Until those
+gates close, alpha.9 remains the product version.

@@ -53,8 +53,10 @@ separately authenticated host-control protocol.
 Alpha.10 is now in development. Its first landed boundary is a short-lived,
 principal-authenticated, loopback-only campaign-control session with exact
 origin and CSRF binding, epoch freshness, immutable revocation, and
-replay-resistant one-shot action authorization. No web mutation endpoint is
-opened by this foundation.
+replay-resistant one-shot action authorization. Canonical worker claims now
+reverify signed policy and Storm evidence, while chained leases distinguish
+claimed, live, stale, cancelling, and acknowledged states without inferring
+success. No web mutation endpoint is opened by this foundation.
 
 ## Documents
 
