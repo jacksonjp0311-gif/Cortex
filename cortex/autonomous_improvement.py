@@ -12,7 +12,7 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from .coding_workspace import (
     apply_approved_patch,
@@ -494,10 +494,21 @@ def run_autonomous_improvement_campaign(
     policy_receipt_hash: str,
     secret: str,
     auto_promote: bool = False,
+    checkpoint: Callable[[str, Mapping[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
-    """Verify, measure, compare, and optionally promote Storm patch candidates."""
+    """Verify, measure, compare, and optionally promote Storm patch candidates.
+
+    A host-owned checkpoint callback may record liveness and raise cancellation
+    between expensive stages. Callback output is ignored and grants no
+    authority; only its bounded stop exception affects progression.
+    """
+
+    def observe(stage: str, **details: Any) -> None:
+        if checkpoint is not None:
+            checkpoint(stage, details)
 
     workspace = Path(root).resolve()
+    observe("context", phase="policy_verification")
     policy_check = verify_autonomy_policy(store, repo, policy_receipt_hash, secret=secret)
     if not policy_check["valid"]:
         raise PermissionError("autonomy policy invalid: " + ",".join(policy_check["errors"]))
@@ -505,16 +516,27 @@ def run_autonomous_improvement_campaign(
     canonical_storm = resolve_canonical_storm_result(
         store, repo, str(storm_result.get("summary_receipt_hash") or "")
     )
+    observe("context", phase="storm_resolution")
     candidates = collect_storm_patch_candidates(store, repo, canonical_storm)
     session = _session(store, repo, "autonomous Storm improvement campaign")
     evaluated: list[dict[str, Any]] = []
     for index, candidate in enumerate(candidates, 1):
         proposal = candidate["proposal"]
+        observe(
+            "candidate",
+            candidate_index=index,
+            proposal_hash=str(proposal.get("proposal_hash") or ""),
+        )
         scope_errors = _policy_scope_errors(policy, proposal)
         if scope_errors:
             evaluated.append({**candidate, "eligible": False, "errors": scope_errors})
             continue
         contract = default_verification_contract(workspace, list(proposal.get("targets") or ()))
+        observe(
+            "verification",
+            candidate_index=index,
+            proposal_hash=str(proposal.get("proposal_hash") or ""),
+        )
         verification = verify_patch_in_isolated_worktree(workspace, proposal, contract)
         verification_receipt = store.append_symbiotic_receipt(
             repo,
@@ -548,6 +570,11 @@ def run_autonomous_improvement_campaign(
         improvement_contract = create_source_improvement_contract(
             workspace, proposal, verification_receipt
         )
+        observe(
+            "trial",
+            candidate_index=index,
+            proposal_hash=str(proposal.get("proposal_hash") or ""),
+        )
         trial = run_source_improvement_trial(
             workspace, proposal, verification_receipt, improvement_contract
         )
@@ -579,6 +606,7 @@ def run_autonomous_improvement_campaign(
                 "errors": [],
             }
         )
+    observe("tournament", eligible_candidate_count=sum(bool(item.get("eligible")) for item in evaluated))
     tournament = run_improvement_tournament(
         workspace,
         [item for item in evaluated if isinstance(item.get("trial"), Mapping)],
@@ -606,6 +634,7 @@ def run_autonomous_improvement_campaign(
     promotion = None
     selected = str(tournament.get("selected_proposal_hash") or "")
     if auto_promote and selected:
+        observe("integration_wait", selected_proposal_hash=selected)
         winner = next(
             item
             for item in evaluated

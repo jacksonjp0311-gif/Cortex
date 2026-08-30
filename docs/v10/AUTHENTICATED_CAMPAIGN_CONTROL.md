@@ -98,6 +98,30 @@ worker heartbeat that records cancellation observation. It still reports
 `independent_process_exit_verified=false`: cooperative acknowledgement is not
 yet an external proof that the process has exited.
 
+## Real campaign checkpoints
+
+The existing autonomous improvement loop now accepts a host-owned checkpoint
+callback. It invokes that boundary before or between:
+
+```text
+policy verification
+Storm resolution
+candidate evaluation
+isolated patch verification
+counterfactual trial
+tournament evaluation
+active integration preparation
+```
+
+`CampaignRuntimeGuard` implements the canonical callback. At each boundary it
+checks that the Git source HEAD still equals the worker claim, observes the
+latest control state, and appends the next heartbeat. When cancellation is
+pending, it records `cancellation_observed=true` and raises a bounded stop
+signal before the next stage begins.
+
+The callback's arbitrary payload is intentionally discarded. A model or
+campaign stage cannot inject its own evidence through checkpoint details.
+
 ## Replay and revocation
 
 Each action consumes a caller-provided nonce exactly once within the control
@@ -134,6 +158,9 @@ The focused adversarial suite covers:
 - exactly-once worker ownership;
 - monotonic heartbeat linkage and read-only stale detection;
 - cancellation-observation ordering and cooperative acknowledgement.
+- real campaign-stage checkpoint wiring;
+- source-HEAD drift blocking between stages;
+- cancellation interruption between expensive operations.
 
 ## Remaining alpha.10 work
 

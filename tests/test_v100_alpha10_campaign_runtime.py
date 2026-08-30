@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import time
+import subprocess
 
+from cortex.autonomous_improvement import run_autonomous_improvement_campaign
 from cortex.campaign_control import (
     authorize_control_action,
     campaign_action_request,
@@ -12,6 +14,9 @@ from cortex.campaign_control import (
     transition_campaign_control,
 )
 from cortex.campaign_runtime import (
+    CampaignCancellationRequested,
+    CampaignRuntimeGuard,
+    CampaignSourceDrift,
     acknowledge_campaign_cancellation,
     claim_campaign_worker,
     observe_campaign_runtime,
@@ -288,6 +293,76 @@ class V100Alpha10CampaignRuntimeTests(V100Alpha8AutonomyTests):
         )
         self.assertEqual(observed["state"], "cancellation_acknowledged")
         self.assertFalse(observed["campaign_execution_success"])
+
+    def test_real_campaign_loop_emits_guarded_heartbeats(self) -> None:
+        policy, storm, _control, _started = self.start_request()
+        claim = self.claim(now=time.time())
+        guard = CampaignRuntimeGuard(
+            self.store, self.repo, self.host, claim["receipt_hash"]
+        )
+        result = run_autonomous_improvement_campaign(
+            self.store,
+            self.repo,
+            self.host,
+            storm_result=storm,
+            policy_receipt_hash=policy["receipt_hash"],
+            secret=self.secret,
+            checkpoint=guard,
+        )
+        self.assertEqual(result["candidate_count"], 0)
+        self.assertGreaterEqual(len(guard.heartbeats), 3)
+        self.assertEqual(guard.heartbeats[0]["stage"], "context")
+        self.assertEqual(guard.heartbeats[-1]["stage"], "tournament")
+        self.assertFalse(result["authority"]["model_execution_authorized"])
+
+    def test_real_campaign_loop_honors_cancel_between_stages(self) -> None:
+        policy, storm, control, started = self.start_request()
+        claim = self.claim(now=time.time())
+        guard = CampaignRuntimeGuard(
+            self.store, self.repo, self.host, claim["receipt_hash"]
+        )
+        calls = {"count": 0}
+
+        def cancelling_checkpoint(stage, details):
+            calls["count"] += 1
+            if calls["count"] == 2:
+                self.cancel_request(policy, storm, control, started)
+            guard(stage, details)
+
+        with self.assertRaises(CampaignCancellationRequested) as raised:
+            run_autonomous_improvement_campaign(
+                self.store,
+                self.repo,
+                self.host,
+                storm_result=storm,
+                policy_receipt_hash=policy["receipt_hash"],
+                secret=self.secret,
+                checkpoint=cancelling_checkpoint,
+            )
+        heartbeat = raised.exception.heartbeat
+        self.assertTrue(heartbeat["cancellation_observed"])
+        ack = acknowledge_campaign_cancellation(
+            self.store,
+            self.repo,
+            claim_receipt_hash=claim["receipt_hash"],
+            heartbeat_receipt_hash=heartbeat["receipt_hash"],
+            exit_state="cooperative_stop",
+        )
+        self.assertEqual(ack["status"], "cancellation_acknowledged")
+
+    def test_source_head_drift_blocks_worker_progress(self) -> None:
+        self.start_request()
+        claim = self.claim(now=time.time())
+        guard = CampaignRuntimeGuard(
+            self.store, self.repo, self.host, claim["receipt_hash"]
+        )
+        (self.host / "head-drift.txt").write_text("drift\n", encoding="utf-8")
+        subprocess.run(["git", "add", "head-drift.txt"], cwd=self.host, check=True)
+        subprocess.run(
+            ["git", "commit", "-qm", "head drift"], cwd=self.host, check=True
+        )
+        with self.assertRaises(CampaignSourceDrift):
+            guard("candidate", {})
 
 
 if __name__ == "__main__":

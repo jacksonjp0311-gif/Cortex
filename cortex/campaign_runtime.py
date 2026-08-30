@@ -11,7 +11,7 @@ import hashlib
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from .autonomous_improvement import verify_autonomy_policy
 from .campaign_control import campaign_state
@@ -30,11 +30,82 @@ WORKER_STAGES = frozenset(
         "model",
         "candidate",
         "verification",
+        "trial",
         "tournament",
         "integration_wait",
         "cancelling",
     }
 )
+
+
+class CampaignCancellationRequested(RuntimeError):
+    """Raised only after the worker records observing canonical cancellation."""
+
+    def __init__(self, campaign_id: str, heartbeat: Mapping[str, Any]) -> None:
+        super().__init__(f"campaign cancellation requested: {campaign_id}")
+        self.campaign_id = campaign_id
+        self.heartbeat = dict(heartbeat)
+
+
+class CampaignSourceDrift(RuntimeError):
+    """Raised when the active source head differs from the claimed source."""
+
+
+class CampaignRuntimeGuard:
+    """Host-owned checkpoint callback for the real improvement loop."""
+
+    def __init__(
+        self,
+        store: Any,
+        repo: str,
+        root: str | Path,
+        claim_receipt_hash: str,
+        *,
+        lease_seconds: float = 30.0,
+    ) -> None:
+        self.store = store
+        self.repo = repo
+        self.root = Path(root).resolve()
+        self.claim = _verified_receipt(
+            store, repo, claim_receipt_hash, "campaign_worker_claim"
+        )
+        self.claim_receipt_hash = str(claim_receipt_hash)
+        self.lease_seconds = float(lease_seconds)
+        existing = _campaign_receipts(
+            store,
+            repo,
+            "campaign_worker_heartbeat",
+            str(self.claim["campaign_id"]),
+        )
+        self.sequence = max(
+            (int(item.get("heartbeat_sequence") or 0) for item in existing),
+            default=0,
+        )
+        self.heartbeats: list[dict[str, Any]] = []
+
+    def __call__(self, stage: str, details: Mapping[str, Any]) -> None:
+        del details  # Stage timing is evidence; arbitrary callback payload is not.
+        if repository_head(self.root) != self.claim.get("source_head"):
+            raise CampaignSourceDrift("campaign source HEAD changed after worker claim")
+        control = campaign_state(
+            self.store, self.repo, str(self.claim["campaign_id"])
+        )
+        cancelling = bool(control and control.get("status") == "cancel_requested")
+        self.sequence += 1
+        heartbeat = record_worker_heartbeat(
+            self.store,
+            self.repo,
+            claim_receipt_hash=self.claim_receipt_hash,
+            sequence=self.sequence,
+            stage="cancelling" if cancelling else stage,
+            cancellation_observed=cancelling,
+            lease_seconds=self.lease_seconds,
+        )
+        self.heartbeats.append(heartbeat)
+        if cancelling:
+            raise CampaignCancellationRequested(
+                str(self.claim["campaign_id"]), heartbeat
+            )
 
 
 def _canonical(value: Any) -> str:
@@ -352,6 +423,9 @@ def observe_campaign_runtime(
 
 __all__ = [
     "WORKER_STAGES",
+    "CampaignCancellationRequested",
+    "CampaignRuntimeGuard",
+    "CampaignSourceDrift",
     "acknowledge_campaign_cancellation",
     "claim_campaign_worker",
     "observe_campaign_runtime",
