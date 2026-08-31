@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.18",
+  "release": "Cortex v10.0.0-alpha.19",
   "release_class": "advanced research prototype",
-  "source_commit": "9ad35c31924aa56d8c9229228eb3f9f23a9f1fee",
-  "runtime_parent": "9ad35c31924aa56d8c9229228eb3f9f23a9f1fee",
+  "source_commit": "11ca9c123837c69ac505ceb04637225bffc91e8d",
+  "runtime_parent": "11ca9c123837c69ac505ceb04637225bffc91e8d",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/LIVE_SEMANTIC_CALIBRATION_SCREEN.md",
+  "phase_document": "docs/v10/HARDER_SEMANTIC_CALIBRATION_SCREEN.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -39,9 +39,12 @@
     "structural_lesson_pair": "relevant cache-coherence and irrelevant line-ending lessons each reconstruct through synthetic circulation, valid competence, current semantic witness, and epistemic event; competence and witness identities are distinct",
     "semantic_calibration_corpus": "12 development-only cache-coherence cases span three difficulty levels; the public manifest carries secret-salted answer commitments while the random secret and private answer key are absent from the committed artifact",
     "semantic_calibration_preflight": "the alpha.17 LIVE_CALIBRATION_SCREEN_READY preflight permitted only the now-completed four-call task-only level-two screen; caller outcome booleans remained non-authorizing and any harder screen requires separate authority",
-    "semantic_calibration_empirical_boundary": "alpha.17 executed zero calls; alpha.18 executed four task-only live calls and found a ceiling; task calibration, semantic relevance gain, total Cortex gain, and confirmatory competence transfer remain unestablished",
+    "semantic_calibration_empirical_boundary": "alpha.17 executed zero calls; alpha.18 and alpha.19 each executed four task-only live calls and both found ceilings; task calibration, semantic relevance gain, total Cortex gain, and confirmatory competence transfer remain unestablished",
     "live_semantic_calibration_screen": "four host-registered live-empirical task-only trajectories were canonically reconstructed for OpenAI gpt-5.6-sol; level two scored 4/4 and is a screening ceiling with move_harder disposition",
     "live_semantic_calibration_boundary": "development screen executed from a disclosed dirty alpha.17 tree with exact executed-file hashes; calibration, semantic relevance gain, total Cortex gain, and confirmatory competence transfer remain unestablished",
+    "harder_semantic_calibration_screen": "a canonical alpha.18 4/4 ceiling opened one newly sealed level-three panel for the same model; four live-empirical task-only trajectories again scored 4/4 and exhausted the available multiple-choice geometry",
+    "harder_screen_continuity_boundary": "the alpha.18 private answer key was intentionally not persisted, so alpha.19 records a new development seal rather than claiming confirmatory corpus continuity",
+    "semantic_calibration_next_run": "retire the saturated choice-recognition ladder and forge open-response latent-cause tasks with independently frozen atomic evaluation before any sham or relevant-lesson treatment calls",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -54,5 +57,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.17 sham-controlled semantic calibration"
+  "supersedes": "Cortex v10.0.0-alpha.18 live semantic calibration screen"
 }
