@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.11",
+  "release": "Cortex v10.0.0-alpha.12",
   "release_class": "advanced research prototype",
-  "source_commit": "033898ad3b939c4548eeb4584eb448846a5449c3",
-  "runtime_parent": "033898ad3b939c4548eeb4584eb448846a5449c3",
+  "source_commit": "1caac1ddea17ee3eff0f6b0073a8239e4f427b0d",
+  "runtime_parent": "1caac1ddea17ee3eff0f6b0073a8239e4f427b0d",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/REVOCABLE_CAPABILITY_WORKER_SEAL.md",
+  "phase_document": "docs/v10/GOVERNED_AUTONOMY_DIFFERENTIAL.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -21,6 +21,9 @@
     "revocable_control_capability": "one-shot action spend revalidates canonical parent session, current epoch, expiry, revocation, exact request, and database-enforced uniqueness",
     "campaign_lifecycle": "complete immutable lifecycle reconstruction verifies sequence, prior links, legal transitions, invariant policy and Storm roots, action binding, chronology, and epoch freshness",
     "external_worker_observation": "fixed shell-free worker subprocess launch and OS exit are independently sealed with PID, timeout path, exit status, output hashes, and canonical terminal binding; process exit is not campaign utility or integration authority",
+    "governed_autonomy_differential": "paired task-only-control versus Cortex-governed native-agent mechanism verified with frozen source, evaluator, model/adapter provenance, tools, capability profile, randomization, budgets, exact matched inference, and canonical trajectory reconstruction",
+    "autonomy_advantage": "not established; the committed synthetic eight-case contrast is structural mechanism evidence only and cannot satisfy the live-empirical or preregistered-power gates",
+    "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
     "production_repository_portability": "not established",
@@ -32,5 +35,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.10 authenticated recoverable campaign interconnect"
+  "supersedes": "Cortex v10.0.0-alpha.11 revocable capability and external worker seal"
 }
