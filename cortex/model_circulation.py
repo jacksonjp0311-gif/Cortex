@@ -181,6 +181,16 @@ def project_task_context(context: Mapping[str, Any]) -> dict[str, Any]:
         "memory_episode_digests": [
             str(x) for x in context.get("memory_episode_digests") or ()
         ],
+        "semantic_memory_projection_receipt_hash": str(
+            context.get("semantic_memory_projection_receipt_hash") or ""
+        ),
+        "semantic_memory_lessons": _json_safe(
+            [
+                dict(item)
+                for item in context.get("semantic_memory_lessons") or ()
+                if isinstance(item, Mapping)
+            ]
+        ),
         "predictions": _json_safe(dict(context.get("predictions") or {})),
         "unresolved_contradictions": [
             str(x) for x in context.get("unresolved_contradictions") or ()

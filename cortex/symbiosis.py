@@ -273,6 +273,7 @@ def cortex_context_receipt(
     body_epoch_id: str,
     evidence_items: Sequence[Mapping[str, Any]] | None = None,
     memory_episodes: Sequence[Mapping[str, Any]] | None = None,
+    semantic_memory_projection: Mapping[str, Any] | None = None,
     graph_neighbors: Sequence[Mapping[str, Any]] | None = None,
     predictions: Mapping[str, Any] | None = None,
     unresolved_contradictions: Sequence[Any] | None = None,
@@ -291,12 +292,20 @@ def cortex_context_receipt(
     episodes = [
         dict(item) for item in (memory_episodes or ()) if isinstance(item, Mapping)
     ]
+    semantic = dict(semantic_memory_projection or {})
+    semantic_lessons = [
+        dict(item)
+        for item in semantic.get("lessons") or ()
+        if isinstance(item, Mapping)
+    ]
     neighbors = [
         dict(item) for item in (graph_neighbors or ()) if isinstance(item, Mapping)
     ]
     packet_material = {
         "evidence_digests": _digest_list(evidence),
         "episode_digests": _digest_list(episodes),
+        "semantic_projection_receipt_hash": semantic.get("receipt_hash"),
+        "semantic_lessons": semantic_lessons,
         "neighbor_digests": _digest_list(neighbors),
         "predictions": dict(predictions or {}),
         "unresolved_contradictions": list(unresolved_contradictions or ()),
@@ -322,6 +331,9 @@ def cortex_context_receipt(
         evidence_digests=packet_material["evidence_digests"],
         memory_episode_count=len(episodes),
         memory_episode_digests=packet_material["episode_digests"],
+        semantic_memory_projection_receipt_hash=semantic.get("receipt_hash"),
+        semantic_memory_lesson_count=len(semantic_lessons),
+        semantic_memory_lessons=semantic_lessons,
         graph_neighbor_count=len(neighbors),
         graph_neighbor_digests=packet_material["neighbor_digests"],
         predictions=dict(predictions or {}),
@@ -1153,6 +1165,31 @@ def open_symbiotic_session(
                         "receipt_hash": item.get("receipt_hash"),
                     }
                 )
+    semantic_memory_projection = None
+    if memory_projection:
+        try:
+            from .semantic_projection import build_semantic_memory_projection
+
+            semantic_memory_projection = build_semantic_memory_projection(
+                store,
+                repo,
+                task=task,
+                selected_memory_ids=memory_projection.get("selected_memory_ids") or (),
+                body_epoch_id=body_epoch_id,
+                current_will=store.get_setting(f"will_latest:{repo}", None) or None,
+                max_lessons=8,
+            )
+        except Exception:
+            semantic_memory_projection = None
+    selected_memory_ids = list((memory_projection or {}).get("selected_memory_ids") or ())
+    semantic_projection_state = (
+        "pass"
+        if semantic_memory_projection
+        and len(semantic_memory_projection.get("lessons") or ()) > 0
+        else "unknown"
+        if selected_memory_ids
+        else "not_applicable"
+    )
     context = cortex_context_receipt(
         repo=repo,
         repository_id=repository_id,
@@ -1168,6 +1205,7 @@ def open_symbiotic_session(
         if evidence
         else [],
         memory_episodes=memory_episodes,
+        semantic_memory_projection=semantic_memory_projection,
         graph_neighbors=[],
         predictions={
             "measured_event_present": bool(measured),
@@ -1176,6 +1214,7 @@ def open_symbiotic_session(
             "memory_projection_id": (memory_projection or {}).get("projection_id"),
             "selected_memory_ids": (memory_projection or {}).get("selected_memory_ids"),
             "continuity_seed": (memory_projection or {}).get("continuity_seed"),
+            "semantic_projection_state": semantic_projection_state,
         },
         unresolved_contradictions=[
             item
@@ -1186,6 +1225,9 @@ def open_symbiotic_session(
                 if str(resonance.get("status") or "")
                 not in {"resonant_candidate", ""}
                 and resonance
+                else None,
+                "semantic_projection_unresolved"
+                if semantic_projection_state == "unknown"
                 else None,
             )
             if item
@@ -1252,6 +1294,7 @@ def open_symbiotic_session(
         if evidence
         else [],
         memory_episodes=memory_episodes,
+        semantic_memory_projection=semantic_memory_projection,
         graph_neighbors=[],
         predictions={
             "measured_event_present": bool(measured),
@@ -1260,6 +1303,7 @@ def open_symbiotic_session(
             "memory_projection_id": (memory_projection or {}).get("projection_id"),
             "selected_memory_ids": (memory_projection or {}).get("selected_memory_ids"),
             "continuity_seed": (memory_projection or {}).get("continuity_seed"),
+            "semantic_projection_state": semantic_projection_state,
         },
         unresolved_contradictions=[
             item
@@ -1270,6 +1314,9 @@ def open_symbiotic_session(
                 if str(resonance.get("status") or "")
                 not in {"resonant_candidate", ""}
                 and resonance
+                else None,
+                "semantic_projection_unresolved"
+                if semantic_projection_state == "unknown"
                 else None,
             )
             if item
@@ -1339,6 +1386,7 @@ def open_symbiotic_session(
             "agent_instantiation": instantiation,
             "cortex_context": context,
             "memory_projection": memory_projection,
+            "semantic_memory_projection": semantic_memory_projection,
         },
         "turns": {},
         "chain": [

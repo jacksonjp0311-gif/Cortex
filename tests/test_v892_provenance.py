@@ -23,6 +23,11 @@ from cortex.interconnect_frame import (
 )
 from cortex.membrane import apply_will_bound_membrane
 from cortex.memory_projection import evaluate_memory_eligibility, project_memories
+from cortex.semantic_projection import (
+    build_semantic_memory_projection,
+    verify_semantic_memory_projection,
+)
+from cortex.symbiosis import open_symbiotic_session
 from cortex.store import Store
 from cortex.ostt.conformance import build_activation_conformance_receipt
 from cortex.provenance import sha
@@ -415,6 +420,50 @@ class V892ProvenanceTests(unittest.TestCase):
         self.assertEqual(len(list_admitted_memories(self.store, self.repo)), 1)
         self.assertFalse(memory["host_mutate_authorized"])
         self.assertFalse(memory["execution_authorized"])
+
+    def test_canonical_memory_reaches_model_as_verified_semantic_guidance(self) -> None:
+        memory, will, _ = self._canonical_memory()
+        task = str(memory["summary"])
+        semantic = build_semantic_memory_projection(
+            self.store,
+            self.repo,
+            task=task,
+            selected_memory_ids=[memory["memory_id"]],
+            body_epoch_id=self.epoch.epoch_id,
+            current_will=will,
+        )
+        self.assertEqual(
+            semantic["projected_memory_ids"], [memory["memory_id"]], semantic
+        )
+        self.assertEqual(semantic["lessons"][0]["guidance"], memory["summary"])
+        report = verify_semantic_memory_projection(
+            self.store, self.repo, semantic, task=task
+        )
+        self.assertTrue(report["valid"], report)
+
+        self.store.set_setting(
+            f"projection_budget_active:{self.repo}",
+            {
+                "policy": {"max_memories": 8, "min_support": "none"},
+                "mode": "DEFAULT",
+                "budget_policy_hash": "test-semantic-budget",
+            },
+        )
+        session = open_symbiotic_session(
+            self.store,
+            self.repo,
+            task=task,
+            provider="fixture",
+            model_id="fixture",
+            persist=True,
+        )
+        context = session["receipts"]["cortex_context"]
+        self.assertEqual(context["semantic_memory_lesson_count"], 1)
+        self.assertEqual(
+            context["semantic_memory_lessons"][0]["memory_receipt_hash"],
+            memory["receipt_hash"],
+        )
+        self.assertFalse(context["semantic_memory_lessons"][0]["execution_authorized"])
 
 
 if __name__ == "__main__":

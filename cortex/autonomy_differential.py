@@ -42,7 +42,7 @@ from .symbiosis import open_symbiotic_session
 PREREG_SCHEMA = "cortex-autonomy-differential-preregistration/1.0"
 CASE_SCHEMA = "cortex-autonomy-differential-case/1.0"
 RESULT_SCHEMA = "cortex-autonomy-differential-result/1.0"
-VERSION = "10.0.0-alpha.13"
+VERSION = "10.0.0-alpha.14"
 ARMS = ("task_only_control", "cortex_governed")
 _PREREG_MATERIAL_FIELDS = (
     "schema_version",

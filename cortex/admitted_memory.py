@@ -491,6 +491,7 @@ def deep_verify_admitted_memory(
                 # still pass now.
                 structural_checks.pop("signature", None)
                 structural_checks.pop("signature_deferred", None)
+                structural_checks.pop("principal_secret_match", None)
                 if not all(structural_checks.values()):
                     will_ok = False
                     errors.append("will_structural_verification_failed")

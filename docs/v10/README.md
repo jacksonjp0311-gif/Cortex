@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.13`
+Version: `10.0.0-alpha.14`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -81,6 +81,14 @@ using a two-case/four-call pilot. The model is read from explicit operator
 selection or Cortex UI settings, the external adapter boundary is canonically
 registered, and the resulting panel remains underpowered by construction.
 
+Alpha.14 closes the semantic projection seam exposed by that null result.
+Canonical admitted memories now reach transient cognition as bounded public
+lessons carrying their exact memory receipt, evidence roots, content hash,
+projection proof, and unresolved completeness states. A noncompensatory
+`Theta_P=min(V,S,A,F,C)` gate blocks unresolved identity, semantic mismatch,
+irrelevance, stale state, or contradiction. Proof form and cognitive form
+remain distinct; neither grants authority.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -95,6 +103,7 @@ registered, and the resulting panel remains underpowered by construction.
 - [Revocable capability and worker seal](REVOCABLE_CAPABILITY_WORKER_SEAL.md)
 - [Governed autonomy differential](GOVERNED_AUTONOMY_DIFFERENTIAL.md)
 - [Live autonomy pilot](LIVE_AUTONOMY_PILOT.md)
+- [Verified semantic projection and causal transfer](VERIFIED_SEMANTIC_PROJECTION.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -112,7 +121,7 @@ registered, and the resulting panel remains underpowered by construction.
 
 ## Claim boundary
 
-Alpha.13 proves that the local interface, provider-neutral runtime path, and
+Alpha.14 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
@@ -120,3 +129,5 @@ safe execution of arbitrary tools, self-improvement, or live cross-provider
 model quality. The autonomy differential is structurally verified. A live
 pilot may verify paired execution, but it is not a powered or replicated
 empirical autonomy-advantage result.
+The semantic projection bridge is mechanically verified, while a live
+three-arm relevant-versus-sham causal transfer trial remains not executed.

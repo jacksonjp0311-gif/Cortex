@@ -116,7 +116,24 @@ def evaluate_memory_eligibility(
     # will: if current will forbids this type, exclude from active projection
     if current_will:
         v = verify_will(store, repo, current_will, secret=will_secret)
-        if not v.get("verified"):
+        latest = store.get_setting(f"will_latest:{repo}", None) or {}
+        same_canonical_tip = bool(
+            latest
+            and latest.get("receipt_hash") == current_will.get("receipt_hash")
+            and latest.get("will_id") == current_will.get("will_id")
+        )
+        if will_secret is not None:
+            current_will_valid = v.get("verified") is True
+        else:
+            structural_checks = dict(v.get("checks") or {})
+            for deferred in (
+                "signature",
+                "signature_deferred",
+                "principal_secret_match",
+            ):
+                structural_checks.pop(deferred, None)
+            current_will_valid = same_canonical_tip and all(structural_checks.values())
+        if not current_will_valid:
             gates["will"] = False
             exclusions.append("current_will_forbids")
         else:

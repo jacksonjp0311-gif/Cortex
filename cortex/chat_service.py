@@ -134,7 +134,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.13",
+            "version": "10.0.0-alpha.14",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",
@@ -629,6 +629,7 @@ class CortexChatService:
                 1
                 + len(projection.get("evidence_digests") or ())
                 + len(projection.get("memory_episode_digests") or ())
+                + len(projection.get("semantic_memory_lessons") or ())
                 + len(projection.get("unresolved_contradictions") or ())
                 + len(projection.get("constitutional_restrictions") or ())
             )
@@ -645,6 +646,8 @@ class CortexChatService:
                 source_classes.append("evidence")
             if projection.get("memory_episode_digests"):
                 source_classes.append("memory")
+            if projection.get("semantic_memory_lessons"):
+                source_classes.append("semantic_memory")
         else:
             projected_items, token_estimate, source_classes = 0, None, []
         return {

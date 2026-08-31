@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.13-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.13" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.14-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.14" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -236,6 +236,53 @@ two-sided p-value was `1.0`. Cortex-governed requests used more context tokens
 without changing success. The canonical disposition is
 `AUTONOMY_DIFFERENTIAL_HELD`: the live path works; advantage remains
 unestablished.
+
+### Alpha.14: proof the model can actually use
+
+The null result revealed a sharper wound than task ceiling alone. Cortex was
+selecting meaningful memory summaries and then giving its reasoning engine only
+their digests. A digest is excellent provenance and useless instruction.
+Alpha.14 introduces a dual representation:
+
+```text
+canonical memory
+  ├─ proof form       receipts + lineage + evidence roots
+  └─ cognitive form   bounded lesson + scope + uncertainty
+                              ↓
+                     transient reasoning model
+```
+
+The governing law is now explicit:
+
+```text
+Knowledge stored != knowledge projected != knowledge usable
+Knowledge = bounded semantic payload + provenance proof
+
+Theta_P(m,t) = min(V, S, A, F, C)
+Project(m,t) iff Theta_P(m,t) = PASS
+```
+
+`V` verifies canonical memory and lineage, `S` binds the lesson to exact
+candidate material, `A` checks task applicability, `F` checks epoch/lifecycle
+freshness, and `C` clears contradiction state. `FAIL < UNKNOWN < PASS`; no rank,
+score, fluency, or caller Boolean can compensate for a closed plane.
+
+The next causal panel is deliberately three-armed:
+
+```text
+A = task only
+B = equally bounded verified but irrelevant sham lesson
+C = verified relevant lesson
+
+G_total     = U_C - U_A
+G_context   = U_B - U_A
+G_relevance = U_C - U_B
+```
+
+`G_relevance` isolates decision-relevant knowledge from mere extra context. The
+bridge is implemented and adversarially verified; the live A/B/C experiment is
+not yet executed, and Cortex still makes no claim of measured capability gain.
+See [verified semantic projection](docs/v10/VERIFIED_SEMANTIC_PROJECTION.md).
 
 ## What we just learned: success needs contrast
 

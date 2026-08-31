@@ -1567,3 +1567,22 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
   `G_C=0`, discordance `0`, exact `p=1.0`, and the canonical result remained
   `AUTONOMY_DIFFERENTIAL_HELD`. The governed arm used more tokens without a
   success benefit; no advantage claim was promoted.
+
+## 10.0.0-alpha.14 - Verified Semantic Projection & Causal Transfer
+
+- Closed the digest-only cognition seam: the native runtime now projects
+  bounded canonical memory semantics alongside immutable proof roots.
+- Added independent canonical reconstruction and a noncompensatory
+  `Theta_P=min(V,S,A,F,C)` gate for verification, semantic binding,
+  applicability, freshness, and contradiction clearance.
+- Preserved unknown prerequisite, applicability, and counterevidence
+  completeness instead of converting trajectory-bound support into a universal
+  claim.
+- Repaired read-only will verification so canonical historical admission can be
+  inspected without a persisted HMAC secret, while only Cortex's canonical
+  current will tip may narrow projection.
+- Added tamper, unresolved identity, stale/irrelevant memory, authority closure,
+  and canonical memory-to-session integration tests.
+- Defined the A task-only / B verified-sham / C relevant-semantic causal
+  geometry and `G_relevance=U_C-U_B`; no live three-arm transfer trial or
+  positive capability-gain claim is made in this release.
