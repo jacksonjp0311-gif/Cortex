@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.20-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.20" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.21-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.21" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -156,6 +156,11 @@ The zero-call commissioning reached `OPEN_RESPONSE_LATENT_FORGE_READY`: all 16
 private contracts were recovered exactly from the host vault and the four
 initial reference responses passed their independently frozen evaluators. No
 live inference ran. Baseline calibration and semantic transfer remain open.
+
+Alpha.21 connects that private evaluator to the native live-circulation path.
+Each outcome must be rebuilt from its immutable public model trajectory. A
+missing vault contract, corpus mismatch, changed adapter identity, unrelated
+preflight, or caller-provided verdict fails closed.
 
 ## What you get
 

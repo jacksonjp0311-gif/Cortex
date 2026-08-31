@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.20`
+Version: `10.0.0-alpha.21`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -128,6 +128,12 @@ evidence IDs, and uncertainty state as public JSON. A private host-vault
 contract independently checks required causal clauses, forbidden unsupported
 claims, and evidence ordering. The public corpus carries commitments only.
 
+Alpha.21 adds the bounded live executor. It retrieves the exact private
+contract from the host vault, freezes four level-three task-only calls, and
+reconstructs every atomic score from immutable native-agent trajectories.
+Malformed public JSON remains UNKNOWN and holds the screen rather than being
+silently converted to FAIL.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -149,6 +155,7 @@ claims, and evidence ordering. The public corpus carries commitments only.
 - [Live semantic calibration screen](LIVE_SEMANTIC_CALIBRATION_SCREEN.md)
 - [Harder semantic calibration screen](HARDER_SEMANTIC_CALIBRATION_SCREEN.md)
 - [Open-response latent-cause forge](OPEN_RESPONSE_LATENT_CAUSE_FORGE.md)
+- [Live open-response calibration screen](LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

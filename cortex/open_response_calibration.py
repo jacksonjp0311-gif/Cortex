@@ -16,6 +16,13 @@ from collections.abc import Mapping
 from typing import Any
 
 from . import __version__
+from .adapter_provenance import (
+    EVIDENCE_LIVE,
+    resolve_adapter_provenance,
+    verify_adapter_provenance,
+)
+from .information_calibration import assess_sequential_level
+from .native_agent import NativeAgentRuntime, verify_native_agent_trajectory
 from .symbiosis import open_symbiotic_session
 
 PUBLIC_SCHEMA = "cortex-open-response-latent-cause-corpus/1.0"
@@ -45,6 +52,16 @@ def _sha(value: Any) -> str:
 
 def _normalized(value: str) -> str:
     return " ".join(re.findall(r"[a-z0-9]+", str(value).lower()))
+
+
+def _adapter_identity(adapter: Any) -> dict[str, str]:
+    return {
+        "provider_family": str(getattr(adapter, "provider_family", "") or ""),
+        "model_id": str(getattr(adapter, "model_id", "") or ""),
+        "model_version": str(getattr(adapter, "model_version", "") or ""),
+        "adapter_id": str(getattr(adapter, "adapter_id", "") or ""),
+        "adapter_version": str(getattr(adapter, "adapter_version", "") or ""),
+    }
 
 
 class HostCalibrationContractVault:
@@ -499,6 +516,258 @@ def freeze_open_response_forge(
     )
 
 
+def freeze_live_open_response_screen(
+    store: Any,
+    repo: str,
+    *,
+    preflight_receipt_hash: str,
+    manifest: Mapping[str, Any],
+    private_key: Mapping[str, Any],
+    adapter: Any,
+) -> dict[str, Any]:
+    """Freeze the exact four-call open-response screen before invocation."""
+    preflight_hash = str(preflight_receipt_hash or "")
+    if store.verify_symbiotic_receipt(repo, preflight_hash).get("valid") is not True:
+        raise ValueError("canonical open-response preflight is required")
+    preflight = store.symbiotic_receipt(preflight_hash, repo=repo) or {}
+    if (
+        preflight.get("kind") != "open_response_latent_cause_preflight"
+        or preflight.get("state") != "OPEN_RESPONSE_LATENT_FORGE_READY"
+        or int(preflight.get("planned_live_calls", -1)) != 0
+    ):
+        raise ValueError("open-response preflight cannot open a live screen")
+    bundle = {"manifest": dict(manifest), "private_key": dict(private_key)}
+    if verify_open_response_latent_bundle(bundle).get("valid") is not True:
+        raise ValueError("open-response private evaluator does not match public corpus")
+    if (
+        preflight.get("corpus_hash") != manifest.get("corpus_hash")
+        or preflight.get("private_key_commitment")
+        != manifest.get("private_key_commitment")
+    ):
+        raise ValueError("open-response corpus is not bound to the preflight")
+    case_ids = list(preflight.get("initial_screen_case_ids") or ())
+    cases_by_id = {str(row.get("case_id") or ""): row for row in manifest.get("cases") or ()}
+    cases = [cases_by_id.get(str(case_id)) for case_id in case_ids]
+    if len(cases) != 4 or any(not isinstance(row, Mapping) for row in cases):
+        raise ValueError("live open-response screen requires four bound cases")
+    identity = _adapter_identity(adapter)
+    if not all(identity.values()):
+        raise ValueError("complete adapter identity is required")
+    provenance = resolve_adapter_provenance(store, repo, adapter)
+    provenance_check = verify_adapter_provenance(store, repo, provenance)
+    if (
+        provenance_check.get("valid") is not True
+        or provenance.get("evidence_class") != EVIDENCE_LIVE
+    ):
+        raise ValueError("live host-registered adapter provenance is required")
+    material = {
+        "schema_version": "cortex-live-open-response-preregistration/1.0",
+        "version": __version__,
+        "kind": "live_open_response_preregistration",
+        "repo": repo,
+        "repository_id": str(store.repo(repo)["repository_id"]),
+        "forge_preflight_receipt_hash": preflight_hash,
+        "corpus_hash": manifest["corpus_hash"],
+        "private_key_commitment": manifest["private_key_commitment"],
+        "screen_level": int(preflight["initial_screen_level"]),
+        "cases": cases,
+        "planned_calls": 4,
+        "context_treatment": "task_only_control",
+        "tools": [],
+        "model_identity": identity,
+        "adapter_provenance": provenance,
+        "evaluator_id": "cortex.atomic-causal-response.v1",
+        "private_contract_persisted": False,
+        "caller_success_booleans_accepted": False,
+        "status": "frozen_before_execution",
+        "development_only": True,
+        "confirmatory_eligible": False,
+        "claim_boundary": CLAIM_BOUNDARY,
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    preregistration_id = _sha(material)
+    session = open_symbiotic_session(
+        store, repo, task="freeze live open-response baseline", persist=True
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "preregistration_id": preregistration_id,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"live_open_response_prereg_{preregistration_id[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
+def execute_live_open_response_screen(
+    store: Any,
+    repo: str,
+    *,
+    preregistration: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    private_key: Mapping[str, Any],
+    adapter: Any,
+    tools: Any,
+    grant: Any,
+) -> dict[str, Any]:
+    """Execute four calls and rebuild every score from canonical trajectories."""
+    prereg_hash = str(preregistration.get("receipt_hash") or "")
+    if store.verify_symbiotic_receipt(repo, prereg_hash).get("valid") is not True:
+        raise ValueError("canonical live open-response preregistration is required")
+    if preregistration.get("kind") != "live_open_response_preregistration":
+        raise ValueError("live open-response preregistration kind is invalid")
+    bundle = {"manifest": dict(manifest), "private_key": dict(private_key)}
+    if verify_open_response_latent_bundle(bundle).get("valid") is not True:
+        raise ValueError("private evaluator no longer matches public corpus")
+    if (
+        manifest.get("corpus_hash") != preregistration.get("corpus_hash")
+        or manifest.get("private_key_commitment")
+        != preregistration.get("private_key_commitment")
+    ):
+        raise ValueError("live screen corpus binding is invalid")
+    if _adapter_identity(adapter) != preregistration.get("model_identity"):
+        raise ValueError("adapter identity changed after preregistration")
+    provenance = resolve_adapter_provenance(store, repo, adapter)
+    if provenance != preregistration.get("adapter_provenance"):
+        raise ValueError("adapter provenance changed after preregistration")
+    runtime = NativeAgentRuntime(store, repo, tools=tools)
+    contracts = private_key.get("contracts") or {}
+    case_receipts: list[dict[str, Any]] = []
+    for case in preregistration.get("cases") or ():
+        case_id = str(case["case_id"])
+        contract = contracts.get(case_id)
+        if not isinstance(contract, Mapping):
+            raise ValueError(f"private evaluator missing for {case_id}")
+        task = (
+            f"{case['prompt']}\n\nEVENT_RECORD\n"
+            + "\n".join(str(item) for item in case.get("events") or ())
+            + "\n\nRESPONSE_CONTRACT\n"
+            + _canonical(case["response_contract"])
+        )
+        run = runtime.run(
+            task,
+            adapter=adapter,
+            grant=grant,
+            context_treatment="task_only_control",
+        )
+        trajectory_hash = str(run["trajectory_receipt_hash"])
+        if verify_native_agent_trajectory(store, repo, trajectory_hash).get("valid") is not True:
+            raise ValueError(f"native trajectory invalid for {case_id}")
+        trajectory = store.symbiotic_receipt(trajectory_hash, repo=repo) or {}
+        evaluation = evaluate_atomic_causal_response(
+            contract, str(trajectory.get("final_answer") or "")
+        )
+        material = {
+            "schema_version": "cortex-live-open-response-case/1.0",
+            "version": __version__,
+            "kind": "live_open_response_case",
+            "preregistration_receipt_hash": prereg_hash,
+            "case_id": case_id,
+            "case_hash": _sha(case),
+            "private_contract_hash": contract["contract_hash"],
+            "private_contract_persisted": False,
+            "trajectory_receipt_hash": trajectory_hash,
+            "evaluation": evaluation,
+            "task_success": evaluation.get("success"),
+            "caller_success_authoritative": False,
+            "evidence_class": EVIDENCE_LIVE,
+            "advisory_only": True,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "memory_admission_authorized": False,
+            "policy_effect": False,
+        }
+        session = open_symbiotic_session(
+            store, repo, task=f"seal live open-response case {case_id}", persist=True
+        )
+        case_receipts.append(
+            store.append_symbiotic_receipt(
+                repo,
+                {
+                    **material,
+                    "status": "live_baseline_observation",
+                    "session_id": session["session_id"],
+                    "turn_id": 0,
+                    "event_id": f"live_open_response_case_{_sha(material)[:24]}",
+                    "body_epoch_id": session["body_epoch_id"],
+                },
+            )
+        )
+    outcomes: list[bool] = []
+    unknown_count = 0
+    errors: list[str] = []
+    for row in case_receipts:
+        trajectory_hash = str(row["trajectory_receipt_hash"])
+        trajectory = store.symbiotic_receipt(trajectory_hash, repo=repo) or {}
+        contract = contracts.get(str(row["case_id"])) or {}
+        rebuilt = evaluate_atomic_causal_response(
+            contract, str(trajectory.get("final_answer") or "")
+        )
+        if verify_native_agent_trajectory(store, repo, trajectory_hash).get("valid") is not True:
+            errors.append(f"trajectory_invalid:{row['case_id']}")
+        if rebuilt != row.get("evaluation"):
+            errors.append(f"evaluation_reconstruction_invalid:{row['case_id']}")
+        if rebuilt.get("success") is None:
+            unknown_count += 1
+        else:
+            outcomes.append(rebuilt.get("success") is True)
+    if unknown_count:
+        screen = {
+            "state": "screening_held_unknown",
+            "recommended_action": "repair_response_contract_or_transport",
+            "case_count": len(case_receipts),
+            "known_outcome_count": len(outcomes),
+            "unknown_count": unknown_count,
+            "success_count": sum(outcomes),
+            "success_rate": None,
+            "development_only": True,
+            "confirmatory_eligible": False,
+        }
+    else:
+        screen = {**assess_sequential_level(outcomes), "unknown_count": 0}
+    material = {
+        "schema_version": "cortex-live-open-response-result/1.0",
+        "version": __version__,
+        "kind": "live_open_response_result",
+        "preregistration_receipt_hash": prereg_hash,
+        "case_receipt_hashes": [row["receipt_hash"] for row in case_receipts],
+        "model_identity": preregistration["model_identity"],
+        "evidence_class": EVIDENCE_LIVE,
+        "screen": screen,
+        "errors": errors,
+        "calls_executed": len(case_receipts),
+        "calibration_established": screen["state"] == "calibrated" and not errors,
+        "semantic_transfer_established": False,
+        "status": "LIVE_OPEN_RESPONSE_SCREEN_RECONSTRUCTED" if not errors else "LIVE_OPEN_RESPONSE_SCREEN_HELD",
+        "claim_boundary": CLAIM_BOUNDARY,
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    session = open_symbiotic_session(
+        store, repo, task="seal live open-response baseline result", persist=True
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"live_open_response_result_{_sha(material)[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 __all__ = [
     "CONTRACT_SCHEMA",
     "HostCalibrationContractVault",
@@ -507,6 +776,8 @@ __all__ = [
     "PUBLIC_SCHEMA",
     "build_open_response_latent_bundle",
     "evaluate_atomic_causal_response",
+    "execute_live_open_response_screen",
     "freeze_open_response_forge",
+    "freeze_live_open_response_screen",
     "verify_open_response_latent_bundle",
 ]

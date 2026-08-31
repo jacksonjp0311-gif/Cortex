@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import time
 import unittest
+import json
 from pathlib import Path
 
 from cortex.adapter_provenance import register_adapter_provenance
@@ -11,7 +12,9 @@ from cortex.config import ensure_home
 from cortex.native_agent import CapabilityGrant, ScriptedAgentAdapter, ToolRegistry
 from cortex.open_response_calibration import (
     build_open_response_latent_bundle,
+    execute_live_open_response_screen,
     freeze_open_response_forge,
+    freeze_live_open_response_screen,
 )
 from cortex.semantic_calibration import (
     build_semantic_calibration_bundle,
@@ -31,14 +34,22 @@ class ExternalScreenAdapter:
     model_version = "2026-08"
     adapter_id = "tests.external-screen-adapter"
     adapter_version = "1"
+    _answers = []
+    _cursor = 0
 
     def __init__(self) -> None:
-        self._answers = iter(("A", "B", "C", "D", "A", "B", "C", "D"))
+        type(self)._answers = ["A", "B", "C", "D", "A", "B", "C", "D"]
+        type(self)._cursor = 0
+
+    def extend(self, answers):
+        type(self)._answers.extend(answers)
 
     def invoke_agent(self, request):
+        answer = type(self)._answers[type(self)._cursor]
+        type(self)._cursor += 1
         return {
             "request_hash": request.request_hash,
-            "public_output": next(self._answers),
+            "public_output": answer,
             "finish_reason": "stop",
             "token_usage": {"input_tokens": 1, "output_tokens": 1},
         }
@@ -202,6 +213,34 @@ class Alpha18LiveSemanticCalibrationTests(unittest.TestCase):
         self.assertEqual(forge["planned_live_calls"], 0)
         self.assertFalse(forge["calibration_established"])
         self.assertFalse(forge["semantic_transfer_established"])
+        open_manifest = open_bundle["manifest"]
+        open_key = open_bundle["private_key"]
+        adapter.extend(
+            json.dumps(open_key["contracts"][case_id]["reference_response"])
+            for case_id in forge["initial_screen_case_ids"]
+        )
+        live_prereg = freeze_live_open_response_screen(
+            self.store,
+            self.repo,
+            preflight_receipt_hash=forge["receipt_hash"],
+            manifest=open_manifest,
+            private_key=open_key,
+            adapter=adapter,
+        )
+        open_result = execute_live_open_response_screen(
+            self.store,
+            self.repo,
+            preregistration=live_prereg,
+            manifest=open_manifest,
+            private_key=open_key,
+            adapter=adapter,
+            tools=ToolRegistry(),
+            grant=grant,
+        )
+        self.assertEqual(open_result["calls_executed"], 4)
+        self.assertEqual(open_result["screen"]["state"], "screening_ceiling")
+        self.assertEqual(open_result["screen"]["unknown_count"], 0)
+        self.assertFalse(open_result["semantic_transfer_established"])
 
 
 if __name__ == "__main__":
