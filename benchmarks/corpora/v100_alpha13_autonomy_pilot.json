@@ -1,0 +1,34 @@
+{
+  "schema_version": "cortex-live-autonomy-pilot-corpus/1.0",
+  "cases": [
+    {
+      "case_id": "bounded-recurrence",
+      "task_family": "deterministic_reasoning",
+      "task": "Start with x=7. Apply x=(3*x+5) mod 97 exactly nine times. Return a short answer containing the token CORTEX-PILOT- followed immediately by the final integer.",
+      "evaluation_contract": {
+        "schema_version": "cortex-task-contract/1.0",
+        "contract_id": "alpha13-bounded-recurrence-v1",
+        "task_type": "text_contains",
+        "target_field": "text",
+        "expected_value": "CORTEX-PILOT-67",
+        "evaluator_id": "cortex.alpha13.pilot.evaluator.v1",
+        "version": "1"
+      }
+    },
+    {
+      "case_id": "ordered-weighted-sum",
+      "task_family": "constraint_execution",
+      "task": "Given (a,4), (b,7), (c,2), (d,9), sort by (value mod 3 ascending, value descending, label ascending). Compute the one-indexed weighted sum of the sorted values. Return a short answer containing CORTEX-PILOT- followed immediately by the sum.",
+      "evaluation_contract": {
+        "schema_version": "cortex-task-contract/1.0",
+        "contract_id": "alpha13-ordered-weighted-sum-v1",
+        "task_type": "text_contains",
+        "target_field": "text",
+        "expected_value": "CORTEX-PILOT-43",
+        "evaluator_id": "cortex.alpha13.pilot.evaluator.v1",
+        "version": "1"
+      }
+    }
+  ],
+  "claim_boundary": "Two-case commissioning panel only. It can verify live paired execution but is underpowered for an autonomy-advantage claim."
+}

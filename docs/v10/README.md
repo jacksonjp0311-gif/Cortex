@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.12`
+Version: `10.0.0-alpha.13`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -76,6 +76,11 @@ Exact matched-pairs inference and a separately reported efficiency denominator
 prevent a plausible answer, raw success Boolean, or cheap synthetic contrast
 from becoming empirical legitimacy.
 
+Alpha.13 commissions that instrument through one runtime-selected live model
+using a two-case/four-call pilot. The model is read from explicit operator
+selection or Cortex UI settings, the external adapter boundary is canonically
+registered, and the resulting panel remains underpowered by construction.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -89,6 +94,7 @@ from becoming empirical legitimacy.
 - [Authenticated campaign control](AUTHENTICATED_CAMPAIGN_CONTROL.md)
 - [Revocable capability and worker seal](REVOCABLE_CAPABILITY_WORKER_SEAL.md)
 - [Governed autonomy differential](GOVERNED_AUTONOMY_DIFFERENTIAL.md)
+- [Live autonomy pilot](LIVE_AUTONOMY_PILOT.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -106,10 +112,11 @@ from becoming empirical legitimacy.
 
 ## Claim boundary
 
-Alpha.12 proves that the local interface, provider-neutral runtime path, and
+Alpha.13 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
 safe execution of arbitrary tools, self-improvement, or live cross-provider
-model quality. The new autonomy differential is structurally verified; no live
-empirical autonomy advantage was executed or established in this release.
+model quality. The autonomy differential is structurally verified. A live
+pilot may verify paired execution, but it is not a powered or replicated
+empirical autonomy-advantage result.

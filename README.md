@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.12-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.12" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.13-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.13" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -221,6 +221,14 @@ empirical promotion remains noncompensatory:
 The committed fixture benchmark deliberately produces a visible structural
 contrast while retaining `empirical_advantage_established = false`. No real
 frontier-model autonomy advantage is claimed by this release.
+
+Alpha.13 adds a deliberately small live commissioning pulse around that
+instrument. It selects the provider and model at runtime from operator input or
+the Cortex interface—no reasoning engine is coded into the experiment—and
+caps the default panel at two cases/four calls. The pilot can establish that a
+real external model crossed both matched arms under canonical observation. It
+is explicitly underpowered and cannot establish Cortex advantage. See the
+[live autonomy pilot](docs/v10/LIVE_AUTONOMY_PILOT.md).
 
 ## What we just learned: success needs contrast
 

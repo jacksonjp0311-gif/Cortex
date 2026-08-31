@@ -1549,3 +1549,17 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Preserved closed host mutation, execution, memory admission, and policy
   authority. Alpha.12 establishes a measurement mechanism, not autonomous
   self-improvement or a positive live model effect.
+## 10.0.0-alpha.13 - Lightweight Live Autonomy Commissioning
+
+- Added a two-case, four-call live pilot that reuses the alpha.12 paired
+  differential rather than creating another evaluation subsystem.
+- Selects provider and model at runtime from explicit operator arguments or
+  Cortex UI settings; no model ID or provider is a coded experimental default.
+- Requires an explicit `--execute` boundary, enforces a maximum-call ceiling,
+  canonically registers the exact live adapter when explicitly authorized, and
+  preserves provider attestation as unavailable when none exists.
+- Persists only canonical preregistration, trajectories, independent
+  evaluations, and a bounded public report. Provider credentials never enter
+  the corpus, result, event, receipt, or command line.
+- Classifies the commissioning panel as underpowered by design. Live execution
+  can verify the paired path but cannot establish autonomous improvement.
