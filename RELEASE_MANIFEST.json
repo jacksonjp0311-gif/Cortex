@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.15",
+  "release": "Cortex v10.0.0-alpha.16",
   "release_class": "advanced research prototype",
-  "source_commit": "c41d7f7107d2f3b03881e76079cc063d4b084a62",
-  "runtime_parent": "c41d7f7107d2f3b03881e76079cc063d4b084a62",
+  "source_commit": "2f7c9286a70fc49cb74f2007849bcb8cfb4d459f",
+  "runtime_parent": "2f7c9286a70fc49cb74f2007849bcb8cfb4d459f",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/SEMANTIC_TRANSFER_READINESS.md",
+  "phase_document": "docs/v10/EPISTEMIC_KERNEL_SEED.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -30,6 +30,12 @@
     "semantic_transfer_trial": "A task-only / B verified irrelevant sham / C verified relevant lesson geometry declared; live three-arm causal transfer not executed and positive model improvement not established",
     "semantic_transfer_readiness": "zero-call preflight found zero modern semantic-ready lessons and six legacy-partial memories; caller-declared task families did not open calibration, no model call executed, and SEMANTIC_TRANSFER_HELD",
     "semantic_transfer_next_run": "advisory policy narrowed to generate_modern_verified_source_experience with maximum live calls zero until canonical relevant/sham lessons and non-ceiling calibration exist",
+    "epistemic_history": "immutable repository-bound events are hash-linked and bitemporal; current support state is deterministically reconstructed and retractions preserve history",
+    "four_valued_support": "support and opposition remain independent, yielding TRUE, FALSE, NEITHER, or BOTH evidence states without treating missing evidence as false or conflict as consensus",
+    "action_sufficient_context": "the bounded compiler preserves requested two-bit support states with minimum representative proof roots under declared Boolean-presence semantics; authority remains a separate canonical gate",
+    "continuation_debt": "an explicit host policy may evaluate the advisory recurrence over uncertainty, conflict, drift, staleness, and verification; missing coefficients or thresholds yield UNKNOWN",
+    "modern_source_experience": "isolated zero-paid-call commissioning reconstructed a synthetic model circulation, valid competence candidate, 3/3 supported semantic witness, immutable epistemic event, and 462-character state-preserving context",
+    "epistemic_kernel_empirical_boundary": "EPISTEMIC_KERNEL_SEED_PASS is structural mechanism evidence only; empirical semantic transfer, source independence, non-ceiling calibration, and production eligibility remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -42,5 +48,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.14 verified semantic projection and causal transfer"
+  "supersedes": "Cortex v10.0.0-alpha.15 semantic transfer readiness pulse"
 }
