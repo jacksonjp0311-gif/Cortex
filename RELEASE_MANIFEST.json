@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.14",
+  "release": "Cortex v10.0.0-alpha.15",
   "release_class": "advanced research prototype",
-  "source_commit": "0efc13a6ccdf753b7a1a8c90f2838a2fb4d45a7e",
-  "runtime_parent": "0efc13a6ccdf753b7a1a8c90f2838a2fb4d45a7e",
+  "source_commit": "c41d7f7107d2f3b03881e76079cc063d4b084a62",
+  "runtime_parent": "c41d7f7107d2f3b03881e76079cc063d4b084a62",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/VERIFIED_SEMANTIC_PROJECTION.md",
+  "phase_document": "docs/v10/SEMANTIC_TRANSFER_READINESS.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -28,6 +28,8 @@
     "verified_semantic_projection": "canonical admitted-memory identities are independently resolved into bounded trajectory-scoped lessons carrying exact receipt, evidence roots, semantic-content hash, projection proof, and explicit unresolved completeness states",
     "semantic_projection_gate": "active model guidance requires noncompensatory pass across canonical verification, exact semantic binding, task applicability, epoch/lifecycle freshness, and contradiction clearance; unknown does not pass",
     "semantic_transfer_trial": "A task-only / B verified irrelevant sham / C verified relevant lesson geometry declared; live three-arm causal transfer not executed and positive model improvement not established",
+    "semantic_transfer_readiness": "zero-call preflight found zero modern semantic-ready lessons and six legacy-partial memories; caller-declared task families did not open calibration, no model call executed, and SEMANTIC_TRANSFER_HELD",
+    "semantic_transfer_next_run": "advisory policy narrowed to generate_modern_verified_source_experience with maximum live calls zero until canonical relevant/sham lessons and non-ceiling calibration exist",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -40,5 +42,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.13 lightweight live autonomy commissioning"
+  "supersedes": "Cortex v10.0.0-alpha.14 verified semantic projection and causal transfer"
 }
