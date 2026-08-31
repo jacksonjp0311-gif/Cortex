@@ -1,0 +1,184 @@
+{
+  "schema_version": "cortex-semantic-transfer-readiness/1.0",
+  "version": "10.0.0-alpha.15",
+  "kind": "semantic_transfer_readiness",
+  "repo": "Cortex",
+  "body_epoch_id": "ce788516d9e46b57b39730436c94e0469c964da92ce3672c776b9cc91e3e7bba",
+  "state": "SEMANTIC_TRANSFER_HELD",
+  "memory_count": 6,
+  "counts": {
+    "canonical_ready": 0,
+    "failed": 0,
+    "unknown": 0,
+    "legacy_partial": 6,
+    "stale_or_inactive": 0
+  },
+  "memory_diagnostics": [
+    {
+      "memory_id": "mem_e67df5a06031ce21c15ee123",
+      "candidate_type": "regime_warning",
+      "support_level": "medium",
+      "semantic_binding_state": "legacy_partial",
+      "readiness_state": "legacy_partial",
+      "reasons": [
+        "candidate_batch_hash_missing",
+        "candidate_material_missing",
+        "cohort_missing",
+        "coordinate_schema_missing",
+        "current_will_forbids",
+        "epoch_mismatch",
+        "lineage_invalid",
+        "receipt_hash_recompute_mismatch",
+        "will_not_current",
+        "will_structural_verification_failed"
+      ],
+      "memory_receipt_hash": "42f52a4483f9a13fd5139c7070bbb35dd0dba2edb42721f3bf4d871eca4f0ac6"
+    },
+    {
+      "memory_id": "mem_a65c272fe1e59b16489f8c04",
+      "candidate_type": "persistent_constraint",
+      "support_level": "medium",
+      "semantic_binding_state": "legacy_partial",
+      "readiness_state": "legacy_partial",
+      "reasons": [
+        "candidate_batch_hash_missing",
+        "candidate_material_missing",
+        "cohort_missing",
+        "coordinate_schema_missing",
+        "current_will_forbids",
+        "epoch_mismatch",
+        "lineage_invalid",
+        "receipt_hash_recompute_mismatch",
+        "will_not_current",
+        "will_structural_verification_failed"
+      ],
+      "memory_receipt_hash": "3a2ca9cd0c7baf2aa1e82efbea6be8015fae8ff28b454fa05e41f7b229c91b46"
+    },
+    {
+      "memory_id": "mem_d23244c5d5137395c976cc9f",
+      "candidate_type": "persistent_constraint",
+      "support_level": "medium",
+      "semantic_binding_state": "legacy_partial",
+      "readiness_state": "legacy_partial",
+      "reasons": [
+        "candidate_batch_hash_missing",
+        "candidate_material_missing",
+        "cohort_missing",
+        "coordinate_schema_missing",
+        "current_will_forbids",
+        "epoch_mismatch",
+        "lineage_invalid",
+        "receipt_hash_recompute_mismatch",
+        "will_not_current",
+        "will_structural_verification_failed"
+      ],
+      "memory_receipt_hash": "1494797cb3f390e008f55c5d693c33cb73ae50dda6b2078d48d0130490f4a704"
+    },
+    {
+      "memory_id": "mem_56dbb9af6a4d03a7c178f3f1",
+      "candidate_type": "persistent_constraint",
+      "support_level": "medium",
+      "semantic_binding_state": "legacy_partial",
+      "readiness_state": "legacy_partial",
+      "reasons": [
+        "candidate_batch_hash_missing",
+        "candidate_material_missing",
+        "cohort_missing",
+        "coordinate_schema_missing",
+        "current_will_forbids",
+        "epoch_mismatch",
+        "lineage_invalid",
+        "receipt_hash_recompute_mismatch",
+        "will_not_current",
+        "will_structural_verification_failed"
+      ],
+      "memory_receipt_hash": "0cd6ee2f7ff9f7f5bbf6e4c5e2d2a7fa544dd72d8cf2da511c901cdfe83bf7bc"
+    },
+    {
+      "memory_id": "mem_a6c54d3fabe2aecb54d7d5a3",
+      "candidate_type": "persistent_constraint",
+      "support_level": "medium",
+      "semantic_binding_state": "legacy_partial",
+      "readiness_state": "legacy_partial",
+      "reasons": [
+        "candidate_batch_hash_missing",
+        "candidate_material_missing",
+        "cohort_missing",
+        "coordinate_schema_missing",
+        "current_will_forbids",
+        "epoch_mismatch",
+        "lineage_invalid",
+        "receipt_hash_recompute_mismatch",
+        "will_not_current",
+        "will_structural_verification_failed"
+      ],
+      "memory_receipt_hash": "91dc0e3719c1ad462708f3e2dcb125dbf3f6b7fbfd3943aad62112f53a1aefd5"
+    },
+    {
+      "memory_id": "mem_b2a872b440ce1605e1cb853a",
+      "candidate_type": "successful_procedure",
+      "support_level": "medium",
+      "semantic_binding_state": "legacy_partial",
+      "readiness_state": "legacy_partial",
+      "reasons": [
+        "candidate_batch_hash_missing",
+        "candidate_material_missing",
+        "cohort_missing",
+        "coordinate_schema_missing",
+        "current_will_forbids",
+        "epoch_mismatch",
+        "lineage_invalid",
+        "outcome_not_in_ledger",
+        "receipt_hash_recompute_mismatch",
+        "will_not_current",
+        "will_structural_verification_failed",
+        "witness_result_not_in_ledger"
+      ],
+      "memory_receipt_hash": "fa9ca7d1b397b85ecc39e5dcdd5b001c78ef523ac101df4bb6ce4242f751c7a2"
+    }
+  ],
+  "task_families": [
+    "constraint_retention",
+    "stale_state_repair"
+  ],
+  "gates": {
+    "canonical_relevant_and_sham_lessons": "unknown",
+    "semantic_distinctness": "unknown",
+    "task_families_declared": "pass",
+    "non_ceiling_target_corpus": "unknown"
+  },
+  "blockers": [
+    "legacy_lessons_require_revalidation",
+    "no_canonical_semantic_lesson",
+    "non_ceiling_target_corpus_missing",
+    "semantic_distinctness_insufficient"
+  ],
+  "next_run_policy": {
+    "action": "generate_modern_verified_source_experience",
+    "maximum_live_calls": 0,
+    "required_arms": [
+      "task_only",
+      "verified_irrelevant_sham",
+      "verified_relevant"
+    ],
+    "baseline_success_band": [
+      0.3,
+      0.7
+    ],
+    "primary_effect": "G_relevance=U_relevant-U_sham",
+    "result_may_only_narrow_next_run": true,
+    "automatic_memory_promotion": false,
+    "automatic_policy_expansion": false
+  },
+  "calls_executed": 0,
+  "empirical_transfer_established": false,
+  "claim_boundary": "Readiness is an advisory experiment preflight. It may prevent model calls; it cannot establish transfer, rewrite memory, or authorize execution.",
+  "cortex_version": "10.0.0a15",
+  "advisory_only": true,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "receipt_hash": "9f2f88e41bfe4e101c107e594d0b1f2319f4e08dc796b37ac991379e953bc37d",
+  "persistence": "advisory_tip_only"
+}

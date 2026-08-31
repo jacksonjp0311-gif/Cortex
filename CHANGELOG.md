@@ -1586,3 +1586,21 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Defined the A task-only / B verified-sham / C relevant-semantic causal
   geometry and `G_relevance=U_C-U_B`; no live three-arm transfer trial or
   positive capability-gain claim is made in this release.
+
+## 10.0.0-alpha.15 - Semantic Transfer Readiness Pulse
+
+- Added a zero-call preflight that independently audits canonical memory
+  lineage, modern semantic binding, lifecycle/epoch eligibility, lesson
+  distinctness, and target-corpus calibration before permitting a live A/B/C
+  transfer pulse.
+- Made caller-declared task-family names non-authorizing: they describe intent
+  but cannot prove a non-ceiling corpus.
+- Persisted only a non-authorizing advisory next-run tip; readiness may reduce
+  the call budget but cannot promote memory, expand policy, or establish
+  empirical transfer.
+- Executed the first live-ledger preflight: six memories were legacy-partial,
+  zero were modern semantic-ready, zero model calls executed, and the result was
+  `SEMANTIC_TRANSFER_HELD`.
+- Adapted the next-run action to `generate_modern_verified_source_experience`
+  with maximum live calls held at zero until relevant/sham lessons and canonical
+  non-ceiling calibration exist.

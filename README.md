@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.14-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.14" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.15-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.15" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -283,6 +283,27 @@ G_relevance = U_C - U_B
 bridge is implemented and adversarially verified; the live A/B/C experiment is
 not yet executed, and Cortex still makes no claim of measured capability gain.
 See [verified semantic projection](docs/v10/VERIFIED_SEMANTIC_PROJECTION.md).
+
+### Alpha.15: measure readiness before spending inference
+
+The first semantic-transfer preflight inspected Cortex's live durable ledger
+before making a provider call. It found six admitted memories, but all six are
+legacy-partial: they predate the modern candidate-material, cohort, and semantic
+bindings required by alpha.14. Therefore:
+
+```text
+ready lessons = 0
+legacy partial = 6
+live calls = 0
+result = SEMANTIC_TRANSFER_HELD
+```
+
+Rather than burn tokens on a treatment that does not exist, Cortex adapted the
+next-run policy to `generate_modern_verified_source_experience` and kept the
+live-call ceiling at zero. Task-family names supplied by a caller cannot open
+the calibration gate. The next live pulse requires a canonical relevant lesson,
+a distinct canonical sham, and independently verified non-ceiling tasks first.
+See [semantic transfer readiness](docs/v10/SEMANTIC_TRANSFER_READINESS.md).
 
 ## What we just learned: success needs contrast
 

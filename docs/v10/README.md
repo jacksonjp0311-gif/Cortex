@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.14`
+Version: `10.0.0-alpha.15`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -89,6 +89,13 @@ projection proof, and unresolved completeness states. A noncompensatory
 irrelevance, stale state, or contradiction. Proof form and cognitive form
 remain distinct; neither grants authority.
 
+Alpha.15 adds a zero-call readiness pulse before the three-arm transfer trial.
+It independently audits whether the live ledger contains modern semantic
+lessons, a distinct relevant/sham pair, and canonical non-ceiling calibration.
+The first pulse found six legacy-partial memories and zero modern projectable
+lessons, so it spent zero model calls and narrowed the next action to generating
+new verified source experience.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -104,6 +111,7 @@ remain distinct; neither grants authority.
 - [Governed autonomy differential](GOVERNED_AUTONOMY_DIFFERENTIAL.md)
 - [Live autonomy pilot](LIVE_AUTONOMY_PILOT.md)
 - [Verified semantic projection and causal transfer](VERIFIED_SEMANTIC_PROJECTION.md)
+- [Semantic transfer readiness pulse](SEMANTIC_TRANSFER_READINESS.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -121,7 +129,7 @@ remain distinct; neither grants authority.
 
 ## Claim boundary
 
-Alpha.14 proves that the local interface, provider-neutral runtime path, and
+Alpha.15 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
@@ -131,3 +139,5 @@ pilot may verify paired execution, but it is not a powered or replicated
 empirical autonomy-advantage result.
 The semantic projection bridge is mechanically verified, while a live
 three-arm relevant-versus-sham causal transfer trial remains not executed.
+The readiness pulse is advisory and fail-closed; it cannot turn legacy memory
+or caller-declared task families into empirical legitimacy.

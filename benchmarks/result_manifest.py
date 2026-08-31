@@ -50,6 +50,12 @@ def main() -> int:
                     if payload.get("empirical_advantage_established") is False
                     else "development_live_empirical"
                 )
+            elif payload.get("schema_version") == "cortex-semantic-transfer-readiness/1.0":
+                metadata_state = (
+                    "readiness_held_zero_call"
+                    if payload.get("calls_executed") == 0
+                    else "readiness_invalid_unexpected_calls"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
