@@ -1525,3 +1525,27 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
 - Preserved `model_host_mutate_authorized=false`,
   `model_execution_authorized=false`, `memory_admission_authorized=false`, and
   `policy_effect=false` across every new proof surface.
+## 10.0.0-alpha.12 - Governed Autonomy Differential
+
+- Added an immutable preregistration for paired task-only-control versus
+  Cortex-governed agent trials, freezing source, task/evaluator contracts,
+  model and adapter provenance, tools, capability profile, randomization,
+  budgets, effect thresholds, and analysis before execution.
+- Added a task-only native-runtime treatment that excludes Cortex evidence,
+  memory, competence, contradictions, and continuity while preserving the
+  identical model/tool runtime, constitutional restrictions, and canonical
+  observation path used by the governed arm.
+- Added independent result evaluation, canonical trajectory reconstruction,
+  exact matched-binary inference, paired bootstrap intervals, regression and
+  budget gates, and separately normalized token/time/cost efficiency.
+- Marked scripted adapter lineage intrinsically synthetic so renaming a fixture
+  provider, model, adapter, or subclass cannot manufacture empirical evidence.
+- Added an eight-case structural benchmark and adversarial tests for raw model
+  success assertions, seed/model/grant/source drift, incomplete panels,
+  exactly-once replay, and synthetic-versus-empirical claim separation.
+- Repaired historical CI release floors so modern PEP 440 alpha versions such
+  as `10.0.0a12` satisfy the v7/v8 receipt chain without accepting malformed
+  version strings; this resolves the GitHub Resonant Frames gate failure.
+- Preserved closed host mutation, execution, memory admission, and policy
+  authority. Alpha.12 establishes a measurement mechanism, not autonomous
+  self-improvement or a positive live model effect.

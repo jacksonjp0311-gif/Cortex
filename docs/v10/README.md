@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.11`
+Version: `10.0.0-alpha.12`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -68,6 +68,14 @@ worker may run through a fixed subprocess entry point, with immutable launch
 and exit observations that distinguish an OS process exit from campaign
 success or integration authority.
 
+Alpha.12 freezes a paired autonomy differential over the same model adapter,
+source commit, evaluator, tools, capability profile, and resource budgets. A
+task-only control and Cortex-governed treatment are randomized within every
+case, independently evaluated, and reconstructed from canonical trajectories.
+Exact matched-pairs inference and a separately reported efficiency denominator
+prevent a plausible answer, raw success Boolean, or cheap synthetic contrast
+from becoming empirical legitimacy.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -80,6 +88,7 @@ success or integration authority.
 - [Canonical autonomous campaign seal](CANONICAL_AUTONOMOUS_CAMPAIGN.md)
 - [Authenticated campaign control](AUTHENTICATED_CAMPAIGN_CONTROL.md)
 - [Revocable capability and worker seal](REVOCABLE_CAPABILITY_WORKER_SEAL.md)
+- [Governed autonomy differential](GOVERNED_AUTONOMY_DIFFERENTIAL.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
@@ -97,9 +106,10 @@ success or integration authority.
 
 ## Claim boundary
 
-Alpha.11 proves that the local interface, provider-neutral runtime path, and
+Alpha.12 proves that the local interface, provider-neutral runtime path, and
 host-frozen paired source comparison are
 executable and auditable with deterministic provider fixtures. It does not
 prove cognition, consciousness, competence improvement, autonomous authority,
 safe execution of arbitrary tools, self-improvement, or live cross-provider
-model quality.
+model quality. The new autonomy differential is structurally verified; no live
+empirical autonomy advantage was executed or established in this release.

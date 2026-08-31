@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.11-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.11" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.12-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.12" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -179,6 +179,48 @@ run in a separate OS process whose PID, exit status, timeout path, and bounded
 output hashes are sealed independently; process exit still does not prove
 campaign utility or authorize integration. See the
 [revocable capability and worker seal](docs/v10/REVOCABLE_CAPABILITY_WORKER_SEAL.md).
+
+Alpha.12 turns Cortex's autonomy question into a frozen paired experiment.
+For every declared case, the same model implementation, source snapshot,
+evaluator, tool catalog, capability ceiling, and budgets run through two
+randomized arms: a task-only control and Cortex-governed context. Both arms use
+the same native runtime and immutable trajectory verifier, so evidence capture
+is not confused with the treatment being measured. Scripted or renamed fixture
+adapters may verify the mechanism, but can never establish empirical advantage.
+See the [governed autonomy differential](docs/v10/GOVERNED_AUTONOMY_DIFFERENTIAL.md).
+
+The primary effect is the matched risk difference:
+
+```text
+G_C = P(success | Cortex-governed) - P(success | task-only control)
+    = (b - c) / n
+
+b = control fails, Cortex succeeds
+c = control succeeds, Cortex fails
+```
+
+Inference is driven by the discordant pairs `b + c`, using an exact matched
+binary test rather than treating correlated arms as independent samples.
+Resource efficiency is reported separately and only when the inputs are
+actually measured:
+
+```text
+η_C = G_C / (wτ·tokens/τ₀ + wt·latency/t₀ + w$·cost/$₀)
+```
+
+No positive score compensates for missing provenance, non-empirical evidence,
+an incomplete frozen panel, excessive regression, unobserved budgets, or a
+failed significance gate. In Cortex's tri-state order `FAIL < UNKNOWN < PASS`,
+empirical promotion remains noncompensatory:
+
+```text
+Θ_autonomy = min(canonical, complete, empirical, discordant,
+                 power, effect, exact_significance, regression, budgets)
+```
+
+The committed fixture benchmark deliberately produces a visible structural
+contrast while retaining `empirical_advantage_established = false`. No real
+frontier-model autonomy advantage is claimed by this release.
 
 ## What we just learned: success needs contrast
 

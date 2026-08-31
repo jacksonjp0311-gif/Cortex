@@ -4,8 +4,11 @@ from scripts.ci.version_gate import release_at_least
 def test_historical_release_gate_accepts_newer_release() -> None:
     assert release_at_least("7.7.1", (7, 3, 0))
     assert release_at_least("8.1.0", (8, 1, 0))
+    assert release_at_least("10.0.0a12", (8, 3, 3))
+    assert release_at_least("10.0.0-alpha.12", (8, 3, 3))
 
 
 def test_historical_release_gate_rejects_older_or_malformed_release() -> None:
     assert not release_at_least("7.6.9", (7, 7, 0))
     assert not release_at_least("development", (7, 3, 0))
+    assert not release_at_least("10.0.0.1", (8, 3, 3))
