@@ -132,7 +132,11 @@ Alpha.21 adds the bounded live executor. It retrieves the exact private
 contract from the host vault, freezes four level-three task-only calls, and
 reconstructs every atomic score from immutable native-agent trajectories.
 Malformed public JSON remains UNKNOWN and holds the screen rather than being
-silently converted to FAIL.
+silently converted to FAIL. The first run scored 0/4 under the frozen exact-
+phrase evaluator, but a zero-call audit found lexical-only failures in all four
+cases and strong brittleness signals in two. The raw result remains unchanged;
+task difficulty and semantic correctness are both unresolved. A new
+paraphrase-robust evaluator must be frozen before more calls.
 
 ## Documents
 

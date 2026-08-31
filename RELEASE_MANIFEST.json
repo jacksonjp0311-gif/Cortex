@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.20",
+  "release": "Cortex v10.0.0-alpha.21",
   "release_class": "advanced research prototype",
-  "source_commit": "da1e33f54039fa2a2996e736f705304819657850",
-  "runtime_parent": "da1e33f54039fa2a2996e736f705304819657850",
+  "source_commit": "4f6c2d23ecc6829f808fa3977150bef36ed384a5",
+  "runtime_parent": "4f6c2d23ecc6829f808fa3977150bef36ed384a5",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/OPEN_RESPONSE_LATENT_CAUSE_FORGE.md",
+  "phase_document": "docs/v10/LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -49,6 +49,9 @@
     "open_response_private_contracts": "private contracts are compressed into bounded OS-vault chunks, resolved only through a hash-bound manifest and full uncompressed digest, and are absent from Git, Cortex evidence, trajectories, logs, and the public artifact",
     "open_response_commissioning": "OPEN_RESPONSE_LATENT_FORGE_READY; canonical alpha.19 prerequisite resolved, 16 private contracts round-tripped from the host vault, 4/4 initial reference evaluators passed, and zero live model calls executed",
     "open_response_operational_wound": "an initial oversized Windows credential write failed and left one advisory preflight without a private key; vault-first manifest-last chunking now prevents new unusable preflights and no model call occurred",
+    "live_open_response_screen": "four task-only live calls executed through OpenAI gpt-5.6-sol; the immutable v1 exact-phrase evaluator scored 0/4 and recorded screening_floor, while calibration and semantic transfer remained unestablished",
+    "open_response_evaluator_audit": "zero additional calls; all four failures were lexical-only with structure, evidence binding, forbidden-claim, and uncertainty gates intact; two of four crossed the declared overlap diagnostic threshold, so EVALUATOR_AUDIT_HELD and baseline difficulty remains unresolved",
+    "open_response_evaluator_boundary": "the audit does not rewrite v1 scores or establish semantic correctness; evaluator rejection is not treated as demonstrated task failure, and a versioned paraphrase-robust evaluator must be frozen before more calls",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -61,5 +64,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.19 harder semantic calibration screen"
+  "supersedes": "Cortex v10.0.0-alpha.20 open-response latent-cause forge"
 }

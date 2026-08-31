@@ -162,6 +162,30 @@ Each outcome must be rebuilt from its immutable public model trajectory. A
 missing vault contract, corpus mismatch, changed adapter identity, unrelated
 preflight, or caller-provided verdict fails closed.
 
+The first four-call open-response screen produced a scientifically useful
+instrument failure rather than a task calibration:
+
+```text
+Frozen v1 exact-phrase score     0 / 4  (immutable)
+Lexical-only evaluator failures  4 / 4
+Strong brittleness signals       2 / 4
+Additional calls for audit       0
+```
+
+All four outputs satisfied response shape, exact evidence binding, forbidden-
+claim, and uncertainty gates. The zero-call audit detected substantial
+paraphrase overlap in two cases but deliberately did not rescore any answer.
+Therefore `screening_floor` is preserved as the historical v1 result while the
+actual baseline difficulty remains **UNRESOLVED**. The next experiment must
+freeze a versioned paraphrase-robust evaluator before spending more calls.
+
+This adds an important measurement law:
+
+```text
+evaluator rejection != demonstrated task failure
+diagnostic similarity != semantic correctness
+```
+
 ## What you get
 
 | Capability | What it means for you |

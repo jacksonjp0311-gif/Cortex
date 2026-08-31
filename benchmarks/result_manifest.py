@@ -113,6 +113,16 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "development_live_open_response_held"
                 )
+            elif payload.get("schema_version") == "cortex-alpha21-open-response-evaluator-audit/1.0":
+                metadata_state = (
+                    "zero_call_evaluator_audit_held"
+                    if payload.get("state") == "EVALUATOR_AUDIT_HELD"
+                    and payload.get("raw_scores_rewritten") is False
+                    and payload.get("baseline_difficulty_established") is False
+                    and payload.get("calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "evaluator_audit_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

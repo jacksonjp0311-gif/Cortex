@@ -1,0 +1,21 @@
+{
+  "schema_version": "cortex-alpha21-open-response-evaluator-audit/1.0",
+  "state": "EVALUATOR_AUDIT_HELD",
+  "source_commit": "4f6c2d23ecc6829f808fa3977150bef36ed384a5",
+  "result_receipt_hash": "5e7974eae0fd3280e42c4d5dcd59e33639258e710cbf555f760acc035e8655be",
+  "audit_receipt_hash": "712b981536811bd3b1ee93d6d0c64c2c09246531a4683a3c4f7feaff88248c11",
+  "case_count": 4,
+  "brittleness_signal_count": 2,
+  "raw_screen_state_preserved": "screening_floor",
+  "raw_scores_rewritten": false,
+  "baseline_difficulty_established": false,
+  "calibration_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "freeze_paraphrase_robust_v2_evaluator_before_new_calls",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

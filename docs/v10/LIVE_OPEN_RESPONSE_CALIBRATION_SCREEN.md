@@ -41,4 +41,31 @@ The initial screen is frozen to:
 Four observations can screen a level but cannot establish calibration. No sham
 or relevant semantic lesson is projected. All authority flags remain false.
 
-The empirical result is added only after the committed executor runs.
+## Executed result
+
+The committed executor made exactly four task-only calls through
+`OpenAI / gpt-5.6-sol`. The frozen v1 atomic evaluator returned 0/4 and the raw
+screen remains immutably recorded as `screening_floor`.
+
+A zero-call reconstruction then found that all four failures were confined to
+the evaluator's required cause/repair phrase gates. Response shape, exact
+evidence ordering, forbidden-claim checks, and uncertainty all passed. Two of
+the four responses crossed the separately declared token-overlap diagnostic
+threshold; two did not. The diagnostic therefore remains
+`EVALUATOR_AUDIT_HELD`.
+
+```text
+raw v1 score                 0 / 4  (preserved)
+lexical-only failures        4 / 4
+strong brittleness signals   2 / 4
+additional model calls       0
+```
+
+This is evidence that the exact-phrase evaluator is brittle. It is not an
+alternate semantic score and does not prove that every answer was correct.
+Consequently, neither `move_easier` nor a true task floor is established.
+Baseline difficulty, calibration, and semantic transfer remain unresolved.
+
+The next valid experiment must freeze a new, versioned, paraphrase-robust
+evaluator before any additional live call. Historical v1 receipts and scores
+must not be rewritten.
