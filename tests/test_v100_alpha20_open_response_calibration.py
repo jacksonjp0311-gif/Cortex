@@ -5,6 +5,7 @@ import json
 import unittest
 
 from cortex.open_response_calibration import (
+    HostCalibrationContractVault,
     build_open_response_latent_bundle,
     evaluate_atomic_causal_response,
     verify_open_response_latent_bundle,
@@ -72,6 +73,34 @@ class Alpha20OpenResponseCalibrationTests(unittest.TestCase):
         result = evaluate_atomic_causal_response(contract, "not-json")
         self.assertIsNone(result["success"])
         self.assertEqual(result["state"], "unknown")
+
+    def test_private_contract_vault_chunks_and_reconstructs_exactly(self) -> None:
+        class FakeKeyring:
+            def __init__(self):
+                self.values = {}
+
+            def set_password(self, service, username, value):
+                self.values[(service, username)] = value
+
+            def get_password(self, service, username):
+                return self.values.get((service, username))
+
+            def delete_password(self, service, username):
+                self.values.pop((service, username), None)
+
+        fake = FakeKeyring()
+
+        class Vault(HostCalibrationContractVault):
+            def _keyring(self):
+                return fake
+
+        vault = Vault()
+        corpus_hash = self.bundle["manifest"]["corpus_hash"]
+        vault.set(corpus_hash, self.bundle["private_key"])
+        self.assertEqual(vault.get(corpus_hash), self.bundle["private_key"])
+        self.assertGreater(len(fake.values), 2)
+        vault.delete(corpus_hash)
+        self.assertIsNone(vault.get(corpus_hash))
 
 
 if __name__ == "__main__":

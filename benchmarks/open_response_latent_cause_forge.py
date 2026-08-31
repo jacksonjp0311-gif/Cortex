@@ -36,14 +36,19 @@ def main(argv: list[str] | None = None) -> int:
         check = verify_open_response_latent_bundle(bundle)
         if check.get("valid") is not True:
             raise ValueError("generated open-response bundle failed verification")
-        preflight = freeze_open_response_forge(
-            store,
-            args.repo,
-            prior_result_receipt_hash=args.prior_result_receipt_hash,
-            bundle=bundle,
-        )
         manifest = bundle["manifest"]
-        HostCalibrationContractVault().set(manifest["corpus_hash"], bundle["private_key"])
+        vault = HostCalibrationContractVault()
+        vault.set(manifest["corpus_hash"], bundle["private_key"])
+        try:
+            preflight = freeze_open_response_forge(
+                store,
+                args.repo,
+                prior_result_receipt_hash=args.prior_result_receipt_hash,
+                bundle=bundle,
+            )
+        except Exception:
+            vault.delete(manifest["corpus_hash"])
+            raise
         private_key = bundle["private_key"]
         reference_checks = [
             evaluate_atomic_causal_response(

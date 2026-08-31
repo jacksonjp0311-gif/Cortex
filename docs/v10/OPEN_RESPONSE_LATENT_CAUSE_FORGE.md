@@ -54,6 +54,11 @@ the operating-system credential vault under a corpus-specific identity. They
 are absent from Git, Cortex evidence, trajectories, logs, and the benchmark
 artifact.
 
+Windows credential items have a bounded payload. Cortex compresses and chunks
+the private key, writes a hash-bound manifest last, and reconstructs only when
+every chunk and the uncompressed SHA-256 digest match. A partial write is
+cleaned up and cannot resolve as a usable evaluator.
+
 This closes the alpha.18/alpha.19 continuity wound: later screens can retrieve
 the exact private evaluator rather than silently generating a replacement key.
 

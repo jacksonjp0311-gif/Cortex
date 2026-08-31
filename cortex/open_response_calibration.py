@@ -7,9 +7,11 @@ supplies success. Private contracts belong in the OS credential vault.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import re
+import zlib
 from collections.abc import Mapping
 from typing import Any
 
@@ -54,18 +56,73 @@ class HostCalibrationContractVault:
         return keyring
 
     def set(self, corpus_hash: str, private_key: Mapping[str, Any]) -> None:
-        self._keyring().set_password(VAULT_SERVICE, str(corpus_hash), _canonical(private_key))
+        keyring = self._keyring()
+        identity = str(corpus_hash)
+        raw = _canonical(private_key).encode("utf-8")
+        encoded = base64.b64encode(zlib.compress(raw, level=9)).decode("ascii")
+        chunks = [encoded[index:index + 1800] for index in range(0, len(encoded), 1800)]
+        written: list[str] = []
+        try:
+            for index, chunk in enumerate(chunks):
+                username = f"{identity}:{index:04d}"
+                keyring.set_password(VAULT_SERVICE, username, chunk)
+                written.append(username)
+            manifest = {
+                "schema_version": "cortex-calibration-vault/1.0",
+                "chunk_count": len(chunks),
+                "raw_sha256": hashlib.sha256(raw).hexdigest(),
+                "compression": "zlib9+base64",
+            }
+            keyring.set_password(VAULT_SERVICE, identity, _canonical(manifest))
+        except Exception:
+            for username in written:
+                try:
+                    keyring.delete_password(VAULT_SERVICE, username)
+                except Exception:
+                    pass
+            raise
 
     def get(self, corpus_hash: str) -> dict[str, Any] | None:
-        value = self._keyring().get_password(VAULT_SERVICE, str(corpus_hash))
+        keyring = self._keyring()
+        identity = str(corpus_hash)
+        value = keyring.get_password(VAULT_SERVICE, identity)
         if not value:
             return None
-        parsed = json.loads(value)
+        manifest = json.loads(value)
+        if (
+            not isinstance(manifest, Mapping)
+            or manifest.get("schema_version") != "cortex-calibration-vault/1.0"
+        ):
+            return None
+        chunks = []
+        for index in range(int(manifest.get("chunk_count") or 0)):
+            chunk = keyring.get_password(VAULT_SERVICE, f"{identity}:{index:04d}")
+            if not chunk:
+                return None
+            chunks.append(str(chunk))
+        try:
+            raw = zlib.decompress(base64.b64decode("".join(chunks))).decode("utf-8")
+        except (ValueError, zlib.error, UnicodeDecodeError):
+            return None
+        if hashlib.sha256(raw.encode("utf-8")).hexdigest() != str(
+            manifest.get("raw_sha256") or ""
+        ):
+            return None
+        parsed = json.loads(raw)
         return dict(parsed) if isinstance(parsed, Mapping) else None
 
     def delete(self, corpus_hash: str) -> None:
+        keyring = self._keyring()
+        identity = str(corpus_hash)
         try:
-            self._keyring().delete_password(VAULT_SERVICE, str(corpus_hash))
+            value = keyring.get_password(VAULT_SERVICE, identity)
+            manifest = json.loads(value) if value else {}
+            for index in range(int((manifest or {}).get("chunk_count") or 0)):
+                try:
+                    keyring.delete_password(VAULT_SERVICE, f"{identity}:{index:04d}")
+                except Exception:
+                    pass
+            keyring.delete_password(VAULT_SERVICE, identity)
         except Exception:
             return
 
