@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.17`
+Version: `10.0.0-alpha.18`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -110,6 +110,12 @@ operator to run only a four-call task-only screen; caller success flags cannot
 become calibration evidence, and a new authorization is required before any
 confirmation or semantic treatment trial.
 
+Alpha.18 executes that bounded screen through an explicitly selected,
+host-registered frontier model. Four task-only level-two trajectories were
+independently reconstructed and all four passed, producing a screening ceiling
+rather than a calibrated task band. Cortex therefore stops after four calls,
+records `move_harder`, and makes no semantic-transfer or improvement claim.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -128,6 +134,7 @@ confirmation or semantic treatment trial.
 - [Semantic transfer readiness pulse](SEMANTIC_TRANSFER_READINESS.md)
 - [Epistemic kernel seed](EPISTEMIC_KERNEL_SEED.md)
 - [Sham-controlled semantic calibration](SHAM_CONTROLLED_SEMANTIC_CALIBRATION.md)
+- [Live semantic calibration screen](LIVE_SEMANTIC_CALIBRATION_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

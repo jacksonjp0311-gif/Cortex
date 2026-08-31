@@ -73,6 +73,18 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     else "semantic_calibration_preflight_held"
                 )
+            elif payload.get("schema_version") == "cortex-alpha18-live-screen/1.0":
+                metadata_state = (
+                    "development_live_empirical_screening_ceiling"
+                    if payload.get("state") == "LIVE_BASELINE_SCREEN_RECONSTRUCTED"
+                    and payload.get("evidence_class") == "live_empirical"
+                    and payload.get("calls_executed") == 4
+                    and (payload.get("screen") or {}).get("state")
+                    == "screening_ceiling"
+                    and payload.get("calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "development_live_empirical_screen_held"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

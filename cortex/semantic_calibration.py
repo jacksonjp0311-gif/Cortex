@@ -13,6 +13,11 @@ from collections.abc import Mapping
 from typing import Any
 
 from . import __version__
+from .adapter_provenance import EVIDENCE_LIVE, resolve_adapter_provenance, verify_adapter_provenance
+from .evaluation import TaskEvaluationContract, evaluate_task_result
+from .information_calibration import assess_sequential_level
+from .native_agent import NativeAgentRuntime, verify_native_agent_trajectory
+from .symbiosis import open_symbiotic_session
 
 SCHEMA = "cortex-semantic-calibration-preflight/1.0"
 CORPUS_SCHEMA = "cortex-semantic-calibration-corpus/1.0"
@@ -201,8 +206,240 @@ def build_semantic_calibration_preflight(
     return {**material, "preflight_hash": _sha(material)}
 
 
+def _adapter_identity(adapter: Any) -> dict[str, str]:
+    return {
+        "provider_family": str(getattr(adapter, "provider_family", "") or ""),
+        "model_id": str(getattr(adapter, "model_id", "") or ""),
+        "model_version": str(getattr(adapter, "model_version", "") or ""),
+        "adapter_id": str(getattr(adapter, "adapter_id", "") or ""),
+        "adapter_version": str(getattr(adapter, "adapter_version", "") or ""),
+    }
+
+
+def freeze_live_calibration_screen(
+    store: Any,
+    repo: str,
+    *,
+    preflight: Mapping[str, Any],
+    bundle: Mapping[str, Any],
+    adapter: Any,
+) -> dict[str, Any]:
+    """Persist the exact four-call screen before any invocation."""
+    if preflight.get("state") != "LIVE_CALIBRATION_SCREEN_READY":
+        raise ValueError("semantic calibration preflight is not ready")
+    bundle_check = verify_semantic_calibration_bundle(bundle)
+    if bundle_check.get("valid") is not True:
+        raise ValueError("semantic calibration bundle is invalid")
+    manifest = bundle["manifest"]
+    if preflight.get("corpus_hash") != manifest.get("corpus_hash"):
+        raise ValueError("preflight corpus binding is invalid")
+    provenance = resolve_adapter_provenance(store, repo, adapter)
+    provenance_check = verify_adapter_provenance(store, repo, provenance)
+    if (
+        provenance_check.get("valid") is not True
+        or provenance.get("evidence_class") != EVIDENCE_LIVE
+    ):
+        raise ValueError("live host-registered adapter provenance is required")
+    identity = _adapter_identity(adapter)
+    if not all(identity.values()):
+        raise ValueError("complete adapter identity is required")
+    cases_by_id = {
+        str(row["case_id"]): row for row in manifest.get("cases") or ()
+    }
+    frozen_cases = [
+        cases_by_id[str(case_id)] for case_id in preflight["initial_screen_case_ids"]
+    ]
+    material = {
+        "schema_version": "cortex-live-semantic-calibration-preregistration/1.0",
+        "version": __version__,
+        "repo": str(repo),
+        "repository_id": str(store.repo(repo)["repository_id"]),
+        "preflight_hash": str(preflight["preflight_hash"]),
+        "corpus_hash": str(manifest["corpus_hash"]),
+        "answer_key_commitment": str(manifest["answer_key_commitment"]),
+        "cases": frozen_cases,
+        "planned_calls": 4,
+        "normalization": "strip_ascii_whitespace",
+        "model_identity": identity,
+        "adapter_provenance": provenance,
+        "provider_identity_used_in_scoring": False,
+        "model_identity_used_in_scoring": False,
+        "caller_success_booleans_accepted": False,
+        "status": "frozen_before_execution",
+        "claim_boundary": CLAIM_BOUNDARY,
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    preregistration_id = _sha(material)
+    session = open_symbiotic_session(
+        store, repo, task="freeze live semantic calibration screen", persist=True
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "kind": "live_semantic_calibration_preregistration",
+            "preregistration_id": preregistration_id,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"semantic_calibration_prereg_{preregistration_id[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
+def execute_live_calibration_screen(
+    store: Any,
+    repo: str,
+    *,
+    preregistration: Mapping[str, Any],
+    bundle: Mapping[str, Any],
+    adapter: Any,
+    tools: Any,
+    grant: Any,
+) -> dict[str, Any]:
+    """Run exactly four task-only calls and reconstruct their outcomes."""
+    if preregistration.get("kind") != "live_semantic_calibration_preregistration":
+        raise ValueError("canonical calibration preregistration is required")
+    if store.verify_symbiotic_receipt(
+        repo, str(preregistration.get("receipt_hash") or "")
+    ).get("valid") is not True:
+        raise ValueError("calibration preregistration receipt is invalid")
+    if _adapter_identity(adapter) != preregistration.get("model_identity"):
+        raise ValueError("adapter identity changed after preregistration")
+    provenance = resolve_adapter_provenance(store, repo, adapter)
+    if provenance != preregistration.get("adapter_provenance"):
+        raise ValueError("adapter provenance changed after preregistration")
+    if verify_semantic_calibration_bundle(bundle).get("valid") is not True:
+        raise ValueError("private calibration bundle is invalid")
+    if _sha(bundle["answer_key"]) != preregistration.get("answer_key_commitment"):
+        raise ValueError("private answer key does not match preregistration")
+    answers = bundle["answer_key"]["answers"]
+    runtime = NativeAgentRuntime(store, repo, tools=tools)
+    case_receipts: list[dict[str, Any]] = []
+    for case in preregistration.get("cases") or ():
+        case_id = str(case["case_id"])
+        expected = str(answers[case_id])
+        contract = TaskEvaluationContract(
+            contract_id=f"alpha18-{case_id}-exact-option-v1",
+            task_type="field_equals",
+            target_field="text",
+            expected_value=expected,
+            evaluator_id="cortex.semantic-calibration.exact-option.v1",
+        )
+        run = runtime.run(
+            f"{case['prompt']}\n\n{case['response_contract']}",
+            adapter=adapter,
+            grant=grant,
+            context_treatment="task_only_control",
+        )
+        trajectory_hash = str(run["trajectory_receipt_hash"])
+        trajectory_check = verify_native_agent_trajectory(store, repo, trajectory_hash)
+        if trajectory_check.get("valid") is not True:
+            raise ValueError(f"native trajectory invalid for {case_id}")
+        trajectory = store.symbiotic_receipt(trajectory_hash, repo=repo) or {}
+        observed = str(trajectory.get("final_answer") or "").strip()
+        evaluation = evaluate_task_result(contract, {"text": observed})
+        case_material = {
+            "schema_version": "cortex-live-semantic-calibration-case/1.0",
+            "kind": "live_semantic_calibration_case",
+            "version": __version__,
+            "preregistration_id": preregistration["preregistration_id"],
+            "preregistration_receipt_hash": preregistration["receipt_hash"],
+            "case_id": case_id,
+            "case_hash": _sha(case),
+            "trajectory_receipt_hash": trajectory_hash,
+            "evaluation_contract": contract.to_dict(),
+            "evaluation_contract_hash": contract.contract_hash,
+            "evaluation": evaluation,
+            "task_success": evaluation.get("success"),
+            "normalization": "strip_ascii_whitespace",
+            "caller_success_fields_authoritative": False,
+            "evidence_class": EVIDENCE_LIVE,
+            "advisory_only": True,
+            "host_mutate_authorized": False,
+            "execution_authorized": False,
+            "memory_admission_authorized": False,
+            "policy_effect": False,
+        }
+        session = open_symbiotic_session(
+            store, repo, task=f"seal live calibration case {case_id}", persist=True
+        )
+        case_receipts.append(
+            store.append_symbiotic_receipt(
+                repo,
+                {
+                    **case_material,
+                    "status": "live_baseline_observation",
+                    "session_id": session["session_id"],
+                    "turn_id": 0,
+                    "event_id": f"semantic_calibration_case_{_sha(case_material)[:24]}",
+                    "body_epoch_id": session["body_epoch_id"],
+                },
+            )
+        )
+    outcomes: list[bool] = []
+    errors: list[str] = []
+    for row in case_receipts:
+        trajectory = store.symbiotic_receipt(
+            str(row["trajectory_receipt_hash"]), repo=repo
+        ) or {}
+        check = verify_native_agent_trajectory(
+            store, repo, str(row["trajectory_receipt_hash"])
+        )
+        contract = TaskEvaluationContract.from_mapping(row["evaluation_contract"])
+        rebuilt = evaluate_task_result(
+            contract, {"text": str(trajectory.get("final_answer") or "").strip()}
+        )
+        if check.get("valid") is not True:
+            errors.append(f"trajectory_invalid:{row['case_id']}")
+        if rebuilt != row.get("evaluation"):
+            errors.append(f"evaluation_reconstruction_invalid:{row['case_id']}")
+        outcomes.append(rebuilt.get("success") is True)
+    sequential = assess_sequential_level(outcomes)
+    material = {
+        "schema_version": "cortex-live-semantic-calibration-result/1.0",
+        "version": __version__,
+        "kind": "live_semantic_calibration_result",
+        "preregistration_id": preregistration["preregistration_id"],
+        "preregistration_receipt_hash": preregistration["receipt_hash"],
+        "case_receipt_hashes": [row["receipt_hash"] for row in case_receipts],
+        "model_identity": preregistration["model_identity"],
+        "evidence_class": EVIDENCE_LIVE,
+        "screen": sequential,
+        "errors": errors,
+        "calibration_established": sequential["state"] == "calibrated" and not errors,
+        "semantic_transfer_established": False,
+        "calls_executed": len(case_receipts),
+        "status": "LIVE_BASELINE_SCREEN_RECONSTRUCTED" if not errors else "LIVE_BASELINE_SCREEN_HELD",
+        "claim_boundary": CLAIM_BOUNDARY,
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    session = open_symbiotic_session(
+        store, repo, task="seal live semantic calibration result", persist=True
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"semantic_calibration_result_{_sha(material)[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 __all__ = [
     "CLAIM_BOUNDARY", "CORPUS_SCHEMA", "PRIVATE_KEY_SCHEMA", "SCHEMA",
     "build_semantic_calibration_bundle", "build_semantic_calibration_preflight",
+    "execute_live_calibration_screen", "freeze_live_calibration_screen",
     "verify_semantic_calibration_bundle",
 ]

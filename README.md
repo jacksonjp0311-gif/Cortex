@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.17-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.17" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.18-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.18" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -95,6 +95,22 @@ total effect     = relevant lesson - task only
 
 The first live step is capped at four baseline calls. It measures task
 difficulty only; it cannot establish Cortex improvement.
+
+Alpha.18 executed that exact screen with the operator-selected frontier model
+`OpenAI / gpt-5.6-sol`. All four task-only cases passed:
+
+```text
+level-two baseline success = 4 / 4 = 1.00
+target information band    = 0.30 .. 0.70
+screen disposition         = CEILING → MOVE HARDER
+```
+
+This is useful negative evidence. The model boundary, preregistration, canonical
+trajectory reconstruction, and independent scoring all worked, but the task
+level contained no useful uncertainty. No lesson was projected, so the result
+is not a transfer test and cannot establish Cortex improvement. The next run
+must move to a harder held-back level before comparing task-only, sham, and
+relevant semantic context.
 
 ## What you get
 
