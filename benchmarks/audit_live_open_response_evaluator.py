@@ -1,0 +1,77 @@
+"""Alpha.21 zero-call diagnostic for frozen open-response evaluator misses."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from cortex.config import cortex_home  # noqa: E402
+from cortex.open_response_calibration import (  # noqa: E402
+    HostCalibrationContractVault,
+    audit_live_open_response_result,
+)
+from cortex.store import Store  # noqa: E402
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--repo", default="Cortex")
+    parser.add_argument("--forge-artifact", type=Path, required=True)
+    parser.add_argument("--result-receipt-hash", required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args(argv)
+    forge = json.loads(args.forge_artifact.read_text(encoding="utf-8"))
+    manifest = forge["public_corpus_manifest"]
+    private_key = HostCalibrationContractVault().get(manifest["corpus_hash"])
+    if not private_key:
+        raise ValueError("private calibration contract is unavailable from host vault")
+    store = Store(cortex_home() / "cortex.db")
+    try:
+        audit = audit_live_open_response_result(
+            store,
+            args.repo,
+            result_receipt_hash=args.result_receipt_hash,
+            private_key=private_key,
+        )
+        report = {
+            "schema_version": "cortex-alpha21-open-response-evaluator-audit/1.0",
+            "state": audit["state"],
+            "source_commit": subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+            ).strip(),
+            "result_receipt_hash": args.result_receipt_hash,
+            "audit_receipt_hash": audit["receipt_hash"],
+            "case_count": len(audit["diagnostics"]),
+            "brittleness_signal_count": sum(
+                row["diagnostic"]["brittleness_signal"] for row in audit["diagnostics"]
+            ),
+            "raw_screen_state_preserved": audit["raw_screen_state_preserved"],
+            "raw_scores_rewritten": False,
+            "baseline_difficulty_established": False,
+            "calibration_established": False,
+            "semantic_transfer_established": False,
+            "next_action": audit["next_action"],
+            "authority": {
+                "host_mutate_authorized": False,
+                "execution_authorized": False,
+                "memory_admission_authorized": False,
+                "policy_effect": False,
+            },
+        }
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2))
+        return 0
+    finally:
+        store.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

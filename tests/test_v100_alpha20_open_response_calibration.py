@@ -6,6 +6,7 @@ import unittest
 
 from cortex.open_response_calibration import (
     HostCalibrationContractVault,
+    audit_atomic_evaluator_response,
     build_open_response_latent_bundle,
     evaluate_atomic_causal_response,
     verify_open_response_latent_bundle,
@@ -101,6 +102,29 @@ class Alpha20OpenResponseCalibrationTests(unittest.TestCase):
         self.assertGreater(len(fake.values), 2)
         vault.delete(corpus_hash)
         self.assertIsNone(vault.get(corpus_hash))
+
+    def test_lexical_near_miss_audit_holds_without_rewriting_failure(self) -> None:
+        contracts = list(self.bundle["private_key"]["contracts"].values())
+        contract = next(
+            row
+            for row in contracts
+            if len(row["required_evidence_ids"]) == 5
+            and any("before commit" in clause for clause in row["required_cause_clauses"])
+        )
+        response = {
+            "cause": (
+                "cache invalidation occurs before the database commit, allowing a "
+                "concurrent reader to recache the stale old value"
+            ),
+            "repair": "invalidate the cache only after a successful commit",
+            "evidence_ids": list(contract["required_evidence_ids"]),
+            "uncertainty": "low",
+        }
+        audit = audit_atomic_evaluator_response(contract, json.dumps(response))
+        self.assertFalse(audit["original_success"])
+        self.assertTrue(audit["brittleness_signal"])
+        self.assertFalse(audit["changes_original_verdict"])
+        self.assertFalse(audit["semantic_correctness_established"])
 
 
 if __name__ == "__main__":

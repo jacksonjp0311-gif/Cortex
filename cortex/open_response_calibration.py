@@ -434,6 +434,72 @@ def evaluate_atomic_causal_response(
     }
 
 
+def audit_atomic_evaluator_response(
+    contract: Mapping[str, Any], public_text: str
+) -> dict[str, Any]:
+    """Diagnose lexical near-misses without changing the frozen v1 verdict."""
+    original = evaluate_atomic_causal_response(contract, public_text)
+    try:
+        response = json.loads(str(public_text))
+    except json.JSONDecodeError:
+        response = None
+    if not isinstance(response, Mapping):
+        return {
+            "state": "audit_unavailable",
+            "original_state": original["state"],
+            "brittleness_signal": False,
+            "reason": "public_json_unavailable",
+        }
+
+    def recalls(clauses: Any, text: str) -> list[float]:
+        observed = set(_normalized(text).split())
+        result = []
+        for clause in clauses or ():
+            options = []
+            for alternative in clause or ():
+                required = set(_normalized(str(alternative)).split())
+                options.append(len(required & observed) / len(required) if required else 0.0)
+            result.append(round(max(options, default=0.0), 9))
+        return result
+
+    cause_recalls = recalls(contract.get("required_cause_clauses"), str(response.get("cause") or ""))
+    repair_recalls = recalls(contract.get("required_repair_clauses"), str(response.get("repair") or ""))
+    combined = cause_recalls + repair_recalls
+    mean_recall = round(sum(combined) / len(combined), 9) if combined else 0.0
+    errors = set(original.get("errors") or ())
+    structural_gates_pass = not errors.intersection(
+        {
+            "response_keys_invalid",
+            "forbidden_unsupported_claim",
+            "causal_evidence_binding_invalid",
+            "uncertainty_state_invalid",
+        }
+    )
+    lexical_only_failure = bool(errors) and errors.issubset(
+        {"required_cause_atoms_missing", "required_repair_atoms_missing"}
+    )
+    brittleness_signal = bool(
+        original.get("success") is False
+        and structural_gates_pass
+        and lexical_only_failure
+        and mean_recall >= 0.75
+    )
+    return {
+        "state": "evaluator_brittleness_signal" if brittleness_signal else "no_brittleness_signal",
+        "original_state": original["state"],
+        "original_success": original["success"],
+        "original_errors": list(original.get("errors") or ()),
+        "cause_clause_token_recall": cause_recalls,
+        "repair_clause_token_recall": repair_recalls,
+        "mean_clause_token_recall": mean_recall,
+        "structural_gates_pass": structural_gates_pass,
+        "lexical_only_failure": lexical_only_failure,
+        "brittleness_signal": brittleness_signal,
+        "changes_original_verdict": False,
+        "semantic_correctness_established": False,
+    }
+
+
 def freeze_open_response_forge(
     store: Any,
     repo: str,
@@ -768,6 +834,91 @@ def execute_live_open_response_screen(
     )
 
 
+def audit_live_open_response_result(
+    store: Any,
+    repo: str,
+    *,
+    result_receipt_hash: str,
+    private_key: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Seal a non-authorizing diagnostic over immutable live case receipts."""
+    result_hash = str(result_receipt_hash or "")
+    if store.verify_symbiotic_receipt(repo, result_hash).get("valid") is not True:
+        raise ValueError("canonical live open-response result is required")
+    result = store.symbiotic_receipt(result_hash, repo=repo) or {}
+    if result.get("kind") != "live_open_response_result":
+        raise ValueError("live open-response result kind is invalid")
+    contracts = private_key.get("contracts") or {}
+    diagnostics = []
+    errors = []
+    for case_hash in result.get("case_receipt_hashes") or ():
+        if store.verify_symbiotic_receipt(repo, str(case_hash)).get("valid") is not True:
+            errors.append(f"case_receipt_invalid:{case_hash}")
+            continue
+        case = store.symbiotic_receipt(str(case_hash), repo=repo) or {}
+        trajectory_hash = str(case.get("trajectory_receipt_hash") or "")
+        if verify_native_agent_trajectory(store, repo, trajectory_hash).get("valid") is not True:
+            errors.append(f"trajectory_invalid:{case.get('case_id')}")
+            continue
+        trajectory = store.symbiotic_receipt(trajectory_hash, repo=repo) or {}
+        contract = contracts.get(str(case.get("case_id") or ""))
+        if not isinstance(contract, Mapping):
+            errors.append(f"private_contract_missing:{case.get('case_id')}")
+            continue
+        diagnostic = audit_atomic_evaluator_response(
+            contract, str(trajectory.get("final_answer") or "")
+        )
+        diagnostics.append(
+            {
+                "case_id": case["case_id"],
+                "case_receipt_hash": case_hash,
+                "trajectory_receipt_hash": trajectory_hash,
+                "private_contract_hash": contract["contract_hash"],
+                "diagnostic": diagnostic,
+            }
+        )
+    all_signal = bool(diagnostics) and all(
+        row["diagnostic"].get("brittleness_signal") is True for row in diagnostics
+    )
+    material = {
+        "schema_version": "cortex-live-open-response-evaluator-audit/1.0",
+        "version": __version__,
+        "kind": "live_open_response_evaluator_audit",
+        "result_receipt_hash": result_hash,
+        "diagnostics": diagnostics,
+        "errors": errors,
+        "state": "EVALUATOR_BRITTLENESS_DETECTED" if all_signal and not errors else "EVALUATOR_AUDIT_HELD",
+        "raw_screen_state_preserved": (result.get("screen") or {}).get("state"),
+        "raw_scores_rewritten": False,
+        "baseline_difficulty_established": False,
+        "calibration_established": False,
+        "semantic_transfer_established": False,
+        "next_action": "freeze_paraphrase_robust_v2_evaluator_before_new_calls",
+        "claim_boundary": (
+            "Lexical near-miss diagnostics do not establish semantic correctness or "
+            "rewrite the frozen v1 evaluation. They may only hold calibration."
+        ),
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    session = open_symbiotic_session(
+        store, repo, task="audit live open-response evaluator brittleness", persist=True
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"live_open_response_audit_{_sha(material)[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 __all__ = [
     "CONTRACT_SCHEMA",
     "HostCalibrationContractVault",
@@ -775,6 +926,8 @@ __all__ = [
     "PRIVATE_SCHEMA",
     "PUBLIC_SCHEMA",
     "build_open_response_latent_bundle",
+    "audit_atomic_evaluator_response",
+    "audit_live_open_response_result",
     "evaluate_atomic_causal_response",
     "execute_live_open_response_screen",
     "freeze_open_response_forge",
