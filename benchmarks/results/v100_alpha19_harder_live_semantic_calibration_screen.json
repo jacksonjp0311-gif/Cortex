@@ -1,0 +1,50 @@
+{
+  "schema_version": "cortex-alpha18-live-screen/1.0",
+  "state": "LIVE_BASELINE_SCREEN_RECONSTRUCTED",
+  "source_commit": "c1e92dfa529ae255e026219fcfabc1a0a8467e94",
+  "execution_runtime_version": "10.0.0a18",
+  "execution_tree_state": "dirty_development_tree",
+  "runner_sha256": "7fa64434c98019231504dcf1e58ec192e26832c53d124e141fc1d5f3c64e9d04",
+  "semantic_calibration_module_sha256": "1cf1419bba6efe0131d30862547d9c68a85f2591f1768554af36160dc1ee9f06",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "preregistration_id": "d81d5e9cbeed817a6e971cada28663e4c35edaa2fe715702f7e07647770f6500",
+  "planned_calls": 4,
+  "screen_level": 3,
+  "prior_result_receipt_hash": "e55eade4ef439bcc42ec2345232d4962e19933217ec28020ca4cb9068b3ebf8f",
+  "calls_executed": 4,
+  "semantic_transfer_established": false,
+  "evidence_class": "live_empirical",
+  "result_receipt_hash": "31f8d3b65444279d0595d6587781a898af968ac4ea5d3c9d59cf5f97835a534a",
+  "screen": {
+    "attainable_success_rates": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "case_count": 4,
+    "confirmation_cases": 8,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "eligible_success_counts": [
+      2
+    ],
+    "recommended_action": "move_harder",
+    "screening_cases": 4,
+    "state": "screening_ceiling",
+    "success_count": 4,
+    "success_rate": 1.0
+  },
+  "calibration_established": false,
+  "calibration_geometry_exhausted": true,
+  "next_action": "retire_choice_ladder_and_forge_open_response_latent_cause_tasks",
+  "confirmatory_eligible": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

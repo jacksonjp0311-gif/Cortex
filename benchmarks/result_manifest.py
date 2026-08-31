@@ -75,7 +75,15 @@ def main() -> int:
                 )
             elif payload.get("schema_version") == "cortex-alpha18-live-screen/1.0":
                 metadata_state = (
-                    "development_live_empirical_screening_ceiling"
+                    "development_live_empirical_geometry_exhausted"
+                    if payload.get("state") == "LIVE_BASELINE_SCREEN_RECONSTRUCTED"
+                    and payload.get("evidence_class") == "live_empirical"
+                    and payload.get("calls_executed") == 4
+                    and payload.get("screen_level") == 3
+                    and payload.get("calibration_geometry_exhausted") is True
+                    and payload.get("calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "development_live_empirical_screening_ceiling"
                     if payload.get("state") == "LIVE_BASELINE_SCREEN_RECONSTRUCTED"
                     and payload.get("evidence_class") == "live_empirical"
                     and payload.get("calls_executed") == 4

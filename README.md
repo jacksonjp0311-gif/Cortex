@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.18-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.18" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.19-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.19" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -111,6 +111,21 @@ level contained no useful uncertainty. No lesson was projected, so the result
 is not a transfer test and cannot establish Cortex improvement. The next run
 must move to a harder held-back level before comparing task-only, sham, and
 relevant semantic context.
+
+Alpha.19 followed that direction with four newly sealed level-three calls. The
+frontier model again scored 4/4. The combined calibration picture is now:
+
+```text
+level two   4 / 4  ────────── ceiling
+level three 4 / 4  ────────── ceiling
+target      30–70% ────────── not reached
+```
+
+The finding is not that Cortex needs still more multiple-choice wording. That
+geometry measures recognition, and this model has saturated it. Cortex now
+marks the ladder exhausted and directs the next experiment toward open-response
+latent-cause diagnosis, where success requires producing and binding the causal
+mechanism rather than selecting it from four visible options.
 
 ## What you get
 

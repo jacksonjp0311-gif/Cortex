@@ -291,6 +291,127 @@ def freeze_live_calibration_screen(
     )
 
 
+def freeze_followup_live_calibration_screen(
+    store: Any,
+    repo: str,
+    *,
+    prior_result_receipt_hash: str,
+    bundle: Mapping[str, Any],
+    adapter: Any,
+    target_level: int,
+) -> dict[str, Any]:
+    """Freeze a harder/easier screen only from a canonical prior disposition."""
+    prior_hash = str(prior_result_receipt_hash or "")
+    prior_check = store.verify_symbiotic_receipt(repo, prior_hash)
+    prior = store.symbiotic_receipt(prior_hash, repo=repo) or {}
+    if prior_check.get("valid") is not True:
+        raise ValueError("canonical prior calibration result is required")
+    if (
+        prior.get("kind") != "live_semantic_calibration_result"
+        or prior.get("status") != "LIVE_BASELINE_SCREEN_RECONSTRUCTED"
+        or prior.get("errors") not in ([], ())
+        or int(prior.get("calls_executed") or 0) != 4
+        or prior.get("calibration_established") is not False
+        or prior.get("semantic_transfer_established") is not False
+    ):
+        raise ValueError("prior calibration result cannot open a follow-up screen")
+    prior_prereg_hash = str(prior.get("preregistration_receipt_hash") or "")
+    prior_prereg_check = store.verify_symbiotic_receipt(repo, prior_prereg_hash)
+    prior_prereg = store.symbiotic_receipt(prior_prereg_hash, repo=repo) or {}
+    if prior_prereg_check.get("valid") is not True:
+        raise ValueError("prior calibration preregistration is invalid")
+    prior_levels = {
+        int(row.get("difficulty_level") or 0)
+        for row in (prior_prereg.get("cases") or ())
+        if isinstance(row, Mapping)
+    }
+    if len(prior_levels) != 1:
+        raise ValueError("prior calibration level is ambiguous")
+    prior_level = next(iter(prior_levels))
+    disposition = str((prior.get("screen") or {}).get("recommended_action") or "")
+    expected_level = (
+        prior_level + 1
+        if disposition == "move_harder"
+        else prior_level - 1
+        if disposition == "move_easier"
+        else 0
+    )
+    if int(target_level) != expected_level:
+        raise ValueError("target level does not follow canonical prior disposition")
+    bundle_check = verify_semantic_calibration_bundle(bundle)
+    if bundle_check.get("valid") is not True:
+        raise ValueError("semantic calibration bundle is invalid")
+    manifest = bundle["manifest"]
+    frozen_cases = [
+        row
+        for row in manifest.get("cases") or ()
+        if int(row.get("difficulty_level") or 0) == int(target_level)
+    ]
+    if len(frozen_cases) != 4:
+        raise ValueError("follow-up screen requires exactly four target-level cases")
+    identity = _adapter_identity(adapter)
+    if identity != prior.get("model_identity"):
+        raise ValueError("follow-up screen requires the same model identity")
+    provenance = resolve_adapter_provenance(store, repo, adapter)
+    provenance_check = verify_adapter_provenance(store, repo, provenance)
+    if (
+        provenance_check.get("valid") is not True
+        or provenance.get("evidence_class") != EVIDENCE_LIVE
+    ):
+        raise ValueError("live host-registered adapter provenance is required")
+    material = {
+        "schema_version": "cortex-live-semantic-calibration-preregistration/2.0",
+        "version": __version__,
+        "repo": str(repo),
+        "repository_id": str(store.repo(repo)["repository_id"]),
+        "prior_result_receipt_hash": prior_hash,
+        "prior_preregistration_receipt_hash": prior_prereg_hash,
+        "prior_corpus_hash": str(prior_prereg.get("corpus_hash") or ""),
+        "prior_level": prior_level,
+        "prior_disposition": disposition,
+        "corpus_hash": str(manifest["corpus_hash"]),
+        "corpus_continuity": "new_development_seal",
+        "continuity_limitation": (
+            "The prior private answer key was intentionally not persisted; this "
+            "follow-up is a newly sealed development panel, not confirmatory corpus continuity."
+        ),
+        "answer_key_commitment": str(manifest["answer_key_commitment"]),
+        "screen_level": int(target_level),
+        "cases": frozen_cases,
+        "planned_calls": 4,
+        "normalization": "strip_ascii_whitespace",
+        "model_identity": identity,
+        "adapter_provenance": provenance,
+        "provider_identity_used_in_scoring": False,
+        "model_identity_used_in_scoring": False,
+        "caller_success_booleans_accepted": False,
+        "status": "frozen_before_execution",
+        "confirmatory_eligible": False,
+        "claim_boundary": CLAIM_BOUNDARY,
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    preregistration_id = _sha(material)
+    session = open_symbiotic_session(
+        store, repo, task="freeze follow-up live semantic calibration screen", persist=True
+    )
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "kind": "live_semantic_calibration_preregistration",
+            "preregistration_id": preregistration_id,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"semantic_calibration_followup_{preregistration_id[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 def execute_live_calibration_screen(
     store: Any,
     repo: str,
@@ -400,6 +521,20 @@ def execute_live_calibration_screen(
             errors.append(f"evaluation_reconstruction_invalid:{row['case_id']}")
         outcomes.append(rebuilt.get("success") is True)
     sequential = assess_sequential_level(outcomes)
+    observed_levels = {
+        int(row.get("difficulty_level") or 0)
+        for row in (preregistration.get("cases") or ())
+        if isinstance(row, Mapping)
+    }
+    screen_level = next(iter(observed_levels)) if len(observed_levels) == 1 else None
+    geometry_exhausted = bool(
+        screen_level == 3 and sequential["state"] == "screening_ceiling"
+    )
+    next_action = (
+        "retire_choice_ladder_and_forge_open_response_latent_cause_tasks"
+        if geometry_exhausted
+        else sequential["recommended_action"]
+    )
     material = {
         "schema_version": "cortex-live-semantic-calibration-result/1.0",
         "version": __version__,
@@ -410,6 +545,9 @@ def execute_live_calibration_screen(
         "model_identity": preregistration["model_identity"],
         "evidence_class": EVIDENCE_LIVE,
         "screen": sequential,
+        "screen_level": screen_level,
+        "calibration_geometry_exhausted": geometry_exhausted,
+        "next_action": next_action,
         "errors": errors,
         "calibration_established": sequential["state"] == "calibrated" and not errors,
         "semantic_transfer_established": False,
@@ -440,6 +578,7 @@ def execute_live_calibration_screen(
 __all__ = [
     "CLAIM_BOUNDARY", "CORPUS_SCHEMA", "PRIVATE_KEY_SCHEMA", "SCHEMA",
     "build_semantic_calibration_bundle", "build_semantic_calibration_preflight",
-    "execute_live_calibration_screen", "freeze_live_calibration_screen",
+    "execute_live_calibration_screen", "freeze_followup_live_calibration_screen",
+    "freeze_live_calibration_screen",
     "verify_semantic_calibration_bundle",
 ]

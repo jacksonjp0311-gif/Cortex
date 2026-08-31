@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.18`
+Version: `10.0.0-alpha.19`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -116,6 +116,12 @@ independently reconstructed and all four passed, producing a screening ceiling
 rather than a calibrated task band. Cortex therefore stops after four calls,
 records `move_harder`, and makes no semantic-transfer or improvement claim.
 
+Alpha.19 binds a newly sealed level-three development panel to the canonical
+alpha.18 `move_harder` receipt and repeats the same four-call task-only screen.
+The selected frontier model again scored 4/4. Cortex therefore retires the
+multiple-choice ladder for this model and requires an open-response,
+latent-cause task forge before any semantic-treatment calls.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -135,6 +141,7 @@ records `move_harder`, and makes no semantic-transfer or improvement claim.
 - [Epistemic kernel seed](EPISTEMIC_KERNEL_SEED.md)
 - [Sham-controlled semantic calibration](SHAM_CONTROLLED_SEMANTIC_CALIBRATION.md)
 - [Live semantic calibration screen](LIVE_SEMANTIC_CALIBRATION_SCREEN.md)
+- [Harder semantic calibration screen](HARDER_SEMANTIC_CALIBRATION_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

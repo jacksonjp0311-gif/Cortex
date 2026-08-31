@@ -23,7 +23,8 @@ from cortex.provider_fabric import ProviderFabric  # noqa: E402
 from cortex.secret_store import HostSecretStore  # noqa: E402
 from cortex.semantic_calibration import (  # noqa: E402
     build_semantic_calibration_bundle, build_semantic_calibration_preflight,
-    execute_live_calibration_screen, freeze_live_calibration_screen,
+    execute_live_calibration_screen, freeze_followup_live_calibration_screen,
+    freeze_live_calibration_screen,
 )
 from cortex.source_experience import forge_structural_source_experience_pair  # noqa: E402
 from cortex.store import Store  # noqa: E402
@@ -36,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--provider", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--level", type=int, choices=(1, 2, 3), default=2)
+    parser.add_argument("--prior-result-receipt-hash", default="")
     parser.add_argument("--register-live-boundary", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
@@ -65,9 +68,21 @@ def main(argv: list[str] | None = None) -> int:
         pair = forge_structural_source_experience_pair(store, args.repo)
         bundle = build_semantic_calibration_bundle(secret_seed=secrets.token_hex(32))
         preflight = build_semantic_calibration_preflight(pair, bundle)
-        prereg = freeze_live_calibration_screen(
-            store, args.repo, preflight=preflight, bundle=bundle, adapter=adapter
-        )
+        if args.prior_result_receipt_hash:
+            prereg = freeze_followup_live_calibration_screen(
+                store,
+                args.repo,
+                prior_result_receipt_hash=args.prior_result_receipt_hash,
+                bundle=bundle,
+                adapter=adapter,
+                target_level=args.level,
+            )
+        else:
+            if args.level != 2:
+                raise ValueError("a noninitial level requires a canonical prior result")
+            prereg = freeze_live_calibration_screen(
+                store, args.repo, preflight=preflight, bundle=bundle, adapter=adapter
+            )
         plan = {
             "schema_version": "cortex-alpha18-live-screen/1.0",
             "state": "LIVE_SCREEN_FROZEN",
@@ -78,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
             "model": args.model,
             "preregistration_id": prereg["preregistration_id"],
             "planned_calls": 4,
+            "screen_level": args.level,
+            "prior_result_receipt_hash": args.prior_result_receipt_hash or None,
             "calls_executed": 0,
             "semantic_transfer_established": False,
         }
@@ -100,6 +117,10 @@ def main(argv: list[str] | None = None) -> int:
                 "evidence_class": result["evidence_class"],
                 "result_receipt_hash": result["receipt_hash"],
                 "screen": result["screen"],
+                "calibration_geometry_exhausted": result[
+                    "calibration_geometry_exhausted"
+                ],
+                "next_action": result["next_action"],
                 "calls_executed": result["calls_executed"],
                 "calibration_established": result["calibration_established"],
                 "semantic_transfer_established": False,
