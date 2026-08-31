@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.12",
+  "release": "Cortex v10.0.0-alpha.13",
   "release_class": "advanced research prototype",
-  "source_commit": "1caac1ddea17ee3eff0f6b0073a8239e4f427b0d",
-  "runtime_parent": "1caac1ddea17ee3eff0f6b0073a8239e4f427b0d",
+  "source_commit": "1d9aeeac8798e079edd3a7f2bfda2ffc9909053a",
+  "runtime_parent": "1d9aeeac8798e079edd3a7f2bfda2ffc9909053a",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/GOVERNED_AUTONOMY_DIFFERENTIAL.md",
+  "phase_document": "docs/v10/LIVE_AUTONOMY_PILOT.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -23,6 +23,8 @@
     "external_worker_observation": "fixed shell-free worker subprocess launch and OS exit are independently sealed with PID, timeout path, exit status, output hashes, and canonical terminal binding; process exit is not campaign utility or integration authority",
     "governed_autonomy_differential": "paired task-only-control versus Cortex-governed native-agent mechanism verified with frozen source, evaluator, model/adapter provenance, tools, capability profile, randomization, budgets, exact matched inference, and canonical trajectory reconstruction",
     "autonomy_advantage": "not established; the committed synthetic eight-case contrast is structural mechanism evidence only and cannot satisfy the live-empirical or preregistered-power gates",
+    "live_autonomy_pilot": "four runtime-selected external-model calls completed across two matched cases; both arms passed both cases, paired effect 0.0, discordance 0, exact p 1.0, and AUTONOMY_DIFFERENTIAL_HELD",
+    "live_autonomy_efficiency": "mean provider-reported tokens were 604.0 task-only and 963.5 Cortex-governed; mean measured latency was 2704.3575 ms and 2391.6355 ms; provider cost unavailable, so the resource-budget gate remained closed",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -35,5 +37,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.11 revocable capability and external worker seal"
+  "supersedes": "Cortex v10.0.0-alpha.12 governed autonomy differential"
 }
