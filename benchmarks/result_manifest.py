@@ -93,6 +93,16 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     else "development_live_empirical_screen_held"
                 )
+            elif payload.get("schema_version") == "cortex-alpha20-open-response-forge/1.0":
+                metadata_state = (
+                    "open_response_forge_ready_zero_call"
+                    if payload.get("state") == "OPEN_RESPONSE_LATENT_FORGE_READY"
+                    and payload.get("planned_live_calls") == 0
+                    and payload.get("calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "open_response_forge_held"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

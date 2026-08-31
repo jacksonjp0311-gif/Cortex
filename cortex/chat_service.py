@@ -134,7 +134,7 @@ class CortexChatService:
             "schema_version": SERVICE_SCHEMA,
             "product": "CORTEX",
             "subtitle": "NATIVE AGENT RUNTIME",
-            "version": "10.0.0-alpha.19",
+            "version": "10.0.0-alpha.20",
             "repo": self.repo,
             "repository_path": self.repository_path,
             "connection": "CONNECTED",

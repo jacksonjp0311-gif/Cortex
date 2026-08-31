@@ -9,6 +9,10 @@ from cortex.adapter_provenance import register_adapter_provenance
 from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
 from cortex.native_agent import CapabilityGrant, ScriptedAgentAdapter, ToolRegistry
+from cortex.open_response_calibration import (
+    build_open_response_latent_bundle,
+    freeze_open_response_forge,
+)
 from cortex.semantic_calibration import (
     build_semantic_calibration_bundle,
     build_semantic_calibration_preflight,
@@ -178,6 +182,26 @@ class Alpha18LiveSemanticCalibrationTests(unittest.TestCase):
             followup_result["next_action"],
             "retire_choice_ladder_and_forge_open_response_latent_cause_tasks",
         )
+        open_bundle = build_open_response_latent_bundle(
+            secret_seed="alpha20-canonical-gate-test-seed"
+        )
+        with self.assertRaisesRegex(ValueError, "canonical prior"):
+            freeze_open_response_forge(
+                self.store,
+                self.repo,
+                prior_result_receipt_hash="0" * 64,
+                bundle=open_bundle,
+            )
+        forge = freeze_open_response_forge(
+            self.store,
+            self.repo,
+            prior_result_receipt_hash=followup_result["receipt_hash"],
+            bundle=open_bundle,
+        )
+        self.assertEqual(forge["state"], "OPEN_RESPONSE_LATENT_FORGE_READY")
+        self.assertEqual(forge["planned_live_calls"], 0)
+        self.assertFalse(forge["calibration_established"])
+        self.assertFalse(forge["semantic_transfer_established"])
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.19`
+Version: `10.0.0-alpha.20`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -122,6 +122,12 @@ The selected frontier model again scored 4/4. Cortex therefore retires the
 multiple-choice ladder for this model and requires an open-response,
 latent-cause task forge before any semantic-treatment calls.
 
+Alpha.20 builds that zero-call forge. Sixteen open-response cases span four
+causal depths. The model must generate a cause, repair principle, exact causal
+evidence IDs, and uncertainty state as public JSON. A private host-vault
+contract independently checks required causal clauses, forbidden unsupported
+claims, and evidence ordering. The public corpus carries commitments only.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -142,6 +148,7 @@ latent-cause task forge before any semantic-treatment calls.
 - [Sham-controlled semantic calibration](SHAM_CONTROLLED_SEMANTIC_CALIBRATION.md)
 - [Live semantic calibration screen](LIVE_SEMANTIC_CALIBRATION_SCREEN.md)
 - [Harder semantic calibration screen](HARDER_SEMANTIC_CALIBRATION_SCREEN.md)
+- [Open-response latent-cause forge](OPEN_RESPONSE_LATENT_CAUSE_FORGE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

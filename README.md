@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.19-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.19" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.20-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.20" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -126,6 +126,31 @@ geometry measures recognition, and this model has saturated it. Cortex now
 marks the ladder exhausted and directs the next experiment toward open-response
 latent-cause diagnosis, where success requires producing and binding the causal
 mechanism rather than selecting it from four visible options.
+
+Alpha.20 implements that transition without spending another model call. The
+new response is a generated causal object:
+
+```json
+{
+  "cause": "public causal mechanism",
+  "repair": "smallest causal repair principle",
+  "evidence_ids": ["E1", "E2", "E3"],
+  "uncertainty": "low | medium | high | unknown"
+}
+```
+
+The scoring contract is frozen independently and kept in the host credential
+vault. The committed corpus contains only salted commitments. A response passes
+only when all required causal clauses are present, no forbidden unsupported
+claim appears, and the evidence IDs bind the exact ordered causal chain:
+
+```text
+Pass = CauseAtoms ∧ RepairAtoms ∧ EvidenceBinding
+       ∧ ¬ForbiddenClaims ∧ ValidUncertainty
+```
+
+Malformed output is UNKNOWN, never PASS. Model/provider identity, caller
+verdicts, fluent prose, and extra fields do not affect the score.
 
 ## What you get
 
