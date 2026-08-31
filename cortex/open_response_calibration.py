@@ -60,7 +60,14 @@ class HostCalibrationContractVault:
         identity = str(corpus_hash)
         raw = _canonical(private_key).encode("utf-8")
         encoded = base64.b64encode(zlib.compress(raw, level=9)).decode("ascii")
-        chunks = [encoded[index:index + 1800] for index in range(0, len(encoded), 1800)]
+        # Windows Generic Credentials cap the UTF-16 credential blob. Keep the
+        # ASCII payload below half that byte ceiling rather than counting code
+        # points as bytes.
+        chunk_size = 900
+        chunks = [
+            encoded[index:index + chunk_size]
+            for index in range(0, len(encoded), chunk_size)
+        ]
         written: list[str] = []
         try:
             for index, chunk in enumerate(chunks):
