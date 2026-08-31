@@ -230,6 +230,13 @@ real external model crossed both matched arms under canonical observation. It
 is explicitly underpowered and cannot establish Cortex advantage. See the
 [live autonomy pilot](docs/v10/LIVE_AUTONOMY_PILOT.md).
 
+The first live pulse completed through the runtime-selected model. Both arms
+solved both cases, so `G_C=0`, the discordant sample was zero, and the exact
+two-sided p-value was `1.0`. Cortex-governed requests used more context tokens
+without changing success. The canonical disposition is
+`AUTONOMY_DIFFERENTIAL_HELD`: the live path works; advantage remains
+unestablished.
+
 ## What we just learned: success needs contrast
 
 Cortex reached an important measurement boundary. A runtime-selected frontier

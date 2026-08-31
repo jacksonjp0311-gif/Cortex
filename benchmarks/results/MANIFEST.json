@@ -1,6 +1,6 @@
 {
-  "benchmark_suite_hash": "17a0e56ca1cd015ae858830e5d2f853e7eac0431e60e338acc6fa56853eb0c3b",
-  "cortex_version": "9.8.7",
+  "benchmark_suite_hash": "bd2f3963104a02c6627ce90ef8ff641e26d46122ee7437bab8a3b655086c3f16",
+  "cortex_version": "10.0.0a13",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
     "Artifacts span historical results, fresh controlled reruns, development-only frontier calibrations, and unexecuted task-forge and commissioning manifests.",
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 17,
+  "result_count": 18,
   "results": [
     {
       "bytes": 3346,
@@ -39,6 +39,12 @@
       "metadata_state": "legacy_partial",
       "path": "benchmarks/results/thalamus_before_after.json",
       "sha256": "d639ec492822f36e7cbb9122914eda04ba8628b154ca10e6914c81eb97b17307"
+    },
+    {
+      "bytes": 2228,
+      "metadata_state": "development_live_empirical_held",
+      "path": "benchmarks/results/v100_alpha13_live_autonomy_pilot.json",
+      "sha256": "fa7338c2b2bab9ba4c7a2d6344f637c3670fa4346f46e0446d520b52d3753302"
     },
     {
       "bytes": 4628,
@@ -118,5 +124,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "954db5d14b92f78b95b0750d3fc9fb951783806a"
+  "source_commit": "4cdf7c193739c04f4e4143cc622690d7cf098a81"
 }

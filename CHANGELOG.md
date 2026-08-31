@@ -1563,3 +1563,7 @@ Transcend-check **2.0** falsifies v5 surfaces. Workflow bootstrap/activate/organ
   the corpus, result, event, receipt, or command line.
 - Classifies the commissioning panel as underpowered by design. Live execution
   can verify the paired path but cannot establish autonomous improvement.
+- Executed the first four-call live pilot: both arms passed both cases,
+  `G_C=0`, discordance `0`, exact `p=1.0`, and the canonical result remained
+  `AUTONOMY_DIFFERENTIAL_HELD`. The governed arm used more tokens without a
+  success benefit; no advantage claim was promoted.

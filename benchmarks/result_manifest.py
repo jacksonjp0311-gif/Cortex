@@ -6,10 +6,16 @@ import hashlib
 import json
 import platform
 import subprocess
+import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from cortex import __version__  # noqa: E402
+
 RESULTS = ROOT / "benchmarks" / "results"
 
 
@@ -38,6 +44,12 @@ def main() -> int:
                 metadata_state = "structural_unexecuted"
             elif payload.get("schema_version") == "cortex-frontier-calibration-commissioning/1.0":
                 metadata_state = "development_live_empirical"
+            elif payload.get("schema_version") == "cortex-live-autonomy-pilot/1.0":
+                metadata_state = (
+                    "development_live_empirical_held"
+                    if payload.get("empirical_advantage_established") is False
+                    else "development_live_empirical"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
@@ -56,7 +68,7 @@ def main() -> int:
     ).hexdigest()
     manifest = {
         "schema_version": "cortex-benchmark-result-manifest/1.0",
-        "cortex_version": "9.8.7",
+        "cortex_version": __version__,
         "source_commit": commit,
         "benchmark_suite_hash": suite_hash,
         "runtime_class": {"python": platform.python_version(), "system": platform.system()},

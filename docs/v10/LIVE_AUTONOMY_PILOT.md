@@ -50,3 +50,25 @@ policy_effect                = false
 The pilot answers only whether the live paired measurement path executed. A
 larger preregistered panel, adequate power, discriminative task families, and
 replication remain necessary before any Cortex-advantage claim.
+
+## First live result
+
+The first runtime-selected external-model pilot completed all four calls:
+
+| Case | Task-only | Cortex-governed |
+|---|---:|---:|
+| bounded recurrence | pass | pass |
+| ordered weighted sum | pass | pass |
+
+```text
+G_C                 = 0.0
+discordant pairs    = 0
+exact two-sided p   = 1.0
+status              = AUTONOMY_DIFFERENTIAL_HELD
+```
+
+Mean reported token use was `604.0` for task-only and `963.5` for
+Cortex-governed context. Mean measured latency was approximately `2704.4 ms`
+and `2391.6 ms`, respectively. Cost was unavailable from the provider response,
+so the resource-budget gate correctly remained closed. This is a live null
+result and a ceiling diagnostic—not evidence of improvement.

@@ -222,9 +222,18 @@ def main(argv: list[str] | None = None) -> int:
             "preregistration_id": prereg["preregistration_id"],
             "case_receipt_hashes": [row["receipt_hash"] for row in completed],
             "result_id": result["result_id"],
+            "case_outcomes": [
+                {
+                    "case_id": row["case_id"],
+                    "control_success": row["arms"]["task_only_control"]["task_success"],
+                    "cortex_success": row["arms"]["cortex_governed"]["task_success"],
+                }
+                for row in completed
+            ],
             "paired_effect": result["exact_matched_binary"]["paired_risk_difference"],
             "discordant_pairs": result["exact_matched_binary"]["discordant_pairs"],
             "exact_two_sided_p": result["exact_matched_binary"]["exact_two_sided_p"],
+            "resource_metrics": result["resource_metrics"],
             "failed_gates": result["failed_gates"],
             "empirical_advantage_established": result["empirical_advantage_established"],
         }

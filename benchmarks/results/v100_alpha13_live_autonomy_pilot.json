@@ -1,0 +1,77 @@
+{
+  "schema_version": "cortex-live-autonomy-pilot/1.0",
+  "version": "10.0.0-alpha.13",
+  "state": "AUTONOMY_DIFFERENTIAL_HELD",
+  "repo": "Cortex",
+  "provider": "openai",
+  "model": "gpt-5.6-luna",
+  "cases": 2,
+  "maximum_calls": 4,
+  "required_calls": 4,
+  "preregistered_power_expected": false,
+  "empirical_advantage_established": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  },
+  "claim_boundary": "Two-case live commissioning only. A successful run verifies the paired external-model path; it cannot establish Cortex advantage.",
+  "evidence_class": "live_empirical",
+  "provider_attestation": "not_available",
+  "preregistration_id": "308b35a63d21101bf66e162eb917885547a6ba9371d9640739b12b98ddf7cf60",
+  "case_receipt_hashes": [
+    "95e8010fd5560438ec1e910083dfd95699d8df770191bf2108e47e9137ffede9",
+    "6d5b21b9effa877b4d57bc02a72abc5d91e23feee621379fc1de6a8e9e3b5b8f"
+  ],
+  "result_id": "a2803d57e2414452d96a14fa1260fabc779651d55c1dd8cceab880325c9243b8",
+  "case_outcomes": [
+    {
+      "case_id": "bounded-recurrence",
+      "control_success": true,
+      "cortex_success": true
+    },
+    {
+      "case_id": "ordered-weighted-sum",
+      "control_success": true,
+      "cortex_success": true
+    }
+  ],
+  "paired_effect": 0.0,
+  "discordant_pairs": 0,
+  "exact_two_sided_p": 1.0,
+  "resource_metrics": {
+    "cost": {
+      "control_mean": null,
+      "cortex_mean": null,
+      "delta": null
+    },
+    "latency_ms": {
+      "control_mean": 2704.3575,
+      "cortex_mean": 2391.6355,
+      "delta": -312.722
+    },
+    "tool_calls": {
+      "control_mean": 0.0,
+      "cortex_mean": 0.0,
+      "delta": 0.0
+    },
+    "tool_failures": {
+      "control_mean": 0.0,
+      "cortex_mean": 0.0,
+      "delta": 0.0
+    },
+    "total_tokens": {
+      "control_mean": 604.0,
+      "cortex_mean": 963.5,
+      "delta": 359.5
+    }
+  },
+  "failed_gates": [
+    "budgets_observed_and_passed",
+    "discordant_information_present",
+    "exact_significance",
+    "minimum_effect",
+    "preregistered_power_sufficient"
+  ]
+}
