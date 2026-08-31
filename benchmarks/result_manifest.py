@@ -64,6 +64,15 @@ def main() -> int:
                     and payload.get("empirical_transfer_established") is False
                     else "structural_commissioning_held"
                 )
+            elif payload.get("schema_version") == "cortex-alpha17-commissioning/1.0":
+                metadata_state = (
+                    "live_screen_ready_zero_call"
+                    if payload.get("state") == "LIVE_CALIBRATION_SCREEN_READY"
+                    and payload.get("paid_calls_executed") == 0
+                    and payload.get("calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "semantic_calibration_preflight_held"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

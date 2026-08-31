@@ -1,0 +1,555 @@
+{
+  "schema_version": "cortex-alpha17-commissioning/1.0",
+  "state": "LIVE_CALIBRATION_SCREEN_READY",
+  "lesson_pair": {
+    "schema_version": "cortex-structural-source-experience-pair/1.0",
+    "state": "STRUCTURAL_LESSON_PAIR_PASS",
+    "relevant": {
+      "schema_version": "cortex-modern-source-experience/1.0",
+      "experience_id": "cache-invalidation",
+      "state": "STRUCTURAL_SOURCE_EXPERIENCE_PASS",
+      "evidence_class": "synthetic",
+      "empirical": false,
+      "production_transfer_eligible": false,
+      "session_id": "sym_4a6d3618eb99c6c08e3a",
+      "competence_id": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+      "competence_receipt_hash": "d35778318f712b35273c1eceba59420828b3392c85bb14dd7844824dd4d32266",
+      "distillation_witness_receipt_hash": "758abd828b3e41aa860fecc5f7f223fc5f3b28a03407fe62649b5d0529085356",
+      "epistemic_event_hash": "342d7ae6ea9a3a3e7a43152ecccf4358c071541c0900602b2274638d92c064ec",
+      "checks": {
+        "circulation": {
+          "valid": true,
+          "errors": [],
+          "chain": {
+            "valid": true,
+            "chain_valid": true,
+            "repository_id": "3daa8e0ffd6988a54039c099",
+            "repo": "Alpha17Preflight",
+            "session_id": "sym_4a6d3618eb99c6c08e3a",
+            "receipt_count": 8,
+            "tip_receipt_hash": "488cefc290c196884096498c6547e9360fa9fcb746b799480718e806699ae50d",
+            "invalid_receipt_hashes": [],
+            "errors": [],
+            "advisory_only": true,
+            "policy_effect": false,
+            "update_authorized": false
+          },
+          "session_id": "sym_4a6d3618eb99c6c08e3a",
+          "turn_id": 1,
+          "invocation_id": "model_sym_4a6d3618eb99c6c08e3a_1_a749195cc8f0",
+          "model_identity": {
+            "provider_family": "fixture",
+            "model_id": "alpha17-structural-fixture",
+            "model_version": "1",
+            "adapter_id": "cortex.fixture",
+            "adapter_version": "1"
+          },
+          "adapter_provenance": {
+            "claim_boundary": "Host registration classifies a locally declared execution boundary; it is not provider attestation and does not prove a provider response.",
+            "empirical": false,
+            "evidence_class": "synthetic",
+            "evidence_state": "structural_only",
+            "execution_boundary": "in_process_fixture",
+            "host_model_classification": {
+              "adapter_or_model_self_assertion_used": false,
+              "authority_basis": "sealed_fixture_lineage",
+              "capability_class": "",
+              "model_family": "",
+              "schema_version": "cortex-host-model-classification/1.0",
+              "state": "synthetic_not_classified"
+            },
+            "implementation_digest": "f3a6c24b3ce29d14be5c1e130ddb9493030798a3caf7640acee0fcfae5a61fb6",
+            "provider_attestation": "not_applicable",
+            "provider_attestation_claimed": false,
+            "registration_id": null,
+            "schema_version": "cortex-adapter-provenance/1.0",
+            "trust_basis": "sealed_fixture_lineage"
+          },
+          "evidence_class": "synthetic",
+          "evidence_state": "structural_only",
+          "body_epoch_id": "e6c15fed19ade5568ee8a402ea173160ef2affe459f602ce3ccda52d97218015",
+          "task_contract_hash": "23e7947f9ca90cb5e80cc81de3e41da440d5fa18dc45861b71a08f895034eb61",
+          "context_projection_hash": "80ae9e0096d4f58363a04f5582409f910827347b1633defa2b442913eaa35a42",
+          "tool_scopes": [],
+          "receipt_bindings": {
+            "model_invocation": {
+              "receipt_hash": "00391e04a264fed687b43c2b2f460876e1508b7078dbb05ceb4460c6f9b81675",
+              "content_hash": "e73fa82e7a2901c717468d6cf458c5cad2aa5373862c1d57fe0ad3a7bf318012"
+            },
+            "model_proposal": {
+              "receipt_hash": "4a7f6deaee8560c12927d62d6cd4db52134cf3f3b6c5e762671d4f9a9eff605a",
+              "content_hash": "5ce367f955ebe66ae31d441dd48a5df6c8673591e8c9674fece6ee1a5b463814"
+            },
+            "model_evaluation": {
+              "receipt_hash": "e976995ce85ae84ded0b4a70ed66bd2de60c4cbb8d5a699dd3b0da9298150c84",
+              "content_hash": "e42c415130972665f8a2a06ab6d70ed5739c0622f349c9c526364b398667f1ce"
+            },
+            "model_outcome": {
+              "receipt_hash": "724f8fdd720f19602c76224c8ebddc2bb44914f5c9da5ebd37883ab8d3c70174",
+              "content_hash": "ee7f32ddba5dc311650da4234fa3e00f502b5e2e0670aefdb2a029da500d3059"
+            },
+            "model_witness": {
+              "receipt_hash": "4c9e18996e7ccdd3786991874c34479496ed00417ae5bde1b8756d8ff5b2ab37",
+              "content_hash": "a68fbf24561cf1cd904a50397155eeb408b46e4ea20e62f853ce264b77a1631a"
+            },
+            "model_trajectory": {
+              "receipt_hash": "488cefc290c196884096498c6547e9360fa9fcb746b799480718e806699ae50d",
+              "content_hash": "677a9ea801efe12b42564febfbeba7b5661b3a10e0c2106ce5f8c8afc8ddcc16"
+            }
+          },
+          "outcome_status": "verified_success",
+          "outcome_success": true,
+          "witness": "3c7858b0b3437839f121472c1d31a4934df0766c93d98f62bcead63c25692b75",
+          "witness_result_hash": "3c7858b0b3437839f121472c1d31a4934df0766c93d98f62bcead63c25692b75",
+          "package_use_receipt_hash": null,
+          "package_use": {},
+          "policy_effect": false,
+          "update_authorized": false,
+          "host_mutate_authorized": false,
+          "execution_authorized": false,
+          "advisory_only": true
+        },
+        "competence": {
+          "valid": true,
+          "state": "origin_verified",
+          "errors": [],
+          "competence_id": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+          "semantic_identity_hash": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+          "model_independent_verification": true,
+          "origin_model_required": false,
+          "counterevidence_conserved": true,
+          "advisory_only": true,
+          "host_mutate_authorized": false,
+          "execution_authorized": false
+        },
+        "semantic_support": {
+          "state": "pass",
+          "status": "SUPPORTED",
+          "valid": true,
+          "errors": [],
+          "witness_id": "1fc200c7ae929e2c9741591a150ee516fa7d925bd24523f82400af69f8ac2021",
+          "receipt_hash": "758abd828b3e41aa860fecc5f7f223fc5f3b28a03407fe62649b5d0529085356",
+          "schema_version": "cortex-distillation-witness/1.1",
+          "verifier": "canonical-atomic-support/2.0",
+          "supported_count": 3,
+          "unknown_count": 0,
+          "contradicted_count": 0,
+          "generalization_authorized": false,
+          "distribution_authorized": false,
+          "memory_admission_authorized": false,
+          "policy_effect": false,
+          "host_mutate_authorized": false,
+          "execution_authorized": false,
+          "advisory_only": true
+        },
+        "epistemic_history": {
+          "valid": true,
+          "errors": [],
+          "event_count": 1,
+          "tip_hash": "342d7ae6ea9a3a3e7a43152ecccf4358c071541c0900602b2274638d92c064ec",
+          "history_primary": true,
+          "state_derived": true,
+          "advisory_only": true,
+          "host_mutate_authorized": false,
+          "execution_authorized": false
+        }
+      },
+      "calls_executed": 0,
+      "paid_calls_executed": 0,
+      "next_action": "calibrate_held_out_non_ceiling_semantic_transfer_tasks",
+      "host_mutate_authorized": false,
+      "execution_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false,
+      "advisory_only": true
+    },
+    "sham": {
+      "schema_version": "cortex-modern-source-experience/1.0",
+      "experience_id": "fixture-line-endings",
+      "state": "STRUCTURAL_SOURCE_EXPERIENCE_PASS",
+      "evidence_class": "synthetic",
+      "empirical": false,
+      "production_transfer_eligible": false,
+      "session_id": "sym_a4417c2131d58b8d02f5",
+      "competence_id": "f6ebc6de2d304c2bc8385e7aefd15c6aa5e2e6daf0e17f53bdaad798f7eed58c",
+      "competence_receipt_hash": "1e66b2750a500292da45ac3019a073328d4507536cac95c168986eee8e2fc022",
+      "distillation_witness_receipt_hash": "2b738f3f9db4a5a2a8abe9c92f0702549a745fd421ddd761ad37f20b2367f046",
+      "epistemic_event_hash": "df30fe33ec2eb95da43c695d62a71c4d4b13357c7347752cfeb3b1d29ea8b614",
+      "checks": {
+        "circulation": {
+          "valid": true,
+          "errors": [],
+          "chain": {
+            "valid": true,
+            "chain_valid": true,
+            "repository_id": "3daa8e0ffd6988a54039c099",
+            "repo": "Alpha17Preflight",
+            "session_id": "sym_a4417c2131d58b8d02f5",
+            "receipt_count": 8,
+            "tip_receipt_hash": "13ef9c67967fc56e722800b55a8132e355ee6307ba8632dc67af0cb376a7c477",
+            "invalid_receipt_hashes": [],
+            "errors": [],
+            "advisory_only": true,
+            "policy_effect": false,
+            "update_authorized": false
+          },
+          "session_id": "sym_a4417c2131d58b8d02f5",
+          "turn_id": 1,
+          "invocation_id": "model_sym_a4417c2131d58b8d02f5_1_a749195cc8f0",
+          "model_identity": {
+            "provider_family": "fixture",
+            "model_id": "alpha17-structural-fixture",
+            "model_version": "1",
+            "adapter_id": "cortex.fixture",
+            "adapter_version": "1"
+          },
+          "adapter_provenance": {
+            "claim_boundary": "Host registration classifies a locally declared execution boundary; it is not provider attestation and does not prove a provider response.",
+            "empirical": false,
+            "evidence_class": "synthetic",
+            "evidence_state": "structural_only",
+            "execution_boundary": "in_process_fixture",
+            "host_model_classification": {
+              "adapter_or_model_self_assertion_used": false,
+              "authority_basis": "sealed_fixture_lineage",
+              "capability_class": "",
+              "model_family": "",
+              "schema_version": "cortex-host-model-classification/1.0",
+              "state": "synthetic_not_classified"
+            },
+            "implementation_digest": "f3a6c24b3ce29d14be5c1e130ddb9493030798a3caf7640acee0fcfae5a61fb6",
+            "provider_attestation": "not_applicable",
+            "provider_attestation_claimed": false,
+            "registration_id": null,
+            "schema_version": "cortex-adapter-provenance/1.0",
+            "trust_basis": "sealed_fixture_lineage"
+          },
+          "evidence_class": "synthetic",
+          "evidence_state": "structural_only",
+          "body_epoch_id": "33e6770d8f6a0398567c908f9b10805c8d849cabcb9ed31f70f6f02714c23724",
+          "task_contract_hash": "2e4f4b43076cffdc7edb8786291d864da6ecf91161e66e415992e4ffcad4601c",
+          "context_projection_hash": "e62907fecb895380334e055860bdfe7ee81d74bd8ebf12687f9f773566015319",
+          "tool_scopes": [],
+          "receipt_bindings": {
+            "model_invocation": {
+              "receipt_hash": "df9800f95e755222fd89cacd1b36871eb749abc5eac7eacea7986dea2289e019",
+              "content_hash": "1ea5cd7d4014867e07fece38836b003a11c18649422f63074d06cad80489db09"
+            },
+            "model_proposal": {
+              "receipt_hash": "f513118f642ee7bfaa56e7b5fa2ff6f3dbcb58c8268eccaaee12ad5a1f1e8114",
+              "content_hash": "4e4dc3f4a20e89391d1e6ce940f41ee9c428ffc171a2f292e48dca5c30a23cb3"
+            },
+            "model_evaluation": {
+              "receipt_hash": "031633886ba0e9d754b01197fa1d6b6cff74b28644f9638674097eb9ede76894",
+              "content_hash": "57ef559ee93e062b7087590bb7129dc9ee6a62e2d000803daf48cd12c16d3d11"
+            },
+            "model_outcome": {
+              "receipt_hash": "445312b999897fa194c7ec29deb88375512e7c9490379c3fcd096f3d838ad1fd",
+              "content_hash": "ebfe97cba608b6ef0d11bbf43e2aba81ae4a9725c7029ec280ae1d7cbd2b467d"
+            },
+            "model_witness": {
+              "receipt_hash": "c66f77d3ced36c617a7f442dd8b7a64fde73134facaa5e000385609d323171a0",
+              "content_hash": "87d81e5f671f6a4a54cfb555919570a7546d15b0f69e60ae504942e2f0ff674a"
+            },
+            "model_trajectory": {
+              "receipt_hash": "13ef9c67967fc56e722800b55a8132e355ee6307ba8632dc67af0cb376a7c477",
+              "content_hash": "64f56a3e28303e592c0c4d5c84fc2c3608664abaf9c358ed2ed9d7029332d1bc"
+            }
+          },
+          "outcome_status": "verified_success",
+          "outcome_success": true,
+          "witness": "fb2da8668a5ca5852581de89d123be6eee3e16009c31061a9ac919c8a5e4eefc",
+          "witness_result_hash": "fb2da8668a5ca5852581de89d123be6eee3e16009c31061a9ac919c8a5e4eefc",
+          "package_use_receipt_hash": null,
+          "package_use": {},
+          "policy_effect": false,
+          "update_authorized": false,
+          "host_mutate_authorized": false,
+          "execution_authorized": false,
+          "advisory_only": true
+        },
+        "competence": {
+          "valid": true,
+          "state": "origin_verified",
+          "errors": [],
+          "competence_id": "f6ebc6de2d304c2bc8385e7aefd15c6aa5e2e6daf0e17f53bdaad798f7eed58c",
+          "semantic_identity_hash": "f6ebc6de2d304c2bc8385e7aefd15c6aa5e2e6daf0e17f53bdaad798f7eed58c",
+          "model_independent_verification": true,
+          "origin_model_required": false,
+          "counterevidence_conserved": true,
+          "advisory_only": true,
+          "host_mutate_authorized": false,
+          "execution_authorized": false
+        },
+        "semantic_support": {
+          "state": "pass",
+          "status": "SUPPORTED",
+          "valid": true,
+          "errors": [],
+          "witness_id": "535918ba10050b2c1d7620379c2c7844f84dc9520206364d413f55279bab413f",
+          "receipt_hash": "2b738f3f9db4a5a2a8abe9c92f0702549a745fd421ddd761ad37f20b2367f046",
+          "schema_version": "cortex-distillation-witness/1.1",
+          "verifier": "canonical-atomic-support/2.0",
+          "supported_count": 3,
+          "unknown_count": 0,
+          "contradicted_count": 0,
+          "generalization_authorized": false,
+          "distribution_authorized": false,
+          "memory_admission_authorized": false,
+          "policy_effect": false,
+          "host_mutate_authorized": false,
+          "execution_authorized": false,
+          "advisory_only": true
+        },
+        "epistemic_history": {
+          "valid": true,
+          "errors": [],
+          "event_count": 2,
+          "tip_hash": "df30fe33ec2eb95da43c695d62a71c4d4b13357c7347752cfeb3b1d29ea8b614",
+          "history_primary": true,
+          "state_derived": true,
+          "advisory_only": true,
+          "host_mutate_authorized": false,
+          "execution_authorized": false
+        }
+      },
+      "calls_executed": 0,
+      "paid_calls_executed": 0,
+      "next_action": "calibrate_held_out_non_ceiling_semantic_transfer_tasks",
+      "host_mutate_authorized": false,
+      "execution_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false,
+      "advisory_only": true
+    },
+    "semantic_distinctness": "pass",
+    "witness_distinctness": "pass",
+    "evidence_class": "synthetic",
+    "empirical_transfer_established": false,
+    "production_transfer_eligible": false,
+    "calls_executed": 0,
+    "paid_calls_executed": 0,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "advisory_only": true
+  },
+  "public_corpus_manifest": {
+    "schema_version": "cortex-semantic-calibration-corpus/1.0",
+    "version": "10.0.0a17",
+    "family": "cache_coherence_repair",
+    "levels": [
+      1,
+      2,
+      3
+    ],
+    "variants_per_level": 4,
+    "case_count": 12,
+    "initial_screen_level": 2,
+    "initial_screen_case_ids": [
+      "scr_20f9a648ab0e67fe8bf0",
+      "scr_b674a3bffbbd3d1600af",
+      "scr_8c2b01a952997f7fa6ea",
+      "scr_be8b433ef6213b6a8a6c"
+    ],
+    "cases": [
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 1,
+        "variant": 1,
+        "prompt": "A service writes a new value, then reads an old value from its local cache. Which action best restores coherence? A invalidate the cache before reread; B retry the write unchanged; C rename the field; D increase logging.",
+        "case_id": "scr_69edf75ec61eb1fdd0f5",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "d561cc019b0bc30a42cbab8a5c012a98902146d975d2c4201fc953607a39905c",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 1,
+        "variant": 2,
+        "prompt": "After configuration mutation, a cached parser result is stale. Choose the relevant repair. A add a comment; B clear the cache before parsing again; C sort keys; D increase timeout.",
+        "case_id": "scr_2fbe03bd50be132d2a92",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "fc3748f866756592b99387ec0a0580f8314026ca5b6e5248258a568375ed5e4d",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 1,
+        "variant": 3,
+        "prompt": "A memoized lookup survives a successful update and returns the prior record. Choose the repair. A change formatting; B add retries; C invalidate memoized state before lookup; D suppress the assertion.",
+        "case_id": "scr_8eacba6d89cfcbb43681",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "0a2a679a717defa63736e23d3c341f7862411bb47d18e7de0b3321bcad7e6f9f",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 1,
+        "variant": 4,
+        "prompt": "A local snapshot remains after mutation and the next read uses it. Choose the repair. A expand the buffer; B rename the snapshot; C delay shutdown; D invalidate the snapshot before reread.",
+        "case_id": "scr_54aa972d51ae50c84b86",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "c1cc003e0a42eb08e0126dce51219e01eb6eb0f29e58106be68a02ba2289f16b",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 2,
+        "variant": 1,
+        "prompt": "write() updates the database. read() first checks object_cache and returns a pre-write object. Tests pass in isolation but fail when write and read share a process. A invalidate object_cache on successful write; B randomize test order; C catch the assertion; D lengthen the transaction.",
+        "case_id": "scr_20f9a648ab0e67fe8bf0",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "be6b98be312e60ee16a5aa5997fedc8b51eeab91611f3edbfe6d6db4f27077b6",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 2,
+        "variant": 2,
+        "prompt": "A deployment changes policy version 7 to 8. resolve_policy() continues returning version 7 until restart because its process map is populated before the change. A restart every request; B evict the keyed map entry after committed mutation; C ignore version; D duplicate the map.",
+        "case_id": "scr_b674a3bffbbd3d1600af",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "4f7df319f35ae631000ed1813f801e5b720fa1fd3c461f5e7f52e53ee93c8d86",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 2,
+        "variant": 3,
+        "prompt": "update_schema() commits, yet describe() returns the old schema from a lazy singleton. A add sleep; B retry commit; C invalidate the singleton at the mutation boundary; D hide the mismatch.",
+        "case_id": "scr_8c2b01a952997f7fa6ea",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "cbd93d15fdfa80e60d629b8db9d989b871d8f0f83829872516c79580a4afea2c",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 2,
+        "variant": 4,
+        "prompt": "A successful feature toggle update is followed by an old value only in long-lived workers; fresh workers are correct. A widen lock; B reorder imports; C change serializer; D clear worker-local cached state after update.",
+        "case_id": "scr_be8b433ef6213b6a8a6c",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "332b67f678a10d9002a2c2c6973efb75682c5314628eed9339f308fbee9510cf",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 3,
+        "variant": 1,
+        "prompt": "A versioned read-through cache uses key (tenant,id) while mutation advances an unkeyed generation counter. Old entries remain addressable and no exception occurs. Choose the smallest causal repair. A bind cache validity to the generation and evict on mutation; B retry network reads; C enlarge cache; D suppress old values.",
+        "case_id": "scr_7f9b4b40c156c4490c66",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "87828952bcaf3f5d3c724908e3f7770e89c34a5697c23e841109393b5e15d3c4",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 3,
+        "variant": 2,
+        "prompt": "Two layers cache the same object. Mutation invalidates L1, but a later L1 miss repopulates from stale L2. A invalidate only L1 twice; B invalidate or version both cache layers at commit; C add tracing; D increase TTL.",
+        "case_id": "scr_0fa26e5e82970e28528c",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "cf163d321ebd197ac26042f4d62c5adea561decac94a905cb3d0c9a45ff6eb32",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 3,
+        "variant": 3,
+        "prompt": "A transaction callback evicts a cache before commit; another reader repopulates the old value before commit completes. After commit the stale entry survives. A move eviction earlier; B disable tests; C evict after successful commit or version entries; D add a print.",
+        "case_id": "scr_de906a3f711655a07569",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "499a183d17ebb1a7b8ef818f82d38f2069cae99a7038216a68158b111f63b4ab",
+        "development_only": true
+      },
+      {
+        "family": "cache_coherence_repair",
+        "difficulty_level": 3,
+        "variant": 4,
+        "prompt": "A derived index is rebuilt from an object cache after source mutation. The source write is correct, but the cache still contains the previous graph. A rebuild more often from the same cache; B add a second index; C reorder output; D invalidate the source cache before rebuilding the index.",
+        "case_id": "scr_92e99ba3b544e5211b4e",
+        "response_contract": "Return exactly one option token: A, B, C, or D.",
+        "answer_commitment": "5f264e8a43666c157b8f2e300e4b3f0006c694ace23a434cc657dc3f99921859",
+        "development_only": true
+      }
+    ],
+    "answer_key_commitment": "8f243bca34109525aa1a8b0dc90275f4fe9acbcf6c4f30d8b8ae5a2b56555b72",
+    "secret_seed_commitment": "f3b94c9a4be493dfc625d530ce404bbfab609fb91a0be9e3f0bbc1216ff44b18",
+    "answers_present": false,
+    "development_only": true,
+    "confirmatory_eligible": false,
+    "claim_boundary": "This preflight seals development calibration material only. It does not establish semantic transfer, model improvement, or execution authority.",
+    "authority": {
+      "host_mutate_authorized": false,
+      "execution_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false
+    },
+    "corpus_hash": "57ab090bd159a8a7e7718bb55a082d4dea6747035fa003a81be208df8e9c6b2c"
+  },
+  "answer_key_commitment": "8f243bca34109525aa1a8b0dc90275f4fe9acbcf6c4f30d8b8ae5a2b56555b72",
+  "answer_key_persisted_in_artifact": false,
+  "bundle_verification": {
+    "valid": true,
+    "state": "pass",
+    "errors": []
+  },
+  "preflight": {
+    "schema_version": "cortex-semantic-calibration-preflight/1.0",
+    "version": "10.0.0a17",
+    "state": "LIVE_CALIBRATION_SCREEN_READY",
+    "lesson_pair": {
+      "relevant_competence_id": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+      "sham_competence_id": "f6ebc6de2d304c2bc8385e7aefd15c6aa5e2e6daf0e17f53bdaad798f7eed58c",
+      "evidence_class": "synthetic",
+      "empirical": false
+    },
+    "corpus_hash": "57ab090bd159a8a7e7718bb55a082d4dea6747035fa003a81be208df8e9c6b2c",
+    "answer_key_commitment": "8f243bca34109525aa1a8b0dc90275f4fe9acbcf6c4f30d8b8ae5a2b56555b72",
+    "initial_screen_case_ids": [
+      "scr_20f9a648ab0e67fe8bf0",
+      "scr_b674a3bffbbd3d1600af",
+      "scr_8c2b01a952997f7fa6ea",
+      "scr_be8b433ef6213b6a8a6c"
+    ],
+    "screening_policy": {
+      "initial_level": 2,
+      "initial_calls": 4,
+      "maximum_calls_before_new_authorization": 4,
+      "success_band": [
+        0.3,
+        0.7
+      ],
+      "zero_successes": "move_easier",
+      "four_successes": "move_harder",
+      "mixed_successes": "collect_four_confirmation_cases_only_after_new_authorization",
+      "outcome_source": "canonical_model_circulation_reconstruction_only",
+      "caller_success_booleans_accepted": false
+    },
+    "calls_executed": 0,
+    "live_model_selected": false,
+    "calibration_established": false,
+    "semantic_transfer_established": false,
+    "next_action": "execute_four_call_live_baseline_screen",
+    "claim_boundary": "This preflight seals development calibration material only. It does not establish semantic transfer, model improvement, or execution authority.",
+    "advisory_only": true,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "preflight_hash": "bbedc84af1b72ab4455aaf14d9e5d8e19dc26a6a329ac82820beeb807c3915f6"
+  },
+  "calls_executed": 0,
+  "paid_calls_executed": 0,
+  "calibration_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "execute_four_call_live_baseline_screen",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.16`
+Version: `10.0.0-alpha.17`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -103,6 +103,13 @@ compiler retains the minimum representatives needed to preserve each requested
 claim state and its conflicts. Authority remains a separate unresolved gate.
 The structural fixture passed; empirical semantic transfer remains untested.
 
+Alpha.17 adds a distinct independently witnessed sham lesson and seals a
+three-level cache-coherence calibration corpus without its private answer key.
+The preflight authorizes nothing and spends no calls. It permits a future
+operator to run only a four-call task-only screen; caller success flags cannot
+become calibration evidence, and a new authorization is required before any
+confirmation or semantic treatment trial.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -120,6 +127,7 @@ The structural fixture passed; empirical semantic transfer remains untested.
 - [Verified semantic projection and causal transfer](VERIFIED_SEMANTIC_PROJECTION.md)
 - [Semantic transfer readiness pulse](SEMANTIC_TRANSFER_READINESS.md)
 - [Epistemic kernel seed](EPISTEMIC_KERNEL_SEED.md)
+- [Sham-controlled semantic calibration](SHAM_CONTROLLED_SEMANTIC_CALIBRATION.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
