@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.16",
+  "release": "Cortex v10.0.0-alpha.17",
   "release_class": "advanced research prototype",
-  "source_commit": "2f7c9286a70fc49cb74f2007849bcb8cfb4d459f",
-  "runtime_parent": "2f7c9286a70fc49cb74f2007849bcb8cfb4d459f",
+  "source_commit": "7f847b5ac29f5ce6ad1fde0a2c40461873dcc99e",
+  "runtime_parent": "7f847b5ac29f5ce6ad1fde0a2c40461873dcc99e",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/EPISTEMIC_KERNEL_SEED.md",
+  "phase_document": "docs/v10/SHAM_CONTROLLED_SEMANTIC_CALIBRATION.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -36,6 +36,10 @@
     "continuation_debt": "an explicit host policy may evaluate the advisory recurrence over uncertainty, conflict, drift, staleness, and verification; missing coefficients or thresholds yield UNKNOWN",
     "modern_source_experience": "isolated zero-paid-call commissioning reconstructed a synthetic model circulation, valid competence candidate, 3/3 supported semantic witness, immutable epistemic event, and 462-character state-preserving context",
     "epistemic_kernel_empirical_boundary": "EPISTEMIC_KERNEL_SEED_PASS is structural mechanism evidence only; empirical semantic transfer, source independence, non-ceiling calibration, and production eligibility remain unestablished",
+    "structural_lesson_pair": "relevant cache-coherence and irrelevant line-ending lessons each reconstruct through synthetic circulation, valid competence, current semantic witness, and epistemic event; competence and witness identities are distinct",
+    "semantic_calibration_corpus": "12 development-only cache-coherence cases span three difficulty levels; the public manifest carries secret-salted answer commitments while the random secret and private answer key are absent from the committed artifact",
+    "semantic_calibration_preflight": "LIVE_CALIBRATION_SCREEN_READY permits only a future four-call task-only screen at level two; caller outcome booleans are rejected by policy and confirmation requires separate authority",
+    "semantic_calibration_empirical_boundary": "zero model calls executed; task calibration, semantic relevance gain, total Cortex gain, and confirmatory competence transfer remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -48,5 +52,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.15 semantic transfer readiness pulse"
+  "supersedes": "Cortex v10.0.0-alpha.16 epistemic kernel seed"
 }

@@ -1,6 +1,6 @@
 {
-  "benchmark_suite_hash": "eb473fc68296a475d4007c88fb1cbcd2ed8a0175a22f53f298c113a2484f6503",
-  "cortex_version": "10.0.0a16",
+  "benchmark_suite_hash": "d90030b7ab8fc94cfff9d4167771efba22e1f2c73ea38ae12a12d2c91e1f5ec7",
+  "cortex_version": "10.0.0a17",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
     "Artifacts span historical results, fresh controlled reruns, development-only frontier calibrations, and unexecuted task-forge and commissioning manifests.",
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 20,
+  "result_count": 21,
   "results": [
     {
       "bytes": 3346,
@@ -57,6 +57,12 @@
       "metadata_state": "structural_mechanism_pass_zero_call",
       "path": "benchmarks/results/v100_alpha16_epistemic_kernel_seed.json",
       "sha256": "ca30e65438c9d7e23087310f0e1d295b1b612cccdbd5e3334f639a8d7c577d71"
+    },
+    {
+      "bytes": 27533,
+      "metadata_state": "live_screen_ready_zero_call",
+      "path": "benchmarks/results/v100_alpha17_semantic_calibration_preflight.json",
+      "sha256": "548d5f1a591feba8f1753fe9fba157d802e9b796df7d35899999892c09a63a53"
     },
     {
       "bytes": 4628,
@@ -136,5 +142,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "2f7c9286a70fc49cb74f2007849bcb8cfb4d459f"
+  "source_commit": "7f847b5ac29f5ce6ad1fde0a2c40461873dcc99e"
 }
