@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.15-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.15" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.16-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.16" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -49,6 +49,38 @@ Think of Cortex as a disciplined companion around an AI coding agent:
 Cortex is not a second model, a replacement for Git, an autonomous developer, or
 a claim of consciousness. It is infrastructure for making agent context
 durable, inspectable, and safer to reuse.
+
+## The epistemic kernel
+
+Cortex now treats memory as controlled reconstruction of epistemic state, not
+as a pile of retrieved text. The alpha.16 seed makes history primary and state
+derived:
+
+```text
+immutable evidence → four-valued support → minimum sufficient context
+```
+
+For each claim, supporting and opposing evidence remain independent. That
+preserves four honest states: supported, opposed, unknown, and conflicted.
+Contradiction is visible instead of being averaged away.
+
+The context compiler then retains the smallest evidence-bearing slice that
+preserves the requested claim state under its declared semantics. It never
+turns relevance, compression, or model confidence into authority:
+
+```text
+knowledge stored ≠ knowledge projected ≠ knowledge usable ≠ action authorized
+```
+
+Continuation debt is also explicit and policy-driven:
+
+```text
+D(t+1) = rho·D(t) + alpha·uncertainty + beta·conflict
+         + gamma·drift + eta·staleness - delta·verification
+```
+
+The host supplies coefficients and thresholds; missing policy yields UNKNOWN.
+See the [alpha.16 engineering note](docs/v10/EPISTEMIC_KERNEL_SEED.md).
 
 ## What you get
 

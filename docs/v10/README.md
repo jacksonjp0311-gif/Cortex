@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.15`
+Version: `10.0.0-alpha.16`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -96,6 +96,13 @@ The first pulse found six legacy-partial memories and zero modern projectable
 lessons, so it spent zero model calls and narrowed the next action to generating
 new verified source experience.
 
+Alpha.16 commissions that modern source-experience path without paid inference
+and seeds the epistemic kernel. Immutable bitemporal evidence events now fold
+into four-valued support (`TRUE`, `FALSE`, `NEITHER`, `BOTH`), and a bounded
+compiler retains the minimum representatives needed to preserve each requested
+claim state and its conflicts. Authority remains a separate unresolved gate.
+The structural fixture passed; empirical semantic transfer remains untested.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -112,6 +119,7 @@ new verified source experience.
 - [Live autonomy pilot](LIVE_AUTONOMY_PILOT.md)
 - [Verified semantic projection and causal transfer](VERIFIED_SEMANTIC_PROJECTION.md)
 - [Semantic transfer readiness pulse](SEMANTIC_TRANSFER_READINESS.md)
+- [Epistemic kernel seed](EPISTEMIC_KERNEL_SEED.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

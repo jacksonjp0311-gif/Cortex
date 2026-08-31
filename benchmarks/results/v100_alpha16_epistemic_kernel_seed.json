@@ -1,0 +1,248 @@
+{
+  "schema_version": "cortex-alpha16-commissioning/1.0",
+  "state": "EPISTEMIC_KERNEL_SEED_PASS",
+  "source_experience": {
+    "schema_version": "cortex-modern-source-experience/1.0",
+    "state": "STRUCTURAL_SOURCE_EXPERIENCE_PASS",
+    "evidence_class": "synthetic",
+    "empirical": false,
+    "production_transfer_eligible": false,
+    "session_id": "sym_81d0dd0c733b4d5675bc",
+    "competence_id": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+    "competence_receipt_hash": "6efec6e49af01f7733255870983b8b4a832a3f77796e74e121317fe36fe23b3d",
+    "distillation_witness_receipt_hash": "7992f0e03bce7ed9765f89c3bacaa29b99e4c9911faffd41ccd1b07a0ad15ef1",
+    "epistemic_event_hash": "fa16d8fbdba33684d56d169ba9aae3cf3d4183fe88489883c967e71e7e92fca0",
+    "checks": {
+      "circulation": {
+        "valid": true,
+        "errors": [],
+        "chain": {
+          "valid": true,
+          "chain_valid": true,
+          "repository_id": "5cb807da8a2812715f4187eb",
+          "repo": "Alpha16Pulse",
+          "session_id": "sym_81d0dd0c733b4d5675bc",
+          "receipt_count": 8,
+          "tip_receipt_hash": "e611b769be8e66a14ea7cc5ffa5b0e1db002a8e7cc519d6f60ba6bcfb5e362b2",
+          "invalid_receipt_hashes": [],
+          "errors": [],
+          "advisory_only": true,
+          "policy_effect": false,
+          "update_authorized": false
+        },
+        "session_id": "sym_81d0dd0c733b4d5675bc",
+        "turn_id": 1,
+        "invocation_id": "model_sym_81d0dd0c733b4d5675bc_1_b0634214587c",
+        "model_identity": {
+          "provider_family": "fixture",
+          "model_id": "alpha16-structural-fixture",
+          "model_version": "1",
+          "adapter_id": "cortex.fixture",
+          "adapter_version": "1"
+        },
+        "adapter_provenance": {
+          "claim_boundary": "Host registration classifies a locally declared execution boundary; it is not provider attestation and does not prove a provider response.",
+          "empirical": false,
+          "evidence_class": "synthetic",
+          "evidence_state": "structural_only",
+          "execution_boundary": "in_process_fixture",
+          "host_model_classification": {
+            "adapter_or_model_self_assertion_used": false,
+            "authority_basis": "sealed_fixture_lineage",
+            "capability_class": "",
+            "model_family": "",
+            "schema_version": "cortex-host-model-classification/1.0",
+            "state": "synthetic_not_classified"
+          },
+          "implementation_digest": "f3a6c24b3ce29d14be5c1e130ddb9493030798a3caf7640acee0fcfae5a61fb6",
+          "provider_attestation": "not_applicable",
+          "provider_attestation_claimed": false,
+          "registration_id": null,
+          "schema_version": "cortex-adapter-provenance/1.0",
+          "trust_basis": "sealed_fixture_lineage"
+        },
+        "evidence_class": "synthetic",
+        "evidence_state": "structural_only",
+        "body_epoch_id": "d187a96ddbe37266e655ff181dbc1d038f049036d66363031e88ffd94c5dcc84",
+        "task_contract_hash": "ed4b5d2c72badfa88361086e843494310828f948ccf404ee99358897f1d478be",
+        "context_projection_hash": "27ffe41e24e777a1ca7f6ca832bc9b31385106c9b1836b0aae5f8e21c8ebf11c",
+        "tool_scopes": [],
+        "receipt_bindings": {
+          "model_invocation": {
+            "receipt_hash": "ef6a4e736d5121a7300f3d747dcdc8d80623868012becf66f93e3a28c3834a97",
+            "content_hash": "0843c7ce776beaad473ecd241d257cd95b5b0678e620ed0a84d844fa448b6007"
+          },
+          "model_proposal": {
+            "receipt_hash": "63443c4dde8a74686539556ec2ccbbed3a8839f2fa829c9d9c3359d09857dd28",
+            "content_hash": "d9cd1489ed43ca5d160413aecf54f9323da839c8bbe72b0a4e159827a5e0c39a"
+          },
+          "model_evaluation": {
+            "receipt_hash": "cf5f9c84bdca52e495568730e41e597d16c56ac121fa1fc1c24cdd12fd450612",
+            "content_hash": "2f21a31437bda16b49bfc08e711e6df707013d7266b5a9cf1b4a881831461de3"
+          },
+          "model_outcome": {
+            "receipt_hash": "226c23f02964e4ac6bde2e156ecb0e5c9a5e2058991190ef7300f53fba8f2fcb",
+            "content_hash": "08b7d4e794aad5c83fe07db8db338dff8e8f479402dff11aa5f68aeb8c14dcc2"
+          },
+          "model_witness": {
+            "receipt_hash": "341fcd27051e9f01b31a6977ebde64ae6a056576bec9fa8c056824c34181b3b2",
+            "content_hash": "f4537bc42f5a1f58aaa69055d63b597af2f6de2af8e5901440b45e53e3f981de"
+          },
+          "model_trajectory": {
+            "receipt_hash": "e611b769be8e66a14ea7cc5ffa5b0e1db002a8e7cc519d6f60ba6bcfb5e362b2",
+            "content_hash": "ba665dab682c79ba03c46dece09cf1645c4b50c59e2438f35dc61e7c3932c286"
+          }
+        },
+        "outcome_status": "verified_success",
+        "outcome_success": true,
+        "witness": "43b3bb2471770b610e41000ecc0b6f6c45e70a0f1ee72e0ad2dd091f5daeeda1",
+        "witness_result_hash": "43b3bb2471770b610e41000ecc0b6f6c45e70a0f1ee72e0ad2dd091f5daeeda1",
+        "package_use_receipt_hash": null,
+        "package_use": {},
+        "policy_effect": false,
+        "update_authorized": false,
+        "host_mutate_authorized": false,
+        "execution_authorized": false,
+        "advisory_only": true
+      },
+      "competence": {
+        "valid": true,
+        "state": "origin_verified",
+        "errors": [],
+        "competence_id": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+        "semantic_identity_hash": "e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+        "model_independent_verification": true,
+        "origin_model_required": false,
+        "counterevidence_conserved": true,
+        "advisory_only": true,
+        "host_mutate_authorized": false,
+        "execution_authorized": false
+      },
+      "semantic_support": {
+        "state": "pass",
+        "status": "SUPPORTED",
+        "valid": true,
+        "errors": [],
+        "witness_id": "66d919794098ea5de24212b8e652da2c076047f40a15280348a95512ad297b12",
+        "receipt_hash": "7992f0e03bce7ed9765f89c3bacaa29b99e4c9911faffd41ccd1b07a0ad15ef1",
+        "schema_version": "cortex-distillation-witness/1.1",
+        "verifier": "canonical-atomic-support/2.0",
+        "supported_count": 3,
+        "unknown_count": 0,
+        "contradicted_count": 0,
+        "generalization_authorized": false,
+        "distribution_authorized": false,
+        "memory_admission_authorized": false,
+        "policy_effect": false,
+        "host_mutate_authorized": false,
+        "execution_authorized": false,
+        "advisory_only": true
+      },
+      "epistemic_history": {
+        "valid": true,
+        "errors": [],
+        "event_count": 1,
+        "tip_hash": "fa16d8fbdba33684d56d169ba9aae3cf3d4183fe88489883c967e71e7e92fca0",
+        "history_primary": true,
+        "state_derived": true,
+        "advisory_only": true,
+        "host_mutate_authorized": false,
+        "execution_authorized": false
+      }
+    },
+    "calls_executed": 0,
+    "paid_calls_executed": 0,
+    "next_action": "calibrate_held_out_non_ceiling_semantic_transfer_tasks",
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "advisory_only": true
+  },
+  "projection": {
+    "schema_version": "cortex-epistemic-projection/1.0",
+    "valid_at": 1788176299.110553,
+    "known_at": 1788176299.110553,
+    "claims": [
+      {
+        "claim_id": "competence:e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+        "claim_text": "Invalidate persistent cached state before trusting a reread after mutation.",
+        "truth_state": "TRUE",
+        "support_bits": [
+          1,
+          0
+        ],
+        "support_event_hashes": [
+          "fa16d8fbdba33684d56d169ba9aae3cf3d4183fe88489883c967e71e7e92fca0"
+        ],
+        "opposition_event_hashes": [],
+        "source_lineage_count": 1,
+        "source_independence": "UNTESTED"
+      }
+    ],
+    "event_count_considered": 1,
+    "history_primary": true,
+    "state_derived": true,
+    "advisory_only": true,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "claim_boundary": "Epistemic events record evidence support, not reality itself. Projection does not grant execution, mutation, memory admission, or policy authority.",
+    "projection_hash": "497922289e94c8dee88b13ac3d8a81e21a9214be3cc518ebbb2e69083ab2c2c4"
+  },
+  "compiled_context": {
+    "schema_version": "cortex-action-sufficient-context/1.0",
+    "projection_hash": "497922289e94c8dee88b13ac3d8a81e21a9214be3cc518ebbb2e69083ab2c2c4",
+    "required_claim_ids": [
+      "competence:e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e"
+    ],
+    "claims": [
+      {
+        "claim_id": "competence:e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+        "claim_text": "Invalidate persistent cached state before trusting a reread after mutation.",
+        "truth_state": "TRUE",
+        "support_bits": [
+          1,
+          0
+        ],
+        "support_event_hashes": [
+          "fa16d8fbdba33684d56d169ba9aae3cf3d4183fe88489883c967e71e7e92fca0"
+        ],
+        "opposition_event_hashes": [],
+        "source_lineage_count": 1,
+        "source_independence": "UNTESTED"
+      }
+    ],
+    "evidence": [
+      {
+        "claim_id": "competence:e8f19e4464a6b5b0821d6d900c526d0be0d5238a2c5318da5402241abba74b1e",
+        "claim_text": "Invalidate persistent cached state before trusting a reread after mutation.",
+        "polarity": "support",
+        "event_hash": "fa16d8fbdba33684d56d169ba9aae3cf3d4183fe88489883c967e71e7e92fca0",
+        "evidence_receipt_hash": "7992f0e03bce7ed9765f89c3bacaa29b99e4c9911faffd41ccd1b07a0ad15ef1",
+        "source_lineage_hash": "e611b769be8e66a14ea7cc5ffa5b0e1db002a8e7cc519d6f60ba6bcfb5e362b2"
+      }
+    ],
+    "character_budget": 2000,
+    "characters_used": 462,
+    "missing_claim_ids": [],
+    "state_preservation": "PASS",
+    "minimality_scope": "exact_for_two_bit_presence_semantics",
+    "authority_state": "SEPARATE_CANONICAL_GATE_REQUIRED",
+    "action_authorized": false,
+    "advisory_only": true,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "claim_boundary": "Epistemic events record evidence support, not reality itself. Projection does not grant execution, mutation, memory admission, or policy authority.",
+    "context_hash": "9f12a98d4bb68a6b4780f8e0faeb0aa9b86d7fa8603c9733f40be810e7fd3eae"
+  },
+  "calls_executed": 0,
+  "paid_calls_executed": 0,
+  "empirical_transfer_established": false,
+  "next_action": "calibrate_held_out_non_ceiling_semantic_transfer_tasks",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

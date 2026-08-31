@@ -56,6 +56,14 @@ def main() -> int:
                     if payload.get("calls_executed") == 0
                     else "readiness_invalid_unexpected_calls"
                 )
+            elif payload.get("schema_version") == "cortex-alpha16-commissioning/1.0":
+                metadata_state = (
+                    "structural_mechanism_pass_zero_call"
+                    if payload.get("state") == "EPISTEMIC_KERNEL_SEED_PASS"
+                    and payload.get("paid_calls_executed") == 0
+                    and payload.get("empirical_transfer_established") is False
+                    else "structural_commissioning_held"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
