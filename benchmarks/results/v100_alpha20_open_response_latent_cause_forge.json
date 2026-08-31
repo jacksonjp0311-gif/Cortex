@@ -1,0 +1,599 @@
+{
+  "schema_version": "cortex-alpha20-open-response-forge/1.0",
+  "state": "OPEN_RESPONSE_LATENT_FORGE_READY",
+  "source_commit": "da1e33f54039fa2a2996e736f705304819657850",
+  "prior_result_receipt_hash": "31f8d3b65444279d0595d6587781a898af968ac4ea5d3c9d59cf5f97835a534a",
+  "preflight_receipt_hash": "82a3bc91a4aa94a9686f0a60114365e673d35c43ddfb6eeab70e77b26ae9eed0",
+  "public_corpus_manifest": {
+    "schema_version": "cortex-open-response-latent-cause-corpus/1.0",
+    "version": "10.0.0a20",
+    "family": "open_response_cache_causality",
+    "levels": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "variants_per_level": 4,
+    "case_count": 16,
+    "initial_screen_level": 3,
+    "cases": [
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 1,
+        "variant": 1,
+        "events": [
+          "E1: store commits a new profile value",
+          "E2: the process cache still contains the prior profile",
+          "E3: read_profile returns the cached prior value",
+          "D1: an unrelated metrics export completes"
+        ],
+        "case_id": "olc_f647b734603404148de2",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "b9b6279c3cedb1c10c19c159acfe56f3002c3e818c9e58e78877916d16d8a78c",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 1,
+        "variant": 2,
+        "events": [
+          "E1: store commits a new profile value",
+          "E2: the process cache still contains the prior profile",
+          "E3: read_profile returns the cached prior value",
+          "D1: an unrelated metrics export completes"
+        ],
+        "case_id": "olc_04320cbba669e93a308e",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "4a6155c30a26fd92aff46f9e78b1a600725c76f426aa1d722bf2d770b3a4539a",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 1,
+        "variant": 3,
+        "events": [
+          "E1: store commits a new profile value",
+          "E2: the process cache still contains the prior profile",
+          "E3: read_profile returns the cached prior value",
+          "D1: an unrelated metrics export completes"
+        ],
+        "case_id": "olc_18e37ef828e26f1c2a71",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "f47339ffb22e750162caa3a16a82975a500de5b1a6a8c59ecbbc7fc37c95df9b",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 1,
+        "variant": 4,
+        "events": [
+          "E1: store commits a new profile value",
+          "E2: the process cache still contains the prior profile",
+          "E3: read_profile returns the cached prior value",
+          "D1: an unrelated metrics export completes"
+        ],
+        "case_id": "olc_e2811d8b4825a9c1793b",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "05ba4679f3951f2ac054401cdde82dd95f7e3551561040ec696d5cbf69eeaaab",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 2,
+        "variant": 1,
+        "events": [
+          "E1: commit writes object version 8",
+          "E2: L1 is invalidated",
+          "E3: the next L1 miss loads version 7 from L2",
+          "E4: L1 is repopulated with version 7",
+          "D1: request tracing records a normal span"
+        ],
+        "case_id": "olc_51505ff7c8f6caf86112",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "2a9713d64eaf413cbd4df2d27c43fceff9936597146b5ab1286383f8b74b3698",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 2,
+        "variant": 2,
+        "events": [
+          "E1: commit writes object version 8",
+          "E2: L1 is invalidated",
+          "E3: the next L1 miss loads version 7 from L2",
+          "E4: L1 is repopulated with version 7",
+          "D1: request tracing records a normal span"
+        ],
+        "case_id": "olc_f57b2e368d85d468b76c",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "fbb2c3e4fc8ca23f30c41cce16d8611d13d08390075a5f30ad9a3713d49d2f78",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 2,
+        "variant": 3,
+        "events": [
+          "E1: commit writes object version 8",
+          "E2: L1 is invalidated",
+          "E3: the next L1 miss loads version 7 from L2",
+          "E4: L1 is repopulated with version 7",
+          "D1: request tracing records a normal span"
+        ],
+        "case_id": "olc_41006faa9cb5b73df559",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "988c947da89f428f63295f293bdf2a7692181cda93e513d48daaaefb79994338",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 2,
+        "variant": 4,
+        "events": [
+          "E1: commit writes object version 8",
+          "E2: L1 is invalidated",
+          "E3: the next L1 miss loads version 7 from L2",
+          "E4: L1 is repopulated with version 7",
+          "D1: request tracing records a normal span"
+        ],
+        "case_id": "olc_473f2b8e6e48174d6b6d",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "9461162e52ef1adf579e09831bf2ee951b276d52e6ee035331a61db1ee7fa2e3",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 3,
+        "variant": 1,
+        "events": [
+          "E1: transaction callback invalidates the cache before commit",
+          "E2: a concurrent reader observes the old database value",
+          "E3: that reader repopulates the cache with the old value",
+          "E4: the transaction commits the new value",
+          "E5: the stale cache entry survives after commit",
+          "D1: connection pooling remains healthy"
+        ],
+        "case_id": "olc_7c1161d0a505c0ab17f9",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "8a0a11b1a908e542db19e63b4306caa58b938f8dbf1c224ca3b75657353a49c5",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 3,
+        "variant": 2,
+        "events": [
+          "E1: transaction callback invalidates the cache before commit",
+          "E2: a concurrent reader observes the old database value",
+          "E3: that reader repopulates the cache with the old value",
+          "E4: the transaction commits the new value",
+          "E5: the stale cache entry survives after commit",
+          "D1: connection pooling remains healthy"
+        ],
+        "case_id": "olc_43a5f251966a165b92c1",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "3c54d24cb7d4c6bcaf0dfcdada3226c60d7a7eba2cb09d5cf041acc8020f56e6",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 3,
+        "variant": 3,
+        "events": [
+          "E1: transaction callback invalidates the cache before commit",
+          "E2: a concurrent reader observes the old database value",
+          "E3: that reader repopulates the cache with the old value",
+          "E4: the transaction commits the new value",
+          "E5: the stale cache entry survives after commit",
+          "D1: connection pooling remains healthy"
+        ],
+        "case_id": "olc_b47e81ce69cae207295d",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "28e4d9a596ca322f6e861a196f76bfda5985ed16b932aa207e558a798ca3eca9",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 3,
+        "variant": 4,
+        "events": [
+          "E1: transaction callback invalidates the cache before commit",
+          "E2: a concurrent reader observes the old database value",
+          "E3: that reader repopulates the cache with the old value",
+          "E4: the transaction commits the new value",
+          "E5: the stale cache entry survives after commit",
+          "D1: connection pooling remains healthy"
+        ],
+        "case_id": "olc_4555c0cfc40e9a8f25a2",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "040f016708bb9a0c3b1d6c1572a45ef995eb1822f4646d2491925029863288b7",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 4,
+        "variant": 1,
+        "events": [
+          "E1: source graph mutation commits generation 42",
+          "E2: snapshot cache remains at generation 41",
+          "E3: index rebuild reads the snapshot cache rather than the committed source",
+          "E4: derived index is sealed as generation 42 while containing generation 41 edges",
+          "E5: direct source reads return generation 42",
+          "D1: index serialization checksum is internally consistent",
+          "D2: worker memory pressure is nominal"
+        ],
+        "case_id": "olc_d9bf154a969350069b1d",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "cbeae143b1cd185e8c1cf6cad13acd75a96cc55c672e9be8025257539865da13",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 4,
+        "variant": 2,
+        "events": [
+          "E1: source graph mutation commits generation 42",
+          "E2: snapshot cache remains at generation 41",
+          "E3: index rebuild reads the snapshot cache rather than the committed source",
+          "E4: derived index is sealed as generation 42 while containing generation 41 edges",
+          "E5: direct source reads return generation 42",
+          "D1: index serialization checksum is internally consistent",
+          "D2: worker memory pressure is nominal"
+        ],
+        "case_id": "olc_54b16654c7814e4a5aa7",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "a61e785f0c6a2fe8370c25b035076c7730c6f043adb909648b9185c831453fe8",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 4,
+        "variant": 3,
+        "events": [
+          "E1: source graph mutation commits generation 42",
+          "E2: snapshot cache remains at generation 41",
+          "E3: index rebuild reads the snapshot cache rather than the committed source",
+          "E4: derived index is sealed as generation 42 while containing generation 41 edges",
+          "E5: direct source reads return generation 42",
+          "D1: index serialization checksum is internally consistent",
+          "D2: worker memory pressure is nominal"
+        ],
+        "case_id": "olc_2467fc3a41cbcdbea7d5",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "13c651191803ab974cc7b040fd2e4f286353a428fdde084b477e66a7cad4f518",
+        "development_only": true
+      },
+      {
+        "family": "open_response_cache_causality",
+        "difficulty_level": 4,
+        "variant": 4,
+        "events": [
+          "E1: source graph mutation commits generation 42",
+          "E2: snapshot cache remains at generation 41",
+          "E3: index rebuild reads the snapshot cache rather than the committed source",
+          "E4: derived index is sealed as generation 42 while containing generation 41 edges",
+          "E5: direct source reads return generation 42",
+          "D1: index serialization checksum is internally consistent",
+          "D2: worker memory pressure is nominal"
+        ],
+        "case_id": "olc_0b6f244e5b16ecb3c268",
+        "prompt": "Infer the latent causal mechanism and smallest causal repair from the event record. Distractor events begin with D. Return one JSON object.",
+        "response_contract": {
+          "keys": [
+            "cause",
+            "repair",
+            "evidence_ids",
+            "uncertainty"
+          ],
+          "cause": "brief public causal explanation",
+          "repair": "brief public repair principle",
+          "evidence_ids": "exact ordered IDs necessary to prove the causal chain",
+          "uncertainty": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ],
+          "extra_keys_forbidden": true
+        },
+        "contract_commitment": "85110486d95b4eecad976d374221b455dac8a874e56ff96a8c6999e4d123d1d8",
+        "development_only": true
+      }
+    ],
+    "private_key_commitment": "98eb8854e9b249c44d16759cecda2ce097dbe9ed6307777d93e1e2b414d3fbaa",
+    "secret_seed_commitment": "66d69756d5fe6f42aa83291df67e77e7c2ab102503970e6d40774c34f614f77f",
+    "answers_present": false,
+    "development_only": true,
+    "confirmatory_eligible": false,
+    "model_identity_in_ontology": false,
+    "claim_boundary": "This development forge verifies task and evaluator structure only. It does not establish calibration, semantic transfer, model improvement, or authority.",
+    "corpus_hash": "983e23f6d36ef956f001dcb9209c82521458aa8ceffcbc22ff75bb1e502efd9b"
+  },
+  "private_contract_storage": "host_os_credential_vault",
+  "private_contract_persisted_in_artifact": false,
+  "reference_evaluator_checks": {
+    "case_count": 4,
+    "all_pass": true
+  },
+  "planned_live_calls": 0,
+  "calibration_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "run_four_call_task_only_open_response_screen_after_separate_authorization",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

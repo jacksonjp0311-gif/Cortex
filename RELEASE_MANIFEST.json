@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.19",
+  "release": "Cortex v10.0.0-alpha.20",
   "release_class": "advanced research prototype",
-  "source_commit": "11ca9c123837c69ac505ceb04637225bffc91e8d",
-  "runtime_parent": "11ca9c123837c69ac505ceb04637225bffc91e8d",
+  "source_commit": "da1e33f54039fa2a2996e736f705304819657850",
+  "runtime_parent": "da1e33f54039fa2a2996e736f705304819657850",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/HARDER_SEMANTIC_CALIBRATION_SCREEN.md",
+  "phase_document": "docs/v10/OPEN_RESPONSE_LATENT_CAUSE_FORGE.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -45,6 +45,10 @@
     "harder_semantic_calibration_screen": "a canonical alpha.18 4/4 ceiling opened one newly sealed level-three panel for the same model; four live-empirical task-only trajectories again scored 4/4 and exhausted the available multiple-choice geometry",
     "harder_screen_continuity_boundary": "the alpha.18 private answer key was intentionally not persisted, so alpha.19 records a new development seal rather than claiming confirmatory corpus continuity",
     "semantic_calibration_next_run": "retire the saturated choice-recognition ladder and forge open-response latent-cause tasks with independently frozen atomic evaluation before any sham or relevant-lesson treatment calls",
+    "open_response_latent_forge": "16 development-only cases across four causal depths require generated cause, repair, exact evidence IDs, and uncertainty; private atomic contracts independently gate causal clauses, forbidden unsupported claims, evidence binding, and response shape",
+    "open_response_private_contracts": "private contracts are compressed into bounded OS-vault chunks, resolved only through a hash-bound manifest and full uncompressed digest, and are absent from Git, Cortex evidence, trajectories, logs, and the public artifact",
+    "open_response_commissioning": "OPEN_RESPONSE_LATENT_FORGE_READY; canonical alpha.19 prerequisite resolved, 16 private contracts round-tripped from the host vault, 4/4 initial reference evaluators passed, and zero live model calls executed",
+    "open_response_operational_wound": "an initial oversized Windows credential write failed and left one advisory preflight without a private key; vault-first manifest-last chunking now prevents new unusable preflights and no model call occurred",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -57,5 +61,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.18 live semantic calibration screen"
+  "supersedes": "Cortex v10.0.0-alpha.19 harder semantic calibration screen"
 }

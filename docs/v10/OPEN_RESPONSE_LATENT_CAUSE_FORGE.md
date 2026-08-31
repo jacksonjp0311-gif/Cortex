@@ -84,3 +84,17 @@ must remain closed until baseline performance enters a non-floor/non-ceiling
 band.
 
 All authority flags remain false.
+
+## Commissioning result
+
+The zero-call commissioning resolved the canonical alpha.19 ceiling, generated
+sixteen public cases, stored sixteen private contracts in the host vault, and
+reconstructed all four initial reference evaluations successfully.
+
+The first vault attempt exposed the Windows credential byte ceiling. One
+advisory preflight was created before that write failed; it has no private key
+and cannot support a live screen. Cortex subsequently changed to vault-first,
+manifest-last chunked storage and verified an exact host-vault round trip before
+creating the successful preflight. Neither failed attempt invoked a model.
+
+State: `OPEN_RESPONSE_LATENT_FORGE_READY`. Planned live calls: `0`.

@@ -152,6 +152,11 @@ Pass = CauseAtoms ∧ RepairAtoms ∧ EvidenceBinding
 Malformed output is UNKNOWN, never PASS. Model/provider identity, caller
 verdicts, fluent prose, and extra fields do not affect the score.
 
+The zero-call commissioning reached `OPEN_RESPONSE_LATENT_FORGE_READY`: all 16
+private contracts were recovered exactly from the host vault and the four
+initial reference responses passed their independently frozen evaluators. No
+live inference ran. Baseline calibration and semantic transfer remain open.
+
 ## What you get
 
 | Capability | What it means for you |
