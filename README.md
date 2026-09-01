@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.35-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.35" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.36-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.36" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -476,6 +476,23 @@ case promised an opaque snapshot publicly while its private evaluator indexed
 snapshot internals. The raw failure remains unchanged, but baseline calibration
 is held because representation mismatch and reasoning failure are confounded.
 No further calls ran.
+
+Alpha.36 repairs the measuring instrument before asking the model again. Every
+private executable assertion must now cite one or more explicit public
+requirements, and every public requirement must be covered:
+
+```text
+for every private assertion a:  mapping(a) is a non-empty subset of public requirements
+for every public requirement r: at least one private assertion maps to r
+```
+
+The private inputs and assertion code remain outside Git and outside model
+context; their mappings, readable public requirements, and salted commitments
+are bound together. Unmapped checks, unknown requirement IDs, uncovered public
+requirements, setup-side hidden assertions, and later tampering fail closed.
+This is structural contract alignment—not proof that an assertion semantically
+entails its requirement. The four-case reference forge executes zero model
+calls and gates any later baseline screen behind a separate freeze.
 
 ## What you get
 

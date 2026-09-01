@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.35`
+Version: `10.0.0-alpha.36`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -266,6 +266,14 @@ snapshot while the private test required direct access to snapshot internals.
 The score remains immutable, but calibration is `INTERPRETATION_HELD`; no
 additional calls ran.
 
+Alpha.36 closes that evaluator seam before another inference. A host-private
+assertion cannot enter a commissioned repair evaluator unless it maps to at
+least one named public requirement, and every public requirement has measured
+coverage. The public semantic contract and private executable material remain
+separately represented but cryptographically bound. This is structural
+traceability, not semantic-entailment proof. Commissioning uses four failing
+baselines, four passing reference repairs, and zero model calls.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -302,6 +310,7 @@ additional calls ran.
 - [Canonical edit intent and private corpus closure](CANONICAL_EDIT_INTENT_SEAL.md)
 - [External-private structured repair baseline](LIVE_STRUCTURED_REPAIR_SCREEN.md)
 - [Harder external-private structured repair calibration](HARDER_STRUCTURED_REPAIR_SCREEN.md)
+- [Contract-aligned external-private repair forge](CONTRACT_ALIGNED_REPAIR_FORGE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
