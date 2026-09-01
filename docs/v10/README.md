@@ -249,6 +249,11 @@ strict edit intent, and Cortex compiles the exact patch before the withheld
 evaluator runs. The four-call task-only screen measures baseline difficulty;
 semantic transfer and general self-improvement remain untested.
 
+The prospective `OpenAI / gpt-5.6-sol` run scored 4/4. Every intent compiled
+and every isolated candidate passed its withheld evaluator. The structured
+transport works, but the fresh corpus is a screening ceiling. A harder
+external-private structured corpus is required before semantic treatment.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)

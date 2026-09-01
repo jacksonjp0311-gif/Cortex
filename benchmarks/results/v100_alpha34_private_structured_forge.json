@@ -1,0 +1,126 @@
+{
+  "schema_version": "cortex-alpha31-executable-repair-forge/1.0",
+  "state": "EXECUTABLE_REPAIR_FORGE_READY",
+  "corpus_hash": "f856ccb45f4694f173ceff8328ca1c2a487004889e9f01a88e76caf5e2ce98dc",
+  "case_count": 4,
+  "cases": [
+    {
+      "case_id": "nested_rollback_isolation",
+      "evaluator_commitment": "dad24a88086f2a7bb23016d26db7b23fd7aa4c9732889eacf0a2505635f68427",
+      "source_head": "10b31c0f40e848902f903dfc38f0e4c4d2c10285",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "888e60be2e19711a6c10c5d700deb2de03c74a8df02597e4172c364f73abff80",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "independent_quorum",
+      "evaluator_commitment": "423a3cef5e14551ed5a7dc20eb3ebf6c18ac77a55bf229b996eb7bca2ccb0404",
+      "source_head": "54fc9d74c1e506cee97a9499d5b0b679014ed937",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "c26347c9268f6b33c6039171aae5254927c1381cf989b7bf511e35109f8a5028",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "dependency_before_dependent",
+      "evaluator_commitment": "3d00dced2383578d4e25c32c8305a7aa09ad3e7636ec9e614d83aa76cfc07e58",
+      "source_head": "38c25efa038a62c4a7d4c1119bd20b4beb4c802f",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "d82e58f2ecfd31b61f436edd81092688c0fdbe7c5334e78dba548e494cff643f",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "stable_observer_snapshot",
+      "evaluator_commitment": "b0ba131ed1f861d0edea19675505a82d7f978b7bbf0a06cb10316eb1c84cec43",
+      "source_head": "5ceaa706ea9cbbef5b3e08f02fc32de497591f6f",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "cea010c546df31e2c64cc48e26b3fc5a365d0fae3efe45ee2ac6050eab3042ad",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    }
+  ],
+  "reference_repairs_measured": 4,
+  "additional_model_calls": 0,
+  "private_tests_in_model_context": false,
+  "private_reference_patches_in_model_context": false,
+  "private_bundle_persisted_in_artifact": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "next_action": "freeze_frontier_model_executable_repair_screen",
+  "claim_boundary": "A zero-call development forge with reference-patch discriminability. No model repair ability, general improvement, or mutation authority is established.",
+  "result_hash": "2b4490620a514e8099e5eea86f8e9cd5ce34c625794b457059aaed2386937354",
+  "source_commit": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5",
+  "public_corpus": {
+    "schema_version": "cortex-executable-repair-corpus/1.0",
+    "development_only": true,
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "nested_rollback_isolation",
+        "task": "Repair Ledger.add_tag so a failed persistence attempt restores the complete prior state, including nested mutable values.",
+        "files": {
+          "module.py": "class Ledger:\n    def __init__(self):\n        self.state = {\"tags\": [\"stable\"], \"revision\": 1}\n\n    def add_tag(self, tag, persist):\n        before = dict(self.state)\n        self.state[\"tags\"].append(tag)\n        self.state[\"revision\"] += 1\n        if not persist(self.state):\n            self.state = before\n            return False\n        return True\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "dad24a88086f2a7bb23016d26db7b23fd7aa4c9732889eacf0a2505635f68427"
+      },
+      {
+        "case_id": "independent_quorum",
+        "task": "Repair has_quorum so approval requires two approving votes from distinct source_root values; duplicate observations from one root count once.",
+        "files": {
+          "module.py": "def has_quorum(votes):\n    approvals = 0\n    for vote in votes:\n        if vote.get(\"approve\"):\n            approvals += 1\n    return approvals >= 2\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "423a3cef5e14551ed5a7dc20eb3ebf6c18ac77a55bf229b996eb7bca2ccb0404"
+      },
+      {
+        "case_id": "dependency_before_dependent",
+        "task": "Repair dependency_order so every dependency appears before the node that requires it, while shared dependencies appear only once.",
+        "files": {
+          "module.py": "def dependency_order(graph, root):\n    seen = set()\n    result = []\n\n    def visit(node):\n        if node in seen:\n            return\n        seen.add(node)\n        result.append(node)\n        for dependency in graph.get(node, []):\n            visit(dependency)\n\n    visit(root)\n    return result\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "3d00dced2383578d4e25c32c8305a7aa09ad3e7636ec9e614d83aa76cfc07e58"
+      },
+      {
+        "case_id": "stable_observer_snapshot",
+        "task": "Repair EventBus.emit so handlers present at emission start each run exactly once even when a handler removes another handler during delivery.",
+        "files": {
+          "module.py": "class EventBus:\n    def __init__(self):\n        self.handlers = []\n\n    def subscribe(self, handler):\n        self.handlers.append(handler)\n\n    def unsubscribe(self, handler):\n        self.handlers.remove(handler)\n\n    def emit(self, event):\n        for handler in self.handlers:\n            handler(event)\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "b0ba131ed1f861d0edea19675505a82d7f978b7bbf0a06cb10316eb1c84cec43"
+      }
+    ],
+    "private_tests_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "A zero-call development forge with reference-patch discriminability. No model repair ability, general improvement, or mutation authority is established.",
+    "corpus_hash": "f856ccb45f4694f173ceff8328ca1c2a487004889e9f01a88e76caf5e2ce98dc"
+  }
+}

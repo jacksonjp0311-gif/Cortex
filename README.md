@@ -449,6 +449,20 @@ the task-only baseline: floor, calibrated, or ceiling. No memory or competence
 treatment is projected, so this phase cannot by itself establish Cortex
 improvement.
 
+The prospective run with `OpenAI / gpt-5.6-sol` scored `4/4`. All four model
+intents compiled cleanly and all four isolated candidates passed their withheld
+tests. This confirms that structured edit transport repaired the two invalid-
+diff failures seen in alpha.32, while also revealing a new ceiling:
+
+```text
+alpha.32 raw model diff       2 / 4  calibrated
+alpha.34 Cortex-compiled edit 4 / 4  ceiling
+```
+
+That is an observed interface/corpus contrast, not a causal Cortex competence
+gain. The next valid experiment must forge
+harder external-private structured tasks before projecting semantic treatment.
+
 ## What you get
 
 | Capability | What it means for you |

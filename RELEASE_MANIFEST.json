@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.33",
+  "release": "Cortex v10.0.0-alpha.34",
   "release_class": "advanced research prototype",
-  "source_commit": "59509f1650c9db7390aafd56f6310ac8b8d83d8d",
-  "runtime_parent": "59509f1650c9db7390aafd56f6310ac8b8d83d8d",
+  "source_commit": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5",
+  "runtime_parent": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/CANONICAL_EDIT_INTENT_SEAL.md",
+  "phase_document": "docs/v10/LIVE_STRUCTURED_REPAIR_SCREEN.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -79,6 +79,9 @@
     "executable_repair_calibration": "the 2/4 result lies in the predeclared 30..70 percent information window; two failed outputs expressed intended edits but did not satisfy the frozen Git patch interface, so scores remain FAIL; Cortex treatment and model improvement were not tested",
     "canonical_edit_intent": "strict provider-neutral old/new source intents compile deterministically into exact canonical patch proposals; ambiguous preimages, target escape, unknown caller fields, and stale source fail closed while all authority remains false",
     "private_corpus_correction": "alpha.31 private strings existed in forge source history although absent from the artifact and alpha.32 no-tool prompt; alpha.32 scores remain unchanged, the corpus is retired from future held-out use, and future private specs must enter from outside the repository",
+    "external_private_structured_forge": "four fresh executable task specifications originated outside Git; all unchanged baselines failed, all host reference repairs passed, private evaluators remained in the host vault, and zero model calls were used for commissioning",
+    "live_structured_repair_screen": "four no-tool OpenAI gpt-5.6-sol calls produced four strict edit intents; Cortex compiled all four canonical diffs and all four isolated candidates passed their withheld executable evaluators; canonical reconstruction passed",
+    "structured_repair_disposition": "the 4/4 task-only result is a development screening ceiling; it demonstrates working structured transport but does not establish semantic transfer, general model improvement, or autonomous self-improvement; forge harder external-private structured tasks next",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -91,5 +94,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.32 live executable repair baseline"
+  "supersedes": "Cortex v10.0.0-alpha.33 canonical edit intent seal"
 }

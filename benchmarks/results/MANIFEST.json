@@ -1,6 +1,6 @@
 {
-  "benchmark_suite_hash": "a725793e8e46f7259ff3eed0aacae0bcb7ce05713e739a2817dfbf0d9d516fc4",
-  "cortex_version": "10.0.0a33",
+  "benchmark_suite_hash": "16fc45ce10474d2b7667840176bb87e4b193cada4b3b22a76d8cc1e9c2c4f4c1",
+  "cortex_version": "10.0.0a34",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
     "Artifacts span historical results, fresh controlled reruns, development-only frontier calibrations, and unexecuted task-forge and commissioning manifests.",
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 39,
+  "result_count": 41,
   "results": [
     {
       "bytes": 3346,
@@ -173,6 +173,18 @@
       "sha256": "7bbbb862c5d5853e4eb86ee38b5cf40478c9c14456c997a193ce68b43947fe69"
     },
     {
+      "bytes": 2122,
+      "metadata_state": "development_live_structured_repair_screen",
+      "path": "benchmarks/results/v100_alpha34_live_structured_repair_screen.json",
+      "sha256": "db6c2ec53c75c645c311de57115e905865e6a79c5dfeedb51a411979a7855f2e"
+    },
+    {
+      "bytes": 6783,
+      "metadata_state": "zero_call_executable_repair_forge_ready",
+      "path": "benchmarks/results/v100_alpha34_private_structured_forge.json",
+      "sha256": "47dd39a15a9aed507f933924f1f80d289d565cb0911f1b77d62866ccf703fbbf"
+    },
+    {
       "bytes": 4628,
       "metadata_state": "fresh_controlled_rerun_partial_metadata",
       "path": "benchmarks/results/v980_rerun/deferred_vs_eager.json",
@@ -250,5 +262,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "59509f1650c9db7390aafd56f6310ac8b8d83d8d"
+  "source_commit": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5"
 }

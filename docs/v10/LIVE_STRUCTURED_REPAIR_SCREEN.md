@@ -1,6 +1,6 @@
 # Alpha.34 — External-Private Structured Repair Baseline
 
-Status before live execution: `STRUCTURED_REPAIR_SCREEN_READY`
+Status: `STRUCTURED_REPAIR_SCREEN_RECONSTRUCTED — SCREENING_CEILING`
 
 ## Purpose
 
@@ -74,3 +74,27 @@ semantic treatment. Other outcomes change task difficulty under a new seal.
 The phase uses the alpha.32–34 repair chain tests, lint, targeted compile, and
 `git diff --check`. A live result is documented only after exactly four calls
 execute and the complete receipt graph reconstructs successfully.
+
+## Observed live result
+
+The operator-selected `OpenAI / gpt-5.6-sol` adapter executed exactly four
+calls against implementation commit `f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5`.
+
+```text
+nested rollback isolation      PASS
+independent quorum             PASS
+dependency before dependent    PASS
+stable observer snapshot       PASS
+                               ────
+task-only baseline             4 / 4
+```
+
+Every public response satisfied the structured intent contract, compiled
+without error, and produced a candidate that crossed the unchanged-fail to
+candidate-pass executable boundary. Canonical reconstruction passed with no
+errors.
+
+This is a ceiling. It shows that deterministic edit compilation removed the
+transport failures observed in alpha.32, but it does not show that Cortex
+semantic context improves the model. The corpus must move harder under a new
+seal before any sham/relevant treatment is scientifically useful.
