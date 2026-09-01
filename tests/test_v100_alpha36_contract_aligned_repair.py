@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -18,8 +19,17 @@ from cortex.contract_aligned_repair import (
     verify_contract_aligned_repair_bundle,
     verify_contract_aligned_repair_forge_result,
 )
+from cortex.edit_intent import INTENT_SCHEMA
+from cortex.harder_contract_aligned_forge import (
+    freeze_harder_contract_aligned_forge,
+    verify_harder_contract_aligned_forge,
+)
+from cortex.native_agent import CapabilityGrant, ToolRegistry
 from cortex.store import Store
-from cortex.structured_repair_screen import freeze_structured_repair_screen
+from cortex.structured_repair_screen import (
+    execute_structured_repair_screen,
+    freeze_structured_repair_screen,
+)
 from cortex.will import register_will_principal
 
 
@@ -94,6 +104,17 @@ class ExternalAlignedAdapter:
     model_version = "2026-09"
     adapter_id = "tests.external-aligned-adapter"
     adapter_version = "1"
+
+    def __init__(self, answers: list[str] | None = None) -> None:
+        self.answers = list(answers or [])
+
+    def invoke_agent(self, request):
+        return {
+            "request_hash": request.request_hash,
+            "public_output": self.answers.pop(0),
+            "finish_reason": "stop",
+            "token_usage": {"input_tokens": 10, "output_tokens": 10},
+        }
 
 
 class Alpha36ContractAlignedRepairTests(unittest.TestCase):
@@ -237,6 +258,125 @@ class Alpha36ContractAlignedRepairTests(unittest.TestCase):
                         forge_artifact=changed,
                         private_bundle=private,
                         adapter=adapter,
+                    )
+            finally:
+                store.close()
+
+    def test_harder_forge_requires_and_reconstructs_canonical_aligned_ceiling(self) -> None:
+        specs = []
+        for index in range(4):
+            case = _case()
+            case["case_id"] = f"prior_{index}"
+            specs.append(case)
+        prior_public, prior_private = build_contract_aligned_repair_bundle(
+            secret_seed="alpha38-prior-secret", case_specs=specs
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prior_forge = commission_contract_aligned_repair_forge(
+                prior_public, prior_private, root / "prior_forge"
+            )
+            prior_forge["public_corpus"] = prior_public
+            prior_forge["result_hash"] = _sha(
+                {key: value for key, value in prior_forge.items() if key != "result_hash"}
+            )
+            host = root / "host"
+            host.mkdir()
+            (host / "README.md").write_text("alpha38\n", encoding="utf-8")
+            store = Store(ensure_home(root / "home") / "cortex.db")
+            try:
+                repo = "Alpha38Host"
+                bootstrap_repository(root / "home", store, host, repo)
+                intent = json.dumps(
+                    {
+                        "schema_version": INTENT_SCHEMA,
+                        "summary": "reject negative amount",
+                        "edits": [
+                            {
+                                "path": "module.py",
+                                "old": "    def add(self, amount):\n",
+                                "new": (
+                                    "    def add(self, amount):\n"
+                                    "        if amount < 0:\n"
+                                    "            raise ValueError(\"negative amount\")\n"
+                                ),
+                            }
+                        ],
+                    }
+                )
+                adapter = ExternalAlignedAdapter([intent] * 4)
+                register_will_principal(
+                    store, repo, "alpha38-operator", "Alpha.38 operator", secret="secret"
+                )
+                register_adapter_provenance(
+                    store,
+                    repo,
+                    adapter,
+                    boundary_kind="external_api",
+                    principal_id="alpha38-operator",
+                    principal_secret="secret",
+                    endpoint_descriptor={"transport": "test_external_boundary"},
+                    model_family="frontier-aligned-family",
+                    capability_class="structured_code_repair",
+                )
+                prereg = freeze_structured_repair_screen(
+                    store,
+                    repo,
+                    forge_artifact=prior_forge,
+                    private_bundle=prior_private,
+                    adapter=adapter,
+                )
+                now = time.time()
+                prior_result = execute_structured_repair_screen(
+                    store,
+                    repo,
+                    preregistration=prereg,
+                    private_bundle=prior_private["executable_private_bundle"],
+                    adapter=adapter,
+                    tools=ToolRegistry(),
+                    grant=CapabilityGrant(
+                        workspace_root=str(host),
+                        allowed_tools=(),
+                        principal_id="alpha38-test",
+                        purpose="canonical prior ceiling",
+                        issued_at=now,
+                        expires_at=now + 120,
+                        max_tool_calls=0,
+                        max_total_tool_seconds=0.0,
+                    ),
+                )
+                harder_specs = []
+                for index in range(4):
+                    case = _case()
+                    case["case_id"] = f"harder_{index}"
+                    harder_specs.append(case)
+                harder_public, harder_private = build_contract_aligned_repair_bundle(
+                    secret_seed="alpha38-harder-secret", case_specs=harder_specs
+                )
+                harder = freeze_harder_contract_aligned_forge(
+                    store,
+                    repo,
+                    prior_result_receipt_hash=prior_result["receipt_hash"],
+                    public_corpus=harder_public,
+                    private_bundle=harder_private,
+                    workspace=root / "harder_forge",
+                    source_commit="a" * 40,
+                )
+                audit = verify_harder_contract_aligned_forge(
+                    store, repo, harder, private_bundle=harder_private
+                )
+                self.assertTrue(audit["valid"], audit["errors"])
+                self.assertEqual(harder["state"], "HARDER_CONTRACT_ALIGNED_FORGE_READY")
+                self.assertEqual(harder["additional_model_calls"], 0)
+                with self.assertRaisesRegex(ValueError, "canonical contract-aligned"):
+                    freeze_harder_contract_aligned_forge(
+                        store,
+                        repo,
+                        prior_result_receipt_hash="f" * 64,
+                        public_corpus=harder_public,
+                        private_bundle=harder_private,
+                        workspace=root / "rejected",
+                        source_commit="a" * 40,
                     )
             finally:
                 store.close()

@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.37`
+Version: `10.0.0-alpha.38`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -285,6 +285,11 @@ four structured intents compiled and all four candidates passed. The panel is a
 screening ceiling, so baseline calibration and semantic transfer remain
 unestablished; the next action is a harder contract-aligned forge, not treatment.
 
+Alpha.38 implements that move-harder transition. The forge independently
+reconstructs the canonical alpha.37 `4/4` aligned ceiling, binds its model and
+alignment provenance, and commissions a fresh host-private panel without model
+calls. A caller-supplied ceiling or unrelated receipt cannot open the forge.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -323,6 +328,7 @@ unestablished; the next action is a harder contract-aligned forge, not treatment
 - [Harder external-private structured repair calibration](HARDER_STRUCTURED_REPAIR_SCREEN.md)
 - [Contract-aligned external-private repair forge](CONTRACT_ALIGNED_REPAIR_FORGE.md)
 - [Contract-aligned frontier baseline](CONTRACT_ALIGNED_FRONTIER_BASELINE.md)
+- [Harder contract-aligned repair forge](HARDER_CONTRACT_ALIGNED_REPAIR_FORGE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.37-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.37" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.38-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.38" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -509,6 +509,14 @@ private evaluator. Canonical reconstruction found no binding error. The result
 is therefore a genuine development ceiling—not evidence of semantic transfer.
 No sham or relevant lesson was projected, and no additional calls are valid on
 this panel.
+
+Alpha.38 turns that ceiling into a canonical move-harder transition. Cortex
+must reconstruct alpha.37's exact aligned `4/4` result before commissioning a
+fresh outside-Git panel. The new tasks deepen idempotent transaction identity,
+revision-aware negative caching, per-key optimistic concurrency, and atomic
+expiring reservations. As before, every private assertion maps to readable
+public requirements and every unchanged baseline/reference repair pair must
+discriminate before any new model call can open.
 
 ## What you get
 
