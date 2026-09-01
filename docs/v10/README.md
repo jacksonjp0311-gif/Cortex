@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.26`
+Version: `10.0.0-alpha.27`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -178,6 +178,13 @@ score. Corroborating evidence is accepted, unsupported or reversed relations
 fail closed, the alpha.24/25 history remains immutable, and no model call is
 spent. The next permitted step is a zero-call intermediate task forge.
 
+Alpha.27 builds that forge. Three answer-sealed four-case panels increase typed
+relational depth while preserving the exact evidence-sufficiency policy. The
+public artifact contains task events and salted contract commitments, never the
+private expected graph. No call executes and no screen is pre-authorized. A
+future separately frozen screen begins at `bridge_low` and stops if its success
+rate enters the 30–70% information window.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -205,6 +212,7 @@ spent. The next permitted step is a zero-call intermediate task forge.
 - [Harder live semantic causal screen v2](HARDER_LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
 - [Semantic instrument sufficiency audit](SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md)
 - [Relational causal proof and evidence minimality](RELATIONAL_CAUSAL_PROOF.md)
+- [Intermediate relational task forge](INTERMEDIATE_RELATIONAL_FORGE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

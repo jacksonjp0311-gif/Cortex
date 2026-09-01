@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.26-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.26" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.27-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.27" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -286,6 +286,21 @@ prose cannot change the score; reversing a temporal edge, omitting a causal
 edge, inventing a relation, replaying evidence out of order, or adding a caller
 success field fails closed. The previous alpha.24 scores remain immutable.
 This establishes a better measurement instrument, not model improvement.
+
+Alpha.27 uses that instrument to forge three new four-case development panels.
+The evidence law is held constant while relational depth increases:
+
+```text
+bridge-low   4 causal + 2 repair relations
+bridge-mid   5 causal + 2 repair relations
+bridge-high  7 causal + 3 repair relations
+```
+
+Each band uses the same two minimal evidence proof paths. This means a future
+difficulty change cannot be explained merely by demanding another receipt.
+The sequential rule screens one band at a time and stops when success lies in
+the 30–70% information window. Alpha.27 spends zero calls and grants no future
+call authority; the first four-call screen requires a separate freeze.
 
 ## What you get
 

@@ -34,7 +34,7 @@ from .tool_fabric import (
 
 SCHEMA = "cortex-native-agent/1.0"
 EVENT_SCHEMA = "cortex-agent-event/1.0"
-VERSION = "10.0.0-alpha.26"
+VERSION = "10.0.0-alpha.27"
 ZERO_HASH = "0" * 64
 MAX_PROVIDER_OUTPUT_BYTES = 1_048_576
 MAX_TOOL_OUTPUT_BYTES = 262_144

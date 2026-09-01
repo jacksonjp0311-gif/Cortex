@@ -178,6 +178,20 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "relational_causal_evaluator_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha27-intermediate-relational-forge/1.0":
+                metadata_state = (
+                    "zero_call_intermediate_relational_forge_ready"
+                    if payload.get("state") == "INTERMEDIATE_RELATIONAL_FORGE_READY"
+                    and payload.get("panel_count") == 3
+                    and payload.get("cases_per_panel") == 4
+                    and payload.get("planned_live_calls") == 0
+                    and payload.get("maximum_future_calls_without_new_authority") == 0
+                    and payload.get("historical_scores_rewritten") is False
+                    and payload.get("evidence_policy_constant_across_bands") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "intermediate_relational_forge_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
