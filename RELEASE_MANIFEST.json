@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.37",
+  "release": "Cortex v10.0.0-alpha.38",
   "release_class": "advanced research prototype",
-  "source_commit": "44cae5b3b88a3a5a3aa2e106b69a96986a221ed0",
-  "runtime_parent": "44cae5b3b88a3a5a3aa2e106b69a96986a221ed0",
+  "source_commit": "79c16f15e0a70e2c9092ef50e87f8354a5344ea5",
+  "runtime_parent": "79c16f15e0a70e2c9092ef50e87f8354a5344ea5",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/CONTRACT_ALIGNED_FRONTIER_BASELINE.md",
+  "phase_document": "docs/v10/HARDER_CONTRACT_ALIGNED_REPAIR_FORGE.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -92,6 +92,9 @@
     "contract_aligned_live_baseline": "four no-tool task-only OpenAI gpt-5.6-sol calls were bound to the exact alpha.36 alignment result, public and executable corpus identities, host-private evaluator, adapter provenance, and structured edit contract; all four trajectories reconstructed",
     "contract_aligned_live_result": "all four structured intents compiled and all four isolated candidates passed their mapped private evaluators, yielding an immutable 4/4 screening ceiling with zero transport failures",
     "contract_aligned_next_run": "semantic treatment remains blocked by ceiling; forge a harder external-private panel under the same explicit requirement-to-assertion law before any sham or relevant lesson calls",
+    "harder_contract_transition": "the exact alpha.37 result and preregistration receipts, 4/4 ceiling, model identity, and alignment-result hash are reconstructed before move-harder can open; caller labels and unrelated receipts cannot substitute",
+    "harder_contract_forge": "four fresh outside-Git defects expose 16 public requirements bound to 15 private assertion groups; all four unchanged baselines failed, all four host reference repairs passed, and zero model calls executed",
+    "harder_contract_boundary": "forge readiness establishes evaluator discriminability and structural traceability only; frontier-model calibration, semantic transfer, general improvement, and self-improvement remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -104,5 +107,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.36 contract-aligned repair forge"
+  "supersedes": "Cortex v10.0.0-alpha.37 contract-aligned frontier baseline"
 }

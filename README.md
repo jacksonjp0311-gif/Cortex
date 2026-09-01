@@ -518,6 +518,11 @@ expiring reservations. As before, every private assertion maps to readable
 public requirements and every unchanged baseline/reference repair pair must
 discriminate before any new model call can open.
 
+Commissioning passed: the prior ceiling reconstructed, all 16 public
+requirements have mapped private coverage, all four unchanged baselines fail,
+and all four host reference repairs pass. No model call executed. The harder
+panel is ready for a separately frozen frontier baseline.
+
 ## What you get
 
 | Capability | What it means for you |

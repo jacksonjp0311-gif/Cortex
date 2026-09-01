@@ -392,6 +392,29 @@ def main() -> int:
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     else "live_contract_aligned_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha38-harder-contract-aligned-forge/1.0":
+                commissioned = payload.get("contract_forge_result") or {}
+                prior_screen = payload.get("prior_screen") or {}
+                metadata_state = (
+                    "zero_call_harder_contract_aligned_forge_ready"
+                    if payload.get("state") == "HARDER_CONTRACT_ALIGNED_FORGE_READY"
+                    and payload.get("difficulty_transition") == "move_harder"
+                    and prior_screen.get("state") == "screening_ceiling"
+                    and prior_screen.get("success_count") == 4
+                    and prior_screen.get("case_count") == 4
+                    and commissioned.get("state") == "CONTRACT_ALIGNED_REPAIR_FORGE_READY"
+                    and commissioned.get("case_count") == 4
+                    and commissioned.get("requirement_count") == 16
+                    and commissioned.get("assertion_count") == 15
+                    and commissioned.get("reference_repairs_measured") == 4
+                    and commissioned.get("additional_model_calls") == 0
+                    and payload.get("additional_model_calls") == 0
+                    and payload.get("private_bundle_persisted_in_artifact") is False
+                    and payload.get("baseline_calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    else "harder_contract_aligned_forge_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

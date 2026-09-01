@@ -290,6 +290,11 @@ reconstructs the canonical alpha.37 `4/4` aligned ceiling, binds its model and
 alignment provenance, and commissions a fresh host-private panel without model
 calls. A caller-supplied ceiling or unrelated receipt cannot open the forge.
 
+Commissioning reconstructed the prior ceiling and measured reference repairs
+on all four fresh cases. Sixteen public requirements bind 15 private assertion
+groups; four baselines failed, four reference candidates passed, and zero model
+calls executed. The harder live screen still requires a separate freeze.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)

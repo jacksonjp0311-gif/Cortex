@@ -44,3 +44,19 @@ instrument. It does not establish frontier-model difficulty, baseline
 calibration, semantic transfer, model improvement, or autonomous self-improvement.
 A new four-call task-only screen requires a separate freeze after this artifact
 is committed.
+
+## Commissioning result
+
+```text
+canonical prior ceiling             PASS
+fresh cases                         4
+public requirements                16
+private assertion groups           15
+unchanged baselines failing         4 / 4
+reference repairs passing           4 / 4
+model calls                         0
+state                HARDER_CONTRACT_ALIGNED_FORGE_READY
+```
+
+Result hash:
+`d7ab1eddb02583728527886f1cc6300f3d334cf25dd2c89821876f91a2e9241d`
