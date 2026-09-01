@@ -1,0 +1,166 @@
+{
+  "schema_version": "cortex-alpha36-contract-aligned-repair-forge/1.0",
+  "state": "CONTRACT_ALIGNED_REPAIR_FORGE_READY",
+  "corpus_hash": "f88cfd12879bfe1d3099f145c7246478697586970682a4cd6a658ca4085776ee",
+  "executable_corpus_hash": "51f41d62e65a1a3a623bd8091069c37ecf7e1a79f03ded68483c3eac4f15f9e6",
+  "case_count": 4,
+  "requirement_count": 11,
+  "assertion_count": 10,
+  "all_private_assertions_publicly_mapped": true,
+  "all_public_requirements_covered": true,
+  "reference_repairs_measured": 4,
+  "executable_result_hash": "b6c30ec16b5dcfb2221b119ded1c8c1587547f8ff91b56368f0228b3657ad2c5",
+  "additional_model_calls": 0,
+  "private_assertions_in_model_context": false,
+  "private_reference_patches_in_model_context": false,
+  "private_bundle_persisted_in_artifact": false,
+  "structural_contract_alignment_established": true,
+  "semantic_entailment_established": false,
+  "baseline_calibration_established": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "next_action": "freeze_contract_aligned_baseline_screen",
+  "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+  "result_hash": "347bb3387a17d7db4ef6333826491e8b243731528d350c882b19af34062502cb",
+  "source_commit": "60c630de0720e6d2842f40c61595aef78f113cf1",
+  "public_corpus": {
+    "schema_version": "cortex-contract-aligned-repair-corpus/1.0",
+    "development_only": true,
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "bounded_budget",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "consume(amount) accepts a positive amount not greater than remaining, decrements remaining, and returns True."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "A nonpositive amount raises ValueError and leaves remaining unchanged."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "An amount greater than remaining returns False and leaves remaining unchanged."
+          }
+        ],
+        "requirement_commitment": "2fd635477f6ad47c2c32a426992a9766175c67109be43f6838454b623554ad57",
+        "assertion_count": 3,
+        "alignment_commitment": "bfcf8282ce6ef421ab20f348d211b4f37d5fd329a370105141eab2b4e129ff2f",
+        "executable_case": {
+          "case_id": "bounded_budget",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] consume(amount) accepts a positive amount not greater than remaining, decrements remaining, and returns True.\n[R2] A nonpositive amount raises ValueError and leaves remaining unchanged.\n[R3] An amount greater than remaining returns False and leaves remaining unchanged.",
+          "files": {
+            "module.py": "class Budget:\n    def __init__(self, remaining):\n        self.remaining = remaining\n\n    def consume(self, amount):\n        self.remaining -= amount\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "0e4af5e8eedb2158436d0e746a001dd6220f0aa39fe5deb63ca7dd50254ac89e"
+        }
+      },
+      {
+        "case_id": "write_invalidates_cache",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "read(key) may reuse a cached value until that key is written."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "write(key, value) updates the source and invalidates only that key's cached value before the next read."
+          }
+        ],
+        "requirement_commitment": "0b20e3831c53b003e401b0d66099c1e93cfba1edb51206ca21484d18d7080e70",
+        "assertion_count": 2,
+        "alignment_commitment": "a31fde082cf69ac20802969e1328d332b36c80953a5d91909c700d28b5a2188f",
+        "executable_case": {
+          "case_id": "write_invalidates_cache",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] read(key) may reuse a cached value until that key is written.\n[R2] write(key, value) updates the source and invalidates only that key's cached value before the next read.",
+          "files": {
+            "module.py": "class Cache:\n    def __init__(self):\n        self.source = {}\n        self.cached = {}\n\n    def read(self, key):\n        if key not in self.cached:\n            self.cached[key] = self.source.get(key)\n        return self.cached[key]\n\n    def write(self, key, value):\n        self.source[key] = value\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "29d88b74f96475162c9fdae26052664f973f952c7c71334745fdc205b1e59214"
+        }
+      },
+      {
+        "case_id": "normalized_rotation",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "rotate(items, count) returns a new list rotated left by count positions without mutating items."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "Counts are normalized modulo the list length, including negative counts."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "An empty input returns an empty list for every integer count."
+          }
+        ],
+        "requirement_commitment": "a23afe055e5d4d9b77771049258dee3d2cd3ea5406ee5bbe82a517bd8611438a",
+        "assertion_count": 3,
+        "alignment_commitment": "dc8a76be01d6ea7bb97df2e8579442d9a2816d7e82326ae105befd17fc154c69",
+        "executable_case": {
+          "case_id": "normalized_rotation",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] rotate(items, count) returns a new list rotated left by count positions without mutating items.\n[R2] Counts are normalized modulo the list length, including negative counts.\n[R3] An empty input returns an empty list for every integer count.",
+          "files": {
+            "module.py": "def rotate(items, count):\n    return items[count:] + items[:count]\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "9790d81b380d5f3c323f8b8241e7db2a50408415aeec85d17ef5d65523753c09"
+        }
+      },
+      {
+        "case_id": "owned_register_snapshot",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "begin() returns a stable dict snapshot with exactly store, version, and value fields; store is an opaque identity owned by that Register."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "commit(snapshot, value) accepts only a well-formed snapshot from the same Register at its current version."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "A rejected commit returns False and changes neither value nor version; an accepted commit updates value, advances version once, and returns True."
+          }
+        ],
+        "requirement_commitment": "df1d280d3b6b44258d6ddfeb8f63dbe935e8014ac44d5e9e397026b7a9a161bd",
+        "assertion_count": 2,
+        "alignment_commitment": "fcc08dbb0bb04e212d5725ef93cfacac8eb0b25c87a2510099a756c9c5761766",
+        "executable_case": {
+          "case_id": "owned_register_snapshot",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] begin() returns a stable dict snapshot with exactly store, version, and value fields; store is an opaque identity owned by that Register.\n[R2] commit(snapshot, value) accepts only a well-formed snapshot from the same Register at its current version.\n[R3] A rejected commit returns False and changes neither value nor version; an accepted commit updates value, advances version once, and returns True.",
+          "files": {
+            "module.py": "class Register:\n    def __init__(self, value):\n        self.value = value\n        self.version = 0\n\n    def begin(self):\n        return {\"version\": self.version, \"value\": self.value}\n\n    def commit(self, snapshot, value):\n        if snapshot[\"version\"] != self.version:\n            return False\n        self.value = value\n        self.version += 1\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "6ba1d246fa329dcf0a585e56c53d9c59f6cb661fefc6014cc448f09346761d98"
+        }
+      }
+    ],
+    "executable_corpus_hash": "51f41d62e65a1a3a623bd8091069c37ecf7e1a79f03ded68483c3eac4f15f9e6",
+    "private_assertions_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+    "corpus_hash": "f88cfd12879bfe1d3099f145c7246478697586970682a4cd6a658ca4085776ee"
+  }
+}

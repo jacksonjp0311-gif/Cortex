@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.35",
+  "release": "Cortex v10.0.0-alpha.36",
   "release_class": "advanced research prototype",
-  "source_commit": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
-  "runtime_parent": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
+  "source_commit": "60c630de0720e6d2842f40c61595aef78f113cf1",
+  "runtime_parent": "60c630de0720e6d2842f40c61595aef78f113cf1",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/HARDER_STRUCTURED_REPAIR_SCREEN.md",
+  "phase_document": "docs/v10/CONTRACT_ALIGNED_REPAIR_FORGE.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -86,6 +86,9 @@
     "harder_structured_screen": "four no-tool OpenAI gpt-5.6-sol calls produced four valid structured intents; three candidates passed withheld evaluators and one failed, yielding an immutable canonically reconstructed 3/4 screening ceiling",
     "harder_structured_instrument_audit": "zero additional calls; the sole failed MVCC case declared an opaque snapshot publicly while its private evaluator indexed internal snapshot data, so the raw score remains unchanged but baseline interpretation is held as representation-confounded",
     "harder_structured_next_run": "forge a new contract-aligned external-private panel; every private observable must be justified by the public task contract before further live calls or semantic treatment",
+    "contract_aligned_evaluator": "every private executable assertion is structurally mapped to one or more explicit public requirements and every public requirement has assertion coverage; unmapped, unknown, uncovered, setup-hidden, or tampered checks fail closed",
+    "contract_aligned_commissioning": "four fresh outside-Git cases expose 11 public requirements bound to 10 private assertion groups; all four unchanged baselines failed, all four host reference repairs passed, and zero model calls executed",
+    "contract_alignment_boundary": "host-authored requirement mapping establishes structural traceability, not semantic entailment, baseline calibration, semantic transfer, general model improvement, or autonomous self-improvement",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -98,5 +101,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.34 external-private structured repair baseline"
+  "supersedes": "Cortex v10.0.0-alpha.35 harder structured repair calibration"
 }
