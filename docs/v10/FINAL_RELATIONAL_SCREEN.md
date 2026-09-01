@@ -37,3 +37,23 @@ screen permits only a later, separately authorized semantic-treatment trial.
 
 This screen is development evidence, not confirmation of semantic transfer or
 Cortex improvement. All authority flags remain false.
+
+## Result
+
+The implementation was frozen at commit
+`307e075949d5dfc4588149b639ca4731b6e90d72` before inference. Four calls then
+ran through the host-registered `OpenAI / gpt-5.6-sol` boundary:
+
+```text
+successes                 0 / 4
+unknown                   0
+screen                    screening_floor
+canonical reconstruction PASS
+result receipt            7566fa045d51a0af01614054dc03a054ef90ceebe9461b0dff9ec15fb98ccfdd
+```
+
+All answers were valid JSON and supplied an accepted evidence proof. Each
+omitted the frozen direct proposition `stale_snapshot causes derived_artifact`;
+one also omitted the required validation-before-derived/publication ordering.
+The scores are preserved. The synthetic semantic benchmark is retired and no
+evaluator v5 is authorized.

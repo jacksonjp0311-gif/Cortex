@@ -208,7 +208,9 @@ ruler-building phase.
 Alpha.30 is the final prospective screen. It binds v4 before four unseen
 `bridge_mid` calls, forbids further ruler revision, and precommits the outcome:
 2/4 opens a separately authorized treatment experiment; every other result
-retires the synthetic semantic line in favor of executable code tasks.
+retires the synthetic semantic line in favor of executable code tasks. The live
+screen returned 0/4 with zero UNKNOWN outcomes and valid canonical
+reconstruction, so retirement is now active.
 
 ## Documents
 

@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.29",
+  "release": "Cortex v10.0.0-alpha.30",
   "release_class": "advanced research prototype",
-  "source_commit": "2310fe9285352b2f21aff07dc1063ccca53b0885",
-  "runtime_parent": "2310fe9285352b2f21aff07dc1063ccca53b0885",
+  "source_commit": "307e075949d5dfc4588149b639ca4731b6e90d72",
+  "runtime_parent": "307e075949d5dfc4588149b639ca4731b6e90d72",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/RELATIONAL_EQUIVALENCE_CLOSURE.md",
+  "phase_document": "docs/v10/FINAL_RELATIONAL_SCREEN.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -71,6 +71,8 @@
     "relational_equivalence_policy": "finite host-frozen alternatives independently satisfy each required proposition; bounded grounded additions are retained but noncompensating, while contradictions, unknown entities or predicates, missing propositions, and caller verdicts fail closed",
     "relational_equivalence_commissioning": "RELATIONAL_EQUIVALENCE_V4_READY; 9/9 deterministic adversarial checks passed and the zero-call post-hoc alpha.28 shadow accepted 4/4 responses while preserving immutable v3 scores of 0/4",
     "relational_equivalence_boundary": "the 4/4 shadow diagnoses exact-edge representation collapse but is post-hoc and cannot establish baseline difficulty, semantic transfer, or model improvement; ruler building is closed",
+    "final_relational_screen": "four previously unseen bridge-mid cases were frozen against evaluator v4 before four OpenAI gpt-5.6-sol calls; canonical reconstruction passed, the prospective score was 0/4 with zero UNKNOWN outcomes, and semantic transfer was not tested",
+    "synthetic_semantic_retirement": "all four valid structured responses omitted the same frozen direct causal proposition and one also omitted a repair-ordering proposition; historical and prospective scores remain unchanged, evaluator v5 is forbidden, and the next surface is executable code tasks with frozen external tests",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -83,5 +85,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.28 empirical relational screen and instrument audit"
+  "supersedes": "Cortex v10.0.0-alpha.29 deterministic relational equivalence closure"
 }

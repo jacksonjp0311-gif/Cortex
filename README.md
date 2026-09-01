@@ -371,6 +371,24 @@ treatment, and four-call ceiling are frozen before inference. Only 2/4 lies in
 the declared 30–70% information window. Every other result—including UNKNOWN—
 retires the synthetic semantic benchmark. No evaluator v5 is permitted.
 
+The prospective `OpenAI / gpt-5.6-sol` screen produced a clean 0/4 floor with
+zero UNKNOWN outcomes:
+
+```text
+prospective cases              4 unseen bridge-mid
+successes                      0 / 4
+unknown                        0
+canonical reconstruction       PASS
+synthetic benchmark            RETIRED
+```
+
+Every public response was valid structured JSON with a sufficient evidence
+proof. All four omitted the same frozen proposition linking the stale snapshot
+as a direct cause of the derived artifact; one also omitted the required
+validation-before-derived/publication ordering. Cortex preserves those misses
+instead of creating evaluator v5. The next empirical surface is executable code
+repair judged by independently frozen tests.
+
 ## What you get
 
 | Capability | What it means for you |
