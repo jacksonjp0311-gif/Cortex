@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.24",
+  "release": "Cortex v10.0.0-alpha.25",
   "release_class": "advanced research prototype",
-  "source_commit": "5c70144a1c5d321fd1d17ef75101477835214847",
-  "runtime_parent": "5c70144a1c5d321fd1d17ef75101477835214847",
+  "source_commit": "150d2cdb5b7df51d8b0f5d295ffae8c8632081cc",
+  "runtime_parent": "150d2cdb5b7df51d8b0f5d295ffae8c8632081cc",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/HARDER_LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md",
+  "phase_document": "docs/v10/SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -58,7 +58,9 @@
     "live_semantic_causal_screen_v2": "four new task-only OpenAI gpt-5.6-sol calls were bound before inference to the alpha.22 evaluator, corpus, private commitment, model identity, and live adapter provenance; all trajectories reconstructed and scored 4/4 with zero UNKNOWN outcomes",
     "live_semantic_causal_disposition": "level three is a development screening ceiling for the selected model and the next valid action is move_harder; four cases do not establish broad calibration and no semantic treatment or Cortex improvement was tested",
     "harder_live_semantic_causal_screen_v2": "the canonical alpha.23 result, preregistration, four case receipts, native trajectories, and semantic verdicts were independently reconstructed before four level-four calls opened for the identical model and registered adapter boundary",
-    "semantic_causal_difficulty_bracket": "level three scored 4/4 and level four scored 0/4 with zero UNKNOWN outcomes; the transition is bounded but the eligible 2/4 development band was not observed, so calibration and semantic treatment remain closed",
+    "semantic_causal_difficulty_bracket": "level three scored 4/4 and level four scored 0/4 with zero UNKNOWN outcomes, but the apparent transition is instrument-confounded and cannot yet establish a model-difficulty bracket",
+    "semantic_instrument_sufficiency_audit": "zero-call canonical reconstruction found three exact evidence-list rejections and one semantic repair-clause rejection across the alpha.24 floor; all historical scores remain immutable",
+    "difficulty_interpolation_gate": "DIFFICULTY_INTERPOLATION_HELD; evidence minimality and repair semantics require a new independently frozen policy before an intermediate corpus may open",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -71,5 +73,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.23 live semantic causal screen v2"
+  "supersedes": "Cortex v10.0.0-alpha.24 harder live semantic causal screen v2"
 }

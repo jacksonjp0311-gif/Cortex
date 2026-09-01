@@ -34,4 +34,25 @@ unestablished.
 
 ## Result
 
-Pending execution of the zero-call canonical audit.
+The canonical audit executed with zero model calls:
+
+```text
+state                              DIFFICULTY_INTERPOLATION_HELD
+cases reconstructed                4 / 4
+evidence-binding rejections        3
+semantic-clause rejections         1
+historical scores rewritten        NO
+additional model calls             0
+difficulty interpolation ready     NO
+audit receipt                       06cc350d6b29cbe7d6e47961acb80e711a5b09d95652c0f65587fae8106a420e
+```
+
+Three responses reported `E1..E4` while the frozen contract required
+`E1..E5`. The remaining response reported the complete evidence sequence but
+missed repair group 1 under the frozen atom vocabulary. These are real contract
+failures and remain FAIL. They also prevent Cortex from treating 0/4 as clean
+evidence of model difficulty.
+
+The next valid action is to freeze an evidence-minimality law and a versioned
+repair-semantics policy before forging an intermediate task band. No historical
+receipt may be rewritten.

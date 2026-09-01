@@ -1,0 +1,142 @@
+{
+  "schema_version": "cortex-alpha25-semantic-instrument-sufficiency-audit/1.0",
+  "state": "DIFFICULTY_INTERPOLATION_HELD",
+  "source_commit": "150d2cdb5b7df51d8b0f5d295ffae8c8632081cc",
+  "result_receipt_hash": "e453cae6a677108994110ac1e8d4113aaa92a16192ccb82dc98d495450ecfa10",
+  "audit_receipt_hash": "06cc350d6b29cbe7d6e47961acb80e711a5b09d95652c0f65587fae8106a420e",
+  "case_count": 4,
+  "evidence_binding_rejection_count": 3,
+  "semantic_clause_rejection_count": 1,
+  "instrument_task_confound_present": true,
+  "historical_scores_rewritten": false,
+  "additional_model_calls": 0,
+  "difficulty_interpolation_ready": false,
+  "baseline_difficulty_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "freeze_evidence_minimality_and_semantic_repair_policy",
+  "case_diagnostics": [
+    {
+      "canonical_score_rewritten": false,
+      "case_id": "olc_d9bf154a969350069b1d",
+      "case_receipt_hash": "59ca2d043be10b7f43cfdfefdde97e30467ae1695edb65344e4a2f93957e264a",
+      "evaluation_errors": [
+        "required_repair_semantics_missing"
+      ],
+      "extra_evidence_ids": [],
+      "missing_cause_group_indices": [],
+      "missing_evidence_ids": [],
+      "missing_repair_group_indices": [
+        1
+      ],
+      "reported_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "required_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "response_hash": "7b044aa038333c1fc006c43c7c779eaeb67f7790251188ccd2b48c5754964f7b",
+      "trajectory_receipt_hash": "ed1e683ee26ad06e189eaeeae252d164dfe27b16c345aeb2feb4094b2589234b"
+    },
+    {
+      "canonical_score_rewritten": false,
+      "case_id": "olc_54b16654c7814e4a5aa7",
+      "case_receipt_hash": "6e25ff77e41236d6072da6f81001b22f8d4e9d80d16f5752b2de17d0e98e344b",
+      "evaluation_errors": [
+        "causal_evidence_binding_invalid"
+      ],
+      "extra_evidence_ids": [],
+      "missing_cause_group_indices": [],
+      "missing_evidence_ids": [
+        "E5"
+      ],
+      "missing_repair_group_indices": [],
+      "reported_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4"
+      ],
+      "required_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "response_hash": "aba207e71b609be2c115a99d3a1731c16ac5207dc08d0e9caa5f9349ff7f2562",
+      "trajectory_receipt_hash": "e1c56dbcea4f2b2066b352a3000a270f660effa09ad7046c1cc025eb1b29d14c"
+    },
+    {
+      "canonical_score_rewritten": false,
+      "case_id": "olc_2467fc3a41cbcdbea7d5",
+      "case_receipt_hash": "2a1924637bfa7bd3f153bfea4d487a47d433cb05dd6859b3cacc3dd7d6b945f1",
+      "evaluation_errors": [
+        "causal_evidence_binding_invalid"
+      ],
+      "extra_evidence_ids": [],
+      "missing_cause_group_indices": [],
+      "missing_evidence_ids": [
+        "E5"
+      ],
+      "missing_repair_group_indices": [],
+      "reported_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4"
+      ],
+      "required_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "response_hash": "85569b17ed956f06e0f2dc06f5eb053e1fe7c44efde9ab049154a97190cfad93",
+      "trajectory_receipt_hash": "9ea8550d0f3e57174d318f8bd3eddd8c50f590bbf7901614b8366779e35f5dca"
+    },
+    {
+      "canonical_score_rewritten": false,
+      "case_id": "olc_0b6f244e5b16ecb3c268",
+      "case_receipt_hash": "2b0cce5d8c84e38ea243bb2348d9b3ec2ff5ecfb03891441dd2d2542ed708c91",
+      "evaluation_errors": [
+        "causal_evidence_binding_invalid"
+      ],
+      "extra_evidence_ids": [],
+      "missing_cause_group_indices": [],
+      "missing_evidence_ids": [
+        "E5"
+      ],
+      "missing_repair_group_indices": [],
+      "reported_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4"
+      ],
+      "required_evidence_ids": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "response_hash": "7acb1c3bac45e92283c4ab6690b77200382fb0e492b6f6a2d005b0c9af20e22c",
+      "trajectory_receipt_hash": "5fd8f0afcc37143594623a7439e8e5321cb85c2a7ec332c4d0e5f42584d23fc9"
+    }
+  ],
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}
