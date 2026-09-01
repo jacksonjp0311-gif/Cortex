@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.21-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.21" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.22-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.22" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -185,6 +185,30 @@ This adds an important measurement law:
 evaluator rejection != demonstrated task failure
 diagnostic similarity != semantic correctness
 ```
+
+Alpha.22 replaces neither history nor truth with fuzzy similarity. It compiles
+the private v1 clauses into a versioned deterministic semantic contract:
+
+```text
+public response
+  -> exact JSON shape
+  -> temporal / actor / state-transition atoms
+  -> negation check
+  -> exact ordered evidence binding
+  -> forbidden-claim and uncertainty gates
+  -> noncompensatory verdict
+```
+
+Surface variants such as “before the database transaction commits,” “parallel
+reader,” and “recache” map to host-frozen semantic atoms. Wrong temporal order,
+negated mechanisms, missing actors, evidence replay, caller success fields, and
+unsupported repairs still fail closed. Provider and model identity remain
+outside scoring.
+
+The evaluator is commissioned with zero model calls. Applying it to alpha.21
+is explicitly a post-hoc shadow diagnostic and can never rewrite the original
+0/4 or establish difficulty. Only a separately authorized new screen may do
+that.
 
 ## What you get
 

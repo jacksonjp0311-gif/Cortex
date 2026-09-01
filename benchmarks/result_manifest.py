@@ -123,6 +123,17 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     else "evaluator_audit_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha22-semantic-causal-evaluator/1.0":
+                metadata_state = (
+                    "semantic_evaluator_v2_ready_zero_call"
+                    if payload.get("state") == "SEMANTIC_CAUSAL_EVALUATOR_V2_READY"
+                    and payload.get("planned_live_calls") == 0
+                    and payload.get("baseline_difficulty_established") is False
+                    and payload.get("calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "semantic_evaluator_v2_held"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

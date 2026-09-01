@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.21`
+Version: `10.0.0-alpha.22`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -138,6 +138,14 @@ cases and strong brittleness signals in two. The raw result remains unchanged;
 task difficulty and semantic correctness are both unresolved. A new
 paraphrase-robust evaluator must be frozen before more calls.
 
+Alpha.22 freezes that replacement without invoking a model. The v2 evaluator
+uses host-controlled semantic atoms for causal timing, actor, stale-state
+transition, and repair ordering while preserving exact evidence and response
+bindings. Its deterministic positive/adversarial panel must pass before the
+private v2 contract enters the OS credential vault. Historical alpha.21
+responses may be inspected only in post-hoc shadow mode; their scores remain
+immutable and calibration remains unresolved.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -160,6 +168,7 @@ paraphrase-robust evaluator must be frozen before more calls.
 - [Harder semantic calibration screen](HARDER_SEMANTIC_CALIBRATION_SCREEN.md)
 - [Open-response latent-cause forge](OPEN_RESPONSE_LATENT_CAUSE_FORGE.md)
 - [Live open-response calibration screen](LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md)
+- [Semantic causal evaluator v2](SEMANTIC_CAUSAL_EVALUATOR_V2.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
