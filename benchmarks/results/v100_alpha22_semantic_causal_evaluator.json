@@ -1,0 +1,63 @@
+{
+  "schema_version": "cortex-alpha22-semantic-causal-evaluator/1.0",
+  "state": "SEMANTIC_CAUSAL_EVALUATOR_V2_READY",
+  "source_commit": "9d844052bb5867d6c92b8342f9329d8533b5f381",
+  "preflight_receipt_hash": "8fabbecc9484a6238e97e61c71c4e73c5774d472a25aff345f7987906c97f252",
+  "source_result_receipt_hash": "5e7974eae0fd3280e42c4d5dcd59e33639258e710cbf555f760acc035e8655be",
+  "source_audit_receipt_hash": "712b981536811bd3b1ee93d6d0c64c2c09246531a4683a3c4f7feaff88248c11",
+  "evaluator_manifest": {
+    "schema_version": "cortex-semantic-causal-manifest/2.0",
+    "version": "10.0.0a22",
+    "evaluator_id": "cortex.semantic-causal-response.v2",
+    "source_corpus_hash": "983e23f6d36ef956f001dcb9209c82521458aa8ceffcbc22ff75bb1e502efd9b",
+    "source_private_key_commitment": "98eb8854e9b249c44d16759cecda2ce097dbe9ed6307777d93e1e2b414d3fbaa",
+    "lexicon_hash": "8dd55d33f489cf63b17646cd0d7bdbdeefda57aa26645400eb921765f634158b",
+    "private_key_commitment": "795989b0da569e6a802ac2e00c36cf35369535349d68ed54fe30ce4892a4c0b7",
+    "case_ids": [
+      "olc_04320cbba669e93a308e",
+      "olc_0b6f244e5b16ecb3c268",
+      "olc_18e37ef828e26f1c2a71",
+      "olc_2467fc3a41cbcdbea7d5",
+      "olc_41006faa9cb5b73df559",
+      "olc_43a5f251966a165b92c1",
+      "olc_4555c0cfc40e9a8f25a2",
+      "olc_473f2b8e6e48174d6b6d",
+      "olc_51505ff7c8f6caf86112",
+      "olc_54b16654c7814e4a5aa7",
+      "olc_7c1161d0a505c0ab17f9",
+      "olc_b47e81ce69cae207295d",
+      "olc_d9bf154a969350069b1d",
+      "olc_e2811d8b4825a9c1793b",
+      "olc_f57b2e368d85d468b76c",
+      "olc_f647b734603404148de2"
+    ],
+    "private_contracts_present": false,
+    "development_only": true,
+    "confirmatory_eligible": false,
+    "model_identity_in_scoring": false,
+    "evaluator_hash": "373220107ee53c20330d8169c2df036c7b393e1656e5a09fe99738661a3cbc7f"
+  },
+  "private_contract_storage": "host_os_credential_vault",
+  "private_contract_persisted_in_artifact": false,
+  "self_test": {
+    "passed": true,
+    "check_count": 67
+  },
+  "historical_shadow": {
+    "case_count": 4,
+    "pass_count": 4,
+    "post_hoc_only": true,
+    "scores_rewritten": false
+  },
+  "planned_live_calls": 0,
+  "baseline_difficulty_established": false,
+  "calibration_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "separately_authorize_new_four_call_task_only_screen",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

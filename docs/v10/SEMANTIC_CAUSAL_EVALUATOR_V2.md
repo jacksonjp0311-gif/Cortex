@@ -64,3 +64,20 @@ semantic transfer         not executed
 A new four-call task-only screen requires separate authorization after the v2
 manifest, private vault contract, source commit, and preflight receipt are
 sealed.
+
+## Commissioning result
+
+The committed alpha.22 implementation produced:
+
+```text
+state                       SEMANTIC_CAUSAL_EVALUATOR_V2_READY
+self-test                   67 / 67 passed
+historical shadow           4 / 4 passed
+model calls                 0
+preflight receipt           8fabbecc9484a6238e97e61c71c4e73c5774d472a25aff345f7987906c97f252
+```
+
+The historical shadow result is deliberately non-authorizing and post-hoc.
+It proves that v2 accepts those four observed paraphrases under its declared
+atoms. It does not prove general semantic entailment, baseline difficulty, or
+Cortex-caused improvement.

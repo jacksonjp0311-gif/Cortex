@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.21",
+  "release": "Cortex v10.0.0-alpha.22",
   "release_class": "advanced research prototype",
-  "source_commit": "4f6c2d23ecc6829f808fa3977150bef36ed384a5",
-  "runtime_parent": "4f6c2d23ecc6829f808fa3977150bef36ed384a5",
+  "source_commit": "9d844052bb5867d6c92b8342f9329d8533b5f381",
+  "runtime_parent": "9d844052bb5867d6c92b8342f9329d8533b5f381",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md",
+  "phase_document": "docs/v10/SEMANTIC_CAUSAL_EVALUATOR_V2.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -52,6 +52,9 @@
     "live_open_response_screen": "four task-only live calls executed through OpenAI gpt-5.6-sol; the immutable v1 exact-phrase evaluator scored 0/4 and recorded screening_floor, while calibration and semantic transfer remained unestablished",
     "open_response_evaluator_audit": "zero additional calls; all four failures were lexical-only with structure, evidence binding, forbidden-claim, and uncertainty gates intact; two of four crossed the declared overlap diagnostic threshold, so EVALUATOR_AUDIT_HELD and baseline difficulty remains unresolved",
     "open_response_evaluator_boundary": "the audit does not rewrite v1 scores or establish semantic correctness; evaluator rejection is not treated as demonstrated task failure, and a versioned paraphrase-robust evaluator must be frozen before more calls",
+    "semantic_causal_evaluator_v2": "host-controlled versioned semantic atoms independently gate causal timing, actor, stale-state transition, repair relation, negation, exact evidence order, forbidden claims, response shape, and uncertainty; model/provider identity and caller scores are excluded",
+    "semantic_causal_evaluator_commissioning": "SEMANTIC_CAUSAL_EVALUATOR_V2_READY; 67/67 deterministic positive and adversarial checks passed, private compiled contracts were stored in the OS credential vault, and zero model calls executed",
+    "semantic_causal_historical_shadow": "the four alpha.21 outputs passed v2 only as a disclosed post-hoc diagnostic; original v1 scores remain immutable and baseline difficulty, calibration, semantic transfer, and model improvement remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -64,5 +67,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.20 open-response latent-cause forge"
+  "supersedes": "Cortex v10.0.0-alpha.21 live open-response calibration screen"
 }

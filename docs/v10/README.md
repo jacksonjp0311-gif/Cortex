@@ -144,7 +144,9 @@ transition, and repair ordering while preserving exact evidence and response
 bindings. Its deterministic positive/adversarial panel must pass before the
 private v2 contract enters the OS credential vault. Historical alpha.21
 responses may be inspected only in post-hoc shadow mode; their scores remain
-immutable and calibration remains unresolved.
+immutable and calibration remains unresolved. Commissioning passed all 67
+deterministic checks. The four historical outputs passed v2 in shadow mode,
+confirming the original lexical wound without retroactively changing evidence.
 
 ## Documents
 

@@ -210,6 +210,16 @@ is explicitly a post-hoc shadow diagnostic and can never rewrite the original
 0/4 or establish difficulty. Only a separately authorized new screen may do
 that.
 
+The sealed commissioning result is:
+
+```text
+deterministic positive/adversarial checks   67 / 67 passed
+historical alpha.21 v2 shadow               4 / 4 passed
+historical v1 scores rewritten              NO
+live model calls                            0
+baseline difficulty                         UNRESOLVED
+```
+
 ## What you get
 
 | Capability | What it means for you |
