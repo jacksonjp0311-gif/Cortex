@@ -1,0 +1,45 @@
+{
+  "schema_version": "cortex-alpha23-live-semantic-causal-screen/1.0",
+  "state": "LIVE_SEMANTIC_CAUSAL_SCREEN_RECONSTRUCTED",
+  "source_commit": "9209dec28592bae3376536b87459546278566b33",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "corpus_hash": "983e23f6d36ef956f001dcb9209c82521458aa8ceffcbc22ff75bb1e502efd9b",
+  "evaluator_hash": "373220107ee53c20330d8169c2df036c7b393e1656e5a09fe99738661a3cbc7f",
+  "evaluator_preflight_receipt_hash": "8fabbecc9484a6238e97e61c71c4e73c5774d472a25aff345f7987906c97f252",
+  "preregistration_receipt_hash": "ddda3e258e275f23edef412b2c9b5cf882480db01f36804387bf891722293d0b",
+  "result_receipt_hash": "4e3799ff63dffa65a203e983ecab06fcbd290dbe00252bc43d0028f6b83bfb26",
+  "planned_calls": 4,
+  "calls_executed": 4,
+  "screen": {
+    "attainable_success_rates": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "case_count": 4,
+    "confirmation_cases": 8,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "eligible_success_counts": [
+      2
+    ],
+    "recommended_action": "move_harder",
+    "screening_cases": 4,
+    "state": "screening_ceiling",
+    "success_count": 4,
+    "success_rate": 1.0,
+    "unknown_count": 0
+  },
+  "calibration_established": false,
+  "semantic_transfer_established": false,
+  "private_contract_persisted_in_artifact": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

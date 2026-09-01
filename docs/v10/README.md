@@ -152,7 +152,9 @@ Alpha.23 adds a new four-call task-only screen bound before inference to the
 exact alpha.22 evaluator hash, corpus, private vault commitment, adapter
 identity, and host-registered live provenance. Scores are reconstructed from
 canonical trajectories. It remains a development difficulty screen, not a
-semantic-transfer experiment.
+semantic-transfer experiment. The first run scored 4/4 with no UNKNOWN
+outcomes, establishing a level-three screening ceiling and a `move_harder`
+disposition.
 
 ## Documents
 

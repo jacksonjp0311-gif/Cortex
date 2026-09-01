@@ -30,4 +30,20 @@ UNKNOWN remains distinct from FAIL. Malformed JSON or an invalid evaluator
 holds the screen instead of being counted as task failure. All authority flags
 remain false.
 
-The empirical result is appended only after the committed executor runs.
+## Empirical result
+
+The committed executor ran exactly four task-only calls through
+`OpenAI / gpt-5.6-sol`:
+
+```text
+state                 LIVE_SEMANTIC_CAUSAL_SCREEN_RECONSTRUCTED
+successes             4 / 4
+unknown               0
+screen                screening_ceiling
+next action           move_harder
+result receipt        4e3799ff63dffa65a203e983ecab06fcbd290dbe00252bc43d0028f6b83bfb26
+```
+
+Because v2 was frozen before the new responses, the ceiling is valid within
+this development screen. Four cases cannot establish broad calibration, and no
+semantic treatment was applied. Cortex improvement remains untested.

@@ -225,6 +225,20 @@ are frozen against the exact alpha.22 evaluator and model provenance before
 invocation. Every result is reconstructed from its immutable native trajectory;
 the screen still contains no memory, sham, or relevant-lesson treatment.
 
+The fresh `OpenAI / gpt-5.6-sol` screen scored 4/4 with zero UNKNOWN outcomes:
+
+```text
+level-three v2 baseline     4 / 4
+screen state                screening ceiling
+recommended action          move harder
+calibration                 not established
+semantic transfer           not executed
+```
+
+Unlike alpha.21, this is not an evaluator artifact: the instrument was frozen
+before these responses existed. The result establishes that this development
+level is a ceiling for the selected model under the declared four-case screen.
+
 ## What you get
 
 | Capability | What it means for you |
