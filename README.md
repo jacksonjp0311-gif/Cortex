@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.23-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.23" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.24-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.24" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -238,6 +238,13 @@ semantic transfer           not executed
 Unlike alpha.21, this is not an evaluator artifact: the instrument was frozen
 before these responses existed. The result establishes that this development
 level is a ceiling for the selected model under the declared four-case screen.
+
+Alpha.24 hardens the next transition: level four cannot open merely because a
+caller says alpha.23 was a ceiling. Cortex reloads the prior result,
+preregistration, every case receipt, every native trajectory, and the frozen
+private evaluator; it recomputes the complete screen before freezing four
+harder calls for the same registered model boundary. The treatment remains
+task-only, so this phase locates difficulty rather than claiming improvement.
 
 ## What you get
 

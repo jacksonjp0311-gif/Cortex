@@ -144,6 +144,17 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "development_live_semantic_causal_held"
                 )
+            elif payload.get("schema_version") == "cortex-alpha24-harder-live-semantic-screen/1.0":
+                metadata_state = (
+                    "development_harder_live_semantic_screen"
+                    if payload.get("state") == "LIVE_SEMANTIC_CAUSAL_SCREEN_RECONSTRUCTED"
+                    and payload.get("difficulty_level") == 4
+                    and payload.get("calls_executed") == 4
+                    and (payload.get("canonical_reconstruction") or {}).get("valid") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "development_harder_live_semantic_held"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

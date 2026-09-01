@@ -719,14 +719,220 @@ def execute_live_semantic_screen_v2(
     )
 
 
+def verify_live_semantic_screen_v2(
+    store: Any,
+    repo: str,
+    *,
+    result_receipt_hash: str,
+    evaluator_bundle: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Reconstruct a live screen from canonical receipts and model trajectories."""
+    result_hash = str(result_receipt_hash or "")
+    errors: list[str] = []
+    if verify_semantic_evaluator_bundle(evaluator_bundle).get("valid") is not True:
+        return {"valid": False, "errors": ["evaluator_bundle_invalid"]}
+    if store.verify_symbiotic_receipt(repo, result_hash).get("valid") is not True:
+        return {"valid": False, "errors": ["result_receipt_invalid"]}
+    result = store.symbiotic_receipt(result_hash, repo=repo) or {}
+    prereg_hash = str(result.get("preregistration_receipt_hash") or "")
+    if store.verify_symbiotic_receipt(repo, prereg_hash).get("valid") is not True:
+        return {"valid": False, "errors": ["preregistration_receipt_invalid"]}
+    prereg = store.symbiotic_receipt(prereg_hash, repo=repo) or {}
+    manifest = evaluator_bundle["manifest"]
+    contracts = evaluator_bundle["private_key"]["contracts"]
+    if result.get("kind") != "live_semantic_causal_result":
+        errors.append("result_kind_invalid")
+    if prereg.get("kind") != "live_semantic_causal_preregistration":
+        errors.append("preregistration_kind_invalid")
+    if (
+        result.get("evaluator_hash") != manifest.get("evaluator_hash")
+        or prereg.get("evaluator_hash") != manifest.get("evaluator_hash")
+        or prereg.get("private_key_commitment") != manifest.get("private_key_commitment")
+    ):
+        errors.append("evaluator_binding_invalid")
+    if result.get("model_identity") != prereg.get("model_identity"):
+        errors.append("model_identity_binding_invalid")
+
+    outcomes: list[bool] = []
+    unknown_count = 0
+    case_hashes = list(result.get("case_receipt_hashes") or ())
+    for case_hash in case_hashes:
+        if store.verify_symbiotic_receipt(repo, str(case_hash)).get("valid") is not True:
+            errors.append(f"case_receipt_invalid:{case_hash}")
+            continue
+        case = store.symbiotic_receipt(str(case_hash), repo=repo) or {}
+        case_id = str(case.get("case_id") or "")
+        contract = contracts.get(case_id)
+        if not isinstance(contract, Mapping):
+            errors.append(f"semantic_contract_missing:{case_id}")
+            continue
+        trajectory_hash = str(case.get("trajectory_receipt_hash") or "")
+        if verify_native_agent_trajectory(store, repo, trajectory_hash).get("valid") is not True:
+            errors.append(f"trajectory_invalid:{case_id}")
+            continue
+        trajectory = store.symbiotic_receipt(trajectory_hash, repo=repo) or {}
+        rebuilt = evaluate_semantic_causal_response(
+            contract, str(trajectory.get("final_answer") or "")
+        )
+        if (
+            case.get("kind") != "live_semantic_causal_case"
+            or case.get("preregistration_receipt_hash") != prereg_hash
+            or case.get("semantic_contract_hash") != contract.get("contract_hash")
+            or case.get("evaluator_hash") != manifest.get("evaluator_hash")
+            or case.get("evaluation") != rebuilt
+            or case.get("task_success") != rebuilt.get("success")
+        ):
+            errors.append(f"case_binding_invalid:{case_id}")
+        if rebuilt.get("success") is None:
+            unknown_count += 1
+        else:
+            outcomes.append(rebuilt.get("success") is True)
+
+    if unknown_count:
+        rebuilt_screen = {
+            "state": "screening_held_unknown",
+            "recommended_action": "repair_response_contract_or_transport",
+            "case_count": len(case_hashes),
+            "known_outcome_count": len(outcomes),
+            "unknown_count": unknown_count,
+            "success_count": sum(outcomes),
+            "success_rate": None,
+            "development_only": True,
+            "confirmatory_eligible": False,
+        }
+    else:
+        rebuilt_screen = {**assess_sequential_level(outcomes), "unknown_count": 0}
+    if result.get("screen") != rebuilt_screen:
+        errors.append("screen_reconstruction_invalid")
+    if (
+        len(case_hashes) != int(prereg.get("planned_calls") or -1)
+        or len(case_hashes) != int(result.get("calls_executed") or -1)
+    ):
+        errors.append("call_count_binding_invalid")
+    if result.get("errors") not in ([], ()):
+        errors.append("result_contains_execution_errors")
+    if result.get("status") != "LIVE_SEMANTIC_CAUSAL_SCREEN_RECONSTRUCTED":
+        errors.append("result_status_invalid")
+    if result.get("semantic_transfer_established") is not False:
+        errors.append("semantic_transfer_claim_invalid")
+    for field in (
+        "host_mutate_authorized",
+        "execution_authorized",
+        "memory_admission_authorized",
+        "policy_effect",
+    ):
+        if result.get(field) is not False or prereg.get(field) is not False:
+            errors.append(f"authority_open:{field}")
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "result_receipt_hash": result_hash,
+        "preregistration_receipt_hash": prereg_hash,
+        "difficulty_levels": sorted(
+            {
+                int(case.get("difficulty_level") or 0)
+                for case in prereg.get("cases") or ()
+            }
+        ),
+        "screen": rebuilt_screen,
+        "model_identity": prereg.get("model_identity"),
+        "adapter_provenance": prereg.get("adapter_provenance"),
+        "corpus_hash": prereg.get("corpus_hash"),
+        "evaluator_hash": prereg.get("evaluator_hash"),
+    }
+
+
+def freeze_harder_live_semantic_screen_v2(
+    store: Any,
+    repo: str,
+    *,
+    prior_result_receipt_hash: str,
+    corpus_manifest: Mapping[str, Any],
+    evaluator_bundle: Mapping[str, Any],
+    adapter: Any,
+) -> dict[str, Any]:
+    """Freeze level four only when canonical level-three evidence proves a ceiling."""
+    audit = verify_live_semantic_screen_v2(
+        store,
+        repo,
+        result_receipt_hash=prior_result_receipt_hash,
+        evaluator_bundle=evaluator_bundle,
+    )
+    if (
+        audit.get("valid") is not True
+        or audit.get("difficulty_levels") != [3]
+        or (audit.get("screen") or {}).get("state") != "screening_ceiling"
+        or int((audit.get("screen") or {}).get("success_count") or 0) != 4
+        or int((audit.get("screen") or {}).get("unknown_count") or 0) != 0
+    ):
+        raise ValueError("canonical level-three ceiling is required")
+    manifest = evaluator_bundle["manifest"]
+    if (
+        audit.get("corpus_hash") != corpus_manifest.get("corpus_hash")
+        or audit.get("evaluator_hash") != manifest.get("evaluator_hash")
+    ):
+        raise ValueError("prior screen does not bind this corpus and evaluator")
+    identity = _adapter_identity(adapter)
+    provenance = resolve_adapter_provenance(store, repo, adapter)
+    if identity != audit.get("model_identity") or provenance != audit.get("adapter_provenance"):
+        raise ValueError("harder screen requires the same registered model boundary")
+    cases = [
+        row
+        for row in corpus_manifest.get("cases") or ()
+        if int(row.get("difficulty_level") or 0) == 4
+    ]
+    if len(cases) != 4:
+        raise ValueError("harder semantic screen requires four level-four cases")
+    material = {
+        "schema_version": "cortex-live-semantic-causal-preregistration/2.1",
+        "version": __version__,
+        "kind": "live_semantic_causal_preregistration",
+        "prior_result_receipt_hash": str(prior_result_receipt_hash),
+        "prior_screen_audit": audit,
+        "corpus_hash": corpus_manifest["corpus_hash"],
+        "evaluator_hash": manifest["evaluator_hash"],
+        "private_key_commitment": manifest["private_key_commitment"],
+        "cases": cases,
+        "difficulty_level": 4,
+        "planned_calls": 4,
+        "context_treatment": "task_only_control",
+        "tools": [],
+        "model_identity": identity,
+        "adapter_provenance": provenance,
+        "evaluator_id": EVALUATOR_ID,
+        "status": "frozen_before_execution",
+        "development_only": True,
+        "confirmatory_eligible": False,
+        "caller_success_booleans_accepted": False,
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    session = open_symbiotic_session(store, repo, task="freeze harder live semantic screen", persist=True)
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"harder_live_semantic_prereg_{_sha(material)[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 __all__ = [
     "EVALUATOR_ID",
     "build_semantic_evaluator_bundle",
     "compile_semantic_contract",
     "evaluate_semantic_causal_response",
     "execute_live_semantic_screen_v2",
+    "freeze_harder_live_semantic_screen_v2",
     "freeze_semantic_evaluator_v2",
     "freeze_live_semantic_screen_v2",
     "semantic_evaluator_self_test",
+    "verify_live_semantic_screen_v2",
     "verify_semantic_evaluator_bundle",
 ]

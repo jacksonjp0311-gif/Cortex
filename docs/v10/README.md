@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.23`
+Version: `10.0.0-alpha.24`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -156,6 +156,12 @@ semantic-transfer experiment. The first run scored 4/4 with no UNKNOWN
 outcomes, establishing a level-three screening ceiling and a `move_harder`
 disposition.
 
+Alpha.24 independently reconstructs that level-three result before permitting
+the already sealed level-four cases to run. A status string or caller-owned
+copy cannot open the gate: every prior case, trajectory, semantic score, screen
+aggregate, model identity, and adapter registration must resolve canonically.
+The four-call cap and task-only treatment remain unchanged.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -180,6 +186,7 @@ disposition.
 - [Live open-response calibration screen](LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md)
 - [Semantic causal evaluator v2](SEMANTIC_CAUSAL_EVALUATOR_V2.md)
 - [Live semantic causal screen v2](LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
+- [Harder live semantic causal screen v2](HARDER_LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

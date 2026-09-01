@@ -16,8 +16,10 @@ from cortex.semantic_causal_evaluator import (
     build_semantic_evaluator_bundle,
     evaluate_semantic_causal_response,
     execute_live_semantic_screen_v2,
+    freeze_harder_live_semantic_screen_v2,
     freeze_live_semantic_screen_v2,
     semantic_evaluator_self_test,
+    verify_live_semantic_screen_v2,
     verify_semantic_evaluator_bundle,
 )
 from cortex.store import Store
@@ -26,6 +28,8 @@ from cortex.will import register_will_principal
 
 
 class ExternalSemanticAdapter:
+    __slots__ = ("answers",)
+
     provider_family = "external-semantic-provider"
     model_id = "semantic-frontier-model"
     model_version = "2026-08"
@@ -184,6 +188,65 @@ class Alpha22SemanticCausalEvaluatorTests(unittest.TestCase):
                 self.assertFalse(result["semantic_transfer_established"])
                 self.assertFalse(result["host_mutate_authorized"])
                 self.assertFalse(result["execution_authorized"])
+
+                audit = verify_live_semantic_screen_v2(
+                    store,
+                    repo,
+                    result_receipt_hash=result["receipt_hash"],
+                    evaluator_bundle=self.bundle,
+                )
+                self.assertTrue(audit["valid"], audit["errors"])
+                self.assertEqual(audit["difficulty_levels"], [3])
+
+                level_four = [
+                    row
+                    for row in self.source["manifest"]["cases"]
+                    if row["difficulty_level"] == 4
+                ]
+                adapter.answers.extend(
+                    json.dumps(source_contracts[row["case_id"]]["reference_response"])
+                    for row in level_four
+                )
+                harder_prereg = freeze_harder_live_semantic_screen_v2(
+                    store,
+                    repo,
+                    prior_result_receipt_hash=result["receipt_hash"],
+                    corpus_manifest=self.source["manifest"],
+                    evaluator_bundle=self.bundle,
+                    adapter=adapter,
+                )
+                harder_result = execute_live_semantic_screen_v2(
+                    store,
+                    repo,
+                    preregistration=harder_prereg,
+                    corpus_manifest=self.source["manifest"],
+                    evaluator_bundle=self.bundle,
+                    adapter=adapter,
+                    tools=ToolRegistry(),
+                    grant=grant,
+                )
+                harder_audit = verify_live_semantic_screen_v2(
+                    store,
+                    repo,
+                    result_receipt_hash=harder_result["receipt_hash"],
+                    evaluator_bundle=self.bundle,
+                )
+                self.assertTrue(harder_audit["valid"], harder_audit["errors"])
+                self.assertEqual(harder_audit["difficulty_levels"], [4])
+                self.assertEqual(
+                    harder_prereg["prior_result_receipt_hash"], result["receipt_hash"]
+                )
+
+                caller_copy = dict(result)
+                caller_copy["screen"] = {"state": "calibrated", "success_count": 2}
+                self.assertTrue(
+                    verify_live_semantic_screen_v2(
+                        store,
+                        repo,
+                        result_receipt_hash=caller_copy["receipt_hash"],
+                        evaluator_bundle=self.bundle,
+                    )["valid"]
+                )
             finally:
                 store.close()
 
