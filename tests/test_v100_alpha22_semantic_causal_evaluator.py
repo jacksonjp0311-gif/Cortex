@@ -13,6 +13,7 @@ from cortex.config import ensure_home
 from cortex.native_agent import CapabilityGrant, ToolRegistry
 from cortex.open_response_calibration import build_open_response_latent_bundle
 from cortex.semantic_causal_evaluator import (
+    audit_harder_live_semantic_screen_v2,
     build_semantic_evaluator_bundle,
     evaluate_semantic_causal_response,
     execute_live_semantic_screen_v2,
@@ -203,10 +204,20 @@ class Alpha22SemanticCausalEvaluatorTests(unittest.TestCase):
                     for row in self.source["manifest"]["cases"]
                     if row["difficulty_level"] == 4
                 ]
-                adapter.answers.extend(
-                    json.dumps(source_contracts[row["case_id"]]["reference_response"])
-                    for row in level_four
-                )
+                harder_answers = []
+                for index, row in enumerate(level_four):
+                    answer = copy.deepcopy(
+                        source_contracts[row["case_id"]]["reference_response"]
+                    )
+                    if index < 3:
+                        answer["evidence_ids"] = answer["evidence_ids"][:-1]
+                    else:
+                        answer["repair"] = (
+                            "require rebuilds to read a snapshot matching the committed "
+                            "source generation and refuse sealing on mismatch"
+                        )
+                    harder_answers.append(json.dumps(answer))
+                adapter.answers.extend(harder_answers)
                 harder_prereg = freeze_harder_live_semantic_screen_v2(
                     store,
                     repo,
@@ -233,9 +244,27 @@ class Alpha22SemanticCausalEvaluatorTests(unittest.TestCase):
                 )
                 self.assertTrue(harder_audit["valid"], harder_audit["errors"])
                 self.assertEqual(harder_audit["difficulty_levels"], [4])
+                self.assertEqual(harder_audit["screen"]["state"], "screening_floor")
                 self.assertEqual(
                     harder_prereg["prior_result_receipt_hash"], result["receipt_hash"]
                 )
+                instrument_audit = audit_harder_live_semantic_screen_v2(
+                    store,
+                    repo,
+                    result_receipt_hash=harder_result["receipt_hash"],
+                    evaluator_bundle=self.bundle,
+                )
+                self.assertEqual(
+                    instrument_audit["state"], "DIFFICULTY_INTERPOLATION_HELD"
+                )
+                self.assertEqual(
+                    instrument_audit["evidence_binding_rejection_count"], 3
+                )
+                self.assertGreaterEqual(
+                    instrument_audit["semantic_clause_rejection_count"], 1
+                )
+                self.assertEqual(instrument_audit["additional_model_calls"], 0)
+                self.assertFalse(instrument_audit["historical_scores_rewritten"])
 
                 caller_copy = dict(result)
                 caller_copy["screen"] = {"state": "calibrated", "success_count": 2}

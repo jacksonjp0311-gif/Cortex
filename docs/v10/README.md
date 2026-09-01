@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.24`
+Version: `10.0.0-alpha.25`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -165,6 +165,12 @@ scored 0/4 with zero UNKNOWN outcomes, producing a valid floor immediately
 above the alpha.23 ceiling. Cortex now has a bracket, not a calibrated band;
 the next step is zero-call difficulty interpolation.
 
+Alpha.25 performs the required zero-call audit first. It preserves alpha.24's
+0/4 exactly while separating evidence-list rejection from semantic-clause
+rejection. Because both surfaces contributed to the apparent floor,
+interpolation remains held pending a versioned evidence-minimality and repair-
+semantics policy.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -190,6 +196,7 @@ the next step is zero-call difficulty interpolation.
 - [Semantic causal evaluator v2](SEMANTIC_CAUSAL_EVALUATOR_V2.md)
 - [Live semantic causal screen v2](LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
 - [Harder live semantic causal screen v2](HARDER_LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
+- [Semantic instrument sufficiency audit](SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

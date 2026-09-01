@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.24-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.24" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.25-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.25" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -259,6 +259,14 @@ This is not calibration and not evidence of Cortex improvement. It is a useful
 bracket: the next experiment must interpolate difficulty between the two
 levels before any sham-versus-relevant semantic treatment is scientifically
 informative.
+
+Alpha.25 audits that interpretation before generating more tasks. The 0/4
+level-four panel was not a clean model floor: three responses omitted one
+frozen evidence ID, while another complete-evidence response was rejected by a
+repair-phrase atom despite expressing a generation-matching rebuild guard.
+Historical scores remain unchanged, but difficulty interpolation is held until
+evidence minimality and repair semantics are frozen independently. This avoids
+training the benchmark around an evaluator artifact.
 
 ## What you get
 

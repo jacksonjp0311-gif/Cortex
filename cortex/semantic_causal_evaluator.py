@@ -923,8 +923,128 @@ def freeze_harder_live_semantic_screen_v2(
     )
 
 
+def audit_harder_live_semantic_screen_v2(
+    store: Any,
+    repo: str,
+    *,
+    result_receipt_hash: str,
+    evaluator_bundle: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Diagnose a level-four floor without rewriting any canonical score."""
+    audit = verify_live_semantic_screen_v2(
+        store,
+        repo,
+        result_receipt_hash=result_receipt_hash,
+        evaluator_bundle=evaluator_bundle,
+    )
+    screen = audit.get("screen") or {}
+    if (
+        audit.get("valid") is not True
+        or audit.get("difficulty_levels") != [4]
+        or screen.get("state") != "screening_floor"
+        or int(screen.get("success_count", -1)) != 0
+        or int(screen.get("unknown_count", -1)) != 0
+    ):
+        raise ValueError("canonical level-four zero-success floor is required")
+    result = store.symbiotic_receipt(str(result_receipt_hash), repo=repo) or {}
+    contracts = evaluator_bundle["private_key"]["contracts"]
+    diagnostics: list[dict[str, Any]] = []
+    evidence_rejections = 0
+    semantic_rejections = 0
+    for case_hash in result.get("case_receipt_hashes") or ():
+        case = store.symbiotic_receipt(str(case_hash), repo=repo) or {}
+        case_id = str(case.get("case_id") or "")
+        contract = contracts[case_id]
+        trajectory = store.symbiotic_receipt(
+            str(case.get("trajectory_receipt_hash") or ""), repo=repo
+        ) or {}
+        try:
+            response = json.loads(str(trajectory.get("final_answer") or ""))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            response = {}
+        reported = [str(item) for item in response.get("evidence_ids") or ()]
+        required = [str(item) for item in contract.get("required_evidence_ids") or ()]
+        evaluation = dict(case.get("evaluation") or {})
+        errors = [str(item) for item in evaluation.get("errors") or ()]
+        evidence_rejected = "causal_evidence_binding_invalid" in errors
+        semantic_rejected = any(
+            item in errors
+            for item in (
+                "required_cause_semantics_missing",
+                "required_repair_semantics_missing",
+            )
+        )
+        evidence_rejections += int(evidence_rejected)
+        semantic_rejections += int(semantic_rejected)
+        diagnostics.append(
+            {
+                "case_id": case_id,
+                "case_receipt_hash": str(case_hash),
+                "trajectory_receipt_hash": str(case.get("trajectory_receipt_hash") or ""),
+                "response_hash": evaluation.get("response_hash"),
+                "evaluation_errors": errors,
+                "reported_evidence_ids": reported,
+                "required_evidence_ids": required,
+                "missing_evidence_ids": [item for item in required if item not in reported],
+                "extra_evidence_ids": [item for item in reported if item not in required],
+                "missing_cause_group_indices": list(
+                    evaluation.get("missing_cause_group_indices") or ()
+                ),
+                "missing_repair_group_indices": list(
+                    evaluation.get("missing_repair_group_indices") or ()
+                ),
+                "canonical_score_rewritten": False,
+            }
+        )
+    confounded = evidence_rejections > 0 or semantic_rejections > 0
+    material = {
+        "schema_version": "cortex-semantic-screen-instrument-audit/1.0",
+        "version": __version__,
+        "kind": "semantic_screen_instrument_audit",
+        "result_receipt_hash": str(result_receipt_hash),
+        "result_audit": audit,
+        "case_diagnostics": diagnostics,
+        "case_count": len(diagnostics),
+        "evidence_binding_rejection_count": evidence_rejections,
+        "semantic_clause_rejection_count": semantic_rejections,
+        "instrument_task_confound_present": confounded,
+        "historical_scores_rewritten": False,
+        "additional_model_calls": 0,
+        "difficulty_interpolation_ready": not confounded,
+        "baseline_difficulty_established": False,
+        "semantic_transfer_established": False,
+        "state": (
+            "DIFFICULTY_INTERPOLATION_HELD"
+            if confounded
+            else "DIFFICULTY_INTERPOLATION_READY"
+        ),
+        "next_action": (
+            "freeze_evidence_minimality_and_semantic_repair_policy"
+            if confounded
+            else "forge_intermediate_difficulty_zero_call"
+        ),
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    session = open_symbiotic_session(store, repo, task="audit harder semantic instrument", persist=True)
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"semantic_instrument_audit_{_sha(material)[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 __all__ = [
     "EVALUATOR_ID",
+    "audit_harder_live_semantic_screen_v2",
     "build_semantic_evaluator_bundle",
     "compile_semantic_contract",
     "evaluate_semantic_causal_response",

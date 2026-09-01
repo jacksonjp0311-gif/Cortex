@@ -155,6 +155,16 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "development_harder_live_semantic_held"
                 )
+            elif payload.get("schema_version") == "cortex-alpha25-semantic-instrument-sufficiency-audit/1.0":
+                metadata_state = (
+                    "zero_call_semantic_instrument_audit_held"
+                    if payload.get("state") == "DIFFICULTY_INTERPOLATION_HELD"
+                    and payload.get("additional_model_calls") == 0
+                    and payload.get("historical_scores_rewritten") is False
+                    and payload.get("difficulty_interpolation_ready") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "semantic_instrument_audit_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
