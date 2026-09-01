@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.36`
+Version: `10.0.0-alpha.37`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -274,6 +274,12 @@ separately represented but cryptographically bound. This is structural
 traceability, not semantic-entailment proof. Commissioning uses four failing
 baselines, four passing reference repairs, and zero model calls.
 
+Alpha.37 composes that alignment proof with the existing provider-neutral
+structured-repair circulation. A four-call task-only baseline must bind the
+exact alpha.36 result, host-private evaluator, runtime-selected live adapter,
+model identity, response contract, no-tool grant, and canonical trajectory
+reconstruction before a score can be interpreted.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -311,6 +317,7 @@ baselines, four passing reference repairs, and zero model calls.
 - [External-private structured repair baseline](LIVE_STRUCTURED_REPAIR_SCREEN.md)
 - [Harder external-private structured repair calibration](HARDER_STRUCTURED_REPAIR_SCREEN.md)
 - [Contract-aligned external-private repair forge](CONTRACT_ALIGNED_REPAIR_FORGE.md)
+- [Contract-aligned frontier baseline](CONTRACT_ALIGNED_FRONTIER_BASELINE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

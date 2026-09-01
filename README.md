@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.36-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.36" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.37-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.37" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -493,6 +493,15 @@ requirements, setup-side hidden assertions, and later tampering fail closed.
 This is structural contract alignment—not proof that an assertion semantically
 entails its requirement. The four-case reference forge executes zero model
 calls and gates any later baseline screen behind a separate freeze.
+
+Alpha.37 adds that separate freeze. The existing provider-neutral structured
+repair circulation can now consume the aligned bundle only after independently
+verifying alpha.36 and binding its exact result, aligned corpus, executable
+projection, live adapter provenance, model identity, four-call ceiling, zero
+tools, and task-only context. The model remains runtime-selected; Cortex core
+contains no provider or model preference. The resulting baseline determines
+whether semantic treatment may begin, whether task difficulty must move, or
+whether interpretation must remain held.
 
 ## What you get
 

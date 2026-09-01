@@ -11,6 +11,10 @@ from typing import Any
 
 from . import __version__
 from .adapter_provenance import EVIDENCE_LIVE, resolve_adapter_provenance, verify_adapter_provenance
+from .contract_aligned_repair import (
+    executable_bundle_from_contract_aligned,
+    verify_contract_aligned_repair_forge_result,
+)
 from .edit_intent import INTENT_SCHEMA, compile_edit_intent
 from .executable_repair_forge import evaluate_executable_patch, verify_executable_repair_bundle
 from .native_agent import NativeAgentRuntime, verify_native_agent_trajectory
@@ -52,7 +56,28 @@ def freeze_structured_repair_screen(
     prior_result_receipt_hash: str | None = None,
 ) -> dict[str, Any]:
     public = forge_artifact.get("public_corpus") or {}
-    if forge_artifact.get("state") != "EXECUTABLE_REPAIR_FORGE_READY" or verify_executable_repair_bundle(public, private_bundle).get("valid") is not True:
+    alignment_binding: dict[str, Any] | None = None
+    if forge_artifact.get("state") == "CONTRACT_ALIGNED_REPAIR_FORGE_READY":
+        alignment_audit = verify_contract_aligned_repair_forge_result(forge_artifact)
+        if alignment_audit["valid"] is not True:
+            raise ValueError("valid contract-aligned repair forge is required")
+        aligned_corpus_hash = str(public.get("corpus_hash") or "")
+        public, private_bundle = executable_bundle_from_contract_aligned(
+            public,
+            private_bundle,
+        )
+        alignment_binding = {
+            "alignment_result_hash": forge_artifact["result_hash"],
+            "aligned_corpus_hash": aligned_corpus_hash,
+            "executable_corpus_hash": public["corpus_hash"],
+            "all_private_assertions_publicly_mapped": True,
+            "all_public_requirements_covered": True,
+            "semantic_entailment_established": False,
+        }
+    elif (
+        forge_artifact.get("state") != "EXECUTABLE_REPAIR_FORGE_READY"
+        or verify_executable_repair_bundle(public, private_bundle).get("valid") is not True
+    ):
         raise ValueError("valid external-private executable forge is required")
     identity = _identity(adapter)
     provenance = resolve_adapter_provenance(store, repo, adapter)
@@ -97,6 +122,7 @@ def freeze_structured_repair_screen(
         "adapter_provenance": provenance, "status": "frozen_before_execution",
         "private_specs_origin": "outside_repository", "development_only": True,
         "prior_screen_binding": prior_binding,
+        "contract_alignment_binding": alignment_binding,
         "semantic_transfer_established": False, "advisory_only": True,
         "host_mutate_authorized": False, "execution_authorized": False,
         "memory_admission_authorized": False, "policy_effect": False,

@@ -441,6 +441,29 @@ def commission_contract_aligned_repair_forge(
     return result
 
 
+def executable_bundle_from_contract_aligned(
+    public: Mapping[str, Any], private: Mapping[str, Any]
+) -> tuple[dict[str, Any], Mapping[str, Any]]:
+    """Resolve the legacy executable projection after alignment verification."""
+    audit = verify_contract_aligned_repair_bundle(public, private)
+    if audit["valid"] is not True:
+        raise ValueError("contract-aligned bundle invalid: " + ",".join(audit["errors"]))
+    executable_public = {
+        "schema_version": "cortex-executable-repair-corpus/1.0",
+        "development_only": True,
+        "case_count": public["case_count"],
+        "cases": [case["executable_case"] for case in public["cases"]],
+        "private_tests_in_model_context": False,
+        "private_reference_patches_in_model_context": False,
+        "claim_boundary": (
+            "A zero-call development forge with reference-patch discriminability. "
+            "No model repair ability, general improvement, or mutation authority is established."
+        ),
+        "corpus_hash": public["executable_corpus_hash"],
+    }
+    return executable_public, private["executable_private_bundle"]
+
+
 def verify_contract_aligned_repair_forge_result(result: Mapping[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     body = {key: value for key, value in result.items() if key != "result_hash"}
@@ -480,6 +503,7 @@ __all__ = [
     "RESULT_SCHEMA",
     "build_contract_aligned_repair_bundle",
     "commission_contract_aligned_repair_forge",
+    "executable_bundle_from_contract_aligned",
     "verify_contract_aligned_repair_bundle",
     "verify_contract_aligned_repair_forge_result",
 ]
