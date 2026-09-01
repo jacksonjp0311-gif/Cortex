@@ -21,6 +21,19 @@ from cortex.store import Store
 from cortex.will import register_will_principal
 
 
+def _unit_specs():
+    return [
+        {
+            "case_id": f"screen_{index}",
+            "task": "Return the declared fixture value.",
+            "source": "def value():\n    return 0\n",
+            "test": "from module import value\nassert value() == 1\n",
+            "patch": "diff --git a/module.py b/module.py\n--- a/module.py\n+++ b/module.py\n@@ -1,2 +1,2 @@\n def value():\n-    return 0\n+    return 1\n",
+        }
+        for index in range(4)
+    ]
+
+
 class ExternalRepairAdapter:
     provider_family = "external-repair-provider"
     model_id = "frontier-repair-model"
@@ -50,7 +63,9 @@ class Alpha32ExecutableRepairScreenTests(unittest.TestCase):
         store = Store(home / "cortex.db")
         repo = "Alpha32Host"
         bootstrap_repository(home, store, host, repo)
-        public, private = build_executable_repair_bundle(secret_seed="alpha32-test-secret")
+        public, private = build_executable_repair_bundle(
+            secret_seed="alpha32-test-secret", case_specs=_unit_specs()
+        )
         answers = [case["reference_patch"] for case in private["cases"]] if valid_answers else ["no patch"] * 4
         adapter = ExternalRepairAdapter(answers)
         register_will_principal(store, repo, "alpha32-operator", "Alpha.32 test operator", secret="alpha32-secret")

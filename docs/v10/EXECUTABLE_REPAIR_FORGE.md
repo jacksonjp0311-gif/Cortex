@@ -34,6 +34,11 @@ allowlist, and a salted evaluator commitment. The external test, commitment
 salt, and reference patch are stored together in the host credential vault.
 They are absent from the model-visible context and committed artifact.
 
+Legacy disclosure: the alpha.31 implementation source embedded the original
+private strings. Alpha.33 removes that path and retires this corpus from future
+held-out trials. The alpha.32 model had no tools and did not receive the private
+material, so its development observation remains intact.
+
 ## Reused constitutional machinery
 
 Alpha.31 composes, rather than duplicates, the alpha.4/alpha.5 source path:

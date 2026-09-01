@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.32-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.32" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.33-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.33" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -420,6 +420,17 @@ produced invalid Git diffs, so they correctly remained failures. This is the
 first executable, non-ceiling frontier-model baseline in the program. It is
 not yet evidence that Cortex improves the model; no memory or competence was
 projected in this arm.
+
+Alpha.33 separates repair reasoning from patch serialization. Models may now
+propose exact structured replacements while Cortex deterministically compiles
+the unified diff and binds it to current preimages. Ambiguous or stale edits
+fail closed; compilation grants no authority.
+
+The phase also corrects an evidence-boundary wound: alpha.31 withheld its tests
+from the artifact and live prompt, but its forge source contained the private
+strings. Alpha.32's no-tool observation remains valid, while that corpus is
+retired from future held-out trials. New private task specifications must enter
+from outside Git and remain in the host vault.
 
 ## What you get
 

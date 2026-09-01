@@ -15,9 +15,24 @@ from cortex.executable_repair_forge import (
 )
 
 
+def _unit_specs():
+    return [
+        {
+            "case_id": f"unit_{index}",
+            "task": "Return the declared fixture value.",
+            "source": "def value():\n    return 0\n",
+            "test": "from module import value\nassert value() == 1\n",
+            "patch": "diff --git a/module.py b/module.py\n--- a/module.py\n+++ b/module.py\n@@ -1,2 +1,2 @@\n def value():\n-    return 0\n+    return 1\n",
+        }
+        for index in range(4)
+    ]
+
+
 class ExecutableRepairForgeTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.public, self.private = build_executable_repair_bundle(secret_seed="alpha31-test-secret")
+        self.public, self.private = build_executable_repair_bundle(
+            secret_seed="alpha31-test-secret", case_specs=_unit_specs()
+        )
 
     def test_public_corpus_contains_no_tests_or_reference_patches(self) -> None:
         self.assertTrue(verify_executable_repair_bundle(self.public, self.private)["valid"])

@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.32`
+Version: `10.0.0-alpha.33`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -234,6 +234,14 @@ scores remain immutable. Baseline difficulty is now calibrated for this
 combined reasoning-and-patch-production task, while Cortex improvement remains
 untested.
 
+Alpha.33 closes the measurement wound before treatment. A strict structured
+edit intent expresses exact old/new source fragments; Cortex deterministically
+compiles valid diff coordinates and reuses the canonical patch boundary. It
+also discloses that alpha.31 private material existed in forge source history.
+The live model never received it, so alpha.32 remains an honest development
+observation, but the corpus is retired from future held-out causal use. Future
+private specifications must originate outside the repository.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -267,6 +275,7 @@ untested.
 - [Final prospective relational screen](FINAL_RELATIONAL_SCREEN.md)
 - [Answer-sealed executable repair forge](EXECUTABLE_REPAIR_FORGE.md)
 - [Live executable repair screen](LIVE_EXECUTABLE_REPAIR_SCREEN.md)
+- [Canonical edit intent and private corpus closure](CANONICAL_EDIT_INTENT_SEAL.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

@@ -25,9 +25,22 @@ from cortex.open_response_calibration import HostCalibrationContractVault  # noq
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--private-spec", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=ROOT / "benchmarks/results/v100_alpha31_executable_repair_forge.json")
     arguments = parser.parse_args()
-    public, private = build_executable_repair_bundle(secret_seed=secrets.token_hex(32))
+    private_path = arguments.private_spec.resolve()
+    try:
+        private_path.relative_to(ROOT.resolve())
+    except ValueError:
+        pass
+    else:
+        raise ValueError("private executable specifications must remain outside the repository")
+    private_specs = json.loads(private_path.read_text(encoding="utf-8"))
+    if not isinstance(private_specs, list):
+        raise ValueError("private executable specification must be a JSON list")
+    public, private = build_executable_repair_bundle(
+        secret_seed=secrets.token_hex(32), case_specs=private_specs
+    )
     # The manifest is written only after every private chunk succeeds.
     HostCalibrationContractVault().set(str(public["corpus_hash"]), private)
     with tempfile.TemporaryDirectory(prefix="cortex-alpha31-") as parent:

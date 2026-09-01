@@ -45,46 +45,20 @@ def _sha(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
-def _case_material() -> tuple[dict[str, str], ...]:
-    return (
-        {
-            "case_id": "stale_cache_invalidation",
-            "task": "Repair Catalog.rename so reads after a successful rename never return a stale cached name.",
-            "source": '''class Catalog:\n    def __init__(self):\n        self.records = {"a": "amber"}\n        self._cache = {}\n\n    def read(self, key):\n        if key not in self._cache:\n            self._cache[key] = self.records[key]\n        return self._cache[key]\n\n    def rename(self, key, value):\n        self.records[key] = value\n''',
-            "test": '''from module import Catalog\n\nc = Catalog()\nassert c.read("a") == "amber"\nc.rename("a", "azure")\nassert c.read("a") == "azure", "rename leaked a stale cached value"\n''',
-            "patch": '''diff --git a/module.py b/module.py\n--- a/module.py\n+++ b/module.py\n@@ -10,3 +10,4 @@ class Catalog:\n \n     def rename(self, key, value):\n         self.records[key] = value\n+        self._cache.pop(key, None)\n''',
-        },
-        {
-            "case_id": "zero_generation_guard",
-            "task": "Repair SnapshotStore.apply so expected generation zero is checked rather than treated as absent.",
-            "source": '''class SnapshotStore:\n    def __init__(self):\n        self.generation = 1\n        self.value = "old"\n\n    def apply(self, value, expected_generation=None):\n        if expected_generation and expected_generation != self.generation:\n            raise RuntimeError("stale generation")\n        self.value = value\n''',
-            "test": '''from module import SnapshotStore\n\ns = SnapshotStore()\ntry:\n    s.apply("unsafe", expected_generation=0)\nexcept RuntimeError:\n    pass\nelse:\n    raise AssertionError("generation zero bypassed the stale-state guard")\nassert s.value == "old"\n''',
-            "patch": '''diff --git a/module.py b/module.py\n--- a/module.py\n+++ b/module.py\n@@ -5,6 +5,6 @@ class SnapshotStore:\n         self.value = "old"\n \n     def apply(self, value, expected_generation=None):\n-        if expected_generation and expected_generation != self.generation:\n+        if expected_generation is not None and expected_generation != self.generation:\n             raise RuntimeError("stale generation")\n         self.value = value\n''',
-        },
-        {
-            "case_id": "validate_before_publish",
-            "task": "Repair Registry.publish so a rejected artifact is never visible in the published collection.",
-            "source": '''class Registry:\n    def __init__(self):\n        self.published = []\n\n    def publish(self, artifact):\n        self.published.append(artifact)\n        if not artifact.get("verified"):\n            raise ValueError("artifact is not verified")\n''',
-            "test": '''from module import Registry\n\nr = Registry()\ntry:\n    r.publish({"id": "bad", "verified": False})\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError("unverified artifact was accepted")\nassert r.published == [], "rejected artifact leaked into published state"\n''',
-            "patch": '''diff --git a/module.py b/module.py\n--- a/module.py\n+++ b/module.py\n@@ -3,6 +3,6 @@ class Registry:\n         self.published = []\n \n     def publish(self, artifact):\n-        self.published.append(artifact)\n         if not artifact.get("verified"):\n             raise ValueError("artifact is not verified")\n+        self.published.append(artifact)\n''',
-        },
-        {
-            "case_id": "validity_before_dedup",
-            "task": "Repair select_valid so an invalid duplicate cannot suppress a later valid record with the same id.",
-            "source": '''def select_valid(records):\n    selected = []\n    seen = set()\n    for record in records:\n        key = record["id"]\n        if key in seen:\n            continue\n        seen.add(key)\n        if not record.get("valid"):\n            continue\n        selected.append(record)\n    return selected\n''',
-            "test": '''from module import select_valid\n\nrecords = [\n    {"id": "x", "valid": False, "value": "bad"},\n    {"id": "x", "valid": True, "value": "good"},\n]\nassert select_valid(records) == [records[1]], "invalid-first duplicate suppressed valid evidence"\n''',
-            "patch": '''diff --git a/module.py b/module.py\n--- a/module.py\n+++ b/module.py\n@@ -5,8 +5,8 @@ def select_valid(records):\n         key = record["id"]\n         if key in seen:\n             continue\n-        seen.add(key)\n         if not record.get("valid"):\n             continue\n+        seen.add(key)\n         selected.append(record)\n     return selected\n''',
-        },
-    )
-
-
-def build_executable_repair_bundle(*, secret_seed: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def build_executable_repair_bundle(
+    *, secret_seed: str, case_specs: list[Mapping[str, str]] | tuple[Mapping[str, str], ...]
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Build a public task corpus and a separately sealable private evaluator bundle."""
     if not str(secret_seed):
         raise ValueError("a non-empty host secret seed is required")
     public_cases: list[dict[str, Any]] = []
     private_cases: list[dict[str, Any]] = []
-    for raw in _case_material():
+    if not case_specs:
+        raise ValueError("host-private executable case specifications are required")
+    for raw in case_specs:
+        required = {"case_id", "task", "source", "test", "patch"}
+        if set(raw) != required or any(not str(raw.get(key) or "") for key in required):
+            raise ValueError("each private case specification must contain exactly the required fields")
         salt = _sha({"seed": secret_seed, "case_id": raw["case_id"]})
         private_body = {"case_id": raw["case_id"], "external_test": raw["test"], "reference_patch": raw["patch"]}
         commitment = _sha({"salt": salt, "private": private_body})
