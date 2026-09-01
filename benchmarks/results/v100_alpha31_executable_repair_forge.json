@@ -1,0 +1,126 @@
+{
+  "schema_version": "cortex-alpha31-executable-repair-forge/1.0",
+  "state": "EXECUTABLE_REPAIR_FORGE_READY",
+  "corpus_hash": "9c70148c288cba1fc8ead03e5ef510d29e8b686607fe9b16b6bdfd9a0b2f0236",
+  "case_count": 4,
+  "cases": [
+    {
+      "case_id": "stale_cache_invalidation",
+      "evaluator_commitment": "4ff4e9e5a864cc50be8f0010303173febcbb1bc58c62f21e769ab007b8028d57",
+      "source_head": "22471b3b39a45c8fe092227d5f2553d9109cb5cd",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "ffe801390b963b1a7ff86fd015941c688f5c083927c9b34dcb14a0ca87fcbf51",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "zero_generation_guard",
+      "evaluator_commitment": "6e2c3bb0717a353ab5e81dcce2558416db96ee3805b81e093f595fe48041d410",
+      "source_head": "c25f8ef38e024653cff20e18f1a80c1aa06115c3",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "4a36bf779c552d1fed975bc9aeabc32ae3e79a5a84aefa3de6ac087b32bc0463",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "validate_before_publish",
+      "evaluator_commitment": "599c912bbe478983334c12c6f06f4b1fc90f2413dcc4850deeca04936816bda6",
+      "source_head": "3ce0817b8cb14a89f3b32ec3327afb2c43720f58",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "135d2d6bc2e21d47d770e5bd2a48404206ae7c2f7a0f2a6e24a696ef45930e13",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "validity_before_dedup",
+      "evaluator_commitment": "ebd35f1f05e0ae003ae824e3decc0ae9fcb2fefc43cede95dc69317d15eba829",
+      "source_head": "e4ecf704470cf8e92eb26ca3e97e7b4e47b6e515",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "820abef412642da347200545d506c4b45fad7934897831a69dc48ee243884fec",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    }
+  ],
+  "reference_repairs_measured": 4,
+  "additional_model_calls": 0,
+  "private_tests_in_model_context": false,
+  "private_reference_patches_in_model_context": false,
+  "private_bundle_persisted_in_artifact": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "next_action": "freeze_frontier_model_executable_repair_screen",
+  "claim_boundary": "A zero-call development forge with reference-patch discriminability. No model repair ability, general improvement, or mutation authority is established.",
+  "result_hash": "fbb2c5a1aa627d7b8928d33df6a454de1eddd780a9a168665dfda041b6261c40",
+  "source_commit": "9a2711b0d1678e555de2690ac76310c596528a5c",
+  "public_corpus": {
+    "schema_version": "cortex-executable-repair-corpus/1.0",
+    "development_only": true,
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "stale_cache_invalidation",
+        "task": "Repair Catalog.rename so reads after a successful rename never return a stale cached name.",
+        "files": {
+          "module.py": "class Catalog:\n    def __init__(self):\n        self.records = {\"a\": \"amber\"}\n        self._cache = {}\n\n    def read(self, key):\n        if key not in self._cache:\n            self._cache[key] = self.records[key]\n        return self._cache[key]\n\n    def rename(self, key, value):\n        self.records[key] = value\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "4ff4e9e5a864cc50be8f0010303173febcbb1bc58c62f21e769ab007b8028d57"
+      },
+      {
+        "case_id": "zero_generation_guard",
+        "task": "Repair SnapshotStore.apply so expected generation zero is checked rather than treated as absent.",
+        "files": {
+          "module.py": "class SnapshotStore:\n    def __init__(self):\n        self.generation = 1\n        self.value = \"old\"\n\n    def apply(self, value, expected_generation=None):\n        if expected_generation and expected_generation != self.generation:\n            raise RuntimeError(\"stale generation\")\n        self.value = value\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "6e2c3bb0717a353ab5e81dcce2558416db96ee3805b81e093f595fe48041d410"
+      },
+      {
+        "case_id": "validate_before_publish",
+        "task": "Repair Registry.publish so a rejected artifact is never visible in the published collection.",
+        "files": {
+          "module.py": "class Registry:\n    def __init__(self):\n        self.published = []\n\n    def publish(self, artifact):\n        self.published.append(artifact)\n        if not artifact.get(\"verified\"):\n            raise ValueError(\"artifact is not verified\")\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "599c912bbe478983334c12c6f06f4b1fc90f2413dcc4850deeca04936816bda6"
+      },
+      {
+        "case_id": "validity_before_dedup",
+        "task": "Repair select_valid so an invalid duplicate cannot suppress a later valid record with the same id.",
+        "files": {
+          "module.py": "def select_valid(records):\n    selected = []\n    seen = set()\n    for record in records:\n        key = record[\"id\"]\n        if key in seen:\n            continue\n        seen.add(key)\n        if not record.get(\"valid\"):\n            continue\n        selected.append(record)\n    return selected\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "ebd35f1f05e0ae003ae824e3decc0ae9fcb2fefc43cede95dc69317d15eba829"
+      }
+    ],
+    "private_tests_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "A zero-call development forge with reference-patch discriminability. No model repair ability, general improvement, or mutation authority is established.",
+    "corpus_hash": "9c70148c288cba1fc8ead03e5ef510d29e8b686607fe9b16b6bdfd9a0b2f0236"
+  }
+}
