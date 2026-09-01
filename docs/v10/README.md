@@ -160,7 +160,10 @@ Alpha.24 independently reconstructs that level-three result before permitting
 the already sealed level-four cases to run. A status string or caller-owned
 copy cannot open the gate: every prior case, trajectory, semantic score, screen
 aggregate, model identity, and adapter registration must resolve canonically.
-The four-call cap and task-only treatment remain unchanged.
+The four-call cap and task-only treatment remain unchanged. The selected model
+scored 0/4 with zero UNKNOWN outcomes, producing a valid floor immediately
+above the alpha.23 ceiling. Cortex now has a bracket, not a calibrated band;
+the next step is zero-call difficulty interpolation.
 
 ## Documents
 

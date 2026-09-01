@@ -246,6 +246,20 @@ private evaluator; it recomputes the complete screen before freezing four
 harder calls for the same registered model boundary. The treatment remains
 task-only, so this phase locates difficulty rather than claiming improvement.
 
+The live level-four panel scored 0/4 with zero UNKNOWN outcomes. Together the
+two fresh screens reveal a sharp boundary:
+
+```text
+level three   4 / 4  ────────── ceiling
+level four    0 / 4  ────────── floor
+target        2 / 4  ────────── not observed
+```
+
+This is not calibration and not evidence of Cortex improvement. It is a useful
+bracket: the next experiment must interpolate difficulty between the two
+levels before any sham-versus-relevant semantic treatment is scientifically
+informative.
+
 ## What you get
 
 | Capability | What it means for you |

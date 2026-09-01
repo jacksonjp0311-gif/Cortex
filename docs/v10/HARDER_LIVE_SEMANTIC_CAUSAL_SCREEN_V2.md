@@ -32,4 +32,27 @@ UNKNOWN remains distinct from FAIL. Every authority flag remains false.
 
 ## Result
 
-Pending the separately executed four-call screen.
+The separately authorized executor made exactly four calls through
+`OpenAI / gpt-5.6-sol`:
+
+```text
+state                 LIVE_SEMANTIC_CAUSAL_SCREEN_RECONSTRUCTED
+successes             0 / 4
+unknown               0
+screen                screening_floor
+next action           move_easier
+result receipt        e453cae6a677108994110ac1e8d4113aaa92a16192ccb82dc98d495450ecfa10
+```
+
+Combined with alpha.23, the measured development geometry is discontinuous:
+
+```text
+level three   4 / 4  ceiling
+level four    0 / 4  floor
+target band   2 / 4  not observed
+```
+
+The screen successfully bounds the transition, but it does not calibrate an
+item band. The next valid step is a zero-call interpolation forge between the
+two frozen levels. Repeating either extreme or opening semantic treatment now
+would waste evidence and calls.
