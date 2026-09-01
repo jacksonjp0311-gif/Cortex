@@ -42,7 +42,15 @@ def _screen(successes: int) -> dict[str, Any]:
     }
 
 
-def freeze_structured_repair_screen(store: Any, repo: str, *, forge_artifact: Mapping[str, Any], private_bundle: Mapping[str, Any], adapter: Any) -> dict[str, Any]:
+def freeze_structured_repair_screen(
+    store: Any,
+    repo: str,
+    *,
+    forge_artifact: Mapping[str, Any],
+    private_bundle: Mapping[str, Any],
+    adapter: Any,
+    prior_result_receipt_hash: str | None = None,
+) -> dict[str, Any]:
     public = forge_artifact.get("public_corpus") or {}
     if forge_artifact.get("state") != "EXECUTABLE_REPAIR_FORGE_READY" or verify_executable_repair_bundle(public, private_bundle).get("valid") is not True:
         raise ValueError("valid external-private executable forge is required")
@@ -53,6 +61,25 @@ def freeze_structured_repair_screen(store: Any, repo: str, *, forge_artifact: Ma
     cases = list(public.get("cases") or ())
     if len(cases) != PLANNED_CALLS:
         raise ValueError("structured screen requires exactly four cases")
+    prior_binding: dict[str, Any] | None = None
+    if prior_result_receipt_hash:
+        prior_audit = verify_structured_repair_screen(
+            store, repo, result_receipt_hash=prior_result_receipt_hash
+        )
+        prior = store.symbiotic_receipt(prior_result_receipt_hash, repo=repo) or {}
+        if (
+            prior_audit.get("valid") is not True
+            or (prior.get("screen") or {}).get("state") != "screening_ceiling"
+            or prior.get("model_identity") != identity
+            or prior.get("evidence_class") != EVIDENCE_LIVE
+        ):
+            raise ValueError("canonical same-model screening ceiling is required")
+        prior_binding = {
+            "prior_result_receipt_hash": prior_result_receipt_hash,
+            "prior_screen_state": "screening_ceiling",
+            "prior_success_count": int((prior.get("screen") or {}).get("success_count") or 0),
+            "difficulty_transition": "move_harder",
+        }
     response_contract = {
         "schema_version": INTENT_SCHEMA,
         "format": "one JSON object only; no markdown fences",
@@ -69,6 +96,7 @@ def freeze_structured_repair_screen(store: Any, repo: str, *, forge_artifact: Ma
         "tools": [], "response_contract": response_contract, "model_identity": identity,
         "adapter_provenance": provenance, "status": "frozen_before_execution",
         "private_specs_origin": "outside_repository", "development_only": True,
+        "prior_screen_binding": prior_binding,
         "semantic_transfer_established": False, "advisory_only": True,
         "host_mutate_authorized": False, "execution_authorized": False,
         "memory_admission_authorized": False, "policy_effect": False,

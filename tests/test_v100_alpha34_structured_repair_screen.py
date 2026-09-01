@@ -156,6 +156,59 @@ class Alpha34StructuredRepairScreenTests(unittest.TestCase):
             finally:
                 store.close()
 
+    def test_harder_followup_requires_canonical_same_model_ceiling(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = self._fixture(temp)
+            store, repo, _, forge, private, adapter = fixture
+            try:
+                _, ceiling = self._run(fixture)
+                register_adapter_provenance(
+                    store,
+                    repo,
+                    adapter,
+                    boundary_kind="external_api",
+                    principal_id="alpha34-operator",
+                    principal_secret="alpha34-secret",
+                    endpoint_descriptor={"transport": "test_external_boundary"},
+                    model_family="frontier-structured-family",
+                    capability_class="structured_code_repair",
+                )
+                followup = freeze_structured_repair_screen(
+                    store,
+                    repo,
+                    forge_artifact=forge,
+                    private_bundle=private,
+                    adapter=adapter,
+                    prior_result_receipt_hash=ceiling["receipt_hash"],
+                )
+                binding = followup["prior_screen_binding"]
+                self.assertEqual(binding["prior_screen_state"], "screening_ceiling")
+                self.assertEqual(binding["difficulty_transition"], "move_harder")
+                other_adapter = ExternalStructuredAdapter([])
+                other_adapter.model_id = "different-frontier-model"
+                register_adapter_provenance(
+                    store,
+                    repo,
+                    other_adapter,
+                    boundary_kind="external_api",
+                    principal_id="alpha34-operator",
+                    principal_secret="alpha34-secret",
+                    endpoint_descriptor={"transport": "test_external_boundary"},
+                    model_family="different-frontier-family",
+                    capability_class="structured_code_repair",
+                )
+                with self.assertRaisesRegex(ValueError, "canonical same-model"):
+                    freeze_structured_repair_screen(
+                        store,
+                        repo,
+                        forge_artifact=forge,
+                        private_bundle=private,
+                        adapter=other_adapter,
+                        prior_result_receipt_hash=ceiling["receipt_hash"],
+                    )
+            finally:
+                store.close()
+
 
 if __name__ == "__main__":
     unittest.main()

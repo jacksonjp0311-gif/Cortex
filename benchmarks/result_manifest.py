@@ -320,6 +320,25 @@ def main() -> int:
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     else "live_structured_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha35-live-harder-structured-repair-screen/1.0":
+                reconstruction = payload.get("canonical_reconstruction") or {}
+                screen = payload.get("screen") or {}
+                metadata_state = (
+                    "development_live_harder_structured_repair_screen"
+                    if payload.get("state") == "HARDER_STRUCTURED_REPAIR_SCREEN_RECONSTRUCTED"
+                    and payload.get("planned_calls") == 4
+                    and payload.get("maximum_calls") == 4
+                    and payload.get("calls_executed") == 4
+                    and payload.get("difficulty_transition") == "move_harder"
+                    and screen.get("state") in {
+                        "screening_floor", "structured_baseline_calibrated", "screening_ceiling"
+                    }
+                    and reconstruction.get("valid") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    and payload.get("private_bundle_persisted_in_artifact") is False
+                    else "live_harder_structured_repair_screen_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.34-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.34" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.35-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.35" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -462,6 +462,13 @@ alpha.34 Cortex-compiled edit 4 / 4  ceiling
 That is an observed interface/corpus contrast, not a causal Cortex competence
 gain. The next valid experiment must forge
 harder external-private structured tasks before projecting semantic treatment.
+
+Alpha.35 makes that next step a canonical difficulty transition. A new screen
+may open only after Cortex independently reconstructs alpha.34's same-model
+`4/4` ceiling. Four external-private defects increase temporal and relational
+depth across fencing leases, atomic observer batches, dependency waves, and
+per-key MVCC. The transport, model, tool budget, and withheld-test law remain
+fixed; only task difficulty changes.
 
 ## What you get
 

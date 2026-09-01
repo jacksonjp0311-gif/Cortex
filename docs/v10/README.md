@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.34`
+Version: `10.0.0-alpha.35`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -254,6 +254,12 @@ and every isolated candidate passed its withheld evaluator. The structured
 transport works, but the fresh corpus is a screening ceiling. A harder
 external-private structured corpus is required before semantic treatment.
 
+Alpha.35 binds that move-harder decision to the canonical alpha.34 result and
+the identical model identity. Its external-private panel increases state-
+machine depth while retaining strict structured intents, zero tools, four-call
+maximum, isolated execution, and host-private evaluators. A caller-provided
+ceiling or different model cannot open the screen.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -289,6 +295,7 @@ external-private structured corpus is required before semantic treatment.
 - [Live executable repair screen](LIVE_EXECUTABLE_REPAIR_SCREEN.md)
 - [Canonical edit intent and private corpus closure](CANONICAL_EDIT_INTENT_SEAL.md)
 - [External-private structured repair baseline](LIVE_STRUCTURED_REPAIR_SCREEN.md)
+- [Harder external-private structured repair calibration](HARDER_STRUCTURED_REPAIR_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
