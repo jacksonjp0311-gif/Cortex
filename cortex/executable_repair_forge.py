@@ -16,7 +16,12 @@ from pathlib import Path
 from typing import Any
 
 from .coding_workspace import CONTRACT_SCHEMA as VERIFY_SCHEMA
-from .coding_workspace import create_patch_proposal, verify_patch_in_isolated_worktree
+from .coding_workspace import (
+    create_patch_proposal,
+    repository_head,
+    run_host_verification_step,
+    verify_patch_in_isolated_worktree,
+)
 from .source_improvement import (
     create_source_improvement_contract,
     run_source_improvement_trial,
@@ -161,6 +166,66 @@ def _verification_contract(proposal: Mapping[str, Any]) -> dict[str, Any]:
     return body
 
 
+def evaluate_executable_patch(
+    public_case: Mapping[str, Any],
+    private_case: Mapping[str, Any],
+    patch_text: str,
+    root: Path,
+) -> dict[str, Any]:
+    """Measure one proposed patch while retaining malformed candidates as FAIL."""
+    _write_fixture(root, public_case, private_case)
+    step = {
+        "id": "frozen_external_test",
+        "argv": ["{python}", "external_test.py"],
+        "timeout_seconds": 30,
+    }
+    baseline = run_host_verification_step(root, step)
+    proposal_hash: str | None = None
+    candidate: dict[str, Any] = {
+        "status": "held",
+        "steps": [],
+        "active_tree_mutated": False,
+    }
+    candidate_error: str | None = None
+    try:
+        proposal = create_patch_proposal(root, patch_text, "frontier-model executable repair candidate")
+        proposal_hash = str(proposal["proposal_hash"])
+        candidate = verify_patch_in_isolated_worktree(root, proposal, _verification_contract(proposal))
+    except (OSError, RuntimeError, ValueError) as exc:
+        candidate_error = type(exc).__name__ + ":" + str(exc)[:500]
+    baseline_pass = bool(baseline.get("passed"))
+    candidate_pass = candidate.get("status") == "verified"
+    classification = (
+        "REPAIR_MEASURED" if not baseline_pass and candidate_pass
+        else "VERIFIED_MAINTENANCE" if baseline_pass and candidate_pass
+        else "REGRESSION_DETECTED" if baseline_pass
+        else "IMPROVEMENT_HELD"
+    )
+    material: dict[str, Any] = {
+        "schema_version": "cortex-executable-patch-evaluation/1.0",
+        "case_id": str(public_case["case_id"]),
+        "source_head": repository_head(root),
+        "evaluator_commitment": str(public_case["private_evaluator_commitment"]),
+        "proposal_hash": proposal_hash,
+        "patch_hash": hashlib.sha256(str(patch_text).encode("utf-8")).hexdigest(),
+        "baseline": baseline,
+        "candidate": candidate,
+        "candidate_error": candidate_error,
+        "baseline_pass": baseline_pass,
+        "candidate_pass": candidate_pass,
+        "classification": classification,
+        "bounded_repair_established": classification == "REPAIR_MEASURED",
+        "general_improvement_established": False,
+        "active_tree_mutated": False,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    material["evaluation_hash"] = _sha(material)
+    return material
+
+
 def commission_executable_repair_forge(public: Mapping[str, Any], private: Mapping[str, Any], root: Path) -> dict[str, Any]:
     """Run deterministic baseline/reference checks without invoking a model."""
     audit = verify_executable_repair_bundle(public, private)
@@ -247,6 +312,7 @@ def verify_executable_repair_forge_result(result: Mapping[str, Any]) -> dict[str
 
 __all__ = [
     "PUBLIC_SCHEMA", "PRIVATE_SCHEMA", "RESULT_SCHEMA", "build_executable_repair_bundle",
-    "commission_executable_repair_forge", "verify_executable_repair_bundle",
+    "commission_executable_repair_forge", "evaluate_executable_patch",
+    "verify_executable_repair_bundle",
     "verify_executable_repair_forge_result",
 ]

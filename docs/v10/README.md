@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.31`
+Version: `10.0.0-alpha.32`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -221,6 +221,12 @@ through the existing detached-worktree counterfactual path. This proves task
 discriminability, not model repair competence; the next separately authorized
 step is a frontier-model task-only executable repair screen.
 
+Alpha.32 freezes and executes that bounded screen. The selected frontier model
+receives only each defect contract and buggy module, returns an exact unified
+diff, and receives no tools. The host-private external test evaluates the
+unchanged baseline and isolated candidate; malformed and failing patches remain
+failed observations. Only a 2/4 result opens semantic treatment.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -253,6 +259,7 @@ step is a frontier-model task-only executable repair screen.
 - [Deterministic relational equivalence closure](RELATIONAL_EQUIVALENCE_CLOSURE.md)
 - [Final prospective relational screen](FINAL_RELATIONAL_SCREEN.md)
 - [Answer-sealed executable repair forge](EXECUTABLE_REPAIR_FORGE.md)
+- [Live executable repair screen](LIVE_EXECUTABLE_REPAIR_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

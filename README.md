@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.31-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.31" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.32-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.32" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -405,6 +405,13 @@ ready. Tests and reference patches are absent from model-visible context and
 the committed artifact. This demonstrates an executable, discriminative
 measurement instrument—not that Cortex or a model can repair the tasks. The
 next bounded run measures a frontier model on the public task/source only.
+
+Alpha.32 freezes that four-call task-only screen. A frontier model must return
+an exact patch; Cortex then runs the withheld external test against the
+unchanged baseline and the isolated candidate. Model prose, confidence, and
+self-reported success have no role in the score. Only `2/4` opens a later
+sham-versus-relevant semantic treatment; every other result changes task
+difficulty under a new seal.
 
 ## What you get
 
