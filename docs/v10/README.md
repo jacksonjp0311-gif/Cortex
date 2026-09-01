@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.27`
+Version: `10.0.0-alpha.28`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -185,6 +185,12 @@ private expected graph. No call executes and no screen is pre-authorized. A
 future separately frozen screen begins at `bridge_low` and stops if its success
 rate enters the 30–70% information window.
 
+Alpha.28 implements that bounded live screen. It resolves the provider/model at
+runtime, requires host-registered live adapter provenance, freezes exactly four
+task-only calls, exposes the public relation vocabulary, and reconstructs each
+verdict from the immutable native trajectory. It cannot project lessons or
+establish semantic transfer.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -213,6 +219,7 @@ rate enters the 30–70% information window.
 - [Semantic instrument sufficiency audit](SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md)
 - [Relational causal proof and evidence minimality](RELATIONAL_CAUSAL_PROOF.md)
 - [Intermediate relational task forge](INTERMEDIATE_RELATIONAL_FORGE.md)
+- [Bounded bridge-low relational screen](BRIDGE_LOW_RELATIONAL_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

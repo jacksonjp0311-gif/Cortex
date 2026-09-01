@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.27-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.27" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.28-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.28" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -301,6 +301,14 @@ difficulty change cannot be explained merely by demanding another receipt.
 The sequential rule screens one band at a time and stops when success lies in
 the 30–70% information window. Alpha.27 spends zero calls and grants no future
 call authority; the first four-call screen requires a separate freeze.
+
+Alpha.28 supplies that separate freeze and executor. The provider and model are
+selected at runtime from explicit operator input or Cortex UI settings; neither
+is encoded in ontology. Before inference, Cortex binds the exact `bridge_low`
+cases, private corpus commitment, relational evaluator, live adapter provenance,
+relation vocabulary, four-call ceiling, no-tool treatment, and 30–70% stop
+window. Every score is reconstructed from the canonical public trajectory.
+Caller-held preregistrations and verdicts are ignored after receipt resolution.
 
 ## What you get
 

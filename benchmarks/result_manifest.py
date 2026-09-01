@@ -192,6 +192,18 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "intermediate_relational_forge_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha28-bridge-low-relational-screen/1.0":
+                metadata_state = (
+                    "development_bridge_low_relational_screen"
+                    if payload.get("state") == "RELATIONAL_LIVE_SCREEN_RECONSTRUCTED"
+                    and payload.get("planned_calls") == 4
+                    and payload.get("maximum_calls") == 4
+                    and payload.get("calls_executed") == 4
+                    and (payload.get("canonical_reconstruction") or {}).get("valid") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "bridge_low_relational_screen_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):
