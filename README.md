@@ -348,6 +348,23 @@ model's opinion. Alpha.29 explicitly marks ruler building closed. One final
 fresh screen may use v4; if measurement collapses again, Cortex must switch to
 externally executable code tasks rather than create evaluator v5.
 
+The zero-call historical shadow then evaluated the four immutable alpha.28
+answers without changing their original scores:
+
+```text
+alpha.28 exact-edge score       0 / 4  (immutable)
+alpha.29 equivalence shadow     4 / 4  (post-hoc diagnostic)
+additional model calls          0
+self-test checks                9 / 9
+```
+
+This isolates a representation mismatch in the old ruler: the answers carried
+the required causal propositions through equivalent bounded relations. It does
+not establish baseline difficulty or semantic transfer because the shadow was
+designed after the responses existed. The only scientifically valid next step
+is one freshly frozen screen under v4; another collapse ends this synthetic
+line and moves Cortex to executable code tasks with external tests.
+
 ## What you get
 
 | Capability | What it means for you |

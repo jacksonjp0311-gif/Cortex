@@ -41,6 +41,12 @@ The alpha.28 outputs are evaluated only as a disclosed post-hoc shadow. Their
 immutable v3 scores remain 0/4. Shadow success can validate the new policy's
 coverage but cannot establish baseline difficulty.
 
+The commissioned zero-call shadow accepted 4/4 historical answers and the
+deterministic adversarial panel passed 9/9 checks. No historical score changed,
+no model call ran, and no private contract entered the public artifact. This is
+evidence that the exact-edge ruler rejected bounded relational equivalence; it
+is not prospective performance evidence.
+
 Ruler building is now closed. Cortex may execute one final fresh preregistered
 screen. If that screen is still dominated by representation or evaluator
 collapse, the synthetic semantic benchmark is retired in favor of externally

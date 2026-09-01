@@ -199,7 +199,11 @@ difficulty is still unresolved.
 Alpha.29 freezes deterministic finite relation alternatives per required causal
 proposition. Bounded grounded additions and evidence supersets are retained but
 cannot satisfy missing propositions; contradictions and ungrounded claims fail.
-No model judges equivalence. This is the final ruler-building phase.
+No model judges equivalence. A zero-call post-hoc shadow accepted all four
+alpha.28 responses under v4 (4/4) while preserving their immutable v3 scores
+(0/4); the evaluator self-test passed 9/9. This diagnoses representation
+collapse but cannot establish difficulty or transfer. This is the final
+ruler-building phase.
 
 ## Documents
 

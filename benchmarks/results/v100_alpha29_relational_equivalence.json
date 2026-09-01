@@ -1,0 +1,90 @@
+{
+  "schema_version": "cortex-alpha29-relational-equivalence/1.0",
+  "state": "RELATIONAL_EQUIVALENCE_V4_READY",
+  "source_commit": "387318bd19b9a5fa756a45a28601124b4ab7c9ec",
+  "preflight_receipt_hash": "80fdd5c95b31b0d9eb9874fc786458cc328219b59e8502243ad63eba530ae06e",
+  "source_instrument_audit_receipt_hash": "0c00f69effcc2eb89cdc5edf1c0ffc106a75836059b96f5e7775e8d4c8be2cf2",
+  "source_result_receipt_hash": "912e79b3a96a41163c8b096204caef69b2e84a5c5b0054b29e2cda1b08ee3c25",
+  "evaluator_manifest": {
+    "schema_version": "cortex-relational-equivalence-manifest/4.0",
+    "version": "10.0.0a29",
+    "evaluator_id": "cortex.relational-equivalence-proof.v4",
+    "source_corpus_hash": "f36faefd21978b8a4b96734570f028cc4d4e425eeca9bceb89e5c3a33885dbd1",
+    "source_private_key_commitment": "3f604810bd92f899926ea52ac295b99b6d33bcc7cb0162eb877274417717a5d5",
+    "case_ids": [
+      "irc_0bd78f6f43ef9efc2117",
+      "irc_0cdd302b2a4539114ae9",
+      "irc_4843996b0f6397e58125",
+      "irc_8c4211b99852df8f932d",
+      "irc_904d74700cda7609f642",
+      "irc_91839f47c91d40b2fb37",
+      "irc_a1b221492d250b9633f1",
+      "irc_a8fd6c2e9fd2bc7ac3c5",
+      "irc_d10d7b129ae80763b7c6",
+      "irc_d1d021d2d8c5f0ddd70f",
+      "irc_e6f3e217784f3f50f228",
+      "irc_ee183302c3daa3d95ce0"
+    ],
+    "relation_ontology": [
+      "blocks",
+      "causes",
+      "has_generation",
+      "invalidates",
+      "must_match_generation",
+      "older_than",
+      "precedes",
+      "published_as",
+      "reads_from"
+    ],
+    "equivalence_policy": "host_frozen_finite_alternatives_per_required_proposition",
+    "additional_relation_policy": "bounded_and_retained_but_non_satisfying",
+    "private_key_commitment": "535b16cbf205e9d1747f52d22363105eb42d6f63cff7197edb3e30337f81d6f2",
+    "private_contracts_present": false,
+    "public_rationale_scored": false,
+    "model_identity_in_scoring": false,
+    "development_only": true,
+    "confirmatory_eligible": false,
+    "evaluator_hash": "4f1ecf1dba825d872c3afea0f6d8c7e8afff5a165f86e100b0e36ab097869b15"
+  },
+  "private_contract_storage": "host_os_credential_vault",
+  "private_contract_persisted_in_artifact": false,
+  "self_test": {
+    "passed": true,
+    "check_count": 9
+  },
+  "post_hoc_shadow": [
+    {
+      "case_id": "irc_904d74700cda7609f642",
+      "errors": [],
+      "success": true
+    },
+    {
+      "case_id": "irc_ee183302c3daa3d95ce0",
+      "errors": [],
+      "success": true
+    },
+    {
+      "case_id": "irc_0cdd302b2a4539114ae9",
+      "errors": [],
+      "success": true
+    },
+    {
+      "case_id": "irc_4843996b0f6397e58125",
+      "errors": [],
+      "success": true
+    }
+  ],
+  "post_hoc_shadow_success_count": 4,
+  "historical_scores_rewritten": false,
+  "additional_model_calls": 0,
+  "ruler_building_closed": true,
+  "baseline_difficulty_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "freeze_one_final_fresh_screen_or_switch_to_executable_tasks",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}
