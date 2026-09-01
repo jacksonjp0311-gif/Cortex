@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.25",
+  "release": "Cortex v10.0.0-alpha.26",
   "release_class": "advanced research prototype",
-  "source_commit": "150d2cdb5b7df51d8b0f5d295ffae8c8632081cc",
-  "runtime_parent": "150d2cdb5b7df51d8b0f5d295ffae8c8632081cc",
+  "source_commit": "1caa699bc51a7d986d8a5e375a1ce4e94fc9dcfb",
+  "runtime_parent": "1caa699bc51a7d986d8a5e375a1ce4e94fc9dcfb",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md",
+  "phase_document": "docs/v10/RELATIONAL_CAUSAL_PROOF.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -60,7 +60,10 @@
     "harder_live_semantic_causal_screen_v2": "the canonical alpha.23 result, preregistration, four case receipts, native trajectories, and semantic verdicts were independently reconstructed before four level-four calls opened for the identical model and registered adapter boundary",
     "semantic_causal_difficulty_bracket": "level three scored 4/4 and level four scored 0/4 with zero UNKNOWN outcomes, but the apparent transition is instrument-confounded and cannot yet establish a model-difficulty bracket",
     "semantic_instrument_sufficiency_audit": "zero-call canonical reconstruction found three exact evidence-list rejections and one semantic repair-clause rejection across the alpha.24 floor; all historical scores remain immutable",
-    "difficulty_interpolation_gate": "DIFFICULTY_INTERPOLATION_HELD; evidence minimality and repair semantics require a new independently frozen policy before an intermediate corpus may open",
+    "relational_causal_evaluator_v3": "typed subject-relation-object graphs replace prose-shaped scoring; required and allowed directed edges, uncertainty, response shape, and canonical ordered evidence are independently verified while public rationale remains non-authoritative",
+    "evidence_sufficiency_policy": "two independently frozen minimal evidence proof sets may establish sufficiency; a valid corroborating superset passes but is marked nonminimal, while incomplete, unknown, or out-of-order evidence fails closed",
+    "relational_evaluator_commissioning": "RELATIONAL_CAUSAL_EVALUATOR_V3_READY; canonical alpha.24 and alpha.25 evidence reconstructed, 11/11 adversarial checks passed, zero model calls executed, and all historical scores remain immutable",
+    "difficulty_interpolation_gate": "the instrument is ready for a zero-call intermediate relational case forge; baseline difficulty, semantic transfer, and Cortex improvement remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -73,5 +76,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.24 harder live semantic causal screen v2"
+  "supersedes": "Cortex v10.0.0-alpha.25 semantic instrument sufficiency audit"
 }

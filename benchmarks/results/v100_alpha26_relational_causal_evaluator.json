@@ -1,0 +1,69 @@
+{
+  "schema_version": "cortex-alpha26-relational-causal-evaluator/1.0",
+  "state": "RELATIONAL_CAUSAL_EVALUATOR_V3_READY",
+  "source_commit": "1caa699bc51a7d986d8a5e375a1ce4e94fc9dcfb",
+  "preflight_receipt_hash": "0479a90a1572edb9824564bc1b6ef82bba4337b761bd29786274058d47cf72f8",
+  "source_instrument_audit_receipt_hash": "06cc350d6b29cbe7d6e47961acb80e711a5b09d95652c0f65587fae8106a420e",
+  "source_result_receipt_hash": "e453cae6a677108994110ac1e8d4113aaa92a16192ccb82dc98d495450ecfa10",
+  "evaluator_manifest": {
+    "schema_version": "cortex-relational-causal-manifest/3.0",
+    "version": "10.0.0a26",
+    "evaluator_id": "cortex.relational-causal-proof.v3",
+    "source_corpus_hash": "983e23f6d36ef956f001dcb9209c82521458aa8ceffcbc22ff75bb1e502efd9b",
+    "source_private_key_commitment": "98eb8854e9b249c44d16759cecda2ce097dbe9ed6307777d93e1e2b414d3fbaa",
+    "case_ids": [
+      "olc_0b6f244e5b16ecb3c268",
+      "olc_2467fc3a41cbcdbea7d5",
+      "olc_54b16654c7814e4a5aa7",
+      "olc_d9bf154a969350069b1d"
+    ],
+    "relation_schema": [
+      "subject",
+      "relation",
+      "object"
+    ],
+    "response_schema": [
+      "cause",
+      "repair",
+      "causal_relations",
+      "repair_relations",
+      "evidence_ids",
+      "uncertainty"
+    ],
+    "relation_ontology": [
+      "blocks",
+      "causes",
+      "has_generation",
+      "must_match_generation",
+      "older_than",
+      "precedes",
+      "reads_from"
+    ],
+    "evidence_policy": "ordered_submitted_evidence_must_contain_one_independently_frozen_minimal_proof_set; corroborating_evidence_may_be_retained",
+    "private_key_commitment": "9833ecf63e4bf9ca0c2ab242e1455c82d84a8aa87aa67ee597ac65339d3b30d8",
+    "private_contracts_present": false,
+    "public_rationale_scored": false,
+    "model_identity_in_scoring": false,
+    "development_only": true,
+    "confirmatory_eligible": false,
+    "evaluator_hash": "f7b7efd76de612208ba2649e4367e52a49de065cb19e3d6d1b4810fa1279aece"
+  },
+  "private_contract_storage": "host_os_credential_vault",
+  "private_contract_persisted_in_artifact": false,
+  "self_test": {
+    "passed": true,
+    "check_count": 11
+  },
+  "historical_scores_rewritten": false,
+  "planned_live_calls": 0,
+  "difficulty_interpolation_ready": true,
+  "baseline_difficulty_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "forge_intermediate_relational_cases_zero_call",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}
