@@ -287,6 +287,21 @@ def main() -> int:
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     else "live_executable_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha33-edit-intent-seal/1.0":
+                metadata_state = (
+                    "zero_call_edit_intent_transport_ready"
+                    if payload.get("state") == "EDIT_INTENT_TRANSPORT_READY"
+                    and payload.get("checks_passed") == payload.get("checks_total") == 7
+                    and payload.get("additional_model_calls") == 0
+                    and payload.get("historical_private_material_in_git") is True
+                    and payload.get("historical_live_model_received_private_material") is False
+                    and payload.get("historical_alpha32_scores_rewritten") is False
+                    and payload.get("alpha31_corpus_reusable_for_future_heldout_trials") is False
+                    and payload.get("future_private_specs_must_be_outside_repository") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    else "edit_intent_transport_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

@@ -1,0 +1,32 @@
+{
+  "schema_version": "cortex-alpha33-edit-intent-seal/1.0",
+  "state": "EDIT_INTENT_TRANSPORT_READY",
+  "source_commit": "59509f1650c9db7390aafd56f6310ac8b8d83d8d",
+  "compiler_schema": "cortex-structured-edit-intent/1.0",
+  "checks": {
+    "valid_intent_compiles": true,
+    "canonical_reconstruction": true,
+    "authority_closed": true,
+    "caller_success_rejected": true,
+    "scope_escape_rejected": true,
+    "ambiguous_preimage_rejected": true,
+    "stale_preimage_rejected": true
+  },
+  "checks_passed": 7,
+  "checks_total": 7,
+  "additional_model_calls": 0,
+  "historical_private_material_in_git": true,
+  "historical_live_model_received_private_material": false,
+  "historical_alpha32_scores_rewritten": false,
+  "alpha31_corpus_reusable_for_future_heldout_trials": false,
+  "future_private_specs_must_be_outside_repository": true,
+  "structured_edit_removes_manual_diff_coordinate_burden": true,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "next_action": "forge_new_external_private_executable_corpus_then_screen_structured_intents",
+  "result_hash": "86c9ec6f0065fc7f6c6e9873e20f16d9c94d0197e8944327e7223b24bc4896f2"
+}
