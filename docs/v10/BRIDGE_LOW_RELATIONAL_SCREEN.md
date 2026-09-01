@@ -29,3 +29,24 @@ UNKNOWN           -> stop and repair response contract/transport
 Even an informative band does not prove Cortex improvement. It only creates the
 measurement conditions required for a later task-only versus sham versus
 relevant semantic-context experiment.
+
+## Executed result
+
+The runtime-selected frontier screen executed four calls through the canonical
+live adapter boundary and reconstructed every trajectory. Its frozen score was
+0/4 with zero UNKNOWN outcomes.
+
+A zero-call audit then found:
+
+- four valid JSON responses;
+- four exact graph-mapping rejections;
+- two sufficient proof sets rejected because the submission also named a
+  distractor event;
+- zero score rewrites and zero additional calls.
+
+Several outputs encoded generation-to-generation age or validation-before-
+publication where the private graph required snapshot-to-source age or
+validation-before-derived-object. The audit does not declare those alternatives
+correct. It establishes that exact graph identity is confounded with semantic
+causal correctness. `BRIDGE_LOW_INTERPRETATION_HELD` is therefore the honest
+disposition.

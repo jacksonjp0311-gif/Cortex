@@ -310,6 +310,23 @@ relation vocabulary, four-call ceiling, no-tool treatment, and 30–70% stop
 window. Every score is reconstructed from the canonical public trajectory.
 Caller-held preregistrations and verdicts are ignored after receipt resolution.
 
+The first `OpenAI / gpt-5.6-sol` bridge-low screen produced an immutable 0/4,
+but the zero-call audit held the floor interpretation. All four responses were
+valid JSON and supplied coherent alternate graph mappings; exact expected-edge
+identity rejected all four, and two otherwise sufficient proof supersets also
+included a distractor event. Therefore:
+
+```text
+historical score             0 / 4  (preserved)
+graph-mapping rejections     4 / 4
+additional audit calls       0
+baseline difficulty         UNRESOLVED
+```
+
+The next repair is not a larger model or more calls. It is an independently
+frozen equivalence-aware graph policy that distinguishes relation-preserving
+isomorphism from a materially different causal claim.
+
 ## What you get
 
 | Capability | What it means for you |

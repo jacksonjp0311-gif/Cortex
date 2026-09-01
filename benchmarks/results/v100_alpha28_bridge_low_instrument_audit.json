@@ -1,0 +1,50 @@
+{
+  "schema_version": "cortex-alpha28-bridge-low-instrument-audit/1.0",
+  "state": "BRIDGE_LOW_INTERPRETATION_HELD",
+  "source_commit": "b95b21c3b844839e63034d7247aaf4df3bd1f560",
+  "audit_receipt_hash": "0c00f69effcc2eb89cdc5edf1c0ffc106a75836059b96f5e7775e8d4c8be2cf2",
+  "result_receipt_hash": "912e79b3a96a41163c8b096204caef69b2e84a5c5b0054b29e2cda1b08ee3c25",
+  "historical_screen": {
+    "attainable_success_rates": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "case_count": 4,
+    "confirmation_cases": 8,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "eligible_success_counts": [
+      2
+    ],
+    "recommended_action": "move_easier",
+    "screening_cases": 4,
+    "state": "screening_floor",
+    "success_count": 0,
+    "success_rate": 0.0,
+    "unknown_count": 0
+  },
+  "historical_scores_rewritten": false,
+  "additional_model_calls": 0,
+  "valid_json_response_count": 4,
+  "graph_mapping_rejection_count": 4,
+  "sufficient_proof_superset_rejection_count": 2,
+  "error_counts": {
+    "causal_evidence_insufficient": 2,
+    "required_causal_relations_missing": 3,
+    "required_repair_relations_missing": 4,
+    "unsupported_relation_claim": 4
+  },
+  "difficulty_interpretation_confounded": true,
+  "baseline_difficulty_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "freeze_equivalence_aware_relational_policy_zero_call",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

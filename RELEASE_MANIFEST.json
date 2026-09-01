@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.27",
+  "release": "Cortex v10.0.0-alpha.28",
   "release_class": "advanced research prototype",
-  "source_commit": "a2a28ea0c5af7e3d54fdd1bc8a316b812448c4d8",
-  "runtime_parent": "a2a28ea0c5af7e3d54fdd1bc8a316b812448c4d8",
+  "source_commit": "b95b21c3b844839e63034d7247aaf4df3bd1f560",
+  "runtime_parent": "20558cd8130036b697db21bddd1a7015f10d6c58",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/INTERMEDIATE_RELATIONAL_FORGE.md",
+  "phase_document": "docs/v10/BRIDGE_LOW_RELATIONAL_SCREEN.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -65,7 +65,9 @@
     "relational_evaluator_commissioning": "RELATIONAL_CAUSAL_EVALUATOR_V3_READY; canonical alpha.24 and alpha.25 evidence reconstructed, 11/11 adversarial checks passed, zero model calls executed, and all historical scores remain immutable",
     "intermediate_relational_forge": "12 answer-sealed development cases span three four-case panels with progressively increasing typed causal depth and a constant evidence-sufficiency policy; private expected graphs remain in the host credential vault",
     "intermediate_sequential_rule": "begin with bridge_low only after a separate exact four-call freeze; stop when observed success lies in the 0.30..0.70 information window, otherwise move at most one adjacent band under new authority",
-    "difficulty_interpolation_gate": "INTERMEDIATE_RELATIONAL_FORGE_READY with zero model calls and zero future-call authority; baseline difficulty, semantic transfer, and Cortex improvement remain unestablished",
+    "bridge_low_live_screen": "four OpenAI gpt-5.6-sol task-only calls were frozen before inference, reconstructed from canonical native trajectories, and scored 0/4 with zero UNKNOWN outcomes under the immutable exact-edge evaluator",
+    "bridge_low_instrument_audit": "zero-call audit found valid JSON in 4/4, graph-mapping rejection in 4/4, and sufficient-proof supersets rejected in 2/4; historical scores remain immutable and the apparent floor is instrument-confounded",
+    "difficulty_interpolation_gate": "BRIDGE_LOW_INTERPRETATION_HELD; freeze an equivalence-aware relational policy before any additional model calls; baseline difficulty, semantic transfer, and Cortex improvement remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -78,5 +80,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.26 relational causal proof and evidence minimality"
+  "supersedes": "Cortex v10.0.0-alpha.27 intermediate relational task forge"
 }

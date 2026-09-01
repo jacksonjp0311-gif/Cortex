@@ -1,0 +1,118 @@
+{
+  "schema_version": "cortex-alpha28-bridge-low-relational-screen/1.0",
+  "state": "RELATIONAL_LIVE_SCREEN_RECONSTRUCTED",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "planned_calls": 4,
+  "maximum_calls": 4,
+  "semantic_transfer_established": false,
+  "source_commit": "20558cd8130036b697db21bddd1a7015f10d6c58",
+  "corpus_hash": "f36faefd21978b8a4b96734570f028cc4d4e425eeca9bceb89e5c3a33885dbd1",
+  "evaluator_hash": "f7b7efd76de612208ba2649e4367e52a49de065cb19e3d6d1b4810fa1279aece",
+  "forge_preflight_receipt_hash": "68f7483fe702137fd063381e22d37e17f040a2b80fe04a0e16c7e3303a398e73",
+  "preregistration_receipt_hash": "93c3473af85b151acc98c48df9f574e698ce9e55b7d06bc1ad8e27a294f760e5",
+  "result_receipt_hash": "912e79b3a96a41163c8b096204caef69b2e84a5c5b0054b29e2cda1b08ee3c25",
+  "calls_executed": 4,
+  "screen": {
+    "attainable_success_rates": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "case_count": 4,
+    "confirmation_cases": 8,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "eligible_success_counts": [
+      2
+    ],
+    "recommended_action": "move_easier",
+    "screening_cases": 4,
+    "state": "screening_floor",
+    "success_count": 0,
+    "success_rate": 0.0,
+    "unknown_count": 0
+  },
+  "canonical_reconstruction": {
+    "valid": true,
+    "errors": [],
+    "result_receipt_hash": "912e79b3a96a41163c8b096204caef69b2e84a5c5b0054b29e2cda1b08ee3c25",
+    "preregistration_receipt_hash": "93c3473af85b151acc98c48df9f574e698ce9e55b7d06bc1ad8e27a294f760e5",
+    "screen": {
+      "state": "screening_floor",
+      "recommended_action": "move_easier",
+      "case_count": 4,
+      "success_count": 0,
+      "success_rate": 0.0,
+      "screening_cases": 4,
+      "confirmation_cases": 8,
+      "attainable_success_rates": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "eligible_success_counts": [
+        2
+      ],
+      "development_only": true,
+      "confirmatory_eligible": false,
+      "unknown_count": 0
+    },
+    "model_identity": {
+      "adapter_id": "cortex.provider-fabric.http",
+      "adapter_version": "10.0.0-alpha.2",
+      "model_id": "gpt-5.6-sol",
+      "model_version": "provider-declared",
+      "provider_family": "openai"
+    },
+    "adapter_provenance": {
+      "binding_digest": "134b843443a4e1c55712cb36aa64b3cb6f0d868718bcf1ea6cc216258a4d0d9c",
+      "claim_boundary": "Host registration classifies a locally declared execution boundary; it is not provider attestation and does not prove a provider response.",
+      "empirical": true,
+      "evidence_class": "live_empirical",
+      "evidence_state": "host_registered",
+      "execution_boundary": "external_api",
+      "host_identity": {
+        "adapter_id": "cortex.provider-fabric.http",
+        "adapter_version": "10.0.0-alpha.2",
+        "model_id": "gpt-5.6-sol",
+        "model_version": "provider-declared",
+        "provider_family": "openai"
+      },
+      "host_identity_digest": "0c03268008e672d906908c8cbf515de96fbd677d9fdf48127d54795753b4d056",
+      "host_model_classification": {
+        "adapter_or_model_self_assertion_used": false,
+        "authority_basis": "host_principal_registration",
+        "capability_class": "general_reasoning",
+        "model_family": "runtime_selected_frontier",
+        "principal_id": "alpha18-screen-1788178750-65b8a692",
+        "provider_attestation_claimed": false,
+        "schema_version": "cortex-host-model-classification/1.0",
+        "state": "host_registered"
+      },
+      "host_model_classification_digest": "be200fc6bbcfdcb4acda8db1011608c8f4418784676ec169b68a72c53df1923e",
+      "implementation_digest": "5183223c82392dc6a58c9bca5141fc02a57751376789abca72c2efb0c8b6c9c5",
+      "principal_id": "alpha18-screen-1788178750-65b8a692",
+      "provider_attestation": "not_available",
+      "provider_attestation_claimed": false,
+      "registration_hash": "f205a67aef2567388b1491b4d2f5b3c4fc691e47ace46e9fa9ede8db66241386",
+      "registration_id": "f205a67aef2567388b1491b4d2f5b3c4fc691e47ace46e9fa9ede8db66241386",
+      "runtime_profile_digest": "3a0a53158f38ea01e92150b1581eb2fbbfc2ab9d5f018b9e0e1a4a928d017024",
+      "schema_version": "cortex-adapter-provenance/1.0",
+      "trust_basis": "host_principal_registration"
+    },
+    "corpus_hash": "f36faefd21978b8a4b96734570f028cc4d4e425eeca9bceb89e5c3a33885dbd1"
+  },
+  "calibration_established": false,
+  "private_contract_persisted_in_artifact": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

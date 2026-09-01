@@ -191,6 +191,11 @@ task-only calls, exposes the public relation vocabulary, and reconstructs each
 verdict from the immutable native trajectory. It cannot project lessons or
 establish semantic transfer.
 
+The first live screen scored 0/4 under its frozen exact-edge policy. A zero-call
+audit found graph-mapping rejection in all four valid JSON responses and held
+the floor interpretation. Historical scores remain immutable; baseline
+difficulty is still unresolved.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
