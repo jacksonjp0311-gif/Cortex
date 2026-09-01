@@ -371,6 +371,27 @@ def main() -> int:
                     and payload.get("general_improvement_established") is False
                     else "contract_aligned_repair_forge_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha37-live-contract-aligned-repair-screen/1.0":
+                reconstruction = payload.get("canonical_reconstruction") or {}
+                screen = payload.get("screen") or {}
+                metadata_state = (
+                    "development_live_contract_aligned_screening_ceiling"
+                    if payload.get("state") == "CONTRACT_ALIGNED_BASELINE_RECONSTRUCTED"
+                    and payload.get("planned_calls") == 4
+                    and payload.get("maximum_calls") == 4
+                    and payload.get("calls_executed") == 4
+                    and payload.get("context_treatment") == "task_only_control"
+                    and payload.get("tools") == []
+                    and screen.get("success_count") == 4
+                    and screen.get("state") == "screening_ceiling"
+                    and reconstruction.get("valid") is True
+                    and payload.get("baseline_calibrated") is False
+                    and payload.get("semantic_treatment_projected") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    and payload.get("private_bundle_persisted_in_artifact") is False
+                    else "live_contract_aligned_repair_screen_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

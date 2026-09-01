@@ -503,6 +503,13 @@ contains no provider or model preference. The resulting baseline determines
 whether semantic treatment may begin, whether task difficulty must move, or
 whether interpretation must remain held.
 
+The prospective `OpenAI / gpt-5.6-sol` run scored `4/4`. Every response
+compiled into a canonical patch and every isolated candidate passed its mapped
+private evaluator. Canonical reconstruction found no binding error. The result
+is therefore a genuine development ceiling—not evidence of semantic transfer.
+No sham or relevant lesson was projected, and no additional calls are valid on
+this panel.
+
 ## What you get
 
 | Capability | What it means for you |

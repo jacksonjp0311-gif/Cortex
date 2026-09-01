@@ -1,0 +1,63 @@
+{
+  "schema_version": "cortex-alpha37-live-contract-aligned-repair-screen/1.0",
+  "state": "CONTRACT_ALIGNED_BASELINE_RECONSTRUCTED",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "planned_calls": 4,
+  "maximum_calls": 4,
+  "context_treatment": "task_only_control",
+  "response_contract": "cortex-edit-intent/1.0",
+  "tools": [],
+  "alignment_result_hash": "347bb3387a17d7db4ef6333826491e8b243731528d350c882b19af34062502cb",
+  "aligned_corpus_hash": "f88cfd12879bfe1d3099f145c7246478697586970682a4cd6a658ca4085776ee",
+  "executable_corpus_hash": "51f41d62e65a1a3a623bd8091069c37ecf7e1a79f03ded68483c3eac4f15f9e6",
+  "private_specs_origin": "outside_repository",
+  "semantic_treatment_projected": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "source_commit": "44cae5b3b88a3a5a3aa2e106b69a96986a221ed0",
+  "preregistration_receipt_hash": "03c9149ff6cec73651a2f98ae3cb1f4d281a34492e6bdd236b6570742cd0490a",
+  "result_receipt_hash": "477a22ebc65f1aea59fcc6fbdd1f606b81fe337c2e52766c0e3043dee04e4fb6",
+  "calls_executed": 4,
+  "screen": {
+    "case_count": 4,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "recommended_action": "forge_harder_structured_tasks",
+    "state": "screening_ceiling",
+    "success_count": 4,
+    "success_rate": 1.0,
+    "target_window": {
+      "maximum": 0.7,
+      "minimum": 0.3
+    }
+  },
+  "canonical_reconstruction": {
+    "valid": true,
+    "errors": [],
+    "screen": {
+      "case_count": 4,
+      "success_count": 4,
+      "success_rate": 1.0,
+      "target_window": {
+        "minimum": 0.3,
+        "maximum": 0.7
+      },
+      "state": "screening_ceiling",
+      "recommended_action": "forge_harder_structured_tasks",
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "result_receipt_hash": "477a22ebc65f1aea59fcc6fbdd1f606b81fe337c2e52766c0e3043dee04e4fb6",
+    "preregistration_receipt_hash": "03c9149ff6cec73651a2f98ae3cb1f4d281a34492e6bdd236b6570742cd0490a"
+  },
+  "baseline_calibrated": false,
+  "next_action": "forge_harder_structured_tasks",
+  "private_bundle_persisted_in_artifact": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

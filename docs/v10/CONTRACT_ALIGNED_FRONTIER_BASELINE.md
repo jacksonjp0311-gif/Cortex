@@ -34,6 +34,38 @@ mismatch -> interpretation held; do not infer difficulty
 No retries or post-hoc evaluator changes are permitted. A later semantic trial
 requires new authority even if the baseline is calibrated.
 
+## Live result
+
+The exact committed implementation was exercised with the runtime-selected
+experiment configuration `OpenAI / gpt-5.6-sol`:
+
+| Case | Intent compiled | Candidate result |
+|---|---:|---:|
+| bounded budget | yes | PASS |
+| write invalidates cache | yes | PASS |
+| normalized rotation | yes | PASS |
+| owned register snapshot | yes | PASS |
+
+```text
+calls executed                  4 / 4
+task successes                  4 / 4
+structured transport failures  0
+canonical reconstruction       PASS
+screen state                    screening_ceiling
+semantic treatment projected   no
+```
+
+Preregistration receipt:
+`03c9149ff6cec73651a2f98ae3cb1f4d281a34492e6bdd236b6570742cd0490a`
+
+Result receipt:
+`477a22ebc65f1aea59fcc6fbdd1f606b81fe337c2e52766c0e3043dee04e4fb6`
+
+The outcome is informative even though it is not the desired middle band: the
+contract-alignment repair removed the alpha.35 interpretation confound, and the
+frontier model saturated the resulting panel. No semantic-treatment calls were
+opened.
+
 ## Claim boundary
 
 This phase measures task-only repair performance for one runtime-selected model

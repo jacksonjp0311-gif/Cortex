@@ -280,6 +280,11 @@ exact alpha.36 result, host-private evaluator, runtime-selected live adapter,
 model identity, response contract, no-tool grant, and canonical trajectory
 reconstruction before a score can be interpreted.
 
+The prospective `OpenAI / gpt-5.6-sol` baseline reconstructed at `4/4`. All
+four structured intents compiled and all four candidates passed. The panel is a
+screening ceiling, so baseline calibration and semantic transfer remain
+unestablished; the next action is a harder contract-aligned forge, not treatment.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
