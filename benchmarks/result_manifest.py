@@ -228,6 +228,26 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "relational_equivalence_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha30-final-relational-screen/1.0":
+                reconstruction = payload.get("canonical_reconstruction") or {}
+                calibrated = payload.get("calibration_established") is True
+                retired = payload.get("synthetic_semantic_benchmark_retired") is True
+                disposition_valid = (calibrated and not retired) or (retired and not calibrated)
+                metadata_state = (
+                    "development_final_relational_screen"
+                    if payload.get("state") == "FINAL_RELATIONAL_SCREEN_RECONSTRUCTED"
+                    and payload.get("difficulty_band") == "bridge_mid"
+                    and payload.get("planned_calls") == 4
+                    and payload.get("maximum_calls") == 4
+                    and payload.get("calls_executed") == 4
+                    and reconstruction.get("valid") is True
+                    and payload.get("ruler_building_closed") is True
+                    and payload.get("ruler_revision_permitted") is False
+                    and disposition_valid
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "final_relational_screen_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

@@ -420,6 +420,7 @@ def freeze_equivalence_policy(
 
 
 __all__ = [
+    "EVALUATOR_ID",
     "build_equivalence_evaluator_bundle",
     "equivalence_evaluator_self_test",
     "evaluate_equivalent_relational_response",

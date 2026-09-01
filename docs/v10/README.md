@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.29`
+Version: `10.0.0-alpha.30`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -205,6 +205,11 @@ alpha.28 responses under v4 (4/4) while preserving their immutable v3 scores
 collapse but cannot establish difficulty or transfer. This is the final
 ruler-building phase.
 
+Alpha.30 is the final prospective screen. It binds v4 before four unseen
+`bridge_mid` calls, forbids further ruler revision, and precommits the outcome:
+2/4 opens a separately authorized treatment experiment; every other result
+retires the synthetic semantic line in favor of executable code tasks.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -235,6 +240,7 @@ ruler-building phase.
 - [Intermediate relational task forge](INTERMEDIATE_RELATIONAL_FORGE.md)
 - [Bounded bridge-low relational screen](BRIDGE_LOW_RELATIONAL_SCREEN.md)
 - [Deterministic relational equivalence closure](RELATIONAL_EQUIVALENCE_CLOSURE.md)
+- [Final prospective relational screen](FINAL_RELATIONAL_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

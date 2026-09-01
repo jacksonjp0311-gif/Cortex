@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.29-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.29" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.30-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.30" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -364,6 +364,12 @@ not establish baseline difficulty or semantic transfer because the shadow was
 designed after the responses existed. The only scientifically valid next step
 is one freshly frozen screen under v4; another collapse ends this synthetic
 line and moves Cortex to executable code tasks with external tests.
+
+Alpha.30 implements that final prospective boundary over four previously unseen
+`bridge_mid` cases. The cases, v4 evaluator, live adapter identity, no-tool
+treatment, and four-call ceiling are frozen before inference. Only 2/4 lies in
+the declared 30–70% information window. Every other result—including UNKNOWN—
+retires the synthetic semantic benchmark. No evaluator v5 is permitted.
 
 ## What you get
 
