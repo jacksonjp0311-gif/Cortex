@@ -1,0 +1,69 @@
+{
+  "schema_version": "cortex-alpha32-live-executable-repair-screen/1.0",
+  "state": "EXECUTABLE_REPAIR_SCREEN_RECONSTRUCTED",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "planned_calls": 4,
+  "maximum_calls": 4,
+  "context_treatment": "task_only_control",
+  "tools": [],
+  "corpus_hash": "9c70148c288cba1fc8ead03e5ef510d29e8b686607fe9b16b6bdfd9a0b2f0236",
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "source_commit": "5446038d9add2ae25c2b6bb4b8f6154821890a61",
+  "preregistration_receipt_hash": "2f2c78eeb3e9b4251ad2094c3e2a6d1a81741ada19cb0f09a9735ad8a05b0573",
+  "result_receipt_hash": "f8c1fe3f753417b219de537aebd447fe639d60820d7984c4f1f07e13520275dc",
+  "calls_executed": 4,
+  "screen": {
+    "case_count": 4,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "recommended_action": "freeze_sham_relevant_treatment",
+    "state": "executable_baseline_calibrated",
+    "success_count": 2,
+    "success_rate": 0.5,
+    "target_window": {
+      "maximum": 0.7,
+      "minimum": 0.3
+    }
+  },
+  "canonical_reconstruction": {
+    "valid": true,
+    "errors": [],
+    "screen": {
+      "case_count": 4,
+      "success_count": 2,
+      "success_rate": 0.5,
+      "target_window": {
+        "minimum": 0.3,
+        "maximum": 0.7
+      },
+      "state": "executable_baseline_calibrated",
+      "recommended_action": "freeze_sham_relevant_treatment",
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "result_receipt_hash": "f8c1fe3f753417b219de537aebd447fe639d60820d7984c4f1f07e13520275dc",
+    "preregistration_receipt_hash": "2f2c78eeb3e9b4251ad2094c3e2a6d1a81741ada19cb0f09a9735ad8a05b0573"
+  },
+  "baseline_calibrated": true,
+  "next_action": "freeze_sham_relevant_treatment",
+  "zero_call_diagnostic": {
+    "additional_model_calls": 0,
+    "historical_scores_rewritten": false,
+    "cases": [
+      {"case_id": "stale_cache_invalidation", "outcome": "FAIL", "failure_surface": "unparseable_unified_diff", "semantic_repair_observed": true},
+      {"case_id": "zero_generation_guard", "outcome": "PASS", "failure_surface": null, "semantic_repair_observed": true},
+      {"case_id": "validate_before_publish", "outcome": "FAIL", "failure_surface": "nonapplying_unified_diff", "semantic_repair_observed": true},
+      {"case_id": "validity_before_dedup", "outcome": "PASS", "failure_surface": null, "semantic_repair_observed": true}
+    ],
+    "interpretation": "Executable success includes producing an applicable patch. The two failed outputs expressed the intended edit but did not satisfy the frozen git patch boundary; scores remain unchanged."
+  },
+  "private_bundle_persisted_in_artifact": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

@@ -413,6 +413,14 @@ self-reported success have no role in the score. Only `2/4` opens a later
 sham-versus-relevant semantic treatment; every other result changes task
 difficulty under a new seal.
 
+The prospective screen landed at `2/4`, exactly inside the frozen information
+window. Generation-guard and dedup repairs passed their external tests. Cache
+invalidation and validation-order outputs described the right edits but
+produced invalid Git diffs, so they correctly remained failures. This is the
+first executable, non-ceiling frontier-model baseline in the program. It is
+not yet evidence that Cortex improves the model; no memory or competence was
+projected in this arm.
+
 ## What you get
 
 | Capability | What it means for you |

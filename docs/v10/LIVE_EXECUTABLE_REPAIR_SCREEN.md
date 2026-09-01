@@ -40,3 +40,24 @@ With four cases, only `2/4` lies in the predeclared 30–70% information window:
 This phase tests task-only model repair ability. It does not project Cortex
 memory or competence and cannot establish semantic transfer, general
 self-improvement, or authorization to integrate a patch.
+
+## Commissioning result
+
+The frozen `OpenAI / gpt-5.6-sol` screen returned exactly `2/4`:
+
+```text
+stale cache invalidation       FAIL — unified diff did not parse
+generation-zero guard         PASS — executable repair measured
+validate before publish       FAIL — unified diff did not apply
+validity before dedup         PASS — executable repair measured
+```
+
+Canonical reconstruction passed and all authority flags remained false. A
+zero-call diagnostic found that both failed outputs expressed the intended
+source edit but violated the frozen Git patch boundary. Their scores remain
+FAIL: producing an applicable change is part of executable repair competence.
+
+This result establishes a development baseline in the declared information
+window. It does not establish Cortex improvement because no Cortex lesson was
+projected. A separately frozen sham/relevant treatment may now be designed,
+but it must distinguish semantic assistance from patch-format assistance.

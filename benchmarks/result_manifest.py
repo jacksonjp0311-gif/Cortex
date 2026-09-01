@@ -269,6 +269,24 @@ def main() -> int:
                     )
                     else "executable_repair_forge_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha32-live-executable-repair-screen/1.0":
+                reconstruction = payload.get("canonical_reconstruction") or {}
+                screen = payload.get("screen") or {}
+                metadata_state = (
+                    "live_executable_repair_baseline_calibrated"
+                    if payload.get("state") == "EXECUTABLE_REPAIR_SCREEN_RECONSTRUCTED"
+                    and payload.get("planned_calls") == 4
+                    and payload.get("maximum_calls") == 4
+                    and payload.get("calls_executed") == 4
+                    and screen.get("success_count") == 2
+                    and screen.get("state") == "executable_baseline_calibrated"
+                    and reconstruction.get("valid") is True
+                    and payload.get("baseline_calibrated") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    and payload.get("private_bundle_persisted_in_artifact") is False
+                    else "live_executable_repair_screen_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

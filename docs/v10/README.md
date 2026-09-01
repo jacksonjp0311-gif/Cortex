@@ -227,6 +227,13 @@ diff, and receives no tools. The host-private external test evaluates the
 unchanged baseline and isolated candidate; malformed and failing patches remain
 failed observations. Only a 2/4 result opens semantic treatment.
 
+The prospective `OpenAI / gpt-5.6-sol` run produced exactly 2/4 with valid
+canonical reconstruction. Two exact patches repaired their tasks; two outputs
+expressed the intended edits but failed the Git parse/apply boundary. The
+scores remain immutable. Baseline difficulty is now calibrated for this
+combined reasoning-and-patch-production task, while Cortex improvement remains
+untested.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
