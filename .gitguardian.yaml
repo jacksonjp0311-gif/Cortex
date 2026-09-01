@@ -1,0 +1,11 @@
+version: 2
+
+secret:
+  show_secrets: false
+  ignored_matches:
+    # Public SHA-256 commitments from the alpha.20 answer-sealed evaluator.
+    # These bind host-vault material without containing or revealing it.
+    - name: alpha20-private-evaluator-commitment
+      match: 98eb8854e9b249c44d16759cecda2ce097dbe9ed6307777d93e1e2b414d3fbaa
+    - name: alpha20-forge-seed-commitment
+      match: 66d69756d5fe6f42aa83291df67e77e7c2ab102503970e6d40774c34f614f77f
