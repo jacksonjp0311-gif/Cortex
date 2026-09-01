@@ -248,6 +248,27 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "final_relational_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha31-executable-repair-forge/1.0":
+                cases = payload.get("cases") or []
+                metadata_state = (
+                    "zero_call_executable_repair_forge_ready"
+                    if payload.get("state") == "EXECUTABLE_REPAIR_FORGE_READY"
+                    and payload.get("case_count") == 4
+                    and payload.get("reference_repairs_measured") == 4
+                    and payload.get("additional_model_calls") == 0
+                    and payload.get("private_bundle_persisted_in_artifact") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    and len(cases) == 4
+                    and all(
+                        case.get("baseline_pass") is False
+                        and case.get("reference_candidate_pass") is True
+                        and case.get("classification") == "REPAIR_MEASURED"
+                        and case.get("canonical_result_valid") is True
+                        for case in cases
+                    )
+                    else "executable_repair_forge_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

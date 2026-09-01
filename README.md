@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.30-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.30" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.31-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.31" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -388,6 +388,23 @@ as a direct cause of the derived artifact; one also omitted the required
 validation-before-derived/publication ordering. Cortex preserves those misses
 instead of creating evaluator v5. The next empirical surface is executable code
 repair judged by independently frozen tests.
+
+Alpha.31 builds that surface with zero additional model calls. Four executable
+defects are now sealed behind host-private tests: stale cache invalidation, a
+generation-zero guard bypass, publish-before-validation leakage, and invalid-
+first deduplication suppression. The same frozen Git source is evaluated in two
+detached arms:
+
+```text
+unchanged baseline ── external test ── FAIL
+reference repair  ── external test ── PASS
+```
+
+All four reference repairs must cross that exact boundary before the corpus is
+ready. Tests and reference patches are absent from model-visible context and
+the committed artifact. This demonstrates an executable, discriminative
+measurement instrument—not that Cortex or a model can repair the tasks. The
+next bounded run measures a frontier model on the public task/source only.
 
 ## What you get
 

@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.30`
+Version: `10.0.0-alpha.31`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -212,6 +212,15 @@ retires the synthetic semantic line in favor of executable code tasks. The live
 screen returned 0/4 with zero UNKNOWN outcomes and valid canonical
 reconstruction, so retirement is now active.
 
+Alpha.31 executes that transition without another model call. Four small
+executable repositories carry distinct behavioral defects. Their external
+tests and reference patches remain host-private while the public task carries
+only source, defect contract, and a salted evaluator commitment. Every frozen
+test fails on its unchanged baseline and passes on its exact reference repair
+through the existing detached-worktree counterfactual path. This proves task
+discriminability, not model repair competence; the next separately authorized
+step is a frontier-model task-only executable repair screen.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -243,6 +252,7 @@ reconstruction, so retirement is now active.
 - [Bounded bridge-low relational screen](BRIDGE_LOW_RELATIONAL_SCREEN.md)
 - [Deterministic relational equivalence closure](RELATIONAL_EQUIVALENCE_CLOSURE.md)
 - [Final prospective relational screen](FINAL_RELATIONAL_SCREEN.md)
+- [Answer-sealed executable repair forge](EXECUTABLE_REPAIR_FORGE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
