@@ -1,0 +1,31 @@
+{
+  "schema_version": "cortex-alpha35-structured-instrument-audit/1.0",
+  "state": "STRUCTURED_INSTRUMENT_INTERPRETATION_HELD",
+  "source_commit": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
+  "source_result_receipt_hash": "8a7345d2772d638b819438662bb373a039df4a9b38380a7b3efb05566e141edf",
+  "source_preregistration_receipt_hash": "22add4cfc7a07e8d062e3e6ed4d1cf475d05b40a886830195e3e0d5db5cfb87b",
+  "raw_success_count": 3,
+  "raw_case_count": 4,
+  "raw_screen_state": "screening_ceiling",
+  "canonical_reconstruction_valid": true,
+  "structured_transport_failures": 0,
+  "public_private_contract_mismatches": 1,
+  "mismatch": {
+    "case_id": "per_key_mvcc_conflicts",
+    "public_contract": "snapshot_is_opaque",
+    "private_evaluator_assumption": "snapshot_internal_data_is_publicly_indexable",
+    "model_representation": "opaque_identity_handle_with_store_internal_snapshot_state",
+    "disposition": "failure_not_cleanly_attributable_to_repair_reasoning"
+  },
+  "additional_model_calls": 0,
+  "historical_scores_rewritten": false,
+  "failed_case_rescored": false,
+  "baseline_calibration_established": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "next_action": "forge_contract_aligned_external_private_panel",
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false
+}

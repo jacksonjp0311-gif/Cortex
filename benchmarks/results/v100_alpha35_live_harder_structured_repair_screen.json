@@ -1,0 +1,62 @@
+{
+  "schema_version": "cortex-alpha35-live-harder-structured-repair-screen/1.0",
+  "state": "HARDER_STRUCTURED_REPAIR_SCREEN_RECONSTRUCTED",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "planned_calls": 4,
+  "maximum_calls": 4,
+  "context_treatment": "task_only_control",
+  "response_contract": "cortex-edit-intent/1.0",
+  "tools": [],
+  "corpus_hash": "ecc4b54441bd23f731f0ba33adac7fc99242064a067b2036dc947e890ae2f3ae",
+  "prior_result_receipt_hash": "910976045222645927ae5518a472f031c6b8eec140201b3479a03db232196614",
+  "difficulty_transition": "move_harder",
+  "private_specs_origin": "outside_repository",
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "source_commit": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
+  "preregistration_receipt_hash": "22add4cfc7a07e8d062e3e6ed4d1cf475d05b40a886830195e3e0d5db5cfb87b",
+  "result_receipt_hash": "8a7345d2772d638b819438662bb373a039df4a9b38380a7b3efb05566e141edf",
+  "calls_executed": 4,
+  "screen": {
+    "case_count": 4,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "recommended_action": "forge_harder_structured_tasks",
+    "state": "screening_ceiling",
+    "success_count": 3,
+    "success_rate": 0.75,
+    "target_window": {
+      "maximum": 0.7,
+      "minimum": 0.3
+    }
+  },
+  "canonical_reconstruction": {
+    "valid": true,
+    "errors": [],
+    "screen": {
+      "case_count": 4,
+      "success_count": 3,
+      "success_rate": 0.75,
+      "target_window": {
+        "minimum": 0.3,
+        "maximum": 0.7
+      },
+      "state": "screening_ceiling",
+      "recommended_action": "forge_harder_structured_tasks",
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "result_receipt_hash": "8a7345d2772d638b819438662bb373a039df4a9b38380a7b3efb05566e141edf",
+    "preregistration_receipt_hash": "22add4cfc7a07e8d062e3e6ed4d1cf475d05b40a886830195e3e0d5db5cfb87b"
+  },
+  "baseline_calibrated": false,
+  "next_action": "forge_harder_structured_tasks",
+  "private_bundle_persisted_in_artifact": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

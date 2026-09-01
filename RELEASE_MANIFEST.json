@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.34",
+  "release": "Cortex v10.0.0-alpha.35",
   "release_class": "advanced research prototype",
-  "source_commit": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5",
-  "runtime_parent": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5",
+  "source_commit": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
+  "runtime_parent": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/LIVE_STRUCTURED_REPAIR_SCREEN.md",
+  "phase_document": "docs/v10/HARDER_STRUCTURED_REPAIR_SCREEN.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -82,6 +82,10 @@
     "external_private_structured_forge": "four fresh executable task specifications originated outside Git; all unchanged baselines failed, all host reference repairs passed, private evaluators remained in the host vault, and zero model calls were used for commissioning",
     "live_structured_repair_screen": "four no-tool OpenAI gpt-5.6-sol calls produced four strict edit intents; Cortex compiled all four canonical diffs and all four isolated candidates passed their withheld executable evaluators; canonical reconstruction passed",
     "structured_repair_disposition": "the 4/4 task-only result is a development screening ceiling; it demonstrates working structured transport but does not establish semantic transfer, general model improvement, or autonomous self-improvement; forge harder external-private structured tasks next",
+    "harder_structured_prerequisite": "the alpha.35 screen independently reconstructed alpha.34's live 4/4 ceiling and required the identical model identity before accepting a move-harder transition; caller status and different-model evidence could not open the gate",
+    "harder_structured_screen": "four no-tool OpenAI gpt-5.6-sol calls produced four valid structured intents; three candidates passed withheld evaluators and one failed, yielding an immutable canonically reconstructed 3/4 screening ceiling",
+    "harder_structured_instrument_audit": "zero additional calls; the sole failed MVCC case declared an opaque snapshot publicly while its private evaluator indexed internal snapshot data, so the raw score remains unchanged but baseline interpretation is held as representation-confounded",
+    "harder_structured_next_run": "forge a new contract-aligned external-private panel; every private observable must be justified by the public task contract before further live calls or semantic treatment",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -94,5 +98,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.33 canonical edit intent seal"
+  "supersedes": "Cortex v10.0.0-alpha.34 external-private structured repair baseline"
 }

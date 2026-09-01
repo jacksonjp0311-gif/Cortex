@@ -339,6 +339,19 @@ def main() -> int:
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     else "live_harder_structured_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha35-structured-instrument-audit/1.0":
+                metadata_state = (
+                    "zero_call_structured_instrument_interpretation_held"
+                    if payload.get("state") == "STRUCTURED_INSTRUMENT_INTERPRETATION_HELD"
+                    and payload.get("raw_success_count") == 3
+                    and payload.get("structured_transport_failures") == 0
+                    and payload.get("public_private_contract_mismatches") == 1
+                    and payload.get("additional_model_calls") == 0
+                    and payload.get("historical_scores_rewritten") is False
+                    and payload.get("baseline_calibration_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "structured_instrument_audit_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

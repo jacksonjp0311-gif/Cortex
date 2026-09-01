@@ -1,6 +1,6 @@
 # Alpha.35 — Harder External-Private Structured Repair Calibration
 
-Status before live execution: `HARDER_STRUCTURED_REPAIR_SCREEN_READY`
+Status: `HARDER_STRUCTURED_REPAIR_SCREEN_RECONSTRUCTED — INTERPRETATION_HELD`
 
 ## Causal prerequisite
 
@@ -53,3 +53,42 @@ in the host credential vault.
 
 No result in this phase establishes semantic transfer, broad model
 improvement, autonomous self-improvement, or mutation authority.
+
+## Observed result
+
+The same `OpenAI / gpt-5.6-sol` identity executed exactly four calls against
+implementation commit `2601517b3df1979569ea6b60a2b1dd39d4d6cc6c`.
+
+| Case | Intent compiled | Withheld evaluator |
+|---|---:|---:|
+| Fenced lease tokens | yes | PASS |
+| Atomic observer batch | yes | PASS |
+| Stable dependency waves | yes | PASS |
+| Per-key MVCC conflicts | yes | FAIL |
+
+The immutable raw score is `3/4`; canonical reconstruction passed. By the
+prospective numeric policy this is a ceiling.
+
+## Zero-call instrument audit
+
+The single failure is interpretation-confounded. The public MVCC contract said
+that `begin` returns an **opaque snapshot**. The model implemented an opaque
+identity handle whose data and per-key versions remain internal to the store.
+The private evaluator nevertheless indexed the snapshot as if its internal
+`data` mapping were public. That representation assumption was not authorized
+by the public contract.
+
+Therefore:
+
+```text
+raw score                         3 / 4  (immutable)
+structured transport failures    0 / 4
+public/private contract mismatch 1 / 4
+baseline interpretation          HELD
+additional model calls           0
+```
+
+The audit does not rescore the failed case or establish that its implementation
+is otherwise correct. It establishes only that the evaluator cannot cleanly
+attribute this failure to repair reasoning. A new external-private panel must
+align every observable assertion with the public contract before more calls.

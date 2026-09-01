@@ -1,6 +1,6 @@
 {
-  "benchmark_suite_hash": "16fc45ce10474d2b7667840176bb87e4b193cada4b3b22a76d8cc1e9c2c4f4c1",
-  "cortex_version": "10.0.0a34",
+  "benchmark_suite_hash": "ce733083e01e4683736a8698d0801251785a06d86ff4c842ae12f0e4bba46aa7",
+  "cortex_version": "10.0.0a35",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
     "Artifacts span historical results, fresh controlled reruns, development-only frontier calibrations, and unexecuted task-forge and commissioning manifests.",
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 41,
+  "result_count": 44,
   "results": [
     {
       "bytes": 3346,
@@ -185,6 +185,24 @@
       "sha256": "47dd39a15a9aed507f933924f1f80d289d565cb0911f1b77d62866ccf703fbbf"
     },
     {
+      "bytes": 1405,
+      "metadata_state": "zero_call_structured_instrument_interpretation_held",
+      "path": "benchmarks/results/v100_alpha35_harder_structured_instrument_audit.json",
+      "sha256": "ab21fa2527a3d056d2bd38fd61b3830cf31c37edec4265c6340b2b190335ea84"
+    },
+    {
+      "bytes": 2281,
+      "metadata_state": "development_live_harder_structured_repair_screen",
+      "path": "benchmarks/results/v100_alpha35_live_harder_structured_repair_screen.json",
+      "sha256": "9f91fe6c0107bdb7b0e905b1761f5a9219daff6c917c055bd3cd5fb211a361e0"
+    },
+    {
+      "bytes": 9688,
+      "metadata_state": "zero_call_executable_repair_forge_ready",
+      "path": "benchmarks/results/v100_alpha35_private_harder_structured_forge.json",
+      "sha256": "6d246d30e9ce4e832535cc705ca27fcba3ae22acbabde94a3354fe2fc0e16c7d"
+    },
+    {
       "bytes": 4628,
       "metadata_state": "fresh_controlled_rerun_partial_metadata",
       "path": "benchmarks/results/v980_rerun/deferred_vs_eager.json",
@@ -262,5 +280,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "f4340709c6e924d07a0dfb6104fd32c0ae2fe0c5"
+  "source_commit": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c"
 }

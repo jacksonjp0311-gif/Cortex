@@ -260,6 +260,12 @@ machine depth while retaining strict structured intents, zero tools, four-call
 maximum, isolated execution, and host-private evaluators. A caller-provided
 ceiling or different model cannot open the screen.
 
+The live result was 3/4 with zero structured-transport failures. The only failed
+case exposed an evaluator wound: its public contract declared an opaque MVCC
+snapshot while the private test required direct access to snapshot internals.
+The score remains immutable, but calibration is `INTERPRETATION_HELD`; no
+additional calls ran.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)

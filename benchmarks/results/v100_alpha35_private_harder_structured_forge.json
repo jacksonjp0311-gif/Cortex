@@ -1,0 +1,126 @@
+{
+  "schema_version": "cortex-alpha31-executable-repair-forge/1.0",
+  "state": "EXECUTABLE_REPAIR_FORGE_READY",
+  "corpus_hash": "ecc4b54441bd23f731f0ba33adac7fc99242064a067b2036dc947e890ae2f3ae",
+  "case_count": 4,
+  "cases": [
+    {
+      "case_id": "fenced_lease_tokens",
+      "evaluator_commitment": "bd0da28139ae8e692d77e74780c96e46e973bee506f599fe79df14b8bcfd67a3",
+      "source_head": "496da29868433591fbce31046c661b39f887f1d2",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "0a27348caa8fe38bb2a08f387cf5a8710d4636e44b5a42e36c78efdd6bd2eb90",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "atomic_observer_batch",
+      "evaluator_commitment": "65dff4f77d87db5447abf2ad02f6913602cae3d68d49ae9395b85258a2533a84",
+      "source_head": "491deb8b1c7724e6f1398a6e512c0ff8e7823bcc",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "6dba6e9379a4cb078f3f445b4d32b93b9f4fa552d4ef8b64a0e9df54120d71ea",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "stable_dependency_waves",
+      "evaluator_commitment": "b78df9825205da8ae59db5ba8021be9408327bfea4241d5d191916ad95dfcb49",
+      "source_head": "11b1f2144b33de96fc1c892db8f41b864e8c0639",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "733114590e33a236055a3c237ada7a7c55674ee29ad9915d23a5c4b9e56749df",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    },
+    {
+      "case_id": "per_key_mvcc_conflicts",
+      "evaluator_commitment": "e4903da23f2a2d60bf2540d1760133b8a9904795c4dc37762ce862ea9f725285",
+      "source_head": "1cf007f2df10f57e831aa7594575ec38ac636947",
+      "baseline_pass": false,
+      "reference_candidate_pass": true,
+      "classification": "REPAIR_MEASURED",
+      "counterfactual_result_hash": "6e37c52620d60954dc564a384aee34f16560be0bd44d3b1f6c52eda9f439c78f",
+      "canonical_result_valid": true,
+      "active_tree_mutated": false
+    }
+  ],
+  "reference_repairs_measured": 4,
+  "additional_model_calls": 0,
+  "private_tests_in_model_context": false,
+  "private_reference_patches_in_model_context": false,
+  "private_bundle_persisted_in_artifact": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "next_action": "freeze_frontier_model_executable_repair_screen",
+  "claim_boundary": "A zero-call development forge with reference-patch discriminability. No model repair ability, general improvement, or mutation authority is established.",
+  "result_hash": "263c1106526c600a4978784696c162bfa8ac9d29b02510640c01b0e6c15597f9",
+  "source_commit": "2601517b3df1979569ea6b60a2b1dd39d4d6cc6c",
+  "public_corpus": {
+    "schema_version": "cortex-executable-repair-corpus/1.0",
+    "development_only": true,
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "fenced_lease_tokens",
+        "task": "Repair LeaseRegistry. acquire must reject a different owner while a lease is active; an active same-owner acquire must return the existing fencing token without extending expiry; every newly granted lease after expiry or release must receive a strictly larger per-key token. renew and release must require the exact current owner/token, and renew must reject expired leases. ttl must be positive. Preserve the public method signatures.",
+        "files": {
+          "module.py": "class LeaseRegistry:\n    def __init__(self):\n        self._leases = {}\n\n    def acquire(self, key, owner, now, ttl):\n        if ttl <= 0:\n            raise ValueError(\"ttl must be positive\")\n        current = self._leases.get(key)\n        if current and current[\"expires_at\"] > now and current[\"owner\"] != owner:\n            return None\n        token = 1\n        self._leases[key] = {\"owner\": owner, \"token\": token, \"expires_at\": now + ttl}\n        return token\n\n    def renew(self, key, owner, token, now, ttl):\n        if ttl <= 0:\n            raise ValueError(\"ttl must be positive\")\n        current = self._leases.get(key)\n        if not current or current[\"owner\"] != owner or current[\"token\"] != token:\n            return False\n        current[\"expires_at\"] = now + ttl\n        return True\n\n    def release(self, key, owner, token):\n        current = self._leases.get(key)\n        if not current or current[\"owner\"] != owner or current[\"token\"] != token:\n            return False\n        del self._leases[key]\n        return True\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "bd0da28139ae8e692d77e74780c96e46e973bee506f599fe79df14b8bcfd67a3"
+      },
+      {
+        "case_id": "atomic_observer_batch",
+        "task": "Repair BatchStore.apply. A batch is all-or-nothing: validate the complete batch before changing state. Each operation is exactly ('set', key, value) or ('delete', key); duplicate keys in one batch are invalid. A failed batch must leave data unchanged and notify nobody. On success, notify the observer set captured at commit start exactly once each. Every observer must receive an independent stable snapshot so observer mutation or subscription changes cannot affect other observers or the returned snapshot. Preserve ordering and signatures.",
+        "files": {
+          "module.py": "class BatchStore:\n    def __init__(self, initial=None):\n        self.data = dict(initial or {})\n        self.observers = []\n\n    def subscribe(self, observer):\n        self.observers.append(observer)\n\n    def apply(self, operations):\n        for operation in operations:\n            kind = operation[0]\n            key = operation[1]\n            if kind == \"set\":\n                self.data[key] = operation[2]\n            elif kind == \"delete\":\n                self.data.pop(key, None)\n            else:\n                raise ValueError(\"unknown operation\")\n        snapshot = dict(self.data)\n        for observer in self.observers:\n            observer(self.data)\n        return snapshot\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "65dff4f77d87db5447abf2ad02f6913602cae3d68d49ae9395b85258a2533a84"
+      },
+      {
+        "case_id": "stable_dependency_waves",
+        "task": "Repair plan_batches. graph maps each job to the jobs it depends on. Return deterministic lexicographically sorted execution waves. A wave contains only jobs whose dependencies were complete before that wave began; jobs becoming ready during selection wait for the next wave. Each wave has at most capacity jobs. Reject capacity below one, dependencies that name unknown jobs, self-dependencies, and every cycle. Do not mutate graph.",
+        "files": {
+          "module.py": "def plan_batches(graph, capacity):\n    if capacity < 1:\n        raise ValueError(\"capacity\")\n    jobs = sorted(graph)\n    return [jobs[index:index + capacity] for index in range(0, len(jobs), capacity)]\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "b78df9825205da8ae59db5ba8021be9408327bfea4241d5d191916ad95dfcb49"
+      },
+      {
+        "case_id": "per_key_mvcc_conflicts",
+        "task": "Repair VersionedStore so snapshots remain stable and commits use per-key optimistic conflict detection. begin returns an opaque snapshot of current data and versions. commit(snapshot, writes) may accept disjoint concurrent writes from the same old snapshot, but must reject the entire commit if any written key changed after that snapshot. A value of None deletes a key. Successful commits advance one global version and stamp every written key; rejected commits change nothing. Reject malformed or foreign snapshots. Preserve read, begin, and commit signatures.",
+        "files": {
+          "module.py": "class VersionedStore:\n    def __init__(self, initial=None):\n        self._data = dict(initial or {})\n        self._version = 0\n\n    def read(self, key):\n        return self._data.get(key)\n\n    def begin(self):\n        return {\"version\": self._version, \"data\": self._data}\n\n    def commit(self, snapshot, writes):\n        if snapshot[\"version\"] != self._version:\n            return False\n        for key, value in writes.items():\n            if value is None:\n                self._data.pop(key, None)\n            else:\n                self._data[key] = value\n        self._version += 1\n        return True\n"
+        },
+        "model_visible_files": [
+          "TASK.md",
+          "module.py"
+        ],
+        "private_evaluator_commitment": "e4903da23f2a2d60bf2540d1760133b8a9904795c4dc37762ce862ea9f725285"
+      }
+    ],
+    "private_tests_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "A zero-call development forge with reference-patch discriminability. No model repair ability, general improvement, or mutation authority is established.",
+    "corpus_hash": "ecc4b54441bd23f731f0ba33adac7fc99242064a067b2036dc947e890ae2f3ae"
+  }
+}

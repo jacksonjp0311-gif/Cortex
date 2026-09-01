@@ -470,6 +470,13 @@ depth across fencing leases, atomic observer batches, dependency waves, and
 per-key MVCC. The transport, model, tool budget, and withheld-test law remain
 fixed; only task difficulty changes.
 
+The same-model screen returned an immutable `3/4`, with all four edit intents
+compiling successfully. A zero-call audit then found that the sole failed MVCC
+case promised an opaque snapshot publicly while its private evaluator indexed
+snapshot internals. The raw failure remains unchanged, but baseline calibration
+is held because representation mismatch and reasoning failure are confounded.
+No further calls ran.
+
 ## What you get
 
 | Capability | What it means for you |
