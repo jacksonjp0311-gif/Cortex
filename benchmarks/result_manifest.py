@@ -215,6 +215,19 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     else "bridge_low_instrument_audit_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha29-relational-equivalence/1.0":
+                metadata_state = (
+                    "zero_call_relational_equivalence_ready"
+                    if payload.get("state") == "RELATIONAL_EQUIVALENCE_V4_READY"
+                    and payload.get("additional_model_calls") == 0
+                    and payload.get("historical_scores_rewritten") is False
+                    and payload.get("ruler_building_closed") is True
+                    and (payload.get("self_test") or {}).get("passed") is True
+                    and payload.get("baseline_difficulty_established") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "relational_equivalence_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

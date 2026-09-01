@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.28`
+Version: `10.0.0-alpha.29`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -196,6 +196,11 @@ audit found graph-mapping rejection in all four valid JSON responses and held
 the floor interpretation. Historical scores remain immutable; baseline
 difficulty is still unresolved.
 
+Alpha.29 freezes deterministic finite relation alternatives per required causal
+proposition. Bounded grounded additions and evidence supersets are retained but
+cannot satisfy missing propositions; contradictions and ungrounded claims fail.
+No model judges equivalence. This is the final ruler-building phase.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -225,6 +230,7 @@ difficulty is still unresolved.
 - [Relational causal proof and evidence minimality](RELATIONAL_CAUSAL_PROOF.md)
 - [Intermediate relational task forge](INTERMEDIATE_RELATIONAL_FORGE.md)
 - [Bounded bridge-low relational screen](BRIDGE_LOW_RELATIONAL_SCREEN.md)
+- [Deterministic relational equivalence closure](RELATIONAL_EQUIVALENCE_CLOSURE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

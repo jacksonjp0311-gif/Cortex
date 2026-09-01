@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.28-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.28" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.29-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.29" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -326,6 +326,27 @@ baseline difficulty         UNRESOLVED
 The next repair is not a larger model or more calls. It is an independently
 frozen equivalence-aware graph policy that distinguishes relation-preserving
 isomorphism from a materially different causal claim.
+
+Alpha.29 closes that policy as the final ruler-building phase. Each required
+causal proposition has a finite host-frozen set of acceptable encodings:
+
+```text
+PropositionPass(p) = any submitted edge in FrozenAlternatives(p)
+ProofPass          = all required propositions pass
+                      and no frozen contradiction appears
+```
+
+Additional edges cannot compensate for a missing proposition. They are retained
+without failing the proof only when both endpoints and the predicate belong to
+the public bounded vocabulary. Reversed temporal relations, unknown entities,
+unknown predicates, missing propositions, and caller verdicts still fail.
+Evidence supersets work the same way: a frozen minimal proof must be present,
+while bounded corroborating or distractor IDs are recorded as nonminimal.
+
+This is a finite deterministic policy—not embedding similarity and not another
+model's opinion. Alpha.29 explicitly marks ruler building closed. One final
+fresh screen may use v4; if measurement collapses again, Cortex must switch to
+externally executable code tasks rather than create evaluator v5.
 
 ## What you get
 
