@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.33-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.33" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.34-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.34" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -431,6 +431,23 @@ from the artifact and live prompt, but its forge source contained the private
 strings. Alpha.32's no-tool observation remains valid, while that corpus is
 retired from future held-out trials. New private task specifications must enter
 from outside Git and remain in the host vault.
+
+Alpha.34 applies that correction prospectively. Four new executable defects
+enter through an external host-private specification, outside Git history. The
+unchanged source fails all four frozen evaluators and each host reference repair
+passes. The model receives only the public task and `module.py`, returns a
+strict old/new edit intent, and Cortex—not the model—compiles the canonical
+unified diff before isolated evaluation:
+
+```text
+external-private task → public defect → structured intent
+                      → deterministic patch → withheld test
+```
+
+The live screen is capped at four no-tool calls. Its only purpose is to locate
+the task-only baseline: floor, calibrated, or ceiling. No memory or competence
+treatment is projected, so this phase cannot by itself establish Cortex
+improvement.
 
 ## What you get
 

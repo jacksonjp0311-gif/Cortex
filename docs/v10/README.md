@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.33`
+Version: `10.0.0-alpha.34`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -242,6 +242,13 @@ The live model never received it, so alpha.32 remains an honest development
 observation, but the corpus is retired from future held-out causal use. Future
 private specifications must originate outside the repository.
 
+Alpha.34 runs the corrected instrument on a new external-private corpus. Four
+unchanged baselines fail and four host reference repairs pass before any model
+call is permitted. The live model sees only task text and buggy source, emits a
+strict edit intent, and Cortex compiles the exact patch before the withheld
+evaluator runs. The four-call task-only screen measures baseline difficulty;
+semantic transfer and general self-improvement remain untested.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -276,6 +283,7 @@ private specifications must originate outside the repository.
 - [Answer-sealed executable repair forge](EXECUTABLE_REPAIR_FORGE.md)
 - [Live executable repair screen](LIVE_EXECUTABLE_REPAIR_SCREEN.md)
 - [Canonical edit intent and private corpus closure](CANONICAL_EDIT_INTENT_SEAL.md)
+- [External-private structured repair baseline](LIVE_STRUCTURED_REPAIR_SCREEN.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)
