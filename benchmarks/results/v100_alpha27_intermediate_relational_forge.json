@@ -1,0 +1,545 @@
+{
+  "schema_version": "cortex-alpha27-intermediate-relational-forge/1.0",
+  "state": "INTERMEDIATE_RELATIONAL_FORGE_READY",
+  "source_commit": "a2a28ea0c5af7e3d54fdd1bc8a316b812448c4d8",
+  "preflight_receipt_hash": "68f7483fe702137fd063381e22d37e17f040a2b80fe04a0e16c7e3303a398e73",
+  "source_relational_preflight_receipt_hash": "0479a90a1572edb9824564bc1b6ef82bba4337b761bd29786274058d47cf72f8",
+  "public_corpus_manifest": {
+    "schema_version": "cortex-intermediate-relational-corpus/1.0",
+    "version": "10.0.0a27",
+    "family": "generation_bound_derived_state",
+    "cases": [
+      {
+        "case_id": "irc_904d74700cda7609f642",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_low",
+        "development_only": true,
+        "instruction": "Represent the stale-input mechanism and minimum ordering safeguard.",
+        "events": [
+          "E1: source_graph commits generation 42",
+          "E2: snapshot_cache remains at generation 41",
+          "E3: derived_index reads from snapshot_cache",
+          "E4: derived_index is published as generation 42 while containing generation 41 material",
+          "E5: a direct source_graph read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "source_graph",
+          "snapshot_cache",
+          "derived_index",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "d002351c1c268634c83dc5b4b68f7d90cc01ee1db28704c3a1bc2981883c45b9"
+      },
+      {
+        "case_id": "irc_ee183302c3daa3d95ce0",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_low",
+        "development_only": true,
+        "instruction": "Represent the stale-input mechanism and minimum ordering safeguard.",
+        "events": [
+          "E1: policy_store commits generation 42",
+          "E2: policy_snapshot remains at generation 41",
+          "E3: compiled_policy reads from policy_snapshot",
+          "E4: compiled_policy is published as generation 42 while containing generation 41 material",
+          "E5: a direct policy_store read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "policy_store",
+          "policy_snapshot",
+          "compiled_policy",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "9289f2040ac392ca082c9bad2ab29908d58e3245eb51560aafb4b3fcb8eab9df"
+      },
+      {
+        "case_id": "irc_0cdd302b2a4539114ae9",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_low",
+        "development_only": true,
+        "instruction": "Represent the stale-input mechanism and minimum ordering safeguard.",
+        "events": [
+          "E1: schema_registry commits generation 42",
+          "E2: schema_snapshot remains at generation 41",
+          "E3: generated_validator reads from schema_snapshot",
+          "E4: generated_validator is published as generation 42 while containing generation 41 material",
+          "E5: a direct schema_registry read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "schema_registry",
+          "schema_snapshot",
+          "generated_validator",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "7887099ea0b96705e92bff310936bc4c5e57e524d52d4e882de9c0693a662e2b"
+      },
+      {
+        "case_id": "irc_4843996b0f6397e58125",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_low",
+        "development_only": true,
+        "instruction": "Represent the stale-input mechanism and minimum ordering safeguard.",
+        "events": [
+          "E1: route_table commits generation 42",
+          "E2: route_snapshot remains at generation 41",
+          "E3: compiled_router reads from route_snapshot",
+          "E4: compiled_router is published as generation 42 while containing generation 41 material",
+          "E5: a direct route_table read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "route_table",
+          "route_snapshot",
+          "compiled_router",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "3e4d2ee643e02b367b6bb425c7a15fee1a1d39a094f0d57f118ee1f88df34009"
+      },
+      {
+        "case_id": "irc_0bd78f6f43ef9efc2117",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_mid",
+        "development_only": true,
+        "instruction": "Represent the complete stale-input causal transition and safeguard.",
+        "events": [
+          "E1: source_graph commits generation 42",
+          "E2: snapshot_cache remains at generation 41",
+          "E3: derived_index reads from snapshot_cache",
+          "E4: derived_index is published as generation 42 while containing generation 41 material",
+          "E5: a direct source_graph read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "source_graph",
+          "snapshot_cache",
+          "derived_index",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "ca9df39d955b4f14c5c920a3c878693e9554f4f6a14e4929a7801010026f6f26"
+      },
+      {
+        "case_id": "irc_a8fd6c2e9fd2bc7ac3c5",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_mid",
+        "development_only": true,
+        "instruction": "Represent the complete stale-input causal transition and safeguard.",
+        "events": [
+          "E1: policy_store commits generation 42",
+          "E2: policy_snapshot remains at generation 41",
+          "E3: compiled_policy reads from policy_snapshot",
+          "E4: compiled_policy is published as generation 42 while containing generation 41 material",
+          "E5: a direct policy_store read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "policy_store",
+          "policy_snapshot",
+          "compiled_policy",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "2702a25281f3ca5b14cffa9d10a40d4295105efcd4dc265d8307e0e3d4b0d169"
+      },
+      {
+        "case_id": "irc_8c4211b99852df8f932d",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_mid",
+        "development_only": true,
+        "instruction": "Represent the complete stale-input causal transition and safeguard.",
+        "events": [
+          "E1: schema_registry commits generation 42",
+          "E2: schema_snapshot remains at generation 41",
+          "E3: generated_validator reads from schema_snapshot",
+          "E4: generated_validator is published as generation 42 while containing generation 41 material",
+          "E5: a direct schema_registry read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "schema_registry",
+          "schema_snapshot",
+          "generated_validator",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "d7e233b5eb20fde72e50d4626d54c0ac3829f1665cb87aa642faba08107cc2cd"
+      },
+      {
+        "case_id": "irc_a1b221492d250b9633f1",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_mid",
+        "development_only": true,
+        "instruction": "Represent the complete stale-input causal transition and safeguard.",
+        "events": [
+          "E1: route_table commits generation 42",
+          "E2: route_snapshot remains at generation 41",
+          "E3: compiled_router reads from route_snapshot",
+          "E4: compiled_router is published as generation 42 while containing generation 41 material",
+          "E5: a direct route_table read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "route_table",
+          "route_snapshot",
+          "compiled_router",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "cde2d6774fb993c3f4b2a2bb9d05f1312a09e009a579e463da87cb139d9e1e68"
+      },
+      {
+        "case_id": "irc_91839f47c91d40b2fb37",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_high",
+        "development_only": true,
+        "instruction": "Represent the causal chain, invalidity relation, and publication block.",
+        "events": [
+          "E1: source_graph commits generation 42",
+          "E2: snapshot_cache remains at generation 41",
+          "E3: derived_index reads from snapshot_cache",
+          "E4: derived_index is published as generation 42 while containing generation 41 material",
+          "E5: a direct source_graph read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "source_graph",
+          "snapshot_cache",
+          "derived_index",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "01c6a9f7adea70f45e635fb4c29ce717a784a01ca703d80f8642976d3b066436"
+      },
+      {
+        "case_id": "irc_e6f3e217784f3f50f228",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_high",
+        "development_only": true,
+        "instruction": "Represent the causal chain, invalidity relation, and publication block.",
+        "events": [
+          "E1: policy_store commits generation 42",
+          "E2: policy_snapshot remains at generation 41",
+          "E3: compiled_policy reads from policy_snapshot",
+          "E4: compiled_policy is published as generation 42 while containing generation 41 material",
+          "E5: a direct policy_store read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "policy_store",
+          "policy_snapshot",
+          "compiled_policy",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "7e34c0f2ac545d4b5286195850ee1b54c6289be7eb6dfa10067eb7a2d2ad3f5d"
+      },
+      {
+        "case_id": "irc_d1d021d2d8c5f0ddd70f",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_high",
+        "development_only": true,
+        "instruction": "Represent the causal chain, invalidity relation, and publication block.",
+        "events": [
+          "E1: schema_registry commits generation 42",
+          "E2: schema_snapshot remains at generation 41",
+          "E3: generated_validator reads from schema_snapshot",
+          "E4: generated_validator is published as generation 42 while containing generation 41 material",
+          "E5: a direct schema_registry read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "schema_registry",
+          "schema_snapshot",
+          "generated_validator",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "25f45353cb0e90d6f3cb9aa28b02de4a5570265d7e260f628b2d3c2972ec6ffb"
+      },
+      {
+        "case_id": "irc_d10d7b129ae80763b7c6",
+        "family": "generation_bound_derived_state",
+        "difficulty_band": "bridge_high",
+        "development_only": true,
+        "instruction": "Represent the causal chain, invalidity relation, and publication block.",
+        "events": [
+          "E1: route_table commits generation 42",
+          "E2: route_snapshot remains at generation 41",
+          "E3: compiled_router reads from route_snapshot",
+          "E4: compiled_router is published as generation 42 while containing generation 41 material",
+          "E5: a direct route_table read returns generation 42",
+          "D1: serialization checksum is internally consistent"
+        ],
+        "entities": [
+          "route_table",
+          "route_snapshot",
+          "compiled_router",
+          "generation_41",
+          "generation_42",
+          "stale_snapshot",
+          "generation_mismatch",
+          "snapshot_validation",
+          "publication"
+        ],
+        "response_schema": [
+          "cause",
+          "repair",
+          "causal_relations",
+          "repair_relations",
+          "evidence_ids",
+          "uncertainty"
+        ],
+        "relation_schema": [
+          "subject",
+          "relation",
+          "object"
+        ],
+        "contract_commitment": "3f90ac6aa071abaf24fc9d9a3edbe9905573ff7bc5d6cc00ca8f333ab9c8309c"
+      }
+    ],
+    "bands": [
+      "bridge_low",
+      "bridge_mid",
+      "bridge_high"
+    ],
+    "band_case_ids": {
+      "bridge_low": [
+        "irc_904d74700cda7609f642",
+        "irc_ee183302c3daa3d95ce0",
+        "irc_0cdd302b2a4539114ae9",
+        "irc_4843996b0f6397e58125"
+      ],
+      "bridge_mid": [
+        "irc_0bd78f6f43ef9efc2117",
+        "irc_a8fd6c2e9fd2bc7ac3c5",
+        "irc_8c4211b99852df8f932d",
+        "irc_a1b221492d250b9633f1"
+      ],
+      "bridge_high": [
+        "irc_91839f47c91d40b2fb37",
+        "irc_e6f3e217784f3f50f228",
+        "irc_d1d021d2d8c5f0ddd70f",
+        "irc_d10d7b129ae80763b7c6"
+      ]
+    },
+    "initial_screen_band": "bridge_low",
+    "sequential_rule": "screen one four-case band; stop if success rate is 0.30..0.70; otherwise move one adjacent band",
+    "evidence_policy_constant_across_bands": true,
+    "model_identity_in_scoring": false,
+    "private_contracts_present": false,
+    "private_key_commitment": "3f604810bd92f899926ea52ac295b99b6d33bcc7cb0162eb877274417717a5d5",
+    "development_only": true,
+    "confirmatory_eligible": false,
+    "corpus_hash": "f36faefd21978b8a4b96734570f028cc4d4e425eeca9bceb89e5c3a33885dbd1"
+  },
+  "private_contract_storage": "host_os_credential_vault",
+  "private_contract_persisted_in_artifact": false,
+  "panel_count": 3,
+  "cases_per_panel": 4,
+  "planned_live_calls": 0,
+  "maximum_future_calls_without_new_authority": 0,
+  "historical_scores_rewritten": false,
+  "evidence_policy_constant_across_bands": true,
+  "baseline_difficulty_established": false,
+  "semantic_transfer_established": false,
+  "next_action": "freeze_four_call_bridge_low_screen",
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}
