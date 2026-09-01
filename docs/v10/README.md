@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.22`
+Version: `10.0.0-alpha.23`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -148,6 +148,12 @@ immutable and calibration remains unresolved. Commissioning passed all 67
 deterministic checks. The four historical outputs passed v2 in shadow mode,
 confirming the original lexical wound without retroactively changing evidence.
 
+Alpha.23 adds a new four-call task-only screen bound before inference to the
+exact alpha.22 evaluator hash, corpus, private vault commitment, adapter
+identity, and host-registered live provenance. Scores are reconstructed from
+canonical trajectories. It remains a development difficulty screen, not a
+semantic-transfer experiment.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -171,6 +177,7 @@ confirming the original lexical wound without retroactively changing evidence.
 - [Open-response latent-cause forge](OPEN_RESPONSE_LATENT_CAUSE_FORGE.md)
 - [Live open-response calibration screen](LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md)
 - [Semantic causal evaluator v2](SEMANTIC_CAUSAL_EVALUATOR_V2.md)
+- [Live semantic causal screen v2](LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

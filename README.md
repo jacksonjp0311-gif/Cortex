@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.22-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.22" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.23-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.23" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -219,6 +219,11 @@ historical v1 scores rewritten              NO
 live model calls                            0
 baseline difficulty                         UNRESOLVED
 ```
+
+Alpha.23 adds the separately authorized fresh screen. Four new task-only calls
+are frozen against the exact alpha.22 evaluator and model provenance before
+invocation. Every result is reconstructed from its immutable native trajectory;
+the screen still contains no memory, sham, or relevant-lesson treatment.
 
 ## What you get
 
