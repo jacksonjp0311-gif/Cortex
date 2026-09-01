@@ -12,6 +12,13 @@ from cortex.bootstrap import bootstrap_repository
 from cortex.config import ensure_home
 from cortex.native_agent import CapabilityGrant, ToolRegistry
 from cortex.open_response_calibration import build_open_response_latent_bundle
+from cortex.relational_causal_evaluator import (
+    build_relational_evaluator_bundle,
+    evaluate_relational_causal_response,
+    freeze_relational_evaluator_v3,
+    relational_evaluator_self_test,
+    verify_relational_evaluator_bundle,
+)
 from cortex.semantic_causal_evaluator import (
     audit_harder_live_semantic_screen_v2,
     build_semantic_evaluator_bundle,
@@ -96,6 +103,44 @@ class Alpha22SemanticCausalEvaluatorTests(unittest.TestCase):
         verdict = evaluate_semantic_causal_response(contract, "{}")
         self.assertIsNone(verdict["success"])
         self.assertEqual(verdict["state"], "unknown")
+
+    def test_relational_proof_is_prose_invariant_and_evidence_minimal(self) -> None:
+        bundle = build_relational_evaluator_bundle(self.source["manifest"])
+        self.assertTrue(verify_relational_evaluator_bundle(bundle)["valid"])
+        contract = next(iter(bundle["private_key"]["contracts"].values()))
+        response = {
+            "cause": "one public explanation",
+            "repair": "one public repair explanation",
+            "causal_relations": contract["required_causal_relations"],
+            "repair_relations": contract["required_repair_relations"],
+            "evidence_ids": ["E1", "E2", "E3", "E4"],
+            "uncertainty": "low",
+        }
+        first = evaluate_relational_causal_response(contract, json.dumps(response))
+        response["cause"] = "radically different public wording"
+        response["repair"] = "wording is retained but does not authorize the score"
+        second = evaluate_relational_causal_response(contract, json.dumps(response))
+        self.assertTrue(first["success"])
+        self.assertTrue(second["success"])
+        self.assertTrue(first["submitted_evidence_is_minimal"])
+
+        response["evidence_ids"] = ["E1", "E2", "E3", "E4", "E5"]
+        corroborated = evaluate_relational_causal_response(
+            contract, json.dumps(response)
+        )
+        self.assertTrue(corroborated["success"])
+        self.assertFalse(corroborated["submitted_evidence_is_minimal"])
+
+        response["evidence_ids"] = ["E1", "E2", "E3"]
+        insufficient = evaluate_relational_causal_response(
+            contract, json.dumps(response)
+        )
+        self.assertFalse(insufficient["success"])
+        self.assertIn("causal_evidence_insufficient", insufficient["errors"])
+
+        self_test = relational_evaluator_self_test(bundle)
+        self.assertTrue(self_test["passed"], self_test["checks"])
+        self.assertEqual(self_test["check_count"], 11)
 
     def test_fresh_live_screen_is_bound_and_reconstructed(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -265,6 +310,30 @@ class Alpha22SemanticCausalEvaluatorTests(unittest.TestCase):
                 )
                 self.assertEqual(instrument_audit["additional_model_calls"], 0)
                 self.assertFalse(instrument_audit["historical_scores_rewritten"])
+
+                relational_bundle = build_relational_evaluator_bundle(
+                    self.source["manifest"]
+                )
+                relational_preflight = freeze_relational_evaluator_v3(
+                    store,
+                    repo,
+                    instrument_audit_receipt_hash=instrument_audit["receipt_hash"],
+                    v2_bundle=self.bundle,
+                    v3_bundle=relational_bundle,
+                )
+                self.assertEqual(
+                    relational_preflight["state"],
+                    "RELATIONAL_CAUSAL_EVALUATOR_V3_READY",
+                )
+                self.assertEqual(relational_preflight["planned_live_calls"], 0)
+                self.assertTrue(
+                    relational_preflight["difficulty_interpolation_ready"]
+                )
+                self.assertFalse(
+                    relational_preflight["historical_scores_rewritten"]
+                )
+                self.assertFalse(relational_preflight["host_mutate_authorized"])
+                self.assertFalse(relational_preflight["execution_authorized"])
 
                 caller_copy = dict(result)
                 caller_copy["screen"] = {"state": "calibrated", "success_count": 2}

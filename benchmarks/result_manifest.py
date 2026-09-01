@@ -165,6 +165,19 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     else "semantic_instrument_audit_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-alpha26-relational-causal-evaluator/1.0":
+                metadata_state = (
+                    "zero_call_relational_causal_evaluator_ready"
+                    if payload.get("state") == "RELATIONAL_CAUSAL_EVALUATOR_V3_READY"
+                    and payload.get("planned_live_calls") == 0
+                    and (payload.get("self_test") or {}).get("passed") is True
+                    and (payload.get("self_test") or {}).get("check_count") == 11
+                    and payload.get("historical_scores_rewritten") is False
+                    and payload.get("difficulty_interpolation_ready") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("private_contract_persisted_in_artifact") is False
+                    else "relational_causal_evaluator_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
         except (json.JSONDecodeError, OSError):

@@ -1,3 +1,3 @@
 """Cortex: verified repository assimilation with sparse neural interlinking."""
 
-__version__ = "10.0.0a25"
+__version__ = "10.0.0a26"

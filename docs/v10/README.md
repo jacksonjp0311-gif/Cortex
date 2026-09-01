@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.25`
+Version: `10.0.0-alpha.26`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -171,6 +171,13 @@ rejection. Because both surfaces contributed to the apparent floor,
 interpolation remains held pending a versioned evidence-minimality and repair-
 semantics policy.
 
+Alpha.26 freezes that policy as a relational causal proof contract. Models must
+submit typed directed relations plus ordered evidence satisfying at least one
+host-frozen minimal proof set. Public prose is retained but cannot alter the
+score. Corroborating evidence is accepted, unsupported or reversed relations
+fail closed, the alpha.24/25 history remains immutable, and no model call is
+spent. The next permitted step is a zero-call intermediate task forge.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -197,6 +204,7 @@ semantics policy.
 - [Live semantic causal screen v2](LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
 - [Harder live semantic causal screen v2](HARDER_LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md)
 - [Semantic instrument sufficiency audit](SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md)
+- [Relational causal proof and evidence minimality](RELATIONAL_CAUSAL_PROOF.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

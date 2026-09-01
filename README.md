@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.25-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.25" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.26-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.26" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -267,6 +267,25 @@ repair-phrase atom despite expressing a generation-matching rebuild guard.
 Historical scores remain unchanged, but difficulty interpolation is held until
 evidence minimality and repair semantics are frozen independently. This avoids
 training the benchmark around an evaluator artifact.
+
+Alpha.26 closes that instrument wound without spending another model call.
+Public explanations remain visible, but scoring now depends on a typed causal
+graph and an independently frozen evidence proof set:
+
+```text
+causal proof = required directed relations + sufficient ordered evidence
+
+PASS iff required_edges ⊆ submitted_edges
+     and submitted_edges ⊆ allowed_edges
+     and ∃ minimal proof set P such that P ⊆ submitted_evidence
+```
+
+Two distinct minimal proof paths are accepted, and additional corroborating
+evidence no longer converts a correct proof into failure. Rewording public
+prose cannot change the score; reversing a temporal edge, omitting a causal
+edge, inventing a relation, replaying evidence out of order, or adding a caller
+success field fails closed. The previous alpha.24 scores remain immutable.
+This establishes a better measurement instrument, not model improvement.
 
 ## What you get
 
