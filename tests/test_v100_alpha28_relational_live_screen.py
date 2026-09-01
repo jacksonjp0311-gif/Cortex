@@ -17,6 +17,7 @@ from cortex.native_agent import CapabilityGrant, ToolRegistry
 from cortex.open_response_calibration import build_open_response_latent_bundle
 from cortex.relational_causal_evaluator import build_relational_evaluator_bundle
 from cortex.relational_live_screen import (
+    audit_bridge_low_instrument,
     execute_bridge_low_screen,
     freeze_bridge_low_screen,
     verify_bridge_low_screen,
@@ -155,6 +156,17 @@ class Alpha28RelationalLiveScreenTests(unittest.TestCase):
                     corpus_bundle=corpus_bundle,
                 )
                 self.assertTrue(audit["valid"], audit["errors"])
+                instrument_audit = audit_bridge_low_instrument(
+                    store,
+                    repo,
+                    result_receipt_hash=result["receipt_hash"],
+                    corpus_bundle=corpus_bundle,
+                )
+                self.assertEqual(
+                    instrument_audit["state"], "BRIDGE_LOW_INSTRUMENT_CLEAN"
+                )
+                self.assertEqual(instrument_audit["additional_model_calls"], 0)
+                self.assertFalse(instrument_audit["historical_scores_rewritten"])
                 caller_copy = dict(result, screen={"state": "calibrated"})
                 self.assertTrue(
                     verify_bridge_low_screen(

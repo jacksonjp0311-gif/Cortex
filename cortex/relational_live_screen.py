@@ -358,7 +358,100 @@ def verify_bridge_low_screen(
     }
 
 
+def audit_bridge_low_instrument(
+    store: Any,
+    repo: str,
+    *,
+    result_receipt_hash: str,
+    corpus_bundle: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Diagnose graph-mapping rejection without changing any frozen verdict."""
+    reconstruction = verify_bridge_low_screen(
+        store,
+        repo,
+        result_receipt_hash=result_receipt_hash,
+        corpus_bundle=corpus_bundle,
+    )
+    if reconstruction.get("valid") is not True:
+        raise ValueError("canonical bridge-low result reconstruction is required")
+    result = store.symbiotic_receipt(str(result_receipt_hash), repo=repo) or {}
+    graph_mapping_rejections = 0
+    evidence_superset_rejections = 0
+    valid_json_responses = 0
+    error_counts: dict[str, int] = {}
+    for receipt_hash in result.get("case_receipt_hashes") or ():
+        case = store.symbiotic_receipt(str(receipt_hash), repo=repo) or {}
+        evaluation = case.get("evaluation") or {}
+        for error in evaluation.get("errors") or ():
+            error_counts[str(error)] = error_counts.get(str(error), 0) + 1
+        trajectory = store.symbiotic_receipt(
+            str(case.get("trajectory_receipt_hash") or ""), repo=repo
+        ) or {}
+        try:
+            parsed = json.loads(str(trajectory.get("final_answer") or ""))
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, Mapping):
+            valid_json_responses += 1
+        errors = set(evaluation.get("errors") or ())
+        if "unsupported_relation_claim" in errors and errors & {
+            "required_causal_relations_missing",
+            "required_repair_relations_missing",
+        }:
+            graph_mapping_rejections += 1
+        if (
+            "causal_evidence_insufficient" in errors
+            and evaluation.get("satisfied_evidence_proof_set_indices")
+        ):
+            evidence_superset_rejections += 1
+    confounded = graph_mapping_rejections > 0 or evidence_superset_rejections > 0
+    material = {
+        "schema_version": "cortex-bridge-low-instrument-audit/1.0",
+        "version": __version__,
+        "kind": "bridge_low_instrument_audit",
+        "result_receipt_hash": str(result_receipt_hash),
+        "result_reconstruction": reconstruction,
+        "historical_screen": result.get("screen"),
+        "historical_scores_rewritten": False,
+        "additional_model_calls": 0,
+        "valid_json_response_count": valid_json_responses,
+        "graph_mapping_rejection_count": graph_mapping_rejections,
+        "sufficient_proof_superset_rejection_count": evidence_superset_rejections,
+        "error_counts": error_counts,
+        "difficulty_interpretation_confounded": confounded,
+        "baseline_difficulty_established": False,
+        "semantic_transfer_established": False,
+        "state": (
+            "BRIDGE_LOW_INTERPRETATION_HELD"
+            if confounded
+            else "BRIDGE_LOW_INSTRUMENT_CLEAN"
+        ),
+        "next_action": (
+            "freeze_equivalence_aware_relational_policy_zero_call"
+            if confounded
+            else "apply_frozen_sequential_rule"
+        ),
+        "advisory_only": True,
+        "host_mutate_authorized": False,
+        "execution_authorized": False,
+        "memory_admission_authorized": False,
+        "policy_effect": False,
+    }
+    session = open_symbiotic_session(store, repo, task="audit bridge-low instrument", persist=True)
+    return store.append_symbiotic_receipt(
+        repo,
+        {
+            **material,
+            "session_id": session["session_id"],
+            "turn_id": 0,
+            "event_id": f"bridge_low_audit_{_sha(material)[:24]}",
+            "body_epoch_id": session["body_epoch_id"],
+        },
+    )
+
+
 __all__ = [
+    "audit_bridge_low_instrument",
     "execute_bridge_low_screen",
     "freeze_bridge_low_screen",
     "verify_bridge_low_screen",
