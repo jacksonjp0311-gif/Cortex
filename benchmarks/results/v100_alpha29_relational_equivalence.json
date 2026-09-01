@@ -1,7 +1,7 @@
 {
   "schema_version": "cortex-alpha29-relational-equivalence/1.0",
   "state": "RELATIONAL_EQUIVALENCE_V4_READY",
-  "source_commit": "387318bd19b9a5fa756a45a28601124b4ab7c9ec",
+  "source_commit": "2310fe9285352b2f21aff07dc1063ccca53b0885",
   "preflight_receipt_hash": "80fdd5c95b31b0d9eb9874fc786458cc328219b59e8502243ad63eba530ae06e",
   "source_instrument_audit_receipt_hash": "0c00f69effcc2eb89cdc5edf1c0ffc106a75836059b96f5e7775e8d4c8be2cf2",
   "source_result_receipt_hash": "912e79b3a96a41163c8b096204caef69b2e84a5c5b0054b29e2cda1b08ee3c25",

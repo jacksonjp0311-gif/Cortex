@@ -2,8 +2,8 @@
   "schema_version": "cortex-release-manifest/4.0",
   "release": "Cortex v10.0.0-alpha.29",
   "release_class": "advanced research prototype",
-  "source_commit": "387318bd19b9a5fa756a45a28601124b4ab7c9ec",
-  "runtime_parent": "387318bd19b9a5fa756a45a28601124b4ab7c9ec",
+  "source_commit": "2310fe9285352b2f21aff07dc1063ccca53b0885",
+  "runtime_parent": "2310fe9285352b2f21aff07dc1063ccca53b0885",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
   "phase_document": "docs/v10/RELATIONAL_EQUIVALENCE_CLOSURE.md",
   "evidence_boundary": {
