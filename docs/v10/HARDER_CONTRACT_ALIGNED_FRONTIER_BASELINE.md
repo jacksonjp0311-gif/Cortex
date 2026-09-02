@@ -32,5 +32,31 @@ memory admission, or policy effect.
 
 ## Result
 
-Pending the separately executed four-call run from a clean implementation
-commit. This section is updated only from its preserved canonical artifact.
+The run executed from implementation commit
+`34af9b9d846be5abc7077dcf34ad77dd4ae20e0e` using
+`OpenAI / gpt-5.6-sol`:
+
+| Surface | Result |
+|---|---:|
+| Calls | 4 |
+| Canonical edit intents compiled | 4/4 |
+| Isolated candidate repairs passed | 3/4 |
+| Success rate | 0.75 |
+| Canonical reconstruction | PASS |
+| Tools | 0 |
+
+The idempotent ledger, revision-aware cache, and owned snapshot repairs passed.
+The atomic expiring-reservation candidate compiled but failed its frozen
+evaluator. Because `0.75 > 0.70`, the predeclared disposition is
+`screening_ceiling`; the tempting `3/4` label does not override the frozen
+window.
+
+Preregistration receipt:
+`60f6b4fbf5ddde605ffe47c7ba6e105057f072cf2b8410e1d1646cf109078acb`
+
+Result receipt:
+`36e11f0edfd1d30172af554a1adc18078041a6ad383e145d96320f66d4892090`
+
+The harder geometry created one real failure and therefore more information
+than alpha.37, but it did not calibrate the baseline. No semantic treatment was
+projected and no Cortex improvement claim is available.

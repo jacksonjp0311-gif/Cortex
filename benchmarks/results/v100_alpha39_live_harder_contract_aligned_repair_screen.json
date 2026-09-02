@@ -1,0 +1,63 @@
+{
+  "schema_version": "cortex-alpha39-live-harder-contract-aligned-repair-screen/1.0",
+  "state": "HARDER_CONTRACT_ALIGNED_BASELINE_RECONSTRUCTED",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "planned_calls": 4,
+  "maximum_calls": 4,
+  "context_treatment": "task_only_control",
+  "tools": [],
+  "harder_forge_result_hash": "d7ab1eddb02583728527886f1cc6300f3d334cf25dd2c89821876f91a2e9241d",
+  "aligned_corpus_hash": "cf8d4fdc59c58b84e07150a374a8d9e062ca340c0866a0de6a4e385cdaa28a0f",
+  "prior_result_receipt_hash": "477a22ebc65f1aea59fcc6fbdd1f606b81fe337c2e52766c0e3043dee04e4fb6",
+  "private_specs_origin": "outside_repository",
+  "semantic_treatment_projected": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "source_commit": "34af9b9d846be5abc7077dcf34ad77dd4ae20e0e",
+  "preregistration_receipt_hash": "60f6b4fbf5ddde605ffe47c7ba6e105057f072cf2b8410e1d1646cf109078acb",
+  "result_receipt_hash": "36e11f0edfd1d30172af554a1adc18078041a6ad383e145d96320f66d4892090",
+  "calls_executed": 4,
+  "screen": {
+    "case_count": 4,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "recommended_action": "forge_harder_structured_tasks",
+    "state": "screening_ceiling",
+    "success_count": 3,
+    "success_rate": 0.75,
+    "target_window": {
+      "maximum": 0.7,
+      "minimum": 0.3
+    }
+  },
+  "canonical_reconstruction": {
+    "valid": true,
+    "errors": [],
+    "screen": {
+      "case_count": 4,
+      "success_count": 3,
+      "success_rate": 0.75,
+      "target_window": {
+        "minimum": 0.3,
+        "maximum": 0.7
+      },
+      "state": "screening_ceiling",
+      "recommended_action": "forge_harder_structured_tasks",
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "result_receipt_hash": "36e11f0edfd1d30172af554a1adc18078041a6ad383e145d96320f66d4892090",
+    "preregistration_receipt_hash": "60f6b4fbf5ddde605ffe47c7ba6e105057f072cf2b8410e1d1646cf109078acb",
+    "harder_forge_result_hash": "d7ab1eddb02583728527886f1cc6300f3d334cf25dd2c89821876f91a2e9241d"
+  },
+  "baseline_calibrated": false,
+  "next_action": "forge_harder_structured_tasks",
+  "private_bundle_persisted_in_artifact": false,
+  "authority": {
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  }
+}

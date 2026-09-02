@@ -24,9 +24,7 @@ def sha256(path: Path) -> str:
 
 
 def main() -> int:
-    commit = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-    ).strip()
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     files = []
     for path in sorted(RESULTS.rglob("*.json")):
         if path.name == "MANIFEST.json":
@@ -34,13 +32,25 @@ def main() -> int:
         metadata_state = "legacy_partial"
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-            if payload.get("evidence_class") == "live_external_calibration" and payload.get("confirmatory_eligible") is False:
+            if (
+                payload.get("evidence_class") == "live_external_calibration"
+                and payload.get("confirmatory_eligible") is False
+            ):
                 metadata_state = "development_calibration"
-            elif payload.get("schema_version") == "cortex-discriminative-forge-benchmark/1.0" and payload.get("observation_state") == "not_executed":
+            elif (
+                payload.get("schema_version") == "cortex-discriminative-forge-benchmark/1.0"
+                and payload.get("observation_state") == "not_executed"
+            ):
                 metadata_state = "structural_unexecuted"
-            elif payload.get("schema_version") == "cortex-information-balanced-forge-benchmark/1.0" and payload.get("empirical_trial_executed") is False:
+            elif (
+                payload.get("schema_version") == "cortex-information-balanced-forge-benchmark/1.0"
+                and payload.get("empirical_trial_executed") is False
+            ):
                 metadata_state = "structural_unexecuted"
-            elif payload.get("schema_version") == "cortex-calibration-commissioning/1.0" and payload.get("empirical_trial_executed") is False:
+            elif (
+                payload.get("schema_version") == "cortex-calibration-commissioning/1.0"
+                and payload.get("empirical_trial_executed") is False
+            ):
                 metadata_state = "structural_unexecuted"
             elif payload.get("schema_version") == "cortex-frontier-calibration-commissioning/1.0":
                 metadata_state = "development_live_empirical"
@@ -87,8 +97,7 @@ def main() -> int:
                     if payload.get("state") == "LIVE_BASELINE_SCREEN_RECONSTRUCTED"
                     and payload.get("evidence_class") == "live_empirical"
                     and payload.get("calls_executed") == 4
-                    and (payload.get("screen") or {}).get("state")
-                    == "screening_ceiling"
+                    and (payload.get("screen") or {}).get("state") == "screening_ceiling"
                     and payload.get("calibration_established") is False
                     and payload.get("semantic_transfer_established") is False
                     else "development_live_empirical_screen_held"
@@ -113,7 +122,9 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "development_live_open_response_held"
                 )
-            elif payload.get("schema_version") == "cortex-alpha21-open-response-evaluator-audit/1.0":
+            elif (
+                payload.get("schema_version") == "cortex-alpha21-open-response-evaluator-audit/1.0"
+            ):
                 metadata_state = (
                     "zero_call_evaluator_audit_held"
                     if payload.get("state") == "EVALUATOR_AUDIT_HELD"
@@ -155,7 +166,10 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "development_harder_live_semantic_held"
                 )
-            elif payload.get("schema_version") == "cortex-alpha25-semantic-instrument-sufficiency-audit/1.0":
+            elif (
+                payload.get("schema_version")
+                == "cortex-alpha25-semantic-instrument-sufficiency-audit/1.0"
+            ):
                 metadata_state = (
                     "zero_call_semantic_instrument_audit_held"
                     if payload.get("state") == "DIFFICULTY_INTERPOLATION_HELD"
@@ -178,7 +192,9 @@ def main() -> int:
                     and payload.get("private_contract_persisted_in_artifact") is False
                     else "relational_causal_evaluator_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha27-intermediate-relational-forge/1.0":
+            elif (
+                payload.get("schema_version") == "cortex-alpha27-intermediate-relational-forge/1.0"
+            ):
                 metadata_state = (
                     "zero_call_intermediate_relational_forge_ready"
                     if payload.get("state") == "INTERMEDIATE_RELATIONAL_FORGE_READY"
@@ -269,7 +285,9 @@ def main() -> int:
                     )
                     else "executable_repair_forge_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha32-live-executable-repair-screen/1.0":
+            elif (
+                payload.get("schema_version") == "cortex-alpha32-live-executable-repair-screen/1.0"
+            ):
                 reconstruction = payload.get("canonical_reconstruction") or {}
                 screen = payload.get("screen") or {}
                 metadata_state = (
@@ -302,7 +320,9 @@ def main() -> int:
                     and payload.get("general_improvement_established") is False
                     else "edit_intent_transport_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha34-live-structured-repair-screen/1.0":
+            elif (
+                payload.get("schema_version") == "cortex-alpha34-live-structured-repair-screen/1.0"
+            ):
                 reconstruction = payload.get("canonical_reconstruction") or {}
                 screen = payload.get("screen") or {}
                 metadata_state = (
@@ -311,16 +331,18 @@ def main() -> int:
                     and payload.get("planned_calls") == 4
                     and payload.get("maximum_calls") == 4
                     and payload.get("calls_executed") == 4
-                    and screen.get("state") in {
-                        "screening_floor", "structured_baseline_calibrated", "screening_ceiling"
-                    }
+                    and screen.get("state")
+                    in {"screening_floor", "structured_baseline_calibrated", "screening_ceiling"}
                     and reconstruction.get("valid") is True
                     and payload.get("semantic_transfer_established") is False
                     and payload.get("general_improvement_established") is False
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     else "live_structured_repair_screen_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha35-live-harder-structured-repair-screen/1.0":
+            elif (
+                payload.get("schema_version")
+                == "cortex-alpha35-live-harder-structured-repair-screen/1.0"
+            ):
                 reconstruction = payload.get("canonical_reconstruction") or {}
                 screen = payload.get("screen") or {}
                 metadata_state = (
@@ -330,9 +352,8 @@ def main() -> int:
                     and payload.get("maximum_calls") == 4
                     and payload.get("calls_executed") == 4
                     and payload.get("difficulty_transition") == "move_harder"
-                    and screen.get("state") in {
-                        "screening_floor", "structured_baseline_calibrated", "screening_ceiling"
-                    }
+                    and screen.get("state")
+                    in {"screening_floor", "structured_baseline_calibrated", "screening_ceiling"}
                     and reconstruction.get("valid") is True
                     and payload.get("semantic_transfer_established") is False
                     and payload.get("general_improvement_established") is False
@@ -352,7 +373,9 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     else "structured_instrument_audit_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha36-contract-aligned-repair-forge/1.0":
+            elif (
+                payload.get("schema_version") == "cortex-alpha36-contract-aligned-repair-forge/1.0"
+            ):
                 metadata_state = (
                     "zero_call_contract_aligned_repair_forge_ready"
                     if payload.get("state") == "CONTRACT_ALIGNED_REPAIR_FORGE_READY"
@@ -371,7 +394,10 @@ def main() -> int:
                     and payload.get("general_improvement_established") is False
                     else "contract_aligned_repair_forge_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha37-live-contract-aligned-repair-screen/1.0":
+            elif (
+                payload.get("schema_version")
+                == "cortex-alpha37-live-contract-aligned-repair-screen/1.0"
+            ):
                 reconstruction = payload.get("canonical_reconstruction") or {}
                 screen = payload.get("screen") or {}
                 metadata_state = (
@@ -392,7 +418,9 @@ def main() -> int:
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     else "live_contract_aligned_repair_screen_invalid"
                 )
-            elif payload.get("schema_version") == "cortex-alpha38-harder-contract-aligned-forge/1.0":
+            elif (
+                payload.get("schema_version") == "cortex-alpha38-harder-contract-aligned-forge/1.0"
+            ):
                 commissioned = payload.get("contract_forge_result") or {}
                 prior_screen = payload.get("prior_screen") or {}
                 metadata_state = (
@@ -414,6 +442,40 @@ def main() -> int:
                     and payload.get("semantic_transfer_established") is False
                     and payload.get("general_improvement_established") is False
                     else "harder_contract_aligned_forge_invalid"
+                )
+            elif (
+                payload.get("schema_version")
+                == "cortex-alpha39-live-harder-contract-aligned-repair-screen/1.0"
+            ):
+                reconstruction = payload.get("canonical_reconstruction") or {}
+                screen = payload.get("screen") or {}
+                authority = payload.get("authority") or {}
+                metadata_state = (
+                    "development_live_harder_contract_aligned_screening_ceiling"
+                    if payload.get("state") == "HARDER_CONTRACT_ALIGNED_BASELINE_RECONSTRUCTED"
+                    and payload.get("planned_calls") == 4
+                    and payload.get("maximum_calls") == 4
+                    and payload.get("calls_executed") == 4
+                    and payload.get("context_treatment") == "task_only_control"
+                    and payload.get("tools") == []
+                    and screen.get("success_count") == 3
+                    and screen.get("state") == "screening_ceiling"
+                    and reconstruction.get("valid") is True
+                    and payload.get("baseline_calibrated") is False
+                    and payload.get("semantic_treatment_projected") is False
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    and payload.get("private_bundle_persisted_in_artifact") is False
+                    and all(
+                        authority.get(field) is False
+                        for field in (
+                            "host_mutate_authorized",
+                            "execution_authorized",
+                            "memory_admission_authorized",
+                            "policy_effect",
+                        )
+                    )
+                    else "live_harder_contract_aligned_repair_screen_invalid"
                 )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"

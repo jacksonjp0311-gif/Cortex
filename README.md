@@ -529,6 +529,12 @@ and four-call ceiling are one reconstructable prerequisite. The resulting
 task-only screen measures the harder frontier; it does not project semantic
 treatment or claim Cortex improvement.
 
+The preserved run scored `3/4`: all four model outputs compiled, three isolated
+repairs passed, and the atomic expiring-reservation candidate failed its frozen
+evaluator. Canonical reconstruction passed. The result is more discriminative
+than alpha.37's `4/4`, but `0.75` remains just above the preregistered `0.70`
+ceiling, so Cortex did not relabel it as calibrated.
+
 ## What you get
 
 | Capability | What it means for you |

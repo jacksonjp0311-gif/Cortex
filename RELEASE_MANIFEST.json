@@ -1,11 +1,11 @@
 {
   "schema_version": "cortex-release-manifest/4.0",
-  "release": "Cortex v10.0.0-alpha.38",
+  "release": "Cortex v10.0.0-alpha.39",
   "release_class": "advanced research prototype",
-  "source_commit": "79c16f15e0a70e2c9092ef50e87f8354a5344ea5",
-  "runtime_parent": "79c16f15e0a70e2c9092ef50e87f8354a5344ea5",
+  "source_commit": "34af9b9d846be5abc7077dcf34ad77dd4ae20e0e",
+  "runtime_parent": "34af9b9d846be5abc7077dcf34ad77dd4ae20e0e",
   "benchmark_result_manifest": "benchmarks/results/MANIFEST.json",
-  "phase_document": "docs/v10/HARDER_CONTRACT_ALIGNED_REPAIR_FORGE.md",
+  "phase_document": "docs/v10/HARDER_CONTRACT_ALIGNED_FRONTIER_BASELINE.md",
   "evidence_boundary": {
     "model_circulation": "verified provider-neutral mechanism with canonical live-empirical development circulations",
     "causal_competence_improvement": "not established",
@@ -95,6 +95,8 @@
     "harder_contract_transition": "the exact alpha.37 result and preregistration receipts, 4/4 ceiling, model identity, and alignment-result hash are reconstructed before move-harder can open; caller labels and unrelated receipts cannot substitute",
     "harder_contract_forge": "four fresh outside-Git defects expose 16 public requirements bound to 15 private assertion groups; all four unchanged baselines failed, all four host reference repairs passed, and zero model calls executed",
     "harder_contract_boundary": "forge readiness establishes evaluator discriminability and structural traceability only; frontier-model calibration, semantic transfer, general improvement, and self-improvement remain unestablished",
+    "harder_contract_live_baseline": "four no-tool task-only OpenAI gpt-5.6-sol calls were bound to the exact alpha.38 outer result, same prior model identity, aligned corpus, host-private commitment, and canonical native trajectories; all four edit intents compiled and three candidates passed",
+    "harder_contract_live_disposition": "the canonically reconstructed 3/4 result is more discriminative than alpha.37 but its 0.75 success rate remains above the preregistered 0.70 ceiling; baseline calibration, semantic transfer, general improvement, and self-improvement remain unestablished",
     "historical_receipt_ci": "PEP 440 alpha package versions are forward-compatible with historical release floors; the previously failing v7.3 Resonant Frames receipt command now exits successfully",
     "heldout_corpus": "answer-free public seal and private commitment mechanism verified; empirical held-out corpus not generated",
     "semantic_distillation": "exact canonical atomic-support verifier operationally gates live empirical transfer and production distribution; general entailment and completeness remain unresolved",
@@ -107,5 +109,5 @@
     "memory_admission_authorized": false,
     "policy_effect": false
   },
-  "supersedes": "Cortex v10.0.0-alpha.37 contract-aligned frontier baseline"
+  "supersedes": "Cortex v10.0.0-alpha.38 harder contract-aligned repair forge"
 }

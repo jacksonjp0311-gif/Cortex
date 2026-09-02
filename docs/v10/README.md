@@ -301,6 +301,11 @@ aligned corpus, private commitment, no-tool grant, and exact four-call budget
 into the existing structured-repair circulation. The screen remains task-only;
 semantic treatment and general improvement remain outside its claim boundary.
 
+The same-model live screen reconstructed at `3/4`. All four edit intents
+compiled; one atomic expiring-reservation repair failed the frozen evaluator.
+The measured `0.75` rate remains above the predeclared `0.70` upper bound, so
+the result is a screening ceiling rather than a calibrated baseline.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
