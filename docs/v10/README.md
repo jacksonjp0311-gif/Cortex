@@ -1,6 +1,6 @@
 # Cortex v10 — Native Agent Runtime
 
-Version: `10.0.0-alpha.38`
+Version: `10.0.0-alpha.39`
 
 Cortex v10 closes one bounded operational loop:
 
@@ -295,6 +295,12 @@ on all four fresh cases. Sixteen public requirements bind 15 private assertion
 groups; four baselines failed, four reference candidates passed, and zero model
 calls executed. The harder live screen still requires a separate freeze.
 
+Alpha.39 adds that freeze without adding a new runtime. A neutral governed
+prerequisite binds the exact alpha.38 transition, same prior model identity,
+aligned corpus, private commitment, no-tool grant, and exact four-call budget
+into the existing structured-repair circulation. The screen remains task-only;
+semantic treatment and general improvement remain outside its claim boundary.
+
 ## Documents
 
 - [Architecture](ARCHITECTURE.md)
@@ -334,6 +340,7 @@ calls executed. The harder live screen still requires a separate freeze.
 - [Contract-aligned external-private repair forge](CONTRACT_ALIGNED_REPAIR_FORGE.md)
 - [Contract-aligned frontier baseline](CONTRACT_ALIGNED_FRONTIER_BASELINE.md)
 - [Harder contract-aligned repair forge](HARDER_CONTRACT_ALIGNED_REPAIR_FORGE.md)
+- [Harder contract-aligned frontier baseline](HARDER_CONTRACT_ALIGNED_FRONTIER_BASELINE.md)
 - [Governed coding workspace](GOVERNED_CODING_WORKSPACE.md)
 - [Verified improvement circulation](VERIFIED_IMPROVEMENT_CIRCULATION.md)
 - [Counterfactual source improvement](COUNTERFACTUAL_SOURCE_IMPROVEMENT.md)

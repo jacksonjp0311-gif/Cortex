@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/jacksonjp0311-gif/Cortex/actions"><img src="https://img.shields.io/badge/CI-tested-22c55e?style=for-the-badge" alt="CI tested" /></a>
-  <img src="https://img.shields.io/badge/version-10.0.0--alpha.38-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.38" />
+  <img src="https://img.shields.io/badge/version-10.0.0--alpha.39-38bdf8?style=for-the-badge" alt="v10.0.0-alpha.39" />
   <img src="https://img.shields.io/badge/attach-one_command-a855f7?style=for-the-badge" alt="One-command attach" />
   <img src="https://img.shields.io/badge/storage-local--first-111827?style=for-the-badge" alt="Local first" />
   <img src="https://img.shields.io/badge/host-sovereign-f8fafc?style=for-the-badge&labelColor=111827" alt="Host sovereign" />
@@ -522,6 +522,12 @@ Commissioning passed: the prior ceiling reconstructed, all 16 public
 requirements have mapped private coverage, all four unchanged baselines fail,
 and all four host reference repairs pass. No model call executed. The harder
 panel is ready for a separately frozen frontier baseline.
+
+Alpha.39 supplies that exact freeze. The same `gpt-5.6-sol` identity, harder
+forge result, outside-Git evaluator commitment, public corpus, no-tool grant,
+and four-call ceiling are one reconstructable prerequisite. The resulting
+task-only screen measures the harder frontier; it does not project semantic
+treatment or claim Cortex improvement.
 
 ## What you get
 

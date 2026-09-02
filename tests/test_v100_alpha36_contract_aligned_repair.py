@@ -24,6 +24,10 @@ from cortex.harder_contract_aligned_forge import (
     freeze_harder_contract_aligned_forge,
     verify_harder_contract_aligned_forge,
 )
+from cortex.harder_contract_aligned_screen import (
+    freeze_harder_contract_aligned_screen,
+    verify_harder_contract_aligned_screen,
+)
 from cortex.native_agent import CapabilityGrant, ToolRegistry
 from cortex.store import Store
 from cortex.structured_repair_screen import (
@@ -84,7 +88,7 @@ def _case() -> dict:
             " \n"
             "     def add(self, amount):\n"
             "+        if amount < 0:\n"
-            "+            raise ValueError(\"negative amount\")\n"
+            '+            raise ValueError("negative amount")\n'
             "         self.value += amount\n"
             "         return self.value\n"
         ),
@@ -92,9 +96,7 @@ def _case() -> dict:
 
 
 def _sha(value: object) -> str:
-    encoded = json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    ).encode()
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -128,9 +130,7 @@ class Alpha36ContractAlignedRepairTests(unittest.TestCase):
         self.assertNotIn('raise ValueError("negative amount")', str(public))
         self.assertIn("R1", public["cases"][0]["executable_case"]["task"])
         with tempfile.TemporaryDirectory() as temp:
-            result = commission_contract_aligned_repair_forge(
-                public, private, Path(temp)
-            )
+            result = commission_contract_aligned_repair_forge(public, private, Path(temp))
         result_audit = verify_contract_aligned_repair_forge_result(result)
         self.assertTrue(result_audit["valid"], result_audit["errors"])
         self.assertEqual(result["state"], "CONTRACT_ALIGNED_REPAIR_FORGE_READY")
@@ -181,16 +181,12 @@ class Alpha36ContractAlignedRepairTests(unittest.TestCase):
         )
         changed_public = copy.deepcopy(public)
         changed_public["cases"][0]["requirements"][0]["text"] = "different semantics"
-        self.assertFalse(
-            verify_contract_aligned_repair_bundle(changed_public, private)["valid"]
-        )
+        self.assertFalse(verify_contract_aligned_repair_bundle(changed_public, private)["valid"])
         changed_private = copy.deepcopy(private)
-        changed_private["cases"][0]["alignment"]["private_assertions"][0][
-            "requirement_ids"
-        ] = ["R1"]
-        self.assertFalse(
-            verify_contract_aligned_repair_bundle(public, changed_private)["valid"]
-        )
+        changed_private["cases"][0]["alignment"]["private_assertions"][0]["requirement_ids"] = [
+            "R1"
+        ]
+        self.assertFalse(verify_contract_aligned_repair_bundle(public, changed_private)["valid"])
 
     def test_structured_screen_preregistration_binds_alignment_proof(self) -> None:
         specs = []
@@ -203,9 +199,7 @@ class Alpha36ContractAlignedRepairTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            result = commission_contract_aligned_repair_forge(
-                public, private, root / "forge"
-            )
+            result = commission_contract_aligned_repair_forge(public, private, root / "forge")
             result["public_corpus"] = public
             result["result_hash"] = _sha(
                 {key: value for key, value in result.items() if key != "result_hash"}
@@ -298,7 +292,7 @@ class Alpha36ContractAlignedRepairTests(unittest.TestCase):
                                 "new": (
                                     "    def add(self, amount):\n"
                                     "        if amount < 0:\n"
-                                    "            raise ValueError(\"negative amount\")\n"
+                                    '            raise ValueError("negative amount")\n'
                                 ),
                             }
                         ],
@@ -368,6 +362,44 @@ class Alpha36ContractAlignedRepairTests(unittest.TestCase):
                 self.assertTrue(audit["valid"], audit["errors"])
                 self.assertEqual(harder["state"], "HARDER_CONTRACT_ALIGNED_FORGE_READY")
                 self.assertEqual(harder["additional_model_calls"], 0)
+                adapter.answers = [intent] * 4
+                harder_prereg = freeze_harder_contract_aligned_screen(
+                    store,
+                    repo,
+                    harder_forge=harder,
+                    private_bundle=harder_private,
+                    adapter=adapter,
+                )
+                self.assertEqual(
+                    harder_prereg["governed_prerequisite"]["harder_forge_result_hash"],
+                    harder["result_hash"],
+                )
+                harder_result = execute_structured_repair_screen(
+                    store,
+                    repo,
+                    preregistration=harder_prereg,
+                    private_bundle=harder_private["executable_private_bundle"],
+                    adapter=adapter,
+                    tools=ToolRegistry(),
+                    grant=CapabilityGrant(
+                        workspace_root=str(host),
+                        allowed_tools=(),
+                        principal_id="alpha39-test",
+                        purpose="harder screen binding",
+                        issued_at=now,
+                        expires_at=now + 120,
+                        max_tool_calls=0,
+                        max_total_tool_seconds=0.0,
+                    ),
+                )
+                harder_screen_audit = verify_harder_contract_aligned_screen(
+                    store,
+                    repo,
+                    result_receipt_hash=harder_result["receipt_hash"],
+                    harder_forge=harder,
+                    private_bundle=harder_private,
+                )
+                self.assertTrue(harder_screen_audit["valid"], harder_screen_audit["errors"])
                 with self.assertRaisesRegex(ValueError, "canonical contract-aligned"):
                     freeze_harder_contract_aligned_forge(
                         store,
