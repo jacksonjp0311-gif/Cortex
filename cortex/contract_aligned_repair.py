@@ -100,6 +100,38 @@ def _canonical(value: Any) -> str:
     )
 
 
+def verify_control_panel(report: Mapping[str, Any], *, corpus_hash: str, commitments: Mapping[str, str]) -> bool:
+    """Verify a complete host-observed control panel, not semantic entailment."""
+    try:
+        if (
+            report.get("result_hash") != _sha({k: v for k, v in report.items() if k != "result_hash"})
+            or report.get("schema_version") != "cortex-evaluator-control-audit/1.0"
+            or report.get("state") != "CONTROL_PANEL_PASS"
+            or report.get("corpus_hash") != corpus_hash
+            or report.get("evaluator_commitments") != commitments
+            or report.get("additional_model_calls") != 0
+            or report.get("evidence_class") != "local_instrument_audit"
+            or report.get("expected_labels") != "host_reviewed_not_semantically_proven"
+            or any(report.get(k) is not False for k in ("universal_implementation_equivalence", "semantic_transfer_established", "general_improvement_established", "host_mutate_authorized", "execution_authorized", "memory_admission_authorized", "policy_effect"))
+        ):
+            return False
+        rows = report["observations"]
+        if {row["case_id"] for row in rows} != set(commitments):
+            return False
+        for case_id in commitments:
+            panel = [row for row in rows if row["case_id"] == case_id]
+            if (
+                len({row["control_id"] for row in panel}) != len(panel)
+                or len({row["patch_hash"] for row in panel if row["expected_pass"] is True}) < 2
+                or not any(row["expected_pass"] is False for row in panel)
+                or any(type(row["expected_pass"]) is not bool or row["observed_pass"] is not row["expected_pass"] or row["expectation_met"] is not True or not row["evaluation_hash"] for row in panel)
+            ):
+                return False
+        return True
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def _sha(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 

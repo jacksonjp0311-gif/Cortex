@@ -18,6 +18,8 @@ from cortex.contract_aligned_repair import (
     commission_contract_aligned_repair_forge,
     verify_contract_aligned_repair_bundle,
     verify_contract_aligned_repair_forge_result,
+    audit_contract_aligned_controls,
+    verify_control_panel,
 )
 from cortex.edit_intent import INTENT_SCHEMA
 from cortex.harder_contract_aligned_forge import (
@@ -33,6 +35,7 @@ from cortex.store import Store
 from cortex.structured_repair_screen import (
     execute_structured_repair_screen,
     freeze_structured_repair_screen,
+    verify_structured_repair_screen,
 )
 from cortex.will import register_will_principal
 
@@ -120,6 +123,61 @@ class ExternalAlignedAdapter:
 
 
 class Alpha36ContractAlignedRepairTests(unittest.TestCase):
+    def test_fresh_audited_screen_binds_controls_and_cannot_calibrate_four_cases(self):
+        specs = [{**_case(), "case_id": f"fresh_{i}"} for i in range(4)]
+        public, private = build_contract_aligned_repair_bundle(secret_seed="fresh-unit-controls", case_specs=specs)
+        controls = {case["case_id"]: [
+            {"control_id": "first", "patch": case["patch"], "expected_pass": True},
+            {"control_id": "alternate", "patch": case["patch"].replace("amount < 0", "0 > amount"), "expected_pass": True},
+            {"control_id": "broken", "patch": case["patch"].replace("amount < 0", "amount < -100"), "expected_pass": False},
+        ] for case in specs}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            audit = audit_contract_aligned_controls(public, private, controls, root / "controls")
+            commitments = {c["case_id"]: c["executable_case"]["private_evaluator_commitment"] for c in public["cases"]}
+            self.assertTrue(verify_control_panel(audit, corpus_hash=public["corpus_hash"], commitments=commitments))
+            for mutation in ("coverage", "identity", "count", "success"):
+                bad = copy.deepcopy(audit)
+                if mutation == "coverage":
+                    bad["observations"] = bad["observations"][:-3]
+                elif mutation == "identity":
+                    bad["corpus_hash"] = "wrong"
+                elif mutation == "count":
+                    bad["observations"] = [r for r in bad["observations"] if r["control_id"] != "alternate"]
+                else:
+                    bad["observations"][0]["observed_pass"] = False
+                bad["result_hash"] = _sha({k: v for k, v in bad.items() if k != "result_hash"})
+                self.assertFalse(verify_control_panel(bad, corpus_hash=public["corpus_hash"], commitments=commitments))
+            forge = commission_contract_aligned_repair_forge(public, private, root / "forge")
+            forge["public_corpus"] = public
+            forge["result_hash"] = _sha({k: v for k, v in forge.items() if k != "result_hash"})
+            host = root / "host"
+            host.mkdir()
+            (host / "README.md").write_text("fixture", encoding="utf-8")
+            home = ensure_home(root / "home")
+            store = Store(home / "cortex.db")
+            try:
+                repo = "FreshAuditTest"
+                bootstrap_repository(home, store, host, repo)
+                intent = json.dumps({"schema_version": INTENT_SCHEMA, "summary": "reject negatives", "edits": [{"path": "module.py", "old": "        self.value += amount", "new": "        if amount < 0:\n            raise ValueError('negative')\n        self.value += amount"}]})
+                adapter = ExternalAlignedAdapter([intent, intent, "malformed", "malformed"])
+                register_will_principal(store, repo, "fixture", "Fixture", secret="unit-only")
+                register_adapter_provenance(store, repo, adapter, boundary_kind="external_api", principal_id="fixture", principal_secret="unit-only", endpoint_descriptor={"transport": "test_external_boundary"}, model_family="fixture", capability_class="fixture")
+                prereg = freeze_structured_repair_screen(store, repo, forge_artifact=forge, private_bundle=private, adapter=adapter, screening_control_audit=audit)
+                self.assertEqual(prereg["schema_version"], "cortex-structured-repair-preregistration/1.2")
+                now = time.time()
+                result = execute_structured_repair_screen(store, repo, preregistration=prereg, private_bundle=private["executable_private_bundle"], adapter=adapter, tools=ToolRegistry(), grant=CapabilityGrant(workspace_root=str(host), allowed_tools=(), principal_id="fixture", purpose="unit", issued_at=now, expires_at=now + 120, max_tool_calls=0, max_total_tool_seconds=0))
+                self.assertEqual(result["screen"]["state"], "screening_candidate")
+                self.assertEqual(result["screen"]["recommended_action"], "collect_confirmation_cases")
+                self.assertFalse(result["baseline_calibrated"])
+                self.assertIn("execution_claim_receipt_hash", result)
+                checked = verify_structured_repair_screen(store, repo, result_receipt_hash=result["receipt_hash"])
+                self.assertTrue(checked["valid"], checked["errors"])
+                forged = store.append_symbiotic_receipt(repo, {**result, "turn_id": 89, "event_id": "false-calibrated", "baseline_calibrated": True})
+                self.assertFalse(verify_structured_repair_screen(store, repo, result_receipt_hash=forged["receipt_hash"])["valid"])
+            finally:
+                store.close()
+
     def test_valid_alignment_commissions_discriminative_zero_call_forge(self) -> None:
         public, private = build_contract_aligned_repair_bundle(
             secret_seed="alpha36-unit-secret", case_specs=[_case()]
