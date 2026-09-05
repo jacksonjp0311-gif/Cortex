@@ -1,0 +1,111 @@
+{
+  "schema_version": "cortex-audited-development-screen/1.0",
+  "state": "AUDITED_SCREEN_RECONSTRUCTED",
+  "source_commit": "a95522803605fd1fdf52816c07da056801c9efeb",
+  "preregistration_receipt_hash": "aae10a89361033845dbe10dc998abbeeb5b0918873ce5a58e0cf4197fddbd046",
+  "result_receipt_hash": "cf4757d19424538a7d2bd8faf7befcba31a23d8741459b47289e06a2ddb899fc",
+  "model_identity": {
+    "adapter_id": "cortex.provider-fabric.http",
+    "adapter_version": "10.0.0-alpha.2",
+    "model_id": "gpt-5.6-sol",
+    "model_version": "provider-declared",
+    "provider_family": "openai"
+  },
+  "evidence_class": "live_empirical",
+  "planned_calls": 4,
+  "calls_executed": 4,
+  "cases": [
+    {
+      "case_id": "fresh_revision_tombstones",
+      "task_success": true,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "b3de78ba02b1cecb553e31f934d521928d039b4279a82dbd036e1b0b123c8ed5",
+      "trajectory_receipt_hash": "e348d0395643d37914279d07056d21d8a838b6c92f1f12cd1af2f11f297a8fa3"
+    },
+    {
+      "case_id": "fresh_transactional_inbox",
+      "task_success": true,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "512a5e4c1121b05e8b55611fd1d187e86211f55d2ed94d46d73658d0cc51fa3a",
+      "trajectory_receipt_hash": "d8cbc34a04a3756e2c5b2f85f26d61d3e5dc8f2d9c0a35f01c5d64d24feca0ee"
+    },
+    {
+      "case_id": "fresh_event_time_window",
+      "task_success": true,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "d26c796ffd6e7ab72441156306f6152320aff468512f059c56a5208f567f7ce3",
+      "trajectory_receipt_hash": "1df5fb818ff09b42fb13b67991858e3facac80c256f59868e4fef8080ddae0e6"
+    },
+    {
+      "case_id": "fresh_dependency_batch",
+      "task_success": true,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "2100d6635b0e112bec70120e1fddffd621dcdcbe1e442a96df7cc9682e9d74d7",
+      "trajectory_receipt_hash": "462ae81a0f428ec4d19bd65b606c6e91bd077c210ce11006f96aeab6cd895bfa"
+    }
+  ],
+  "screen": {
+    "attainable_success_rates": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "case_count": 4,
+    "confirmation_cases": 8,
+    "confirmatory_eligible": false,
+    "development_only": true,
+    "eligible_success_counts": [
+      2
+    ],
+    "recommended_action": "move_harder",
+    "screening_cases": 4,
+    "state": "screening_ceiling",
+    "success_count": 4,
+    "success_rate": 1.0
+  },
+  "canonical_reconstruction": {
+    "valid": true,
+    "errors": [],
+    "screen": {
+      "state": "screening_ceiling",
+      "recommended_action": "move_harder",
+      "case_count": 4,
+      "success_count": 4,
+      "success_rate": 1.0,
+      "screening_cases": 4,
+      "confirmation_cases": 8,
+      "attainable_success_rates": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "eligible_success_counts": [
+        2
+      ],
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "result_receipt_hash": "cf4757d19424538a7d2bd8faf7befcba31a23d8741459b47289e06a2ddb899fc",
+    "preregistration_receipt_hash": "aae10a89361033845dbe10dc998abbeeb5b0918873ce5a58e0cf4197fddbd046",
+    "verification_scope": "receipt_integrity_and_experiment_bindings",
+    "external_execution_replayed": false
+  },
+  "baseline_calibrated": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "provider_reported_usage": {
+    "input_tokens": 3830,
+    "output_tokens": 3707,
+    "total_tokens": 7537
+  },
+  "usage_projection": "Summed canonical response prompt_tokens as input_tokens and completion_tokens as output_tokens; total_tokens is provider-reported. No new inference or receipt modification.",
+  "private_bundle_persisted_in_artifact": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false
+}

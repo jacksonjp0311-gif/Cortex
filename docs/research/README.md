@@ -14,6 +14,12 @@ representation rejected an allowed repair. Corrected relational tests accept
 both permitted strategies and reject six mutants; archived-output reanalysis
 is explicitly separate from new empirical model evidence.
 
+Next executed run: [Fresh audited repair screen — September 5, 2026](FRESH_AUDITED_SCREEN_2026-09-05.md).
+Twenty evaluator controls passed their declared expectations before four new
+model calls. The model repaired all four tasks: screening ceiling, not calibrated
+baseline or Cortex benefit. Mixed initial screens now request fresh confirmation
+instead of overinterpreting the four-case fraction.
+
 ## Read order (agents)
 
 1. **[`EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](EMERGENT_MATH_AND_COMPOSITION_V0.1.md)** — primary map: spectral vs constitutional geometry, epochs, Hamming paths, multi-host product, claim residual  

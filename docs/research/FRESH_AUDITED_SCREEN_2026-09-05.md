@@ -66,3 +66,104 @@ all outcomes and record exact executed calls, usage and canonical verification.
 
 If the instrument fails, hold inference and report the failure. Passing controls
 only covers these examples; it does not establish complete evaluator soundness.
+
+## Executed result
+
+**Four new live calls, four successful repairs, screening ceiling.** No additional
+call or harder run was launched. This is distinct from the earlier same-answer,
+post-hoc evaluator correction. Version remains `10.0.0a39`.
+
+| Case | Intent compilation | Frozen evaluator |
+|---|---|---|
+| Versioned batch map | Pass | Pass |
+| Transactional inbox | Pass | Pass |
+| Event-time window | Pass | Pass |
+| Dependency batch | Pass | Pass |
+
+Before inference, all **20 controls** matched their host-reviewed labels: eight
+permitted implementations passed and twelve mutants failed. All four reference
+repairs measured baseline failure → candidate pass; 16 public requirements
+mapped to 10 private assertion groups. This coverage is finite, not exhaustive.
+
+The runtime selected **OpenAI / gpt-5.6-sol** through the existing Provider Fabric.
+Evidence class: `live_empirical`, without cryptographic provider attestation.
+Serving version/configuration remain provider-declared/defaults, not an exact
+model-weight commitment. Calls used one iteration and zero agent tools each.
+The host evaluator ran candidate tests locally in disposable repositories;
+this is **not an OS security sandbox**.
+
+Canonical reconstruction returned `valid=true`, `errors=[]`. Its scope is
+receipt integrity and experiment bindings; it did not rerun external inference.
+All four model outputs compiled. Provider-reported usage totaled **3,830 input +
+3,707 output = 7,537 tokens**. The report maps `prompt_tokens` and
+`completion_tokens` from the existing response receipts into normalized labels.
+The initial report projection looked only for normalized keys and returned null;
+correcting that public summary required no new calls or canonical receipt edits.
+No verified dollar price is asserted.
+
+### Mathematical interpretation
+
+For observed successes \(s\) in the initial \(n=4\) screen:
+
+\[
+\operatorname{Next}(s)=
+\begin{cases}
+\text{inspect floor}, & s=0,\\
+\text{collect fresh confirmation at this level}, & 0<s<4,\\
+\text{hold ceiling panel out of transfer testing}, & s=4.
+\end{cases}
+\]
+
+The recorded helper recommends `move_harder` for a ceiling; that is advisory,
+not permission to launch calls. Every initial outcome has
+`baseline_calibrated=false`. The 30–70% band applies to the separately planned
+confirmation stage; it cannot turn a mixed four-case screen into calibration.
+
+The observed baseline \(\hat p_A=1\) leaves no observed positive binary headroom
+on these cases. It does **not** establish population success probability 1.
+There was no semantic-treatment arm, so neither \(G_C\) nor lesson-transfer
+benefit was measured. No training, competence promotion or self-improvement
+claim follows from this result.
+
+### What this changes for the next experiment
+
+The evaluator controls worked on the tested alternatives, but adding interacting
+requirements still did not produce a discriminative panel. These are small
+single-file modules built by mutating working implementations; some defects
+remain conspicuous (for example a disabled guard). Complexity of the prose is
+not evidence of task difficulty. The results do not isolate why the model passed.
+
+Do not spend another batch simply adding requirements to these templates.
+First prepare a small, separately reviewed development corpus of realistic
+defects with nontrivial localization, explicit contracts, alternate valid repairs
+and negative controls. Inspect it locally before authorizing fresh screening.
+Keep source lessons and eventual held-out transfer tasks separate. No new corpus
+or further paid run is claimed here.
+
+### Engineering verification
+
+- Circulation-adjacent repair/control regressions: **22 passed in 102.26s**.
+- Sequential calibration regression suite: **7 passed in 0.13s**.
+- Final rerun of the new audited-screen integration test: **1 passed,
+  8 deselected in 23.62s** (a repeat, not another distinct test).
+- Public benchmark-inventory classification tests: **3 passed in 0.09s**.
+- Ruff, targeted compileall and `git diff --check` run; no full repository suite.
+- Four live calls completed; zero automatic retry or follow-on call.
+- No credentials, private tests or reference patches committed. Host keys and
+  private evaluator material remain in the host vault/outside Git.
+
+### Evidence identities
+
+| Surface | Identity |
+|---|---|
+| Frozen runtime source | `a95522803605fd1fdf52816c07da056801c9efeb` |
+| Fresh corpus | `f88ac380c38b37f04b68764b94a3510193f24faed8ead7bfee2bcdcebc71248b` |
+| Control audit | `81764b5deb781d67caf1440fdc423bf2208416e43b0a97ba43e9f0b4997c5389` |
+| Preregistration receipt | `aae10a89361033845dbe10dc998abbeeb5b0918873ce5a58e0cf4197fddbd046` |
+| Result receipt | `cf4757d19424538a7d2bd8faf7befcba31a23d8741459b47289e06a2ddb899fc` |
+
+Public artifacts: [forge and controls](../../benchmarks/results/fresh_audited_forge_2026-09-05.json),
+[frozen protocol](../../benchmarks/results/fresh_audited_screen_prereg_2026-09-05.json),
+[live result](../../benchmarks/results/fresh_audited_screen_result_2026-09-05.json).
+The artifact inventory classifies these separately; inventory metadata is not
+a substitute for reconstruction from the local immutable ledger.

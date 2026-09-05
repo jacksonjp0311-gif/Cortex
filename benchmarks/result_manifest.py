@@ -16,12 +16,60 @@ if str(ROOT) not in sys.path:
 
 from cortex import __version__  # noqa: E402
 from cortex.contract_aligned_repair import verify_contract_aligned_repair_forge_result  # noqa: E402
+from cortex.information_calibration import assess_sequential_level  # noqa: E402
 
 RESULTS = ROOT / "benchmarks" / "results"
 
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def audited_screen_metadata(payload: dict) -> str:
+    """Classify public metadata only; this does not replace ledger verification."""
+    invalid = "audited_development_screen_metadata_invalid"
+    if (
+        payload.get("planned_calls") != 4
+        or not payload.get("source_commit")
+        or not payload.get("preregistration_receipt_hash")
+        or not payload.get("model_identity")
+    ):
+        return invalid
+    if payload.get("state") == "FROZEN_NOT_EXECUTED":
+        return (
+            "zero_call_audited_screen_frozen"
+            if type(payload.get("calls_executed")) is int
+            and payload["calls_executed"] == 0
+            and payload.get("control_audit_hash")
+            else invalid
+        )
+    cases = payload.get("cases") or []
+    if (
+        payload.get("state") != "AUDITED_SCREEN_RECONSTRUCTED"
+        or payload.get("evidence_class") != "live_empirical"
+        or payload.get("calls_executed") != 4
+        or len(cases) != 4
+        or len({case.get("case_id") for case in cases}) != 4
+        or any(type(case.get("task_success")) is not bool for case in cases)
+        or any(payload.get(field) is not False for field in (
+            "baseline_calibrated", "semantic_transfer_established",
+            "general_improvement_established", "private_bundle_persisted_in_artifact",
+            "host_mutate_authorized", "execution_authorized",
+            "memory_admission_authorized", "policy_effect",
+        ))
+    ):
+        return invalid
+    expected = assess_sequential_level([case["task_success"] for case in cases])
+    audit = payload.get("canonical_reconstruction") or {}
+    if (
+        payload.get("screen") != expected
+        or audit.get("valid") is not True
+        or audit.get("screen") != expected
+        or audit.get("result_receipt_hash") != payload.get("result_receipt_hash")
+        or audit.get("preregistration_receipt_hash") != payload["preregistration_receipt_hash"]
+    ):
+        return invalid
+    return "development_live_audited_" + expected["state"]
 
 
 def main() -> int:
@@ -476,6 +524,8 @@ def main() -> int:
                     )
                     else "live_harder_contract_aligned_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-audited-development-screen/1.0":
+                metadata_state = audited_screen_metadata(payload)
             elif payload.get("schema_version") == "cortex-repair-instrument-revision/1.0":
                 metadata_state = (
                     "local_instrument_audit_archived_reanalysis"

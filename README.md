@@ -108,6 +108,31 @@ four passes. **Zero new model calls; no fresh 4/4 performance claim.** This fixe
 measurement, not training, and does not establish Cortex advantage. Read the
 [instrument audit and next experiment](docs/research/REPAIR_INSTRUMENT_AUDIT_2026-09-05.md).
 
+### Fresh audited screen: four calls, four passes, no benefit claim
+
+The next **new live run** used four fresh repair tasks and runtime-selected
+OpenAI / gpt-5.6-sol. Before inference, eight allowed repairs passed and twelve
+broken controls failed. All four model repairs then passed, and Cortex verified
+their receipt chains. Usage: **7,537 provider-reported tokens**; no extra calls.
+
+| Initial four-case outcome | New prospective rule |
+|---|---|
+| 0 passes | Inspect the floor |
+| 1–3 passes | Collect fresh confirmation at the same difficulty |
+| 4 passes — observed | Record screening ceiling; stop this run |
+
+\[
+\text{Passing evaluator controls}\ne\text{task discriminability},\qquad
+n=4\ \not\Rightarrow\ \text{calibrated baseline}.
+\]
+
+This rule is now enforced by the runner, bound to the frozen evaluator audit,
+and protected against duplicate execution. Historical results retain their
+original interpretation. The model solved these tasks without a Cortex lesson;
+there was **no treatment arm and no measured Cortex improvement**. The next
+priority is realistic defects requiring localization, not more elaborate toy
+requirements. [Protocol, results and limitations](docs/research/FRESH_AUDITED_SCREEN_2026-09-05.md).
+
 ### Kernel foundation
 
 Cortex now treats memory as controlled reconstruction of epistemic state, not

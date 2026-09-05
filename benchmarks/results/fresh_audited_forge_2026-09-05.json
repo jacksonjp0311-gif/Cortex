@@ -1,0 +1,391 @@
+{
+  "schema_version": "cortex-alpha36-contract-aligned-repair-forge/1.0",
+  "state": "CONTRACT_ALIGNED_REPAIR_FORGE_READY",
+  "corpus_hash": "f88ac380c38b37f04b68764b94a3510193f24faed8ead7bfee2bcdcebc71248b",
+  "executable_corpus_hash": "00e94de3cb339d2db3622a1316325348a463f9a41a1638195eb828a8819090ac",
+  "case_count": 4,
+  "requirement_count": 16,
+  "assertion_count": 10,
+  "all_private_assertions_publicly_mapped": true,
+  "all_public_requirements_covered": true,
+  "reference_repairs_measured": 4,
+  "executable_result_hash": "b61a2cdbc5e5aaad203a5220f2acd0e64b8b0bef1eb55882db44c004738ddf37",
+  "additional_model_calls": 0,
+  "private_assertions_in_model_context": false,
+  "private_reference_patches_in_model_context": false,
+  "private_bundle_persisted_in_artifact": false,
+  "structural_contract_alignment_established": true,
+  "semantic_entailment_established": false,
+  "baseline_calibration_established": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "next_action": "freeze_contract_aligned_baseline_screen",
+  "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+  "result_hash": "313441ae4e3660fba39629800f24a8d053ce986d2a38d2252b8c743b256d0b88",
+  "public_corpus": {
+    "schema_version": "cortex-contract-aligned-repair-corpus/1.0",
+    "development_only": true,
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "fresh_revision_tombstones",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "Inputs are lists of (string key, integer expected revision, operation, JSON-like value). Operations are put/delete. Duplicate keys or unknown operations raise ValueError before any state change."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "read(key) returns a dict with version, exists and value. Never-seen keys have version 0, exists False and value None. Deletion retains its revision but marks the key absent. All stored and returned values are independent deep snapshots."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "apply(rows) returns False and changes no state if any expected revision differs from that key's current revision, including tombstones. Otherwise it atomically applies the whole batch and returns True."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "Every successful put/delete assigns a revision strictly greater than every prior revision of that key. Revisions need not be consecutive or equal between different keys. Delete on an absent key still advances its revision."
+          }
+        ],
+        "requirement_commitment": "da88a887cefe9b76314794b0c95a36d9845a2470266ca9d714e9325969f8bd9e",
+        "assertion_count": 3,
+        "alignment_commitment": "9451a4e2b9549f435345f77333f1b874851ec85525b7567837e5ef7d5e7586a3",
+        "executable_case": {
+          "case_id": "fresh_revision_tombstones",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Inputs are lists of (string key, integer expected revision, operation, JSON-like value). Operations are put/delete. Duplicate keys or unknown operations raise ValueError before any state change.\n[R2] read(key) returns a dict with version, exists and value. Never-seen keys have version 0, exists False and value None. Deletion retains its revision but marks the key absent. All stored and returned values are independent deep snapshots.\n[R3] apply(rows) returns False and changes no state if any expected revision differs from that key's current revision, including tombstones. Otherwise it atomically applies the whole batch and returns True.\n[R4] Every successful put/delete assigns a revision strictly greater than every prior revision of that key. Revisions need not be consecutive or equal between different keys. Delete on an absent key still advances its revision.",
+          "files": {
+            "module.py": "from copy import deepcopy\n\nclass RevisionMap:\n    def __init__(self):\n        self.data = {}\n        self.versions = {}\n        self.counter = 0\n\n    def read(self, key):\n        return {'version': self.versions.get(key, 0), 'exists': key in self.data, 'value': deepcopy(self.data.get(key))}\n\n    def apply(self, rows):\n        keys = [row[0] for row in rows]\n        if len(set(keys)) != len(keys) or any(row[2] not in ('put', 'delete') for row in rows):\n            raise ValueError('invalid batch')\n        if False:\n            return False\n        for key, expected, op, value in rows:\n            self.counter += 1\n            self.versions[key] = self.counter\n            if op == 'put':\n                self.data[key] = value\n            else:\n                self.data.pop(key, None)\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "c7659c324161dd79f83360d9d38764651b9e3dd32f33f4e198ce1091ecb4ddd3"
+        }
+      },
+      {
+        "case_id": "fresh_transactional_inbox",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "enqueue accepts a list of (string message ID, JSON-like payload) pairs. IDs are retained forever, including after delivery. A repeated ID with equal payload is a no-op; a differing payload raises ValueError. If any pair conflicts, the entire batch changes no state."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "New IDs enter FIFO order at their first occurrence. Equal duplicates within a batch enqueue only once. take(n) returns up to n (ID, payload) tuples in FIFO order and removes those pending deliveries, but not their deduplication records."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "Payloads are deep snapshots on enqueue and on take: later mutations of inputs or delivered values must not affect deduplication or future observations."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "take requires a nonnegative int, excluding bool. Invalid counts raise ValueError without state change. take(0) returns an empty list without consuming deliveries."
+          }
+        ],
+        "requirement_commitment": "15acd91a458c2df79e6c0806397480411289ef85f39b917a3e76016259b9fa38",
+        "assertion_count": 2,
+        "alignment_commitment": "17f54aa4898b2a2ba53dd20b4097dca6b56ed217a7ca4f417f7e0afb7f4deb67",
+        "executable_case": {
+          "case_id": "fresh_transactional_inbox",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] enqueue accepts a list of (string message ID, JSON-like payload) pairs. IDs are retained forever, including after delivery. A repeated ID with equal payload is a no-op; a differing payload raises ValueError. If any pair conflicts, the entire batch changes no state.\n[R2] New IDs enter FIFO order at their first occurrence. Equal duplicates within a batch enqueue only once. take(n) returns up to n (ID, payload) tuples in FIFO order and removes those pending deliveries, but not their deduplication records.\n[R3] Payloads are deep snapshots on enqueue and on take: later mutations of inputs or delivered values must not affect deduplication or future observations.\n[R4] take requires a nonnegative int, excluding bool. Invalid counts raise ValueError without state change. take(0) returns an empty list without consuming deliveries.",
+          "files": {
+            "module.py": "from copy import deepcopy\n\nclass Inbox:\n    def __init__(self):\n        self.seen = {}\n        self.pending = []\n\n    def enqueue(self, rows):\n        seen = self.seen\n        pending = self.pending\n        for key, value in rows:\n            if key in seen:\n                if seen[key] != value:\n                    raise ValueError('conflicting duplicate')\n            else:\n                seen[key] = value\n                pending.append(key)\n        self.seen, self.pending = seen, pending\n\n    def take(self, n):\n        if type(n) is not int or n < 0:\n            raise ValueError('invalid count')\n        keys = self.pending[:n]\n        self.pending = self.pending[n:]\n        return [(key, deepcopy(self.seen[key])) for key in keys]\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "b642b539985b0698bdaa19f5a41daaccddcd58e82f771aa3787a8e307c223c0a"
+        }
+      },
+      {
+        "case_id": "fresh_event_time_window",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "Construct with positive integer width. record(now, rows) takes a list of (string ID, integer event time, integer signed amount) tuples. now must be int excluding bool and must not decrease. Event times/amounts must be ints excluding bool, and future times are invalid. Invalid input raises ValueError with no state change, including watermark."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "The retained event interval is now-width < event_time <= now. Each successful record prunes prior events outside that interval, ignores incoming expired events, and advances the watermark even if rows is empty. total() and record's return value equal the retained signed-amount sum."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "Within the retained interval, identical repeated (ID,time,amount) is a no-op. A retained ID with different time or amount raises ValueError atomically; no partial additions, pruning or watermark advance may survive. This includes duplicates within the input batch."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "An ID whose old event has expired may be reused. Conflict checking is against retained events after prospective pruning, so expired incoming records do not conflict."
+          }
+        ],
+        "requirement_commitment": "03de04bc65911ed6f34a06ed8ea5a1f5fa3b0983b3cafdb6a923dabd2646129a",
+        "assertion_count": 3,
+        "alignment_commitment": "e89462ee060b70c8c56e93c1edbced2535e75ff10dc52300fb7ce04bcba5ad63",
+        "executable_case": {
+          "case_id": "fresh_event_time_window",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Construct with positive integer width. record(now, rows) takes a list of (string ID, integer event time, integer signed amount) tuples. now must be int excluding bool and must not decrease. Event times/amounts must be ints excluding bool, and future times are invalid. Invalid input raises ValueError with no state change, including watermark.\n[R2] The retained event interval is now-width < event_time <= now. Each successful record prunes prior events outside that interval, ignores incoming expired events, and advances the watermark even if rows is empty. total() and record's return value equal the retained signed-amount sum.\n[R3] Within the retained interval, identical repeated (ID,time,amount) is a no-op. A retained ID with different time or amount raises ValueError atomically; no partial additions, pruning or watermark advance may survive. This includes duplicates within the input batch.\n[R4] An ID whose old event has expired may be reused. Conflict checking is against retained events after prospective pruning, so expired incoming records do not conflict.",
+          "files": {
+            "module.py": "class EventWindow:\n    def __init__(self, width):\n        self.width = width\n        self.watermark = None\n        self.events = {}\n\n    def total(self):\n        return sum(amount for stamp, amount in self.events.values())\n\n    def record(self, now, rows):\n        if type(now) is not int or (self.watermark is not None and now < self.watermark):\n            raise ValueError('invalid watermark')\n        if any(type(t) is not int or t > now or type(amount) is not int for key, t, amount in rows):\n            raise ValueError('invalid event')\n        events = {key: value for key, value in self.events.items() if value[0] >= now - self.width}\n        for key, stamp, amount in rows:\n            if stamp <= now - self.width:\n                continue\n            if False:\n                raise ValueError('conflicting event')\n            events[key] = (stamp, amount)\n        self.events, self.watermark = events, now\n        return self.total()\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "c9de9ad080022e55826c599aa8fab48c735eba2e6ac5723f2f06b9f8752a2992"
+        }
+      },
+      {
+        "case_id": "fresh_dependency_batch",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "plan takes a list of (string task name, list of dependency names). Batch names must be unique and not previously registered. Every dependency must exist either in the same batch or previously. Any duplicate name, unknown dependency or cycle (including self-cycle) raises ValueError and changes no state."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "ready() and successful plan() return the lexicographically sorted names of unfinished tasks whose dependencies are all finished. Registration order within a batch does not affect dependency resolution."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "finish(name) returns True only for a currently ready task and then marks it finished. Unknown, blocked or already finished tasks return False without state change. Finished tasks can be dependencies of subsequently planned tasks."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "The dependency relation is a snapshot: changing an input dependency list after plan succeeds must not change scheduling. No particular graph representation or cycle-detection algorithm is required."
+          }
+        ],
+        "requirement_commitment": "107eb7cd914562c1320c2002a5a48791763a14e71319ce64d1943f84a360a7e0",
+        "assertion_count": 2,
+        "alignment_commitment": "944dad51dd7ba1cdde96e01e628e8104b64c68291afac40d11161377bb83c76d",
+        "executable_case": {
+          "case_id": "fresh_dependency_batch",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] plan takes a list of (string task name, list of dependency names). Batch names must be unique and not previously registered. Every dependency must exist either in the same batch or previously. Any duplicate name, unknown dependency or cycle (including self-cycle) raises ValueError and changes no state.\n[R2] ready() and successful plan() return the lexicographically sorted names of unfinished tasks whose dependencies are all finished. Registration order within a batch does not affect dependency resolution.\n[R3] finish(name) returns True only for a currently ready task and then marks it finished. Unknown, blocked or already finished tasks return False without state change. Finished tasks can be dependencies of subsequently planned tasks.\n[R4] The dependency relation is a snapshot: changing an input dependency list after plan succeeds must not change scheduling. No particular graph representation or cycle-detection algorithm is required.",
+          "files": {
+            "module.py": "class Scheduler:\n    def __init__(self):\n        self.nodes = {}\n        self.done = set()\n\n    def ready(self):\n        return sorted(name for name, deps in self.nodes.items() if name not in self.done and all(dep in self.done for dep in deps))\n\n    def plan(self, rows):\n        names = [name for name, deps in rows]\n        if len(set(names)) != len(names) or any(name in self.nodes for name in names):\n            raise ValueError('duplicate task')\n        nodes = dict(self.nodes)\n        nodes.update((name, deps) for name, deps in rows)\n        if any(dep not in nodes for deps in nodes.values() for dep in deps):\n            raise ValueError('unknown dependency')\n        remaining = set(nodes)\n        while remaining:\n            roots = {name for name in remaining if not any(dep in remaining for dep in nodes[name])}\n            if not roots:\n                break\n            remaining -= roots\n        self.nodes = nodes\n        return self.ready()\n\n    def finish(self, name):\n        if name not in self.ready():\n            return False\n        self.done.add(name)\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "d0bba2da3d5d1171b4020b062b383d1b626d3f1a659069c957ae9e2469d9a453"
+        }
+      }
+    ],
+    "executable_corpus_hash": "00e94de3cb339d2db3622a1316325348a463f9a41a1638195eb828a8819090ac",
+    "private_assertions_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+    "corpus_hash": "f88ac380c38b37f04b68764b94a3510193f24faed8ead7bfee2bcdcebc71248b"
+  },
+  "control_audit": {
+    "schema_version": "cortex-evaluator-control-audit/1.0",
+    "state": "CONTROL_PANEL_PASS",
+    "corpus_hash": "f88ac380c38b37f04b68764b94a3510193f24faed8ead7bfee2bcdcebc71248b",
+    "evaluator_commitments": {
+      "fresh_revision_tombstones": "c7659c324161dd79f83360d9d38764651b9e3dd32f33f4e198ce1091ecb4ddd3",
+      "fresh_transactional_inbox": "b642b539985b0698bdaa19f5a41daaccddcd58e82f771aa3787a8e307c223c0a",
+      "fresh_event_time_window": "c9de9ad080022e55826c599aa8fab48c735eba2e6ac5723f2f06b9f8752a2992",
+      "fresh_dependency_batch": "d0bba2da3d5d1171b4020b062b383d1b626d3f1a659069c957ae9e2469d9a453"
+    },
+    "observations": [
+      {
+        "case_id": "fresh_revision_tombstones",
+        "control_id": "reference",
+        "patch_hash": "84099adc8faabe3df4f2bbc7299b1310ea2e8b143bdc71f9f5f6a05cb253de68",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "d41c6c446b068c58b79192c6d6ef2b339d4e5dfb9df210b9ebb73156a475cf93"
+      },
+      {
+        "case_id": "fresh_revision_tombstones",
+        "control_id": "alternate",
+        "patch_hash": "e1881082607b617df5fb0adde7ec7fa8505b431047326a8674fa2c345cdfc8e6",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "c4dc9308092d900870430ddfef13e02d2ba359697190cd7fae1adab20aa6efa0"
+      },
+      {
+        "case_id": "fresh_revision_tombstones",
+        "control_id": "stale_compare_ignored",
+        "patch_hash": "de49be83b5570e4353011f94b0f369e8d25c359f4dcd47868ce8bac0ef9c3c1f",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "27a9f55af1327aca1e052729683ddabef61566948167d4da7a6d636b3b31eb97"
+      },
+      {
+        "case_id": "fresh_revision_tombstones",
+        "control_id": "input_alias_retained",
+        "patch_hash": "5064ebaed53ae9460112789769e6d40db43996aab325efb16c57772c601d7da9",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "5674d5f302bff219096da815ed4bce2b404e7d63a9fd2de16ada3acd4264b118"
+      },
+      {
+        "case_id": "fresh_revision_tombstones",
+        "control_id": "tombstone_forgotten",
+        "patch_hash": "bf469c3d1239c78e155430bde20e54cc47631f3322a119832a58d9317139bb09",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "4198ce69d8bb1d2cad3d6de4dfeba65c0489c02162049ac7675c1f8a4ec6d709"
+      },
+      {
+        "case_id": "fresh_transactional_inbox",
+        "control_id": "reference",
+        "patch_hash": "264d97f966861ec260c3a04dd164b968a9c2fbcdf6f4f5e0ea9dd838372e4892",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "3af44ea14f46031a4c131d2b35d2676013ecd568237b2f8067606998ce590438"
+      },
+      {
+        "case_id": "fresh_transactional_inbox",
+        "control_id": "alternate",
+        "patch_hash": "b0fc19de45cd3db7616501f833b0ca7b96a47e80f7faf701ad40b71468dd1948",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "7686942efecd24d1866eb66852c2eae0dbc4253ce284ea8a123d6d8b268f5500"
+      },
+      {
+        "case_id": "fresh_transactional_inbox",
+        "control_id": "partial_commit",
+        "patch_hash": "f6c107f32292d51ff46df091cf261c089bc8c9422ea25aa01b3d34802b115155",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "0143e6e7995e56c5414cc11979c853190032148ac6e507d954b035cb96f4c435"
+      },
+      {
+        "case_id": "fresh_transactional_inbox",
+        "control_id": "payload_alias",
+        "patch_hash": "7726b15217171ba91a8687e931d5b9e40716d4ccb994b873f9239f8bf5174383",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "357560b6b62fb5eed275d72b2a0799f3696f7ff62418d912c7974342bdeecfb4"
+      },
+      {
+        "case_id": "fresh_transactional_inbox",
+        "control_id": "conflicting_duplicate_ignored",
+        "patch_hash": "e89c8f4fe8d885d8996d1963dcf094f6caffe134ca7ac29d0069fe7652907d15",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "33c39eac09ccd902458bd23361524f13762cb75b5ef99d4739a08f3afe105638"
+      },
+      {
+        "case_id": "fresh_event_time_window",
+        "control_id": "reference",
+        "patch_hash": "e7a839895788f75c9ca5c89608b6983b95a69a87a93579329efc05142496bb9f",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "3e0b034a2ad39fbf6dc17b67ab44f7a20caf25427aebd9b20d8547902127d4f0"
+      },
+      {
+        "case_id": "fresh_event_time_window",
+        "control_id": "alternate",
+        "patch_hash": "5cc3a8a5f33b7d119bbadb16de9b2e92fd1ba64d4f783b5655b430449103f6c0",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "6ceb97316170a5e225cc19f2f1d9f67e3a46a6b328123f5168ca9a856b53faff"
+      },
+      {
+        "case_id": "fresh_event_time_window",
+        "control_id": "cutoff_retained",
+        "patch_hash": "330f2b551b60ee5fc67015e7ee7477e2afe1c4488816a9580194e43024195373",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "61d1980a0efc76b34c7926a638c3b2fc2b55044bc240265b079c6813dde8a8dd"
+      },
+      {
+        "case_id": "fresh_event_time_window",
+        "control_id": "conflict_ignored",
+        "patch_hash": "085e83dfb05be55254e97485d9633882414951dd1d3293d5bf6b5435a52db50b",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "2eb067c5fd103ae91da65e84c2bcaaf06365e578cfdb612e3af6febf82bb4113"
+      },
+      {
+        "case_id": "fresh_event_time_window",
+        "control_id": "backward_watermark",
+        "patch_hash": "345e049089fb2d2aea5ce66920a8c123c2d495ea159465e9df62f70d156e6087",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "aafaa7212c71be705f21f5f4d126fe62f0358f5492285bae64a79658c504eeb5"
+      },
+      {
+        "case_id": "fresh_dependency_batch",
+        "control_id": "reference",
+        "patch_hash": "c396dc5f54fe226de4392019e39aa6665a5a4a640a2762cb208e057579736536",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "d2b7cb544ed5b9cdaf2c69173021117934762ae2d4c1a16da343fb141f1acd09"
+      },
+      {
+        "case_id": "fresh_dependency_batch",
+        "control_id": "alternate",
+        "patch_hash": "4c49462b5d9624b5081d07f6e759bfcdbed415bc81ee7141dcfa3fed11aa31c8",
+        "expected_pass": true,
+        "observed_pass": true,
+        "expectation_met": true,
+        "evaluation_hash": "7986f9de185994492d7e932b369ae778103bad58fb7515ac0a00bd32c2be4e84"
+      },
+      {
+        "case_id": "fresh_dependency_batch",
+        "control_id": "dependency_alias",
+        "patch_hash": "af5b4e37bf5cf27ad13cbba5dfa088beffbee4e501f680377a92ba3c567d3098",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "92559946da93e883f5d54db8f4a583a3d6b3f824bf39358152fa803b16f40eef"
+      },
+      {
+        "case_id": "fresh_dependency_batch",
+        "control_id": "cycle_accepted",
+        "patch_hash": "2fed28fbdde29224b8ed70837f7e20abeadc6ecfec549080b931d022db70e1c0",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "a7b490fe6c1f07497c10bf7a51fc61504d510f5c25bff9d2e20472972798ab18"
+      },
+      {
+        "case_id": "fresh_dependency_batch",
+        "control_id": "readiness_ignores_dependencies",
+        "patch_hash": "9ea9797b08b3afecd6fcfe4a8bae4d62a0db987d0e4e0d4ef0bfb974bc3769bf",
+        "expected_pass": false,
+        "observed_pass": false,
+        "expectation_met": true,
+        "evaluation_hash": "f3314889fd70411106875ace8c1f71395199ad973397136694debd56cdd21f11"
+      }
+    ],
+    "additional_model_calls": 0,
+    "evidence_class": "local_instrument_audit",
+    "expected_labels": "host_reviewed_not_semantically_proven",
+    "universal_implementation_equivalence": false,
+    "semantic_transfer_established": false,
+    "general_improvement_established": false,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "result_hash": "81764b5deb781d67caf1440fdc423bf2208416e43b0a97ba43e9f0b4997c5389"
+  },
+  "source_commit": "a95522803605fd1fdf52816c07da056801c9efeb",
+  "private_driver_sha256": "632e208947d74f8b1f9f97d7ecdec56dd4ce7b1f85d66a8282bc601c97d1e489"
+}

@@ -1,0 +1,22 @@
+{
+  "state": "FROZEN_NOT_EXECUTED",
+  "schema_version": "cortex-audited-development-screen/1.0",
+  "source_commit": "a95522803605fd1fdf52816c07da056801c9efeb",
+  "preregistration_receipt_hash": "aae10a89361033845dbe10dc998abbeeb5b0918873ce5a58e0cf4197fddbd046",
+  "model_identity": {
+    "adapter_id": "cortex.provider-fabric.http",
+    "adapter_version": "10.0.0-alpha.2",
+    "model_id": "gpt-5.6-sol",
+    "model_version": "provider-declared",
+    "provider_family": "openai"
+  },
+  "policy": {
+    "confirmation_cases": 8,
+    "maximum_success_rate": 0.7,
+    "minimum_success_rate": 0.3,
+    "screening_cases": 4
+  },
+  "planned_calls": 4,
+  "calls_executed": 0,
+  "control_audit_hash": "81764b5deb781d67caf1440fdc423bf2208416e43b0a97ba43e9f0b4997c5389"
+}
