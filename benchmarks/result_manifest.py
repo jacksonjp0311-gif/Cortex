@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from cortex import __version__  # noqa: E402
+from cortex.contract_aligned_repair import verify_contract_aligned_repair_forge_result  # noqa: E402
 
 RESULTS = ROOT / "benchmarks" / "results"
 
@@ -379,12 +380,10 @@ def main() -> int:
                 metadata_state = (
                     "zero_call_contract_aligned_repair_forge_ready"
                     if payload.get("state") == "CONTRACT_ALIGNED_REPAIR_FORGE_READY"
-                    and payload.get("case_count") == 4
-                    and payload.get("requirement_count") == 11
-                    and payload.get("assertion_count") == 10
+                    and verify_contract_aligned_repair_forge_result(payload)["valid"] is True
                     and payload.get("all_private_assertions_publicly_mapped") is True
                     and payload.get("all_public_requirements_covered") is True
-                    and payload.get("reference_repairs_measured") == 4
+                    and payload.get("reference_repairs_measured") == payload.get("case_count")
                     and payload.get("additional_model_calls") == 0
                     and payload.get("private_bundle_persisted_in_artifact") is False
                     and payload.get("structural_contract_alignment_established") is True
@@ -477,9 +476,19 @@ def main() -> int:
                     )
                     else "live_harder_contract_aligned_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-repair-instrument-revision/1.0":
+                metadata_state = (
+                    "local_instrument_audit_archived_reanalysis"
+                    if payload.get("evidence_class") == "local_instrument_audit"
+                    and payload.get("new_model_calls") == 0
+                    and payload.get("posthoc_instrument_audit") is True
+                    and payload.get("semantic_transfer_established") is False
+                    and payload.get("general_improvement_established") is False
+                    else "instrument_revision_metadata_invalid"
+                )
             elif path.parent.name == "v980_rerun":
                 metadata_state = "fresh_controlled_rerun_partial_metadata"
-        except (json.JSONDecodeError, OSError):
+        except (OSError, TypeError, ValueError):
             metadata_state = "unreadable"
         files.append(
             {

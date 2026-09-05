@@ -8,6 +8,12 @@ It connects the historical mathematics below to the v10 runtime, reproduces
 contract violations, and distinguishes corrected invariants from empirical
 claims that remain untested.
 
+Follow-up: [Repair instrument audit — September 5, 2026](REPAIR_INSTRUMENT_AUDIT_2026-09-05.md).
+The planned live repeat was held before spending calls: an undeclared token
+representation rejected an allowed repair. Corrected relational tests accept
+both permitted strategies and reject six mutants; archived-output reanalysis
+is explicitly separate from new empirical model evidence.
+
 ## Read order (agents)
 
 1. **[`EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](EMERGENT_MATH_AND_COMPOSITION_V0.1.md)** — primary map: spectral vs constitutional geometry, epochs, Hamming paths, multi-host product, claim residual  

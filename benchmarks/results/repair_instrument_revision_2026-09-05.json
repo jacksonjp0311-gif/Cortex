@@ -1,0 +1,269 @@
+{
+  "archived_response_replays": [
+    {
+      "case_id": "idempotent_transfer_ledger",
+      "corrected_evaluator_pass": true,
+      "new_evaluation_hash": "ccb2931993b036f32a014a3f641d734d785807467b8d16612d5806701ef7f3ac",
+      "new_model_invocation": false,
+      "original_case_receipt_hash": "66d8da97d6f94295d33aa799da73e27ec204876a2469ca20b2f82ca4d8e499a5",
+      "original_success": true,
+      "original_trajectory_receipt_hash": "79c6f5322e9da19e0c161c92b8c6fa6e97fb873659307b66c2feec918966397b"
+    },
+    {
+      "case_id": "revision_aware_negative_cache",
+      "corrected_evaluator_pass": true,
+      "new_evaluation_hash": "b64359842492b050de82ca4b0e85fb7653074b797c4e6e9d463cf84a0bc56bcc",
+      "new_model_invocation": false,
+      "original_case_receipt_hash": "57e3e004b1ad668fde81329b8a13f1ba2a6ab529edd00c3324a087141ba56c81",
+      "original_success": true,
+      "original_trajectory_receipt_hash": "43e03c6825a65565233a0fc265c52e1404093189dac9ba5150924fc4f3c8f2be"
+    },
+    {
+      "case_id": "owned_per_key_snapshot_map",
+      "corrected_evaluator_pass": true,
+      "new_evaluation_hash": "05d5826d649f46153076024f7f2f655d94b923e67cb988e8cfae1aba5ec94984",
+      "new_model_invocation": false,
+      "original_case_receipt_hash": "01bab64a202c7f4a633e97da95b7bd8feb99c22e4aab2ebff9005b6ea21e2254",
+      "original_success": true,
+      "original_trajectory_receipt_hash": "50f82bab52eb9de7cd91dedce69a7eec320d2f8f29ed97ca3a633ada22a62bcf"
+    },
+    {
+      "case_id": "atomic_expiring_reservations",
+      "corrected_evaluator_pass": true,
+      "new_evaluation_hash": "548b35666efd0925f6971c74d5092659c21882d6617c89eed711d150b2fed9c3",
+      "new_model_invocation": false,
+      "original_case_receipt_hash": "43dd0ab74d3b246be95c7adbf19b7415f608c960f7b8b7e46befd3d014a18df5",
+      "original_success": false,
+      "original_trajectory_receipt_hash": "7c84483f1627f36f31f27083abb92306c5b5155225e856571e6bad5828d6c9bf"
+    }
+  ],
+  "baseline_calibration_established": false,
+  "body_epoch_id": "a47d3a4147dd3b0d3d0d7fab457f789363ba5b494d7e14968d6dfc009d77eccc",
+  "challenge_receipt_hash": "6321be435050daf8f537d9a17efb729d2eee6252fe7ec0af334ac8f794606c95",
+  "corrected_control_panel": {
+    "additional_model_calls": 0,
+    "corpus_hash": "fc18c0387bf653adff28a37060f6f1da65cc895fcdb7b6b50c66b02d1f288a57",
+    "evaluator_commitments": {
+      "atomic_expiring_reservations": "3f4c0d2a7d76fae9851fa3151ecd0a34b87d1b5fce8543e44e98853b318a4fe3"
+    },
+    "evidence_class": "local_instrument_audit",
+    "execution_authorized": false,
+    "expected_labels": "host_reviewed_not_semantically_proven",
+    "general_improvement_established": false,
+    "host_mutate_authorized": false,
+    "memory_admission_authorized": false,
+    "observations": [
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "host_per_key_reference",
+        "evaluation_hash": "59af1facf0150371194d691d3434318ad3ca258f1a51737333b5184cbbe61c09",
+        "expectation_met": true,
+        "expected_pass": true,
+        "observed_pass": true,
+        "patch_hash": "af223e322f0900eae83e0eae99238f51d73a3c8bcf928258c83a1d54c38c3d4a"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "archived_global_counter_repair",
+        "evaluation_hash": "d4f4163fc1c95d7adbd8471a18034b649eb86e428608b9ef9bcabc4d7d5e89a9",
+        "expectation_met": true,
+        "expected_pass": true,
+        "observed_pass": true,
+        "patch_hash": "b292d4f218d36fb9ec6849ae06f17be643fd8fd9da849b46004b9207a41a02d3"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "invalid_ttl_allowed",
+        "evaluation_hash": "8cde5f58a4f6d5a11237412dca11c94a941ddfe480e1e151600a4b553fdb9ad3",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "a2661b21c5e0de0038f5e0516fd1eb3460b60a9dcd2d77f46fb0f5377e09a2ef"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "conflict_ignored",
+        "evaluation_hash": "1dc1c47f33437d39110a997ece6827041e790f399db380272284e6ae9f83c75f",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "729cf67b95dc4d85bbc5a73b759b2af424b2cdd0c8387e6dbdc05e18834af698"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "same_owner_renewed",
+        "evaluation_hash": "8c0b8e313ffe1a08cbd2c0267fc62f44c2fc755cf61fe7244b77c2d63d6560d0",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "bcf201370a2a51a4dfae2346ecfa3018dc3014fdb1b3a61775241b5350f6d065"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "tokens_reused",
+        "evaluation_hash": "8d7692853f538787aafbf9041891f65b9a0ecf9e49ee6d076b1d6f285cb9c39d",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "a2b6ec0dd2c2a72abd6873f8d7ce1ad0140bdf150d409a3b5b7bd414a35654a8"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "wrong_owner_release",
+        "evaluation_hash": "8f289b26a2cd78270676e84f7542e5e9ab63692d3bdec846e2a0f3a8ebd02ac5",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "fe284948f747788a7e9468d54dfc0747e070f6ca6bfd6349f8f89e0ae141b662"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "counter_changes_on_refusal",
+        "evaluation_hash": "c32bc2c21bd7a63cfd5eb81480fb74425eee99dd87719051957de233ba6c6c0a",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "d8efb5075fda7cef13dd5a714f786a4bc5c9f1036cb8b74e85b10f513179f026"
+      }
+    ],
+    "policy_effect": false,
+    "result_hash": "499e2761bf0d2f938bf0ee94e1d9e546f016037823d74caba454fe10bd64d27f",
+    "schema_version": "cortex-evaluator-control-audit/1.0",
+    "semantic_transfer_established": false,
+    "state": "CONTROL_PANEL_PASS",
+    "universal_implementation_equivalence": false
+  },
+  "corrected_corpus_hash": "fc18c0387bf653adff28a37060f6f1da65cc895fcdb7b6b50c66b02d1f288a57",
+  "corrected_forge_result_hash": "1f6e8eb5e89590d12413333af38235fb00011b35402380d23155eb5a13837dc2",
+  "created_at": 1788595527.303012,
+  "event_id": "repair_instrument_revision_28d333d9ff5c30f0b718900c",
+  "evidence_class": "local_instrument_audit",
+  "execution_authorized": false,
+  "expected_control_labels": "host_reviewed_not_semantically_proven",
+  "fresh_model_repair_rate": null,
+  "general_improvement_established": false,
+  "host_mutate_authorized": false,
+  "kind": "repair_instrument_revision",
+  "live_repeat_state": "HELD_BEFORE_INVOCATION_EVALUATOR_MISMATCH",
+  "memory_admission_authorized": false,
+  "new_model_calls": 0,
+  "old_control_panel": {
+    "additional_model_calls": 0,
+    "corpus_hash": "cf8d4fdc59c58b84e07150a374a8d9e062ca340c0866a0de6a4e385cdaa28a0f",
+    "evaluator_commitments": {
+      "atomic_expiring_reservations": "8f5d722cb521435e308e93fc34bae58732afdb03c934b112f2f2a818fe439708"
+    },
+    "evidence_class": "local_instrument_audit",
+    "execution_authorized": false,
+    "expected_labels": "host_reviewed_not_semantically_proven",
+    "general_improvement_established": false,
+    "host_mutate_authorized": false,
+    "memory_admission_authorized": false,
+    "observations": [
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "host_per_key_reference",
+        "evaluation_hash": "651e279aa438886b00203c95860598e5543a52de055bbc5e8ad132163b455ed1",
+        "expectation_met": true,
+        "expected_pass": true,
+        "observed_pass": true,
+        "patch_hash": "af223e322f0900eae83e0eae99238f51d73a3c8bcf928258c83a1d54c38c3d4a"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "archived_global_counter_repair",
+        "evaluation_hash": "730ac241c7eb3a0dbf0cd82eac4d608aea2862cbd2aa00c8fce7a8b4e695f5fe",
+        "expectation_met": false,
+        "expected_pass": true,
+        "observed_pass": false,
+        "patch_hash": "b292d4f218d36fb9ec6849ae06f17be643fd8fd9da849b46004b9207a41a02d3"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "invalid_ttl_allowed",
+        "evaluation_hash": "6519dd7bde8ddd886982566f2e7a7e2a05db17d32aa573edac238b3b1a0f3665",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "a2661b21c5e0de0038f5e0516fd1eb3460b60a9dcd2d77f46fb0f5377e09a2ef"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "conflict_ignored",
+        "evaluation_hash": "5259fc5491a5d31954985b435eee33c01b7752e67d7db8174c719d8ccf2db0b3",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "729cf67b95dc4d85bbc5a73b759b2af424b2cdd0c8387e6dbdc05e18834af698"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "same_owner_renewed",
+        "evaluation_hash": "b3ec2df775b459b6e28a0762761c348771386f58c591affbbf33e3c13582aa36",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "bcf201370a2a51a4dfae2346ecfa3018dc3014fdb1b3a61775241b5350f6d065"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "tokens_reused",
+        "evaluation_hash": "2161b82cfb05617acf1a09e5b1f43853c6403b3c206646ddd33961544afbd30a",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "a2b6ec0dd2c2a72abd6873f8d7ce1ad0140bdf150d409a3b5b7bd414a35654a8"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "wrong_owner_release",
+        "evaluation_hash": "11f6bec0307c57b17e6574a58a7d4469ae7905c6f02d9f543fba87f81e480180",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "fe284948f747788a7e9468d54dfc0747e070f6ca6bfd6349f8f89e0ae141b662"
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "control_id": "counter_changes_on_refusal",
+        "evaluation_hash": "07b972b331b4f4bc96bf1f765aa18b8e0b660405dc63fa7ef901db704634eb02",
+        "expectation_met": true,
+        "expected_pass": false,
+        "observed_pass": false,
+        "patch_hash": "d8efb5075fda7cef13dd5a714f786a4bc5c9f1036cb8b74e85b10f513179f026"
+      }
+    ],
+    "policy_effect": false,
+    "result_hash": "e8f5c0817fe157c63029f08b571b69c1c9a11f55bc98505d6dc10a6e9c104cb3",
+    "schema_version": "cortex-evaluator-control-audit/1.0",
+    "semantic_transfer_established": false,
+    "state": "EVALUATOR_CHALLENGED",
+    "universal_implementation_equivalence": false
+  },
+  "old_corpus_hash": "cf8d4fdc59c58b84e07150a374a8d9e062ca340c0866a0de6a4e385cdaa28a0f",
+  "original_result_receipt_hash": "36e11f0edfd1d30172af554a1adc18078041a6ad383e145d96320f66d4892090",
+  "original_result_unchanged": true,
+  "policy_effect": false,
+  "posthoc_instrument_audit": true,
+  "private_bundle_persisted_in_artifact": false,
+  "private_runner_sha256": "03cd1b3dfab4678d5dae8d74a88b315dbd87471fc817b1b37446f32578aceada",
+  "public_requirements_and_sources_unchanged": true,
+  "reference_repairs_measured": 4,
+  "repo": "Cortex",
+  "repository_id": "bca000b2ec3c85672013dc41",
+  "schema_version": "cortex-repair-instrument-revision/1.0",
+  "semantic_transfer_established": false,
+  "session_id": "sym_564e04adfee254c76ec0",
+  "source_commit": "506ac8e25e9e729750da55e6ef6517b0ed918160",
+  "state": "EVALUATOR_REVISED_ARCHIVED_OUTPUTS_REPLAYED",
+  "status": "repair_instrument_revision",
+  "turn_id": 0,
+  "receipt_hash": "85f4da8eb66522780dd4f170f561374e9b8c776a55b4e246414f36050ee9769d",
+  "subject_receipt_hash": "2fcb9547bb582915e0156b93a741d42fb96e916d8de4df73120fd26cca39c000",
+  "previous_receipt_hash": "adb2435409761dea722711df31903ac7121265431fee3f6b4544b0a35c0722bc",
+  "chain_sequence": 3,
+  "ledger_schema_version": "cortex-symbiotic-circulation-ledger/1.1",
+  "inserted": true,
+  "duplicate": false,
+  "chain_valid": true
+}

@@ -1,0 +1,185 @@
+{
+  "schema_version": "cortex-alpha36-contract-aligned-repair-forge/1.0",
+  "state": "CONTRACT_ALIGNED_REPAIR_FORGE_READY",
+  "corpus_hash": "fc18c0387bf653adff28a37060f6f1da65cc895fcdb7b6b50c66b02d1f288a57",
+  "executable_corpus_hash": "4096c8f46b9688cf284ded47e00b959cde5a253b5d80687f18cffc8213d0b313",
+  "case_count": 4,
+  "requirement_count": 16,
+  "assertion_count": 15,
+  "all_private_assertions_publicly_mapped": true,
+  "all_public_requirements_covered": true,
+  "reference_repairs_measured": 4,
+  "executable_result_hash": "1a719acf0b67d08efa212475c1d2ec20d90c60f0b0a3d7c601c36e3b8acec87f",
+  "additional_model_calls": 0,
+  "private_assertions_in_model_context": false,
+  "private_reference_patches_in_model_context": false,
+  "private_bundle_persisted_in_artifact": false,
+  "structural_contract_alignment_established": true,
+  "semantic_entailment_established": false,
+  "baseline_calibration_established": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "next_action": "freeze_contract_aligned_baseline_screen",
+  "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+  "result_hash": "1f6e8eb5e89590d12413333af38235fb00011b35402380d23155eb5a13837dc2",
+  "public_corpus": {
+    "schema_version": "cortex-contract-aligned-repair-corpus/1.0",
+    "development_only": true,
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "idempotent_transfer_ledger",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "A transfer succeeds only when txid is new, source and target are distinct existing accounts, amount is positive, and source has sufficient funds; rejection returns False and changes nothing."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "A successful transfer atomically debits source, credits target, records the exact (source, target, amount) fingerprint for txid, and returns True."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "Repeating a successful txid with the identical fingerprint is idempotent: return True without changing balances again."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "Reusing a successful txid with a different source, target, or amount raises ValueError and changes nothing."
+          }
+        ],
+        "requirement_commitment": "c1cddfb455dd877950a581de51ca9a4c657b534a4f6a46fde9d3e72d111038e3",
+        "assertion_count": 4,
+        "alignment_commitment": "8a7992a6c7dc7d8f05dcf229a46fdad1a2cee8f7892e8c251490e1399b35a320",
+        "executable_case": {
+          "case_id": "idempotent_transfer_ledger",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] A transfer succeeds only when txid is new, source and target are distinct existing accounts, amount is positive, and source has sufficient funds; rejection returns False and changes nothing.\n[R2] A successful transfer atomically debits source, credits target, records the exact (source, target, amount) fingerprint for txid, and returns True.\n[R3] Repeating a successful txid with the identical fingerprint is idempotent: return True without changing balances again.\n[R4] Reusing a successful txid with a different source, target, or amount raises ValueError and changes nothing.",
+          "files": {
+            "module.py": "class TransferLedger:\n    def __init__(self, balances):\n        self.balances = dict(balances)\n        self._seen = set()\n\n    def transfer(self, txid, source, target, amount):\n        if txid in self._seen:\n            return True\n        self.balances[source] -= amount\n        self.balances[target] += amount\n        self._seen.add(txid)\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "66332409a9c0d64a69192861d05c00680f679561cb036d81d5ae8ccaef1d2819"
+        }
+      },
+      {
+        "case_id": "revision_aware_negative_cache",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "Each key has an integer revision starting at zero; every put or delete advances only that key's revision exactly once, including deleting an absent key."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "read(key) caches both the current revision and value, including a missing value of None, and reuses the cached value only while its cached revision equals the current key revision."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "A put or delete becomes visible on the next read of that key without disturbing valid cached entries for other keys."
+          }
+        ],
+        "requirement_commitment": "de3b65426e0ff2d0900643252fb9cb36011de749a096870e7f686cb6ea55a107",
+        "assertion_count": 3,
+        "alignment_commitment": "6352da94c3598786b801387c61b4cf87940a8942008874bbc4eb9fb16f3fadbd",
+        "executable_case": {
+          "case_id": "revision_aware_negative_cache",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Each key has an integer revision starting at zero; every put or delete advances only that key's revision exactly once, including deleting an absent key.\n[R2] read(key) caches both the current revision and value, including a missing value of None, and reuses the cached value only while its cached revision equals the current key revision.\n[R3] A put or delete becomes visible on the next read of that key without disturbing valid cached entries for other keys.",
+          "files": {
+            "module.py": "class RevisionCache:\n    def __init__(self):\n        self.source = {}\n        self.revisions = {}\n        self.cache = {}\n\n    def read(self, key):\n        if key in self.cache:\n            return self.cache[key]\n        value = self.source.get(key)\n        self.cache[key] = value\n        return value\n\n    def put(self, key, value):\n        self.source[key] = value\n        self.revisions[key] = self.revisions.get(key, 0) + 1\n\n    def delete(self, key):\n        self.source.pop(key, None)\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "600f88a879b2c8fe9f24ea74d608e2cf52ddec9edab16891271143daf3abc631"
+        }
+      },
+      {
+        "case_id": "owned_per_key_snapshot_map",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "begin() returns a stable dict with exactly store, version, values, and key_versions; store is an opaque identity owned by that SnapshotMap and both nested mappings are copies."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "commit(snapshot, writes) accepts only a well-formed snapshot from the same map and a dict of writes; malformed or foreign input returns False without mutation."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "Conflict detection is per written key: reject the entire commit if any written key changed since snapshot, while disjoint writes from concurrent snapshots may both succeed."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "A successful commit advances the global version once, stamps every written key with that new version, treats None as deletion, and changes no key outside writes."
+          }
+        ],
+        "requirement_commitment": "dd40c67892bce136904d9a63f081228ce739dc1bee9f264b8d995cfb70b00270",
+        "assertion_count": 4,
+        "alignment_commitment": "b8cba69b098aa9bf0b56d90176b15043af9cf2dc7a0995c37a157ba60bc39cd5",
+        "executable_case": {
+          "case_id": "owned_per_key_snapshot_map",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] begin() returns a stable dict with exactly store, version, values, and key_versions; store is an opaque identity owned by that SnapshotMap and both nested mappings are copies.\n[R2] commit(snapshot, writes) accepts only a well-formed snapshot from the same map and a dict of writes; malformed or foreign input returns False without mutation.\n[R3] Conflict detection is per written key: reject the entire commit if any written key changed since snapshot, while disjoint writes from concurrent snapshots may both succeed.\n[R4] A successful commit advances the global version once, stamps every written key with that new version, treats None as deletion, and changes no key outside writes.",
+          "files": {
+            "module.py": "class SnapshotMap:\n    def __init__(self, initial=None):\n        self.data = dict(initial or {})\n        self.version = 0\n\n    def begin(self):\n        return {\"version\": self.version, \"values\": self.data}\n\n    def commit(self, snapshot, writes):\n        if snapshot[\"version\"] != self.version:\n            return False\n        for key, value in writes.items():\n            if value is None:\n                self.data.pop(key, None)\n            else:\n                self.data[key] = value\n        self.version += 1\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "5c1632d9e507ac569513f369c90d07f962830214d28499b3b86b882dc453bffa"
+        }
+      },
+      {
+        "case_id": "atomic_expiring_reservations",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "reserve(keys, owner, now, ttl) requires positive ttl and unique keys; invalid input raises ValueError before changing state."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "Reservation is atomic: if any key has an unexpired reservation by another owner, return None and change no reservation or token counter."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "An unexpired same-owner reservation is idempotent for that key: preserve and return its existing token without extending expiry."
+          },
+          {
+            "requirement_id": "R4",
+            "text": "Every free, released, or expired key receives a new token strictly larger than every prior token for that key and expiry now + ttl; return one token per requested key."
+          },
+          {
+            "requirement_id": "R5",
+            "text": "release succeeds only for the exact current owner and token and otherwise changes nothing."
+          }
+        ],
+        "requirement_commitment": "62c6583ecc3b9bed05a0ed677f4b4b4d464ee1deac0ddc6564c64671fc588974",
+        "assertion_count": 4,
+        "alignment_commitment": "4cd75347c82d4f9aec367dfa55af947f0c1b6a41093849fe0908c92780b385b8",
+        "executable_case": {
+          "case_id": "atomic_expiring_reservations",
+          "task": "Repair module.py so it satisfies every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] reserve(keys, owner, now, ttl) requires positive ttl and unique keys; invalid input raises ValueError before changing state.\n[R2] Reservation is atomic: if any key has an unexpired reservation by another owner, return None and change no reservation or token counter.\n[R3] An unexpired same-owner reservation is idempotent for that key: preserve and return its existing token without extending expiry.\n[R4] Every free, released, or expired key receives a new token strictly larger than every prior token for that key and expiry now + ttl; return one token per requested key.\n[R5] release succeeds only for the exact current owner and token and otherwise changes nothing.",
+          "files": {
+            "module.py": "class ReservationBook:\n    def __init__(self):\n        self.active = {}\n        self.next_token = 0\n\n    def reserve(self, keys, owner, now, ttl):\n        tokens = {}\n        for key in keys:\n            current = self.active.get(key)\n            if current and current['expires_at'] > now and current['owner'] != owner:\n                return None\n            self.next_token += 1\n            token = self.next_token\n            self.active[key] = {'owner': owner, 'token': token, 'expires_at': now + ttl}\n            tokens[key] = token\n        return tokens\n\n    def release(self, key, owner, token):\n        current = self.active.get(key)\n        if not current or current['owner'] != owner or current['token'] != token:\n            return False\n        del self.active[key]\n        return True\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "module.py"
+          ],
+          "private_evaluator_commitment": "3f4c0d2a7d76fae9851fa3151ecd0a34b87d1b5fce8543e44e98853b318a4fe3"
+        }
+      }
+    ],
+    "executable_corpus_hash": "4096c8f46b9688cf284ded47e00b959cde5a253b5d80687f18cffc8213d0b313",
+    "private_assertions_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+    "corpus_hash": "fc18c0387bf653adff28a37060f6f1da65cc895fcdb7b6b50c66b02d1f288a57"
+  }
+}

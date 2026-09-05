@@ -77,6 +77,37 @@ cases, a 30–70% screening window accepts only `2/4`. A `3/4` result therefore
 needs careful interpretation and fresh confirmation before treating it as a
 model difficulty limit. Historical results remain unchanged.
 
+### September 5: check the test before blaming the model
+
+The planned repeat uncovered an evaluator defect before any paid calls: the
+reservation task allowed either a global or per-key increasing token counter,
+but its private tests required one particular layout and exact token values.
+
+| Local check | Original evaluator | Corrected evaluator |
+|---|---|---|
+| Allowed per-key repair | Pass | Pass |
+| Allowed global-counter repair | **Rejected** | Pass |
+| Six deliberately broken repairs | All rejected | All rejected |
+
+The new instrument check is deliberately noncompensatory:
+
+\[
+\mathrm{InstrumentReady}(E) =
+\bigwedge_{p\in P_{\mathrm{allowed}}} E(p)
+\;\wedge\;
+\bigwedge_{n\in P_{\mathrm{broken}}} \neg E(n).
+\]
+
+These are finite, host-reviewed controls—not a proof of all possible program
+semantics. One reference passing cannot compensate for another allowed repair
+being rejected. Challenged evaluator commitments now block new structured model
+calls; corrections receive new identities without rewriting historical scores.
+
+Replaying the **same four archived answers** against corrected tests produced
+four passes. **Zero new model calls; no fresh 4/4 performance claim.** This fixes
+measurement, not training, and does not establish Cortex advantage. Read the
+[instrument audit and next experiment](docs/research/REPAIR_INSTRUMENT_AUDIT_2026-09-05.md).
+
 ### Kernel foundation
 
 Cortex now treats memory as controlled reconstruction of epistemic state, not
@@ -558,9 +589,12 @@ treatment or claim Cortex improvement.
 
 The preserved run scored `3/4`: all four model outputs compiled, three isolated
 repairs passed, and the atomic expiring-reservation candidate failed its frozen
-evaluator. Canonical reconstruction passed. The result is more discriminative
-than alpha.37's `4/4`, but `0.75` remains just above the preregistered `0.70`
-ceiling, so Cortex did not relabel it as calibrated.
+evaluator. Canonical reconstruction passed. Under that historical policy,
+`0.75` is above the preregistered `0.70` ceiling, so it was not called calibrated.
+The September 5 instrument audit subsequently traced the failure to an unstated
+representation constraint. Do not use it as evidence of a model weakness or
+reuse that evaluator for new calls; see the correction above. The old receipt
+itself is unchanged.
 
 ## What you get
 

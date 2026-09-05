@@ -1,5 +1,12 @@
 # Alpha.39 — Harder Contract-Aligned Frontier Baseline
 
+**Interpretation update, September 5, 2026:** the reservation evaluator has been
+challenged for requiring an unstated counter representation. Its historical
+`3/4` receipt remains unchanged and verifiable, but new calls under that exact
+evaluator commitment are blocked. Re-scoring the archived answer against
+corrected relational tests passed; this is not a fresh model trial. See the
+[instrument audit](../research/REPAIR_INSTRUMENT_AUDIT_2026-09-05.md).
+
 Alpha.39 measures the fresh alpha.38 panel through the existing provider-neutral
 native circulation. It adds no model-specific core path.
 
