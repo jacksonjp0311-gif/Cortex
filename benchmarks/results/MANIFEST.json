@@ -1,5 +1,5 @@
 {
-  "benchmark_suite_hash": "1313df46dd6b8b8af2a065132fb1ee8711b5a527ebe4617deb91f816b3571a10",
+  "benchmark_suite_hash": "25ffb703697fe370f970ea0a09e85f1d0683aaab2dda19167184bef45ea0c508",
   "cortex_version": "10.0.0a39",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 48,
+  "result_count": 50,
   "results": [
     {
       "bytes": 3346,
@@ -27,6 +27,18 @@
       "metadata_state": "development_calibration",
       "path": "benchmarks/results/frontier_calibration_v980_grok46.json",
       "sha256": "efe37950ff7c42b8d017d6917d0e3fc39561ac4943d243b3c8da2d1768495151"
+    },
+    {
+      "bytes": 14246,
+      "metadata_state": "zero_call_contract_aligned_repair_forge_ready",
+      "path": "benchmarks/results/repair_corrected_forge_2026-09-05.json",
+      "sha256": "112560bfb2e446dafa9de240bcf6abaf038436db8ed928eba9ea3994c0bc8993"
+    },
+    {
+      "bytes": 12664,
+      "metadata_state": "local_instrument_audit_archived_reanalysis",
+      "path": "benchmarks/results/repair_instrument_revision_2026-09-05.json",
+      "sha256": "5d5189df1f5841d27aa07cfd6f471fe108bdc7d5c4380292d2dfb880098f65d2"
     },
     {
       "bytes": 2851,
@@ -304,5 +316,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "34af9b9d846be5abc7077dcf34ad77dd4ae20e0e"
+  "source_commit": "3ad7ee04dfc6218f3f287f5ba51385c090c802a2"
 }
