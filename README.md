@@ -52,6 +52,33 @@ durable, inspectable, and safer to reuse.
 
 ## The epistemic kernel
 
+### Mathematics checked against implementation
+
+The [September 4 mathematical audit](docs/research/MATHEMATICAL_CONTRACT_AUDIT_2026-09-04.md)
+turned three claims into tested contracts:
+
+| Contract | What Cortex now checks |
+|---|---|
+| Preserve support and opposition | A context budget cannot emit only one side of a known conflict; the serialized cognitive payload is counted. |
+| Validate the continuation equation's inputs | Nonfinite values, negative weights and invalid thresholds return `UNKNOWN`. |
+| Verify the relationships between receipts | Task, model, case, evaluator and outcome must agree across the experiment's records. |
+
+The governing mathematics stays explicit:
+
+\[
+b(p)=(s^+,s^-),\qquad
+\Theta=\min_i g_i,\qquad
+\mathrm{eligible}\iff\Theta=\mathrm{PASS}.
+\]
+
+Support bits describe evidence. Eligibility gates govern participation. Neither
+alone establishes a measured improvement. The audit also found that with four
+cases, a 30–70% screening window accepts only `2/4`. A `3/4` result therefore
+needs careful interpretation and fresh confirmation before treating it as a
+model difficulty limit. Historical results remain unchanged.
+
+### Kernel foundation
+
 Cortex now treats memory as controlled reconstruction of epistemic state, not
 as a pile of retrieved text. The alpha.16 seed makes history primary and state
 derived:

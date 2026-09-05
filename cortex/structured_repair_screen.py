@@ -40,6 +40,33 @@ def _identity(adapter: Any) -> dict[str, str]:
     }
 
 
+def _case_task(case: Mapping[str, Any], response_contract: Mapping[str, Any]) -> str:
+    return (
+        f"{case['task']}\n\nFILE: module.py\n```python\n{case['files']['module.py']}\n```"
+        f"\n\nRESPONSE_CONTRACT\n{_canonical(response_contract)}"
+    )
+
+
+def _private_binding_errors(prereg: Mapping[str, Any], private: Mapping[str, Any]) -> list[str]:
+    errors = []
+    body = {key: value for key, value in private.items() if key != "private_bundle_hash"}
+    if private.get("private_bundle_hash") != _sha(body) or private.get("private_bundle_hash") != prereg.get("private_bundle_hash"):
+        errors.append("private_bundle_hash_invalid")
+    if private.get("corpus_hash") != prereg.get("corpus_hash"):
+        errors.append("private_corpus_binding_invalid")
+    cases = private.get("cases") or []
+    expected = prereg.get("cases") or []
+    if not isinstance(cases, list) or any(not isinstance(case, Mapping) for case in cases):
+        return errors + ["private_cases_invalid"]
+    if [case.get("case_id") for case in cases] != [case.get("case_id") for case in expected]:
+        errors.append("private_case_order_invalid")
+    for public, secret in zip(expected, cases):
+        material = {key: secret.get(key) for key in ("case_id", "external_test", "reference_patch")}
+        if public.get("private_evaluator_commitment") != _sha({"salt": secret.get("salt"), "private": material}):
+            errors.append("private_evaluator_binding_invalid")
+    return errors
+
+
 def _screen(successes: int) -> dict[str, Any]:
     calibrated = successes == 2
     return {
@@ -107,6 +134,8 @@ def freeze_structured_repair_screen(
     cases = list(public.get("cases") or ())
     if len(cases) != PLANNED_CALLS:
         raise ValueError("structured screen requires exactly four cases")
+    if len({case.get("case_id") for case in cases}) != PLANNED_CALLS:
+        raise ValueError("structured screen requires unique case identities")
     prior_binding: dict[str, Any] | None = None
     if prior_result_receipt_hash:
         prior_audit = verify_structured_repair_screen(
@@ -196,11 +225,16 @@ def execute_structured_repair_screen(
         or resolve_adapter_provenance(store, repo, adapter) != prereg.get("adapter_provenance")
     ):
         raise ValueError("structured runtime binding invalid")
+    binding_errors = _private_binding_errors(prereg, private_bundle)
+    if binding_errors:
+        raise ValueError("structured private evaluator binding invalid: " + ",".join(binding_errors))
+    if grant.allowed_tools or grant.max_tool_calls != 0 or grant.max_total_tool_seconds != 0:
+        raise ValueError("structured screen requires a zero-tool grant")
     private_cases = {str(case["case_id"]): case for case in private_bundle["cases"]}
-    runtime = NativeAgentRuntime(store, repo, tools=tools)
+    runtime = NativeAgentRuntime(store, repo, tools=tools, max_iterations=1)
     sealed = []
     for case in prereg["cases"]:
-        task = f"{case['task']}\n\nFILE: module.py\n```python\n{case['files']['module.py']}\n```\n\nRESPONSE_CONTRACT\n{_canonical(prereg['response_contract'])}"
+        task = _case_task(case, prereg["response_contract"])
         run = runtime.run(task, adapter=adapter, grant=grant, context_treatment="task_only_control")
         trajectory_hash = str(run["trajectory_receipt_hash"])
         if verify_native_agent_trajectory(store, repo, trajectory_hash).get("valid") is not True:
@@ -300,7 +334,7 @@ def execute_structured_repair_screen(
     )
 
 
-def verify_structured_repair_screen(
+def _verify_structured_repair_screen(
     store: Any, repo: str, *, result_receipt_hash: str
 ) -> dict[str, Any]:
     errors = []
@@ -314,14 +348,56 @@ def verify_structured_repair_screen(
         or prereg.get("kind") != "structured_repair_preregistration"
     ):
         errors.append("preregistration_invalid")
+    expected_cases = prereg.get("cases") or []
+    case_hashes = result.get("case_receipt_hashes") or []
+    if (
+        not isinstance(expected_cases, list)
+        or len(expected_cases) != PLANNED_CALLS
+        or len({case["case_id"] for case in expected_cases}) != PLANNED_CALLS
+        or not isinstance(case_hashes, list)
+        or len(case_hashes) != PLANNED_CALLS
+        or len(set(case_hashes)) != PLANNED_CALLS
+        or type(prereg.get("planned_calls")) is not int
+        or prereg.get("planned_calls") != PLANNED_CALLS
+    ):
+        return {"valid": False, "errors": errors + ["frozen_panel_invalid"]}
+    if (
+        result.get("kind") != "structured_repair_result"
+        or result.get("schema_version") != "cortex-structured-repair-result/1.0"
+        or result.get("status") != "STRUCTURED_REPAIR_SCREEN_RECONSTRUCTED"
+        or result.get("model_identity") != prereg.get("model_identity")
+        or result.get("evidence_class") != EVIDENCE_LIVE
+        or type(result.get("calls_executed")) is not int
+        or result.get("calls_executed") != PLANNED_CALLS
+    ):
+        errors.append("result_contract_invalid")
+    if prereg.get("context_treatment") != "task_only_control" or prereg.get("tools") != []:
+        errors.append("preregistration_treatment_invalid")
+    provenance = prereg.get("adapter_provenance") or {}
+    if provenance.get("evidence_class") != EVIDENCE_LIVE or verify_adapter_provenance(store, repo, provenance).get("valid") is not True:
+        errors.append("preregistration_provenance_invalid")
+    authority_fields = ("host_mutate_authorized", "execution_authorized", "memory_admission_authorized", "policy_effect")
+    for field in authority_fields:
+        if prereg.get(field) is not False:
+            errors.append(f"preregistration_authority_invalid:{field}")
     observed = []
     successes = 0
-    for receipt_hash in result.get("case_receipt_hashes") or ():
+    for expected_case, receipt_hash in zip(expected_cases, case_hashes):
         if store.verify_symbiotic_receipt(repo, str(receipt_hash)).get("valid") is not True:
             errors.append(f"case_invalid:{receipt_hash}")
             continue
         case = store.symbiotic_receipt(str(receipt_hash), repo=repo) or {}
         observed.append(str(case.get("case_id") or ""))
+        if (
+            case.get("kind") != "structured_repair_case"
+            or case.get("schema_version") != "cortex-structured-repair-case/1.0"
+            or case.get("preregistration_receipt_hash") != prereg_hash
+            or case.get("case_hash") != _sha(expected_case)
+            or case.get("evidence_class") != EVIDENCE_LIVE
+            or case.get("caller_success_authoritative") is not False
+            or any(case.get(field) is not False for field in authority_fields)
+        ):
+            errors.append(f"case_contract_invalid:{case.get('case_id')}")
         trajectory_hash = str(case.get("trajectory_receipt_hash") or "")
         trajectory = store.symbiotic_receipt(trajectory_hash, repo=repo) or {}
         if (
@@ -330,16 +406,66 @@ def verify_structured_repair_screen(
             != hashlib.sha256(str(trajectory.get("final_answer") or "").encode()).hexdigest()
         ):
             errors.append(f"trajectory_binding_invalid:{case.get('case_id')}")
+        expected_task = _case_task(expected_case, prereg["response_contract"])
+        requests = trajectory.get("requests") or []
+        grant = trajectory.get("capability_grant") or {}
+        if (
+            trajectory.get("task") != expected_task
+            or trajectory.get("task_hash") != _sha(expected_task)
+            or trajectory.get("provider_identity") != prereg.get("model_identity")
+            or trajectory.get("context_treatment") != "task_only_control"
+            or len(requests) != 1
+            or len(trajectory.get("responses") or []) != 1
+            or trajectory.get("tool_results") != []
+            or grant.get("allowed_tools") != []
+            or grant.get("max_tool_calls") != 0
+            or grant.get("max_total_tool_seconds") != 0
+        ):
+            errors.append(f"trajectory_experiment_binding_invalid:{case.get('case_id')}")
+        for request in requests:
+            if request.get("task") != expected_task or request.get("provider_identity") != prereg.get("model_identity") or request.get("tools") != []:
+                errors.append(f"request_experiment_binding_invalid:{case.get('case_id')}")
         evaluation = case.get("evaluation") or {}
         if evaluation.get("evaluation_hash") != _sha(
             {key: value for key, value in evaluation.items() if key != "evaluation_hash"}
         ) or case.get("task_success") is not evaluation.get("candidate_pass"):
             errors.append(f"evaluation_binding_invalid:{case.get('case_id')}")
+        baseline, candidate = evaluation.get("baseline") or {}, evaluation.get("candidate") or {}
+        baseline_pass = baseline.get("passed")
+        candidate_pass = candidate.get("status") == "verified"
+        classification = (
+            "REPAIR_MEASURED" if baseline_pass is False and candidate_pass
+            else "VERIFIED_MAINTENANCE" if baseline_pass is True and candidate_pass
+            else "REGRESSION_DETECTED" if baseline_pass is True else "IMPROVEMENT_HELD"
+        )
+        if (
+            evaluation.get("case_id") != expected_case["case_id"]
+            or evaluation.get("evaluator_commitment") != expected_case["private_evaluator_commitment"]
+            or type(case.get("task_success")) is not bool
+            or type(baseline_pass) is not bool
+            or evaluation.get("baseline_pass") is not baseline_pass
+            or baseline_pass is not (baseline.get("returncode") == 0)
+            or evaluation.get("candidate_pass") is not candidate_pass
+            or evaluation.get("classification") != classification
+            or evaluation.get("bounded_repair_established") is not (classification == "REPAIR_MEASURED")
+            or any(evaluation.get(field) is not False for field in authority_fields)
+        ):
+            errors.append(f"evaluation_contract_invalid:{case.get('case_id')}")
+        if candidate_pass and (
+            len(candidate.get("steps") or []) != 1
+            or any(step.get("passed") is not True or step.get("returncode") != 0 for step in candidate["steps"])
+            or candidate.get("proposal_hash") != evaluation.get("proposal_hash")
+            or candidate.get("source_head") != evaluation.get("source_head")
+        ):
+            errors.append(f"candidate_observation_invalid:{case.get('case_id')}")
         successes += case.get("task_success") is True
     if observed != [str(case["case_id"]) for case in prereg.get("cases") or ()] or result.get(
         "screen"
     ) != _screen(successes):
         errors.append("screen_reconstruction_invalid")
+    reconstructed = _screen(successes)
+    if result.get("baseline_calibrated") is not (reconstructed["state"] == "structured_baseline_calibrated") or result.get("next_action") != reconstructed["recommended_action"]:
+        errors.append("result_disposition_invalid")
     for field in (
         "semantic_transfer_established",
         "general_improvement_established",
@@ -356,7 +482,21 @@ def verify_structured_repair_screen(
         "screen": _screen(successes),
         "result_receipt_hash": result_receipt_hash,
         "preregistration_receipt_hash": prereg_hash,
+        "verification_scope": "receipt_integrity_and_experiment_bindings",
+        "external_execution_replayed": False,
     }
+
+
+def verify_structured_repair_screen(store: Any, repo: str, *, result_receipt_hash: str) -> dict[str, Any]:
+    """Resolve the experimental equalities as well as the receipt hashes.
+
+    This observes persisted execution evidence; it does not rerun candidate code
+    or provide independent OS/provider attestation.
+    """
+    try:
+        return _verify_structured_repair_screen(store, repo, result_receipt_hash=result_receipt_hash)
+    except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
+        return {"valid": False, "errors": ["malformed_structured_evidence"]}
 
 
 __all__ = [

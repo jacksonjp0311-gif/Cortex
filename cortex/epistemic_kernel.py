@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import time
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -18,8 +19,8 @@ from . import __version__
 
 SCHEMA = "cortex-epistemic-event/1.0"
 PROJECTION_SCHEMA = "cortex-epistemic-projection/1.0"
-CONTEXT_SCHEMA = "cortex-action-sufficient-context/1.0"
-DEBT_SCHEMA = "cortex-continuation-debt/1.0"
+CONTEXT_SCHEMA = "cortex-action-sufficient-context/1.1"
+DEBT_SCHEMA = "cortex-continuation-debt/1.1"
 ZERO_HASH = "0" * 64
 POLARITIES = frozenset({"support", "oppose", "retract"})
 TRUTH_STATES = frozenset({"TRUE", "FALSE", "NEITHER", "BOTH"})
@@ -38,6 +39,19 @@ def _canonical(value: Any) -> str:
 
 def _sha(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _finite(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("a finite number is required")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("a finite number is required")
+    return number
+
+
+def _time_coordinate(value: float | None) -> float:
+    return time.time() if value is None else _finite(value)
 
 
 def _repository_id(store: Any, repo: str) -> str:
@@ -134,7 +148,7 @@ def append_epistemic_event(
             "evidence_receipt_hash": str(evidence_receipt_hash),
             "source_lineage_hash": str(source_lineage_hash),
             "valid_time": {"from": float(valid_from), "to": valid_to},
-            "observed_at": float(observed_at or system_time),
+            "observed_at": system_time if observed_at is None else _finite(observed_at),
             "system_time": system_time,
             "retracts_event_hash": str(retracts_event_hash or ""),
             "advisory_only": True,
@@ -204,18 +218,21 @@ def _active_events(
         dict(event) for event in events
         if float(event.get("system_time") or 0.0) <= known_at
     ]
+    def in_interval(event: Mapping[str, Any]) -> bool:
+        interval = event.get("valid_time") or {}
+        start, end = _finite(interval.get("from", 0.0)), interval.get("to")
+        return start <= valid_at and (end is None or valid_at <= _finite(end))
+
+    # A retraction affects its own claim only, during its declared valid time.
     retracted = {
-        str(event.get("retracts_event_hash") or "")
-        for event in visible if event.get("polarity") == "retract"
+        (str(event.get("claim_id") or ""), str(event.get("retracts_event_hash") or ""))
+        for event in visible if event.get("polarity") == "retract" and in_interval(event)
     }
     active: list[dict[str, Any]] = []
     for event in visible:
-        if event.get("polarity") == "retract" or event.get("event_hash") in retracted:
+        if event.get("polarity") == "retract" or (str(event.get("claim_id") or ""), event.get("event_hash")) in retracted:
             continue
-        interval = event.get("valid_time") if isinstance(event.get("valid_time"), Mapping) else {}
-        start = float(interval.get("from") or 0.0)
-        end = interval.get("to")
-        if start <= valid_at and (end is None or valid_at <= float(end)):
+        if in_interval(event):
             active.append(event)
     return active
 
@@ -227,8 +244,8 @@ def project_epistemic_state(
     known_at: float | None = None,
 ) -> dict[str, Any]:
     """Fold history into Belnap-Dunn style support states."""
-    valid_at = float(valid_at or time.time())
-    known_at = float(known_at or time.time())
+    valid_at = _time_coordinate(valid_at)
+    known_at = _time_coordinate(known_at)
     active = _active_events(events, valid_at=valid_at, known_at=known_at)
     grouped: dict[str, list[dict[str, Any]]] = {}
     for event in active:
@@ -284,20 +301,35 @@ def compile_action_sufficient_context(
     All relevant conflicts remain visible. Authority is intentionally left to
     a separate canonical gate.
     """
-    valid_at = float(valid_at or time.time())
-    known_at = float(known_at or time.time())
+    valid_at = _time_coordinate(valid_at)
+    known_at = _time_coordinate(known_at)
+    if isinstance(character_budget, bool) or not isinstance(character_budget, int) or character_budget < 0:
+        raise ValueError("character_budget must be a nonnegative integer")
     active = _active_events(events, valid_at=valid_at, known_at=known_at)
     selected: list[dict[str, Any]] = []
+    requested: list[dict[str, Any]] = []
     missing: list[str] = []
-    used = 0
+    text_conflicts: list[str] = []
+    # Count the serialized cognitive payload, including punctuation and claim
+    # summaries. Audit metadata is outside this explicitly named budget scope.
+    def payload_cost(claims: list, evidence: list) -> int:
+        return len(_canonical({"claims": claims, "evidence": evidence}))
+
+    used = payload_cost([], [])
     for claim_id in dict.fromkeys(str(item) for item in required_claim_ids):
         rows = [row for row in active if str(row.get("claim_id") or "") == claim_id]
+        if len({str(row.get("claim_text") or "") for row in rows}) > 1:
+            text_conflicts.append(claim_id)
+            missing.append(claim_id)
+            continue
+        rows.sort(key=lambda row: str(row.get("event_hash") or ""))
         support = next((row for row in rows if row.get("polarity") == "support"), None)
         oppose = next((row for row in rows if row.get("polarity") == "oppose"), None)
         representatives = [row for row in (support, oppose) if row is not None]
         if not representatives:
             missing.append(claim_id)
             continue
+        items = []
         for row in representatives:
             item = {
                 "claim_id": claim_id,
@@ -307,17 +339,22 @@ def compile_action_sufficient_context(
                 "evidence_receipt_hash": row.get("evidence_receipt_hash"),
                 "source_lineage_hash": row.get("source_lineage_hash"),
             }
-            cost = len(_canonical(item))
-            if used + cost > max(0, int(character_budget)):
-                missing.append(claim_id)
-                break
-            selected.append(item)
-            used += cost
+            items.append(item)
+        claim = {
+            "claim_id": claim_id,
+            "claim_text": str(representatives[0].get("claim_text") or ""),
+            "support_bits": [int(support is not None), int(oppose is not None)],
+            "truth_state": "BOTH" if support and oppose else "TRUE" if support else "FALSE",
+        }
+        cost = payload_cost(requested + [claim], selected + items)
+        if cost > character_budget:
+            missing.append(claim_id)
+            continue
+        # Admit both polarities as one unit; never expose half a conflict.
+        selected.extend(items)
+        requested.append(claim)
+        used = cost
     projection = project_epistemic_state(events, valid_at=valid_at, known_at=known_at)
-    requested = [
-        claim for claim in projection["claims"]
-        if claim["claim_id"] in set(str(item) for item in required_claim_ids)
-    ]
     material = {
         "schema_version": CONTEXT_SCHEMA,
         "projection_hash": projection["projection_hash"],
@@ -326,9 +363,12 @@ def compile_action_sufficient_context(
         "evidence": selected,
         "character_budget": int(character_budget),
         "characters_used": used,
+        "budget_scope": "canonical_json_of_claims_and_evidence",
+        "budget_satisfied": used <= character_budget,
+        "claim_text_conflicts": sorted(text_conflicts),
         "missing_claim_ids": sorted(set(missing)),
-        "state_preservation": "PASS" if not missing else "UNKNOWN",
-        "minimality_scope": "exact_for_two_bit_presence_semantics",
+        "state_preservation": "PASS" if not missing and used <= character_budget else "UNKNOWN",
+        "minimality_scope": "minimum_representative_count_for_two_bit_presence; caller_claim_order",
         "authority_state": "SEPARATE_CANONICAL_GATE_REQUIRED",
         "action_authorized": False,
         "advisory_only": True,
@@ -352,11 +392,28 @@ def update_continuation_debt(
     """Apply an explicit host policy; no expiration/control law is invented."""
     required = {"rho", "alpha", "beta", "gamma", "eta", "delta", "reanchor", "quarantine"}
     missing = sorted(required - set(policy))
-    if missing:
+    errors = [f"policy_{item}_missing" for item in missing]
+    try:
+        coefficients = {key: _finite(policy[key]) for key in required if key in policy}
+        observations = [
+            _finite(item) for item in
+            (previous_debt, uncertainty, conflict, drift, staleness, verification)
+        ]
+        if any(item < 0 for item in observations):
+            errors.append("negative_measurement")
+        if not missing and (
+            not 0 < coefficients["rho"] <= 1
+            or any(coefficients[key] < 0 for key in required - {"rho"})
+            or coefficients["reanchor"] >= coefficients["quarantine"]
+        ):
+            errors.append("policy_domain_invalid")
+    except (ValueError, TypeError, OverflowError):
+        errors.append("nonfinite_or_nonnumeric_input")
+    if errors:
         return {
             "schema_version": DEBT_SCHEMA,
             "state": "UNKNOWN",
-            "errors": [f"policy_{item}_missing" for item in missing],
+            "errors": errors,
             "advisory_only": True,
             "action_authorized": False,
         }
@@ -368,6 +425,11 @@ def update_continuation_debt(
         + float(policy["eta"]) * float(staleness)
         - float(policy["delta"]) * float(verification)
     )
+    if not math.isfinite(debt):
+        return {
+            "schema_version": DEBT_SCHEMA, "state": "UNKNOWN",
+            "errors": ["debt_overflow"], "advisory_only": True, "action_authorized": False,
+        }
     debt = max(0.0, debt)
     regime = (
         "QUARANTINE" if debt >= float(policy["quarantine"]) else

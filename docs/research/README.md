@@ -2,6 +2,12 @@
 
 **For humans and AI agents.** Start here when parsing constitutional or mathematical structure.
 
+Current implementation review:
+[Mathematical contract audit — September 4, 2026](MATHEMATICAL_CONTRACT_AUDIT_2026-09-04.md).
+It connects the historical mathematics below to the v10 runtime, reproduces
+contract violations, and distinguishes corrected invariants from empirical
+claims that remain untested.
+
 ## Read order (agents)
 
 1. **[`EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](EMERGENT_MATH_AND_COMPOSITION_V0.1.md)** — primary map: spectral vs constitutional geometry, epochs, Hamming paths, multi-host product, claim residual  

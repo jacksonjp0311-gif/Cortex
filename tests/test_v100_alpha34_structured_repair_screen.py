@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import copy
+import hashlib
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from cortex.adapter_provenance import register_adapter_provenance
@@ -59,6 +62,81 @@ class ExternalStructuredAdapter:
 
 
 class Alpha34StructuredRepairScreenTests(unittest.TestCase):
+    def test_changed_private_evaluator_is_rejected_before_any_model_call(self):
+        with tempfile.TemporaryDirectory() as temp:
+            store, repo, host, forge, private, adapter = self._fixture(temp)
+            try:
+                prereg = freeze_structured_repair_screen(
+                    store, repo, forge_artifact=forge, private_bundle=private, adapter=adapter,
+                )
+                private = copy.deepcopy(private)
+                private["cases"][0]["external_test"] = "assert True\n"
+                now = time.time()
+                grant = CapabilityGrant(
+                    workspace_root=str(host), allowed_tools=(), principal_id="audit",
+                    purpose="private-binding-test", issued_at=now, expires_at=now + 120,
+                    max_tool_calls=0, max_total_tool_seconds=0,
+                )
+                with patch("cortex.structured_repair_screen.NativeAgentRuntime") as runtime:
+                    with self.assertRaisesRegex(ValueError, "private evaluator binding"):
+                        execute_structured_repair_screen(
+                            store, repo, preregistration=prereg, private_bundle=private,
+                            adapter=adapter, tools=ToolRegistry(), grant=grant,
+                        )
+                    runtime.assert_not_called()
+            finally:
+                store.close()
+
+    def test_hash_valid_receipts_cannot_substitute_for_cross_receipt_bindings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = self._fixture(temp)
+            store, repo, _, _, _, _ = fixture
+            try:
+                _, result = self._run(fixture)
+                first = store.symbiotic_receipt(result["case_receipt_hashes"][0], repo=repo)
+                serial = 0
+
+                def seal(body):
+                    nonlocal serial
+                    serial += 1
+                    body = copy.deepcopy(body)
+                    body["turn_id"] = 100 + serial
+                    body["event_id"] = f"audit-resealed-{serial}"
+                    return store.append_symbiotic_receipt(repo, body)
+
+                accepted = []
+                for field, value in (
+                    ("calls_executed", 99), ("baseline_calibrated", True),
+                    ("next_action", "promote"), ("model_identity", {"model_id": "unrelated"}),
+                    ("kind", "unrelated_result"), ("evidence_class", "synthetic"),
+                ):
+                    forged = seal({**result, field: value})
+                    if verify_structured_repair_screen(store, repo, result_receipt_hash=forged["receipt_hash"])["valid"]:
+                        accepted.append("result:" + field)
+                for field, value in (
+                    ("case_hash", "0" * 64),
+                    ("preregistration_receipt_hash", "0" * 64),
+                    ("kind", "unrelated_case"), ("evidence_class", "synthetic"),
+                    ("execution_authorized", True),
+                ):
+                    forged_case = seal({**first, field: value})
+                    forged = seal({**result, "case_receipt_hashes": [forged_case["receipt_hash"], *result["case_receipt_hashes"][1:]]})
+                    if verify_structured_repair_screen(store, repo, result_receipt_hash=forged["receipt_hash"])["valid"]:
+                        accepted.append("case:" + field)
+                evaluation = copy.deepcopy(first["evaluation"])
+                evaluation["evaluator_commitment"] = "0" * 64
+                evaluation["evaluation_hash"] = hashlib.sha256(json.dumps(
+                    {k: v for k, v in evaluation.items() if k != "evaluation_hash"},
+                    sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                ).encode()).hexdigest()
+                forged_case = seal({**first, "evaluation": evaluation})
+                forged = seal({**result, "case_receipt_hashes": [forged_case["receipt_hash"], *result["case_receipt_hashes"][1:]]})
+                if verify_structured_repair_screen(store, repo, result_receipt_hash=forged["receipt_hash"])["valid"]:
+                    accepted.append("evaluation:evaluator_commitment")
+                self.assertEqual(accepted, [], "Hash-valid substitutions accepted: " + str(accepted))
+            finally:
+                store.close()
+
     def _fixture(self, temp: str, *, valid_answers: bool = True):
         root = Path(temp)
         home = ensure_home(root / "home")
