@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import tempfile
+import uuid
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,14 @@ from .native_agent import NativeAgentRuntime, verify_native_agent_trajectory
 from .symbiosis import open_symbiotic_session
 
 PLANNED_CALLS = 4
+REPEAT_POLICY = {
+    "purpose": "fixed_corpus_repeatability",
+    "new_calls": 4,
+    "automatic_retries": 0,
+    "difficulty_change_authorized": False,
+    "fresh_distinct_tasks": 0,
+    "confirmatory_eligible": False,
+}
 
 
 def _canonical(value: Any) -> str:
@@ -67,6 +76,22 @@ def _private_binding_errors(prereg: Mapping[str, Any], private: Mapping[str, Any
     return errors
 
 
+def _assert_evaluators_unchallenged(store: Any, repo: str, cases: list[dict[str, Any]]) -> None:
+    """A host challenge can close inference, never grant it or rewrite history.
+
+    Challenges are exact-commitment scoped and append-only. A corrected evaluator
+    needs a new commitment; a caller's 'resolved' flag cannot reopen this one.
+    Historical receipt reconstruction deliberately does not consult this gate.
+    """
+    challenges = store.symbiotic_receipts_by_kind(repo, "repair_evaluator_challenge", limit=10000)
+    if len(challenges) == 10000:
+        raise ValueError("evaluator challenge coverage unknown; no model calls permitted")
+    commitments = {case["private_evaluator_commitment"] for case in cases}
+    for challenge in challenges:
+        if challenge.get("evaluator_commitment") in commitments:
+            raise ValueError("evaluator challenged; create and verify a corrected evaluator before new model calls")
+
+
 def _screen(successes: int) -> dict[str, Any]:
     calibrated = successes == 2
     return {
@@ -89,6 +114,68 @@ def _screen(successes: int) -> dict[str, Any]:
     }
 
 
+def _screen_for_prereg(prereg: Mapping[str, Any], successes: int) -> dict[str, Any]:
+    if prereg.get("repeatability_binding") is None:
+        return _screen(successes)
+    return {
+        "case_count": 4,
+        "success_count": successes,
+        "success_rate": successes / 4,
+        "state": "repeatability_observed",
+        "recommended_action": "inspect_repeatability_before_fresh_case_confirmation",
+        "development_only": True,
+        "confirmatory_eligible": False,
+    }
+
+
+def _repeat_binding_errors(store: Any, repo: str, prereg: Mapping[str, Any]) -> list[str]:
+    binding = prereg.get("repeatability_binding")
+    if binding is None:
+        return [] if prereg.get("schema_version") == "cortex-structured-repair-preregistration/1.0" else ["screen_policy_missing"]
+    if (
+        not isinstance(binding, Mapping)
+        or set(binding) != {"prior_result_receipt_hash", "policy"}
+        or _canonical(binding.get("policy")) != _canonical(REPEAT_POLICY)
+        or prereg.get("schema_version") != "cortex-structured-repair-preregistration/1.1"
+        or prereg.get("prior_screen_binding") is not None
+    ):
+        return ["repeatability_policy_invalid"]
+    prior_hash = str(binding["prior_result_receipt_hash"])
+    prior = store.symbiotic_receipt(prior_hash, repo=repo) or {}
+    origin = store.symbiotic_receipt(str(prior.get("preregistration_receipt_hash") or ""), repo=repo) or {}
+    # No recursive receipt graph: a repeat points to a legacy baseline, not another repeat.
+    if origin.get("repeatability_binding") is not None:
+        return ["repeatability_origin_must_be_baseline"]
+    if verify_structured_repair_screen(store, repo, result_receipt_hash=prior_hash).get("valid") is not True:
+        return ["repeatability_origin_invalid"]
+    frozen_fields = (
+        "cases", "corpus_hash", "private_bundle_hash", "response_contract",
+        "model_identity", "adapter_provenance", "context_treatment", "tools", "planned_calls",
+    )
+    return [f"repeatability_binding_changed:{field}" for field in frozen_fields if prereg.get(field) != origin.get(field)]
+
+
+def _repeat_comparison(store: Any, repo: str, prereg: Mapping[str, Any], cases: list[dict[str, Any]]) -> dict[str, Any]:
+    prior = store.symbiotic_receipt(prereg["repeatability_binding"]["prior_result_receipt_hash"], repo=repo)
+    origins = [store.symbiotic_receipt(value, repo=repo) for value in prior["case_receipt_hashes"]]
+    rows = [{
+        "case_id": new["case_id"],
+        "prior_success": old["task_success"],
+        "repeat_success": new["task_success"],
+        "same_outcome": old["task_success"] is new["task_success"],
+    } for old, new in zip(origins, cases)]
+    return {
+        "case_pairs": rows,
+        "distinct_task_count": len(rows),
+        "invocation_observations": len(rows) * 2,
+        "changed_outcomes": sum(not row["same_outcome"] for row in rows),
+        "repeated_failures": sum(not row["prior_success"] and not row["repeat_success"] for row in rows),
+        "independent_task_sample_size": None,
+        "population_inference": "not_established",
+        "causal_treatment_effect": "not_tested",
+    }
+
+
 def freeze_structured_repair_screen(
     store: Any,
     repo: str,
@@ -98,6 +185,7 @@ def freeze_structured_repair_screen(
     adapter: Any,
     prior_result_receipt_hash: str | None = None,
     governed_prerequisite: Mapping[str, Any] | None = None,
+    repeat_of_result_receipt_hash: str | None = None,
 ) -> dict[str, Any]:
     public = forge_artifact.get("public_corpus") or {}
     alignment_binding: dict[str, Any] | None = None
@@ -132,6 +220,7 @@ def freeze_structured_repair_screen(
     ):
         raise ValueError("host-registered live adapter provenance is required")
     cases = list(public.get("cases") or ())
+    _assert_evaluators_unchallenged(store, repo, cases)
     if len(cases) != PLANNED_CALLS:
         raise ValueError("structured screen requires exactly four cases")
     if len({case.get("case_id") for case in cases}) != PLANNED_CALLS:
@@ -190,6 +279,15 @@ def freeze_structured_repair_screen(
         "memory_admission_authorized": False,
         "policy_effect": False,
     }
+    if repeat_of_result_receipt_hash:
+        material["schema_version"] = "cortex-structured-repair-preregistration/1.1"
+        material["repeatability_binding"] = {
+            "prior_result_receipt_hash": repeat_of_result_receipt_hash,
+            "policy": dict(REPEAT_POLICY),
+        }
+        errors = _repeat_binding_errors(store, repo, material)
+        if errors:
+            raise ValueError("repeatability prerequisite invalid: " + ",".join(errors))
     session = open_symbiotic_session(
         store, repo, task="freeze external-private structured repair screen", persist=True
     )
@@ -226,10 +324,26 @@ def execute_structured_repair_screen(
     ):
         raise ValueError("structured runtime binding invalid")
     binding_errors = _private_binding_errors(prereg, private_bundle)
+    binding_errors.extend(_repeat_binding_errors(store, repo, prereg))
     if binding_errors:
         raise ValueError("structured private evaluator binding invalid: " + ",".join(binding_errors))
+    _assert_evaluators_unchallenged(store, repo, prereg["cases"])
     if grant.allowed_tools or grant.max_tool_calls != 0 or grant.max_total_tool_seconds != 0:
         raise ValueError("structured screen requires a zero-tool grant")
+    execution_claim = None
+    if prereg.get("repeatability_binding") is not None:
+        # Store's unique (repo, session, turn, kind) constraint spends this run
+        # exactly once, including parallel launches. A partial run stays held;
+        # it cannot silently retry paid calls under the same preregistration.
+        execution_claim = store.append_symbiotic_receipt(repo, {
+            "kind": "structured_repair_execution_claim",
+            "session_id": prereg["session_id"], "turn_id": 1,
+            "body_epoch_id": prereg["body_epoch_id"],
+            "event_id": "structured_repeat_claim_" + uuid.uuid4().hex,
+            "preregistration_receipt_hash": prereg_hash,
+            "host_mutate_authorized": False, "execution_authorized": False,
+            "memory_admission_authorized": False, "policy_effect": False,
+        })
     private_cases = {str(case["case_id"]): case for case in private_bundle["cases"]}
     runtime = NativeAgentRuntime(store, repo, tools=tools, max_iterations=1)
     sealed = []
@@ -297,7 +411,7 @@ def execute_structured_repair_screen(
                 },
             )
         )
-    screen = _screen(sum(case["task_success"] is True for case in sealed))
+    screen = _screen_for_prereg(prereg, sum(case["task_success"] is True for case in sealed))
     material = {
         "schema_version": "cortex-structured-repair-result/1.0",
         "version": __version__,
@@ -319,6 +433,9 @@ def execute_structured_repair_screen(
         "memory_admission_authorized": False,
         "policy_effect": False,
     }
+    if execution_claim is not None:
+        material["execution_claim_receipt_hash"] = execution_claim["receipt_hash"]
+        material["repeatability"] = _repeat_comparison(store, repo, prereg, sealed)
     session = open_symbiotic_session(
         store, repo, task="seal structured repair result", persist=True
     )
@@ -349,6 +466,11 @@ def _verify_structured_repair_screen(
     ):
         errors.append("preregistration_invalid")
     expected_cases = prereg.get("cases") or []
+    errors.extend(_repeat_binding_errors(store, repo, prereg))
+    if prereg.get("repeatability_binding") is None and (
+        "repeatability" in result or "execution_claim_receipt_hash" in result
+    ):
+        errors.append("unexpected_repeatability_fields")
     case_hashes = result.get("case_receipt_hashes") or []
     if (
         not isinstance(expected_cases, list)
@@ -381,12 +503,14 @@ def _verify_structured_repair_screen(
         if prereg.get(field) is not False:
             errors.append(f"preregistration_authority_invalid:{field}")
     observed = []
+    canonical_cases = []
     successes = 0
     for expected_case, receipt_hash in zip(expected_cases, case_hashes):
         if store.verify_symbiotic_receipt(repo, str(receipt_hash)).get("valid") is not True:
             errors.append(f"case_invalid:{receipt_hash}")
             continue
         case = store.symbiotic_receipt(str(receipt_hash), repo=repo) or {}
+        canonical_cases.append(case)
         observed.append(str(case.get("case_id") or ""))
         if (
             case.get("kind") != "structured_repair_case"
@@ -461,11 +585,37 @@ def _verify_structured_repair_screen(
         successes += case.get("task_success") is True
     if observed != [str(case["case_id"]) for case in prereg.get("cases") or ()] or result.get(
         "screen"
-    ) != _screen(successes):
+    ) != _screen_for_prereg(prereg, successes):
         errors.append("screen_reconstruction_invalid")
-    reconstructed = _screen(successes)
+    reconstructed = _screen_for_prereg(prereg, successes)
     if result.get("baseline_calibrated") is not (reconstructed["state"] == "structured_baseline_calibrated") or result.get("next_action") != reconstructed["recommended_action"]:
         errors.append("result_disposition_invalid")
+    if prereg.get("repeatability_binding") is not None and not errors:
+        claim_hash = str(result.get("execution_claim_receipt_hash") or "")
+        claim = store.symbiotic_receipt(claim_hash, repo=repo) or {}
+        if (
+            store.verify_symbiotic_receipt(repo, claim_hash).get("valid") is not True
+            or claim.get("kind") != "structured_repair_execution_claim"
+            or claim.get("session_id") != prereg.get("session_id")
+            or claim.get("turn_id") != 1
+            or claim.get("preregistration_receipt_hash") != prereg_hash
+            or any(claim.get(field) is not False for field in authority_fields)
+        ):
+            errors.append("repeatability_execution_claim_invalid")
+        prior = store.symbiotic_receipt(prereg["repeatability_binding"]["prior_result_receipt_hash"], repo=repo)
+        old_trajectories = {store.symbiotic_receipt(value, repo=repo)["trajectory_receipt_hash"] for value in prior["case_receipt_hashes"]}
+        new_trajectories = {case["trajectory_receipt_hash"] for case in canonical_cases}
+        if len(new_trajectories) != PLANNED_CALLS or new_trajectories & old_trajectories:
+            errors.append("repeatability_trajectory_replay")
+        for case in canonical_cases:
+            trajectory = store.symbiotic_receipt(case["trajectory_receipt_hash"], repo=repo)
+            if (
+                trajectory.get("created_at", 0) < claim.get("created_at", float("inf"))
+                or any(request.get("requested_at", 0) < claim.get("created_at", float("inf")) for request in trajectory["requests"])
+            ):
+                errors.append("repeatability_chronology_invalid")
+        if result.get("repeatability") != _repeat_comparison(store, repo, prereg, canonical_cases):
+            errors.append("repeatability_comparison_invalid")
     for field in (
         "semantic_transfer_established",
         "general_improvement_established",
@@ -479,7 +629,7 @@ def _verify_structured_repair_screen(
     return {
         "valid": not errors,
         "errors": errors,
-        "screen": _screen(successes),
+        "screen": reconstructed,
         "result_receipt_hash": result_receipt_hash,
         "preregistration_receipt_hash": prereg_hash,
         "verification_scope": "receipt_integrity_and_experiment_bindings",

@@ -20,6 +20,7 @@ from .executable_repair_forge import (
     commission_executable_repair_forge,
     verify_executable_repair_bundle,
     verify_executable_repair_forge_result,
+    evaluate_executable_patch,
 )
 
 PUBLIC_SCHEMA = "cortex-contract-aligned-repair-corpus/1.0"
@@ -30,6 +31,63 @@ CLAIM_BOUNDARY = (
     "public requirement. The mapping is host-authored and does not itself prove "
     "semantic entailment, model repair ability, or improvement. Zero model calls execute."
 )
+
+
+def audit_contract_aligned_controls(
+    public: Mapping[str, Any], private: Mapping[str, Any],
+    controls: Mapping[str, Sequence[Mapping[str, Any]]], root: Path,
+) -> dict[str, Any]:
+    """Challenge an evaluator using alternate allowed implementations and mutants.
+
+    Expected labels are host judgments, not semantic proof. A passing reference
+    alone cannot compensate for a rejected alternate or an accepted mutant.
+    This local instrument audit does not produce empirical model evidence.
+    """
+    executable, secrets = executable_bundle_from_contract_aligned(public, private)
+    public_cases = {case["case_id"]: case for case in executable["cases"]}
+    private_cases = {case["case_id"]: case for case in secrets["cases"]}
+    if not controls or set(controls) - set(public_cases):
+        raise ValueError("controls require known case identities")
+    # Validate the entire panel before executing any candidate program.
+    for rows in controls.values():
+        if (
+            any(set(row) != {"control_id", "patch", "expected_pass"} for row in rows)
+            or any(type(row["expected_pass"]) is not bool or not isinstance(row["patch"], str) for row in rows)
+            or len({row["control_id"] for row in rows}) != len(rows)
+            or len({row["patch"] for row in rows if row["expected_pass"]}) < 2
+            or not any(not row["expected_pass"] for row in rows)
+        ):
+            raise ValueError("each panel needs two distinct allowed repairs and a negative control")
+    observations = []
+    for case_id, rows in controls.items():
+        for row in rows:
+            result = evaluate_executable_patch(
+                public_cases[case_id], private_cases[case_id], row["patch"],
+                root / f"control-{len(observations)}",
+            )
+            observations.append({
+                "case_id": case_id, "control_id": row["control_id"],
+                "patch_hash": _sha(row["patch"]),
+                "expected_pass": row["expected_pass"],
+                "observed_pass": result["candidate_pass"],
+                "expectation_met": result["candidate_pass"] is row["expected_pass"],
+                "evaluation_hash": result["evaluation_hash"],
+            })
+    report = {
+        "schema_version": "cortex-evaluator-control-audit/1.0",
+        "state": "CONTROL_PANEL_PASS" if all(row["expectation_met"] for row in observations) else "EVALUATOR_CHALLENGED",
+        "corpus_hash": public["corpus_hash"],
+        "evaluator_commitments": {case_id: public_cases[case_id]["private_evaluator_commitment"] for case_id in controls},
+        "observations": observations, "additional_model_calls": 0,
+        "evidence_class": "local_instrument_audit",
+        "expected_labels": "host_reviewed_not_semantically_proven",
+        "universal_implementation_equivalence": False,
+        "semantic_transfer_established": False, "general_improvement_established": False,
+        "host_mutate_authorized": False, "execution_authorized": False,
+        "memory_admission_authorized": False, "policy_effect": False,
+    }
+    report["result_hash"] = _sha(report)
+    return report
 
 
 def _canonical(value: Any) -> str:
