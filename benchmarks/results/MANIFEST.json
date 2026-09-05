@@ -1,5 +1,5 @@
 {
-  "benchmark_suite_hash": "25ffb703697fe370f970ea0a09e85f1d0683aaab2dda19167184bef45ea0c508",
+  "benchmark_suite_hash": "a0cdd8dea690b98f0e4b7b86443c5a4cb9922dc36b6aa8e4a02eada548ff5492",
   "cortex_version": "10.0.0a39",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 50,
+  "result_count": 53,
   "results": [
     {
       "bytes": 3346,
@@ -21,6 +21,24 @@
       "metadata_state": "legacy_partial",
       "path": "benchmarks/results/foreign_host_matrix.json",
       "sha256": "99219b10b0481a0b8abcb5dc40861ed356209a5d8299ffa47a675dae965b133e"
+    },
+    {
+      "bytes": 27573,
+      "metadata_state": "zero_call_contract_aligned_repair_forge_ready",
+      "path": "benchmarks/results/fresh_audited_forge_2026-09-05.json",
+      "sha256": "ef042ba611e79251b961695768709384ee70871c6df7edd32163da5314989688"
+    },
+    {
+      "bytes": 783,
+      "metadata_state": "zero_call_audited_screen_frozen",
+      "path": "benchmarks/results/fresh_audited_screen_prereg_2026-09-05.json",
+      "sha256": "da39bf66343dad32d473dab39755ed45538e9a2df7751ec8f8174d3d2b75f5d4"
+    },
+    {
+      "bytes": 3961,
+      "metadata_state": "development_live_audited_screening_ceiling",
+      "path": "benchmarks/results/fresh_audited_screen_result_2026-09-05.json",
+      "sha256": "a6787abd96974780a6301b08a63c947439ce903f31a8e8f2c974e7dde86156d7"
     },
     {
       "bytes": 8378,
@@ -316,5 +334,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "3ad7ee04dfc6218f3f287f5ba51385c090c802a2"
+  "source_commit": "0f97a732a9734f9a313b8ec637e01cb89c97fbb7"
 }
