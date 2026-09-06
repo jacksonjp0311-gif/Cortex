@@ -1,5 +1,5 @@
 {
-  "benchmark_suite_hash": "7fa026828880c20f6ce13cb1fe9b34436045ced0970bb842fa571f65f87a78db",
+  "benchmark_suite_hash": "c4aedef0fe3c8917ad4288f7dd14546d5b1dfa82ac273c059547c7e7e6c4d3d2",
   "cortex_version": "10.0.0a39",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 59,
+  "result_count": 62,
   "results": [
     {
       "bytes": 3346,
@@ -75,6 +75,24 @@
       "metadata_state": "development_calibration",
       "path": "benchmarks/results/frontier_calibration_v980_grok46.json",
       "sha256": "efe37950ff7c42b8d017d6917d0e3fc39561ac4943d243b3c8da2d1768495151"
+    },
+    {
+      "bytes": 6817,
+      "metadata_state": "zero_call_gso_path_audit_not_adaptation_evidence",
+      "path": "benchmarks/results/gso_historical_path_inspection_2026-09-06.json",
+      "sha256": "de00303911062546906e64e0aa23acfa50ac12dcf20a4bbde39cfee43ae20b3c"
+    },
+    {
+      "bytes": 4034,
+      "metadata_state": "zero_call_gso_path_audit_not_adaptation_evidence",
+      "path": "benchmarks/results/gso_transduction_audit_2026-09-06.json",
+      "sha256": "0862a8d4d5bbec612c0a241b56b809d1a1756c7693b23f7771ab803ac5450104"
+    },
+    {
+      "bytes": 4146,
+      "metadata_state": "zero_call_gso_path_audit_not_adaptation_evidence",
+      "path": "benchmarks/results/gso_transduction_committed_check_2026-09-06.json",
+      "sha256": "95847188f6f147a99dce36506cadf019ade68a6439cec23e6c183e32a359397f"
     },
     {
       "bytes": 17492,
@@ -370,5 +388,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "16d2d52ff5903959070c32d8c00dbfdb2482924b"
+  "source_commit": "86bbae17b21d98ac21a80cd5ce5d47e437de8340"
 }
