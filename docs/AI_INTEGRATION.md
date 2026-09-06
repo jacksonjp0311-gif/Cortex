@@ -1,5 +1,9 @@
 # AI Integration
 
+> Integration reference. Begin with [AGENT_START](AGENT_START.md) and
+> [STATUS](STATUS.md) for current runtime orientation. The constitutional read
+> order below applies to that specialized topic, not every agent task.
+
 ## Constitutional math (read before redesign)
 
 When working on Cortex **constitution, epochs, geometry, promotion, federation, or spectral coupling**, agents should load:

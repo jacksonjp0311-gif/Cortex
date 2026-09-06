@@ -1,0 +1,140 @@
+{
+  "schema_version": "cortex-transduction-control-audit/1.0",
+  "state": "READY_WITHIN_CONTROLS",
+  "observations": [
+    {
+      "control": "first_line_import",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "interior",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "final_line",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "multi_hunk",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "multi_file_nested",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "utf8",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "blank_added",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "repeated_target_sequential",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "no_terminal_newline",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "trailing_whitespace",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:proposal does not apply to isolated source HEAD"
+    },
+    {
+      "control": "stale_preimage",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:edit preimage must resolve exactly once: a.py:0"
+    },
+    {
+      "control": "unauthorized_target",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:edit target is outside the host-declared scope"
+    },
+    {
+      "control": "malformed_patch",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:proposal must be a git unified diff"
+    },
+    {
+      "control": "numeric_edit",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:edit fields must be strings"
+    },
+    {
+      "control": "distorted_patch",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "EVALUATOR_REJECTION"
+    },
+    {
+      "control": "evaluator_changes_candidate",
+      "expected": "HOLD_DISTORTED_OBSERVATION",
+      "expectation_met": true,
+      "verifier_status": "held",
+      "expected_vs_recorded_postimage_mismatch": true
+    }
+  ],
+  "expectations_met": 16,
+  "control_count": 16,
+  "model_calls": 0,
+  "evidence_class": "local_structural_audit",
+  "anchors": [
+    "host-authored expected bytes and controls",
+    "local Git and Python execution"
+  ],
+  "unresolved": [
+    "finite controls only",
+    "host execution not independently attested",
+    "raw subprocess observation transport not lossless",
+    "no recursive organization experiment"
+  ],
+  "adaptation_authorized": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "source_commit": "6f134f15a88123b690094daa642f2aee5a5a5c8f",
+  "python_version": "3.12.2",
+  "operating_system": "Windows",
+  "implementation_hashes": {
+    "cortex/edit_intent.py": "5f4d1dfdf52d43d67a98fa56613892ba0eb514bd7e5c3bbf4bb5e08f32436928",
+    "cortex/coding_workspace.py": "547fb69b3a0bedb3df718462ac18b30e971704ff124bc31af9713aabceb19538",
+    "cortex/epistemic_instrumentation.py": "f65e5b9f0785d407c723d655d17bc9eef6584dad31929741b9dce8ef57862091",
+    "benchmarks/transduction_assurance.py": "d39d101ed78eb81be171e9dc76e5f8504878fcb86110c06008246b843b7550c6"
+  }
+}

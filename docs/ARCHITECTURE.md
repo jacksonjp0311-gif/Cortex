@@ -1,5 +1,8 @@
 # Cortex Neural Interlink Architecture
 
+> Specialized memory/interlink architecture, not the current whole-system map.
+> Start with [SYSTEM_MAP](SYSTEM_MAP.md) and [STATUS](STATUS.md).
+
 ## Purpose
 
 Cortex is a local repository-assimilation and selective-memory organ. It inventories and verifies a repository once, then supplies bounded task context to an AI agent. The neural interlink is an internal routing layer over Cortex's existing memory and graph; it is not a second brain, database, or authority system.

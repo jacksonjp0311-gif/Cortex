@@ -1,3 +1,54 @@
+# Cortex research
+
+[Current status](../STATUS.md) · [Evidence guide](../EVIDENCE.md) · [System map](../SYSTEM_MAP.md)
+
+## Active frontier
+
+| Question | Status | Latest report | Next gate |
+|---|---|---|---|
+| Does the candidate survive its complete measurement path? | Three sampled defects fixed; complete path HELD | [Transduction revision](TRANSDUCTION_REVISION_2026-09-06.md) | Compiler-to-applied artifact binding and observation assurance |
+| Can verified semantics improve fresh cognition? | NOT ESTABLISHED | [Epistemic instrumentation](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md) | Fresh discriminative tasks; frozen A/B/C study |
+| Can retained organization improve future variation? | PLANNED / HELD | [GSO audit](GOVERNED_SELF_ORGANIZATION.md) | Assured path before shadow recursive kernel |
+| Can humans and agents find the correct canonical state? | Navigation architecture implemented; utility unmeasured | [Documentation migration](../DOCUMENTATION_MIGRATION.md) | Navigation-fidelity study, not more documentation volume |
+
+## Current measurement theory
+
+[Evidence-governed state](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md)
+connects bounded instrument support, canonical views and claim gates.
+[GSO](GOVERNED_SELF_ORGANIZATION.md) extends the hypothesis to faithful transduction.
+[Mathematical contract audit](MATHEMATICAL_CONTRACT_AUDIT_2026-09-04.md) distinguishes
+support bits, authority gates, bounded context and measured effects.
+
+Epistemic topology is an architectural hypothesis: evidence → canonicality →
+relationships → retrieval → context → cognition. A documentation graph is not
+proof of model utility. Organizational heredity remains a future causal question.
+
+## Empirical program and negative results
+
+| Record | Interpretation |
+|---|---|
+| [Instrument challenge](REPAIR_INSTRUMENT_AUDIT_2026-09-05.md) | An evaluator rejected an allowed representation; post-hoc audit is not new inference |
+| [Fresh audited screen](FRESH_AUDITED_SCREEN_2026-09-05.md) | 4/4 ceiling; no treatment contrast |
+| [Fixed L3 cohort](FIXED_L3_COHORT_2026-09-06.md) | Historical 5/8; transport-confounded, no reasoning calibration |
+| [GSO initial audit](GOVERNED_SELF_ORGANIZATION.md) | Historical 13/16 local expectations; preserved counterexamples |
+| [Current revision](TRANSDUCTION_REVISION_2026-09-06.md) | New zero-call controls, separate from every historical score |
+
+[Machine evidence index](../../benchmarks/results/MANIFEST.json). Nulls, challenged
+instruments and failed methods are useful records, not candidates for erasure.
+
+## Foundational theory and discovery history
+
+Foundational geometry is not the current-runtime entry point. Agents first use
+[AGENT_START](../AGENT_START.md), then the topic-specific source. Applicable host
+AGENTS.md requirements remain controlling.
+
+The preserved index below retains all earlier research links and reading material.
+References calling themselves a primary map mean the **foundational mathematical
+arc**, not current runtime or release status. Old phase claims are date-scoped.
+
+<details>
+<summary>Foundational reading list, historical phases and discovery ledgers</summary>
+
 # Cortex research notes
 
 **For humans and AI agents.** Start here when parsing constitutional or mathematical structure.
@@ -70,3 +121,5 @@ calibrated frontier or a semantic-transfer result.
 ## Claim boundary
 
 Research notes are experimental systems mathematics. Not consciousness. Not universal law.
+
+</details>

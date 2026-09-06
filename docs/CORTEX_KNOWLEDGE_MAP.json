@@ -1,0 +1,2073 @@
+{
+  "schema_version": "cortex-knowledge-map/1.0",
+  "source_commit": "6f134f15a88123b690094daa642f2aee5a5a5c8f",
+  "source_commit_semantics": "reviewed baseline; implementation fingerprints maintained by docs checker, not self-referential HEAD",
+  "product_version": "10.0.0a39",
+  "entry_points": {
+    "human": "README.md",
+    "docs": "docs/README.md",
+    "agent": "docs/AGENT_START.md",
+    "architecture": "docs/SYSTEM_MAP.md",
+    "status": "docs/STATUS.md",
+    "evidence": "docs/EVIDENCE.md",
+    "research": "docs/research/README.md"
+  },
+  "concepts": [
+    {
+      "id": "receipts",
+      "name": "Store / receipts",
+      "summary": "Store / receipts; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/store.py"
+      ],
+      "documentation": [
+        "docs/DATA_MODEL.md"
+      ],
+      "tests": [
+        "tests/test_symbiosis_ledger.py"
+      ],
+      "benchmarks": [],
+      "evidence": [
+        "benchmarks/results/fixed_l3_stage0_2026-09-06.json"
+      ],
+      "depends_on": [],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "VERIFIED WITHIN TESTS",
+      "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    },
+    {
+      "id": "memory",
+      "name": "Governed memory",
+      "summary": "Governed memory; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/admitted_memory.py",
+        "cortex/memory_projection.py"
+      ],
+      "documentation": [
+        "docs/DATA_MODEL.md"
+      ],
+      "tests": [
+        "tests/test_admitted_memory.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [
+        "receipts"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "VERIFIED WITHIN TESTS",
+      "evidence_gap": "No dedicated empirical artifact linked; tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "semantic",
+      "name": "Semantic projection",
+      "summary": "Semantic projection; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/semantic_projection.py"
+      ],
+      "documentation": [
+        "docs/research/EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md"
+      ],
+      "tests": [
+        "tests/test_v100_alpha14_semantic_projection.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [
+        "memory"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "UTILITY NOT ESTABLISHED",
+      "evidence_gap": "No dedicated empirical artifact linked; tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "epistemic",
+      "name": "Epistemic state",
+      "summary": "Epistemic state; follow domain evidence and authority boundaries.",
+      "lifecycle": "EXPERIMENTAL",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [
+        "cortex/epistemic_kernel.py"
+      ],
+      "documentation": [
+        "docs/research/MATHEMATICAL_CONTRACT_AUDIT_2026-09-04.md"
+      ],
+      "tests": [
+        "tests/test_v100_alpha16_epistemic_kernel.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [
+        "receipts"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "VERIFIED WITHIN TESTS",
+      "evidence_gap": "No dedicated empirical artifact linked; tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "instruments",
+      "name": "Instrument assurance",
+      "summary": "Instrument assurance; follow domain evidence and authority boundaries.",
+      "lifecycle": "EXPERIMENTAL",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [
+        "cortex/epistemic_instrumentation.py",
+        "cortex/contract_aligned_repair.py"
+      ],
+      "documentation": [
+        "docs/research/EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md"
+      ],
+      "tests": [
+        "tests/test_epistemic_instrumentation.py"
+      ],
+      "benchmarks": [],
+      "evidence": [
+        "benchmarks/results/fixed_l3_forge_2026-09-06.json"
+      ],
+      "depends_on": [
+        "receipts"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "BOUNDED CONTROLS",
+      "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    },
+    {
+      "id": "transduction",
+      "name": "Transduction assurance",
+      "summary": "Transduction assurance; follow domain evidence and authority boundaries.",
+      "lifecycle": "EXPERIMENTAL",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [
+        "cortex/edit_intent.py",
+        "cortex/coding_workspace.py"
+      ],
+      "documentation": [
+        "docs/research/TRANSDUCTION_REVISION_2026-09-06.md"
+      ],
+      "tests": [
+        "tests/test_transduction_assurance.py",
+        "tests/test_patch_transport.py"
+      ],
+      "benchmarks": [
+        "benchmarks/transduction_assurance.py"
+      ],
+      "evidence": [
+        "benchmarks/results/gso_transduction_revision_2026-09-06.json"
+      ],
+      "depends_on": [
+        "instruments"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "COMPLETE PATH HELD",
+      "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    },
+    {
+      "id": "runtime",
+      "name": "Native agent runtime",
+      "summary": "Native agent runtime; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/native_agent.py",
+        "cortex/chat_service.py"
+      ],
+      "documentation": [
+        "docs/v10/README.md",
+        "docs/v10/CORTEX_CHAT.md"
+      ],
+      "tests": [
+        "tests/test_v100_native_agent.py"
+      ],
+      "benchmarks": [],
+      "evidence": [
+        "benchmarks/results/fixed_l3_stage0_2026-09-06.json"
+      ],
+      "depends_on": [
+        "semantic",
+        "authority",
+        "providers"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "BOUNDED LIVE EVIDENCE",
+      "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    },
+    {
+      "id": "providers",
+      "name": "Provider fabric",
+      "summary": "Provider fabric; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/provider_fabric.py",
+        "cortex/secret_store.py"
+      ],
+      "documentation": [
+        "docs/v10/PROVIDER_FABRIC.md",
+        "docs/v10/SECRET_STORAGE.md"
+      ],
+      "tests": [
+        "tests/test_v100_alpha2_interface.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "LIVE PATHS NOT ALL PROVIDERS RETESTED",
+      "evidence_gap": "No dedicated empirical artifact linked; tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "authority",
+      "name": "Host authority",
+      "summary": "Host authority; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/native_agent.py",
+        "cortex/autonomous_improvement.py"
+      ],
+      "documentation": [
+        "docs/intelligence/TOPOLOGY_LAW.md",
+        "SECURITY.md"
+      ],
+      "tests": [
+        "tests/test_v100_native_agent.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "MECHANISM TESTED; HOST CONTROL",
+      "evidence_gap": "No dedicated empirical artifact linked; tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "repair",
+      "name": "Structured repair",
+      "summary": "Structured repair; follow domain evidence and authority boundaries.",
+      "lifecycle": "EXPERIMENTAL",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [
+        "cortex/structured_repair_screen.py",
+        "cortex/repair_calibration_cohort.py",
+        "cortex/executable_repair_forge.py"
+      ],
+      "documentation": [
+        "docs/research/FIXED_L3_COHORT_2026-09-06.md"
+      ],
+      "tests": [
+        "tests/test_repair_calibration_cohort.py",
+        "tests/test_multifile_instrument_frontier.py"
+      ],
+      "benchmarks": [],
+      "evidence": [
+        "benchmarks/results/fixed_l3_stage0_2026-09-06.json",
+        "benchmarks/results/fixed_l3_stage1_2026-09-06.json"
+      ],
+      "depends_on": [
+        "runtime",
+        "transduction"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "HISTORICAL 5/8; FRONTIER HELD",
+      "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    },
+    {
+      "id": "competence",
+      "name": "Competence candidates",
+      "summary": "Competence candidates; follow domain evidence and authority boundaries.",
+      "lifecycle": "CURRENT",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "implementation": [
+        "cortex/competence.py",
+        "cortex/competence_revision.py"
+      ],
+      "documentation": [
+        "docs/research/EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md"
+      ],
+      "tests": [
+        "tests/test_v91_competence.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [
+        "receipts",
+        "instruments"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "GENERAL COMPETENCE NOT ESTABLISHED",
+      "evidence_gap": "No dedicated empirical artifact linked; tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "gso",
+      "name": "Governed cumulative organization",
+      "summary": "Governed cumulative organization; follow domain evidence and authority boundaries.",
+      "lifecycle": "PLANNED",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [],
+      "documentation": [
+        "docs/research/GOVERNED_SELF_ORGANIZATION.md"
+      ],
+      "tests": [],
+      "benchmarks": [],
+      "evidence": [
+        "benchmarks/results/gso_historical_path_inspection_2026-09-06.json"
+      ],
+      "depends_on": [
+        "transduction",
+        "instruments",
+        "authority"
+      ],
+      "supports": [],
+      "related_to": [],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "HELD; NO RECURSIVE EFFECT",
+      "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    }
+  ],
+  "documents": [
+    {
+      "path": "docs/DOCUMENTATION_MIGRATION.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "reviewed preservation inventory",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "role": "AI_INTEGRATION",
+      "canonicality": "REFERENCE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "BENCHMARK_REPORT.md",
+      "role": "GENERATED_REPORT",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "README.md",
+      "role": "HUMAN_ENTRY",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "README_ARCHIVE_2026-09-06.md",
+      "role": "HISTORICAL_ARCHITECTURE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "RELEASE_MANIFEST.json",
+      "role": "GENERATED_REPORT",
+      "canonicality": "GENERATED",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "benchmarks/results/MANIFEST.json",
+      "role": "MACHINE_EVIDENCE",
+      "canonicality": "GENERATED",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/AGENT_CONSTITUTIONAL_MATH.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/AGENT_START.md",
+      "role": "AI_ENTRY",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/AI_INTEGRATION.md",
+      "role": "AI_INTEGRATION",
+      "canonicality": "REFERENCE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/ARCHITECTURE_V4.md",
+      "role": "HISTORICAL_ARCHITECTURE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [
+        "docs/SYSTEM_MAP.md"
+      ],
+      "supersession_scope": "current bird's-eye entry only; history retained"
+    },
+    {
+      "path": "docs/ARIA_META_LANGUAGE.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/ATTACH_QUICKSTART.md",
+      "role": "QUICKSTART",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/BOOTSTRAP_PROTOCOL.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/BRIGHT_POINT.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/COVENANT.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/CROSS_DOMAIN_ANALYSIS.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/DEVELOPMENT.md",
+      "role": "OPERATOR_GUIDE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/EVIDENCE.md",
+      "role": "EVIDENCE_GUIDE",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/EVOLUTION_SPECTRAL.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/EVOLUTION_V6.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/EVOLVE_PLAN.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/GCMT.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/MIRROR.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/NEURAL_INTERLINK.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/ORGANISM.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/PHOENIX_BOUNDARY.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/README.md",
+      "role": "DOCS_ENTRY",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/SELF_HOST_CONTACT.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/STATUS.md",
+      "role": "CURRENT_STATUS",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/STEADY_STATE.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/SYSTEM_MAP.md",
+      "role": "CURRENT_ARCHITECTURE",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/THALAMUS.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/TRANSCEND.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/TROUBLESHOOTING.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/V2_OUTCOME_LEARNING.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/CAPABILITY_BOUNDARY.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/CAUSAL_LINEAGE.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/CORTEX_IMMUNOLOGY.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/EVIDENCE_KERNEL.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/INDEPENDENT_WITNESS.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/INFLUENCE_QUARANTINE.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/STATE_TRANSITIONS.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/STERILE_EVIDENCE_MODE.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/TRANSACTIONAL_REPAIR.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/architecture/WITNESS_CHRONOLOGY.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/demo/README.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/DISTILLED.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/DISTILLED_FOREIGN_LOOP.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/GLYPH_CANON.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/INTERCONNECT.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/OPERATOR_ALIGN_V71.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PACKS.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.10.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.11.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.12_MATH_NETWORK.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.13_SPECTRAL_E2E.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.14_FUSION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.15_MEASURE_GATE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.16_SELF_ORG.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.17_HOST_MESH.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.18_BOUNDARY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.19_EMERGENT_MATH.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.20_VALIDATED_UTILITY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.21_RATIO_LATTICE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.22_FOREIGN_GEOMETRY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.23_FOREIGN_EMERGENCE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.24_MEMORY_SIMPLEX.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.25.1_CONSTITUTIONAL_SEAL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.25_CONSTITUTIONAL_IMMUNITY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V6.8.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.0_RESONANT_CONTINUITY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.1.1_GEOMETRY_SEAL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.1.2_CLAIM_RECEIPTS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.2_HERMETIC_ATTACH.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.3_RESONANT_FRAMES.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.4_CONTINUITY_REALIGNMENT.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.5_SELF_SENSING_FIELD.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.6_VERIFIED_OPERATING_REGIME.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.7.1_PHASE_COHERENT_ACTIVATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.7.2_EPOCH_ATOMIC_TEMPORAL_BOUNDARY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.7_BINDING_FIELD.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.8.1_TRUTH_RECOVERY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V7.8_EVENT_SOURCED_TEMPORAL_ACCRUAL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.0_MEASURED_PREDICTIVE_SELF_MODEL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.1.1_MEASUREMENT_FIRST_ROUTING.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.1_CANONICAL_PREDICTIVE_OBSERVER.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.1_GEOMETRIC_BRIDGE_FIELD.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.2_QUERY_BRIDGE_TRIALS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.3_SOURCE_ADMISSION_FIELD.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.4_SELECTIVE_ADMISSION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.5_RESONANCE_FREQUENCY_SWEEP.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.6_GEOMETRIC_ECHO.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.7_ROTATED_ECHO_ALIGNMENT.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2.8_EVIDENCE_RUNWAY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.2_INFORMATIONAL_INTERLOCKS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.3.0_OSTT_COMPATIBILITY_LAYER.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.3.1_OPERATOR_RESIDUAL_EVIDENCE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.3.2_TYPED_ACTIVATION_OBSERVATIONS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.3.3_INDEPENDENT_ACTIVATION_CONFORMANCE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.3.4_INTERCONNECT_MATHEMATICS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.4.0_AI_CORTEX_SYMBIOSIS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.4.1_VERIFIED_SYMBIOTIC_CIRCULATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.4.2_RECURRENT_CIRCULATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.4.3_TURN_BOUND_INTERCONNECT.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.4.4_ATOMIC_INTERCONNECT_TRAJECTORIES.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.4.5_DISTILLATION_CANDIDATES.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.5_AUTHENTICATED_WILL_AND_MEMBRANE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.6_ADMITTED_MEMORY_LEDGER.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.7_GOVERNED_MEMORY_REHYDRATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.8_CROSS_INSTANTIATION_MEMORY_TRIALS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.9.1_EPOCH_CONVERGED_INTERCONNECT.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.9.2_CANONICAL_PROVENANCE_ADMISSION_INTEGRITY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.9.3_CANONICAL_EVIDENCE_WITNESS_CLOSURE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V8.9_TRIAL_GUIDED_PROJECTION_BUDGETS.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.0_MODEL_AGNOSTIC_COGNITIVE_CIRCULATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.1_TRANSFERABLE_COMPETENCE_DISTILLATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.2_CROSS_MODEL_COMPETENCE_TRANSFER.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.3_GOVERNED_COMPETENCE_DISTRIBUTION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.4_EMPIRICAL_TRANSFER_PACKAGE_USE_BINDING.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.5.1_CANONICAL_RUNTIME_CONVERGENCE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.5_DISTRIBUTED_EVIDENCE_ASSIMILATION_SCOPED_REVISION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.6_EMPIRICAL_COMMISSIONING_SEAL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.7_EMPIRICAL_COMPETENCE_DIFFERENTIATION.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.1_DISCRIMINATIVE_TASK_FORGE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.2_INFORMATION_BALANCED_HELDOUT_SEAL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.3_FRONTIER_CALIBRATION_COMMISSIONING.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.4_COUPLED_DEPENDENCY_TASK_GEOMETRY.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.5_LATENT_CAUSE_DISCRIMINATION_FORGE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.6_COST_CALIBRATED_EVIDENCE_ENTANGLEMENT.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8.7_SEMANTIC_DISTILLATION_PARTIAL_EVIDENCE.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/PHASE_V9.8_PREREGISTERED_CAUSAL_COMPETENCE_TRIAL.md",
+      "role": "HISTORICAL_PHASE",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/STREAM.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/intelligence/TOPOLOGY_LAW.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md",
+      "role": "FOUNDATIONAL_RESEARCH",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/CORTEX_CONSTITUTIONAL_TESSERACT_V0.1.md",
+      "role": "FOUNDATIONAL_RESEARCH",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/CSG_DISCOVERY_LEDGER.md",
+      "role": "RELEASE_HISTORY",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md",
+      "role": "FOUNDATIONAL_RESEARCH",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/FIXED_L3_COHORT_2026-09-06.md",
+      "role": "EXPERIMENT_RECORD",
+      "canonicality": "EXPERIMENT_RECORD",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/FRESH_AUDITED_SCREEN_2026-09-05.md",
+      "role": "EXPERIMENT_RECORD",
+      "canonicality": "EXPERIMENT_RECORD",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/GOVERNED_SELF_ORGANIZATION.md",
+      "role": "EXPERIMENT_RECORD",
+      "canonicality": "EXPERIMENT_RECORD",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/MATHEMATICAL_CONTRACT_AUDIT_2026-09-04.md",
+      "role": "EXPERIMENT_RECORD",
+      "canonicality": "EXPERIMENT_RECORD",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/README.md",
+      "role": "ACTIVE_RESEARCH",
+      "canonicality": "RESEARCH_ACTIVE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/REPAIR_INSTRUMENT_AUDIT_2026-09-05.md",
+      "role": "EXPERIMENT_RECORD",
+      "canonicality": "EXPERIMENT_RECORD",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/REPAIR_REPEATABILITY_PLAN_2026-09-05.md",
+      "role": "EXPERIMENT_RECORD",
+      "canonicality": "EXPERIMENT_RECORD",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/RESONANT_FRAME_DISCOVERY_LEDGER.md",
+      "role": "RELEASE_HISTORY",
+      "canonicality": "HISTORICAL",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/RESONANT_FRAME_MATHEMATICS_V0.1.md",
+      "role": "FOUNDATIONAL_RESEARCH",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/RESONANT_FRAME_THEORY_V0.1.md",
+      "role": "FOUNDATIONAL_RESEARCH",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/research/TRANSDUCTION_REVISION_2026-09-06.md",
+      "role": "ACTIVE_RESEARCH",
+      "canonicality": "RESEARCH_ACTIVE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/security/MEMORY_POISONING_THREAT_MODEL.md",
+      "role": "REFERENCE",
+      "canonicality": "REFERENCE",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/AGENT_PROTOCOL.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/ARCHITECTURE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/AUTHENTICATED_CAMPAIGN_CONTROL.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/BENCHMARK_PLAN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/BRIDGE_LOW_RELATIONAL_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/CANONICAL_AUTONOMOUS_CAMPAIGN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/CANONICAL_EDIT_INTENT_SEAL.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/CONTRACT_ALIGNED_FRONTIER_BASELINE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/CONTRACT_ALIGNED_REPAIR_FORGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/CORTEX_CHAT.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/CORTEX_RUNTIME_BRIDGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/COUNTERFACTUAL_SOURCE_IMPROVEMENT.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/EPISTEMIC_KERNEL_SEED.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/EXECUTABLE_REPAIR_FORGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/FINAL_RELATIONAL_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/GOVERNED_AUTONOMOUS_IMPROVEMENT.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/GOVERNED_AUTONOMY_DIFFERENTIAL.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/GOVERNED_CODING_WORKSPACE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/GOVERNED_STORM_FABRIC.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/GOVERNED_TOOL_FABRIC.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/HARDER_CONTRACT_ALIGNED_FRONTIER_BASELINE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/HARDER_CONTRACT_ALIGNED_REPAIR_FORGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/HARDER_LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/HARDER_SEMANTIC_CALIBRATION_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/HARDER_STRUCTURED_REPAIR_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/HERMES_EXTRACTION_AUDIT.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/INTERMEDIATE_RELATIONAL_FORGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_AUTONOMY_PILOT.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_EXECUTABLE_REPAIR_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_OPEN_RESPONSE_CALIBRATION_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_SEMANTIC_CALIBRATION_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_SEMANTIC_CAUSAL_SCREEN_V2.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_STRUCTURED_REPAIR_SCREEN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/LIVE_TELEMETRY.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/MODEL_DISCOVERY.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/NATIVE_INTERFACE_PLAN.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/OPEN_RESPONSE_LATENT_CAUSE_FORGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/PROVIDER_FABRIC.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/PROVIDER_INTERFACE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/README.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/RELATIONAL_CAUSAL_PROOF.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/RELATIONAL_EQUIVALENCE_CLOSURE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/REVOCABLE_CAPABILITY_WORKER_SEAL.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/SECRET_STORAGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/SEMANTIC_CAUSAL_EVALUATOR_V2.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/SEMANTIC_INSTRUMENT_SUFFICIENCY_AUDIT.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/SEMANTIC_TRANSFER_READINESS.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/SHAM_CONTROLLED_SEMANTIC_CALIBRATION.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/TOOL_SECURITY.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/UI_ARCHITECTURE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/UI_DESIGN_LANGUAGE.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/VERIFIED_IMPROVEMENT_CIRCULATION.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/v10/VERIFIED_SEMANTIC_PROJECTION.md",
+      "role": "SPECIALIZED_ARCHITECTURE",
+      "canonicality": "CURRENT_SPECIALIZED",
+      "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "llms.txt",
+      "role": "AI_INTEGRATION",
+      "canonicality": "REFERENCE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    }
+  ],
+  "readme_archive": {
+    "path": "README_ARCHIVE_2026-09-06.md",
+    "marker": "<!-- ORIGINAL README START -->\n",
+    "git_blob": "a73d190818fecc99761c125c151c8dda637ed1ba"
+  },
+  "authority_effect": false,
+  "implementation_hashes": {
+    "cortex/admitted_memory.py": "e9a2ce1efc4191c1d82916a687d1056bfa1a7b8a7591cff017e87ee672297d92",
+    "cortex/autonomous_improvement.py": "4fa6afb871be06fc2e8c5630e1337441d595c4dc1fe677067ca31fcb7af222ac",
+    "cortex/chat_service.py": "2065dc896e5d6b7dcc21e3f2c87d77d9bd76d45952ed4a97a80ba2aae9f543fa",
+    "cortex/coding_workspace.py": "634a3784d55db058ea64a6eb6ee3f0140cc10c46ffc5caee71d9bb12d28eafad",
+    "cortex/competence.py": "1beeb1ad01d02591d9a059bbc06c5cce4fb98fd11afadf31e0d6ceb95ec5dad8",
+    "cortex/competence_revision.py": "dfc1d68e58d99db4abf308aa69849a19d09dede4ed81464355333c3290d159e6",
+    "cortex/contract_aligned_repair.py": "ae6d1655e919d41a3612984715c240ad401f60d86c29b4d8b5d72d25b354cfc2",
+    "cortex/edit_intent.py": "5f4d1dfdf52d43d67a98fa56613892ba0eb514bd7e5c3bbf4bb5e08f32436928",
+    "cortex/epistemic_instrumentation.py": "f65e5b9f0785d407c723d655d17bc9eef6584dad31929741b9dce8ef57862091",
+    "cortex/epistemic_kernel.py": "bb22f0ed95c2a92fac7964b7d7ce1ab5c4475751e94f5826dac849004308b568",
+    "cortex/executable_repair_forge.py": "40857ce69f7da53b573b04fe5c08973d3a16f7b6e8e09bd780f73e180b8f44e2",
+    "cortex/memory_projection.py": "9b667a5b2e43732c15ecfcc2de4193de9ac8b0fff1da34597264ca4c9a95ca2e",
+    "cortex/native_agent.py": "6334e9cb2313e63fd47187f5b354f5ec859536ad095c5dfa10109c38e9c2967a",
+    "cortex/provider_fabric.py": "e2978aa9bf748cffb11782f8a7be6e3edbe8552611c7364ee434b31d6b69b68c",
+    "cortex/repair_calibration_cohort.py": "22928d260a32bf4e4306f1c4b47a4ad34a2042ac45cc7eeb04e20520c5197666",
+    "cortex/secret_store.py": "fae47248f04bb6b353d01c8f87ab18831cbe15cbe71b8c3bcf70397210ec10dc",
+    "cortex/semantic_projection.py": "48cbce0456dcc69f51dfde32c06450db9cf9678ee6c92d62b9bb055109d9e35b",
+    "cortex/store.py": "0953d92f30455d7a028eaa420ca0e97c12540be87d55a1433e8ea1ab7a5611e4",
+    "cortex/structured_repair_screen.py": "e40e804f0daf89df3dd225ef5501d3f80ebf3ea0ba9f781dd3f0630afc6e1863"
+  }
+}

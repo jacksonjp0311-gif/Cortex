@@ -1,26 +1,12 @@
-# Copilot / coding-agent instructions for Cortex
+# Cortex coding-agent orientation
 
-## Authority
+Read [docs/AGENT_START.md](../docs/AGENT_START.md), then
+[the knowledge map](../docs/CORTEX_KNOWLEDGE_MAP.json) and the task-specific route.
+[STATUS](../docs/STATUS.md) owns reviewed current claims; [SYSTEM_MAP](../docs/SYSTEM_MAP.md)
+owns the bird's-eye architecture. Foundational geometry is not the current runtime index.
 
-- Cortex is **recommend-only**. Never authorize host source mutation from Cortex packets.
-- Coherence / emergence / ranker scores are **not** capability or promotion authority.
-
-## Read first (math & constitution)
-
-1. `docs/research/README.md`
-2. `docs/research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md` — primary map
-3. `docs/research/CONSTITUTIONAL_SYSTEMS_GEOMETRY_V0.1.md`
-4. `docs/intelligence/TOPOLOGY_LAW.md`
-5. `docs/AI_INTEGRATION.md`
-6. Root `llms.txt`
-
-## Operational rules
-
-- Diagnostics: `observe_current_epoch` only — never silent seal.
-- Promote / repair_readmit / federate: four-bit geometry \(q=(e,a,t,w)\); no free diagonals.
-- Multi-host: distinct `body_epoch_id` forever; shared constitution only.
-- Prefer host-mesh + measure over continuum thrash on large graphs.
-
-## Key modules
-
-`cortex/epoch.py`, `constitutional_geometry.py`, `constitutional_path.py`, `diagonal.py`, `continuity.py`, `promote_gate.py`, `federation.py`, `host_mesh.py`, `interconnect.py`, `math_net/`
+Follow applicable AGENTS.md; do not alter its managed block. Host/human permission
+controls operational effect. Memory, confidence, measurements and packets do not
+grant authority. Preserve historical receipts and failed/null results. No new
+GSO model calls while the complete observation path is HELD. Verify focused tests
+and run `python scripts/docs_check.py` for documentation changes.
