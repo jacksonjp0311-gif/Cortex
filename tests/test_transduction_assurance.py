@@ -1,4 +1,4 @@
-"""Zero-call counterexample inventory; HELD is the expected audit disposition."""
+"""Finite zero-call delivery controls; historical HELD audits remain unchanged."""
 from unittest.mock import patch
 
 import pytest
@@ -12,11 +12,10 @@ def audit(tmp_path_factory):
     return run_audit(tmp_path_factory.mktemp("transduction"))
 
 
-def test_audit_preserves_three_unresolved_counterexamples(audit):
-    assert audit["model_calls"] == 0 and audit["state"] == "HELD"
-    assert {r["control"] for r in audit["observations"] if not r["expectation_met"]} == {
-        "no_terminal_newline", "numeric_edit", "evaluator_changes_candidate"}
-    assert audit["expectations_met"] == 13 and audit["control_count"] == 16
+def test_current_controls_close_previous_counterexamples(audit):
+    assert audit["model_calls"] == 0 and audit["state"] == "READY_WITHIN_CONTROLS"
+    assert all(r["expectation_met"] for r in audit["observations"])
+    assert audit["expectations_met"] == 16 and audit["control_count"] == 16
     assert audit["adaptation_authorized"] is False
 
 

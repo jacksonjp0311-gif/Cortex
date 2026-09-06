@@ -19,7 +19,7 @@ from typing import Any
 
 PROPOSAL_SCHEMA = "cortex-coding-patch-proposal/1.0"
 APPLICATION_SCHEMA = "cortex-coding-patch-application/1.0"
-VERIFICATION_SCHEMA = "cortex-coding-patch-verification/1.0"
+VERIFICATION_SCHEMA = "cortex-coding-patch-verification/1.1"
 CONTRACT_SCHEMA = "cortex-host-verification-contract/1.0"
 MAX_PATCH_BYTES = 262_144
 ZERO_HASH = "0" * 64
@@ -275,10 +275,11 @@ def verify_patch_in_isolated_worktree(
             applied = _git(candidate, ["apply", "--whitespace=error-all", "-"], str(canonical["patch"]))
             if applied.returncode != 0:
                 raise RuntimeError("isolated proposal application failed")
+            applied_postimages = {target: _file_hash(_contained(candidate, target)) for target in targets}
             for step in contract["steps"]:
                 result = run_host_verification_step(candidate, step)
                 steps.append(result)
-                if not result["passed"]:
+                if not result["passed"] or any(_file_hash(_contained(candidate, target)) != digest for target, digest in applied_postimages.items()):
                     break
             postimages = {target: _file_hash(_contained(candidate, target)) for target in targets}
         finally:
@@ -286,7 +287,8 @@ def verify_patch_in_isolated_worktree(
             if removed.returncode != 0:
                 _git(workspace, ["worktree", "prune"])
 
-    passed = len(steps) == len(contract["steps"]) and all(step["passed"] for step in steps)
+    artifact_preserved = applied_postimages == postimages
+    passed = artifact_preserved and len(steps) == len(contract["steps"]) and all(step["passed"] for step in steps)
     return {
         "schema_version": VERIFICATION_SCHEMA,
         "proposal_hash": canonical["proposal_hash"],
@@ -295,6 +297,9 @@ def verify_patch_in_isolated_worktree(
         "contract": dict(contract),
         "steps": steps,
         "postimage_hashes": postimages,
+        "applied_postimage_hashes": applied_postimages,
+        "candidate_artifact_preserved": artifact_preserved,
+        "failure_attribution": "EVALUATOR_MUTATED_CANDIDATE" if not artifact_preserved else None,
         "status": "verified" if passed else "held",
         "isolated_worktree": True,
         "active_tree_mutated": False,

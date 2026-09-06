@@ -16,7 +16,8 @@ from typing import Any
 from .coding_workspace import create_patch_proposal
 
 INTENT_SCHEMA = "cortex-structured-edit-intent/1.0"
-COMPILATION_SCHEMA = "cortex-edit-intent-compilation/1.0"
+LEGACY_COMPILATION_SCHEMA = "cortex-edit-intent-compilation/1.0"
+COMPILATION_SCHEMA = "cortex-edit-intent-compilation/2.0"
 MAX_EDITS = 16
 MAX_TEXT_BYTES = 65_536
 
@@ -29,15 +30,19 @@ def _sha(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
-def _parse(payload: str | Mapping[str, Any]) -> dict[str, Any]:
+def _parse(payload: str | Mapping[str, Any], *, legacy: bool = False) -> dict[str, Any]:
     try:
         value = json.loads(payload) if isinstance(payload, str) else dict(payload)
     except (TypeError, ValueError, json.JSONDecodeError) as exc:
         raise ValueError("edit intent must be one valid JSON object") from exc
+    if not isinstance(value, Mapping):
+        raise ValueError("edit intent must be one valid JSON object")
     if set(value) != {"schema_version", "summary", "edits"}:
         raise ValueError("edit intent contains missing or unknown top-level fields")
     if value.get("schema_version") != INTENT_SCHEMA:
         raise ValueError("edit intent schema is invalid")
+    if not legacy and not isinstance(value.get("summary"), str):
+        raise ValueError("edit summary must be a string")
     summary = str(value.get("summary") or "").strip()
     edits = value.get("edits")
     if not summary or len(summary) > 500 or not isinstance(edits, list) or not 1 <= len(edits) <= MAX_EDITS:
@@ -46,6 +51,8 @@ def _parse(payload: str | Mapping[str, Any]) -> dict[str, Any]:
     for edit in edits:
         if not isinstance(edit, Mapping) or set(edit) != {"path", "old", "new"}:
             raise ValueError("each edit must contain exactly path, old, and new")
+        if not legacy and any(not isinstance(edit[key], str) for key in ("path", "old", "new")):
+            raise ValueError("edit fields must be strings")
         row = {key: str(edit[key]).replace("\r\n", "\n") for key in ("path", "old", "new")}
         if not row["path"] or not row["old"] or row["old"] == row["new"]:
             raise ValueError("edit path and distinct non-empty preimage are required")
@@ -69,14 +76,15 @@ def _target(root: Path, relative: str, allowed: set[str]) -> Path:
     return path
 
 
-def compile_edit_intent(
+def _compile_edit_intent(
     root: str | Path,
     payload: str | Mapping[str, Any],
     *,
     allowed_targets: Sequence[str],
+    legacy: bool = False,
 ) -> dict[str, Any]:
     workspace = Path(root).resolve()
-    intent = _parse(payload)
+    intent = _parse(payload, legacy=legacy)
     allowed = {Path(str(value)).as_posix() for value in allowed_targets}
     if not allowed:
         raise ValueError("host-declared target scope is required")
@@ -102,14 +110,16 @@ def compile_edit_intent(
         ))
         if not diff:
             raise ValueError("compiled edit produced no source change")
+        if not legacy:
+            diff = [line if line.endswith("\n") else line + "\n\\ No newline at end of file\n" for line in diff]
         chunks.append(f"diff --git a/{relative} b/{relative}\n" + "".join(diff))
     patch = "".join(chunks)
     if not patch.endswith("\n"):
         patch += "\n"
     proposal = create_patch_proposal(workspace, patch, intent["summary"])
     material: dict[str, Any] = {
-        "schema_version": COMPILATION_SCHEMA,
-        "compiler_id": "cortex.edit-intent.deterministic-replacement.v1",
+        "schema_version": LEGACY_COMPILATION_SCHEMA if legacy else COMPILATION_SCHEMA,
+        "compiler_id": "cortex.edit-intent.deterministic-replacement.v1" if legacy else "cortex.edit-intent.deterministic-replacement.v2",
         "intent": intent,
         "intent_hash": _sha(intent),
         "allowed_targets": sorted(allowed),
@@ -131,14 +141,20 @@ def compile_edit_intent(
     return material
 
 
+def compile_edit_intent(root: str | Path, payload: str | Mapping[str, Any], *, allowed_targets: Sequence[str]) -> dict[str, Any]:
+    """New compilations use strict v2; v1 remains available only for reconstruction."""
+    return _compile_edit_intent(root, payload, allowed_targets=allowed_targets)
+
+
 def verify_edit_intent_compilation(root: str | Path, compilation: Mapping[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     body = {key: value for key, value in compilation.items() if key != "compilation_hash"}
-    if compilation.get("schema_version") != COMPILATION_SCHEMA or compilation.get("compilation_hash") != _sha(body):
+    if compilation.get("schema_version") not in {COMPILATION_SCHEMA, LEGACY_COMPILATION_SCHEMA} or compilation.get("compilation_hash") != _sha(body):
         errors.append("compilation_identity_invalid")
     try:
-        rebuilt = compile_edit_intent(
-            root, compilation.get("intent") or {}, allowed_targets=compilation.get("allowed_targets") or ()
+        rebuilt = _compile_edit_intent(
+            root, compilation.get("intent") or {}, allowed_targets=compilation.get("allowed_targets") or (),
+            legacy=compilation.get("schema_version") == LEGACY_COMPILATION_SCHEMA,
         )
     except (OSError, ValueError) as exc:
         errors.append("compilation_reconstruction_failed:" + str(exc))
