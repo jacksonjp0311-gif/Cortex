@@ -8,7 +8,7 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 62,
+  "result_count": 64,
   "results": [
     {
       "bytes": 3346,
@@ -93,6 +93,18 @@
       "metadata_state": "zero_call_gso_path_audit_not_adaptation_evidence",
       "path": "benchmarks/results/gso_transduction_committed_check_2026-09-06.json",
       "sha256": "95847188f6f147a99dce36506cadf019ade68a6439cec23e6c183e32a359397f"
+    },
+    {
+      "bytes": 4139,
+      "metadata_state": "zero_call_gso_path_audit_not_adaptation_evidence",
+      "path": "benchmarks/results/gso_transduction_revision_2026-09-06.json",
+      "sha256": "abc24e562d3d6daa175e107c21d20560e73eba4d7e541efdfc3a2f69da10a0c4"
+    },
+    {
+      "bytes": 4139,
+      "metadata_state": "zero_call_gso_path_audit_not_adaptation_evidence",
+      "path": "benchmarks/results/gso_transduction_revision_committed_2026-09-06.json",
+      "sha256": "724798fd9020a3b47fc0a17f1a66c66ff69264fa0aac8b7d0c2989038aa1c8fc"
     },
     {
       "bytes": 17492,
@@ -388,5 +400,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "86bbae17b21d98ac21a80cd5ce5d47e437de8340"
+  "source_commit": "98b1dfdd62abf5052b094e841f626652fd7edbff"
 }
