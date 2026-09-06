@@ -1,0 +1,31 @@
+{
+  "schema_version": "cortex-gso-emergence-log/1.0",
+  "reviewed_head": "a3726be910892b79bcd74d0bb48e91d12784d5bb",
+  "mode": "zero_call_prerequisite_audit",
+  "entries": [
+    {
+      "type": "OBSERVATION",
+      "statement": "The committed-source local panel met 13 of 16 expectations; three counterexamples remain.",
+      "evidence": ["../../benchmarks/results/gso_transduction_committed_check_2026-09-06.json"],
+      "scope": "same finite host-authored controls; repeat is not an independent sample"
+    },
+    {
+      "type": "INTERPRETATION",
+      "statement": "Receipt validity and evaluator exit success do not establish faithful artifact observation. Complete-path assurance is held.",
+      "evidence": ["../../benchmarks/results/gso_historical_path_inspection_2026-09-06.json", "../../benchmarks/results/gso_transduction_committed_check_2026-09-06.json"],
+      "scope": "No reinterpretation of historical 5/8 as fresh live 8/8. No reasoning-failure inference from delivery failure."
+    },
+    {
+      "type": "HYPOTHESIS",
+      "statement": "Governed retained operational lessons may improve later candidate prioritization under matched resources.",
+      "evidence": [],
+      "state": "NOT_TESTED",
+      "scope": "Requires assured path, instrument, fresh matched experiment and replication."
+    }
+  ],
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "adaptation_authorized": false
+}

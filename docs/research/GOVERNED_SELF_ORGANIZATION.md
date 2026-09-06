@@ -77,6 +77,11 @@ permission for production mutation, memory admission, retention or another call.
 
 [Machine-readable control audit](../../benchmarks/results/gso_transduction_audit_2026-09-06.json)
 records **13/16 expectations met; HELD**, not a successful whole-path seal.
+The [committed-source repeat](../../benchmarks/results/gso_transduction_committed_check_2026-09-06.json)
+reproduced the same 13/16 at `41c6b31`. This repeats the same local controls, not
+fresh independent samples. The earlier audit and its implementation hashes remain
+unchanged. [Typed emergence log](GSO_EMERGENCE_LOG.json) separates observations,
+interpretations and hypotheses.
 Controls use exact expected source bytes and disposable Git repositories with
 `core.autocrlf=false` to isolate authored bytes. The prior Windows transport test
 also remains in the focused suite. This is not a cross-OS rerun.
@@ -259,3 +264,4 @@ verify the audit's HELD disposition and reproduce the three gaps; they do not
 mean 16/16 assurance controls passed. Ruff, targeted compileall and diff checks
 passed. Full repository suite, cross-platform CI and paid inference were not run.
 Historical L3 files were not changed. Product version remains alpha.39.
+Three manifest tests also passed in 0.09s: **40 distinct focused tests total**.
