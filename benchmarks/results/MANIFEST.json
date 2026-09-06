@@ -1,5 +1,5 @@
 {
-  "benchmark_suite_hash": "76453501ffe15af27300c0a0447ed54942060e982de586d0481f0698eff03c2f",
+  "benchmark_suite_hash": "7fa026828880c20f6ce13cb1fe9b34436045ced0970bb842fa571f65f87a78db",
   "cortex_version": "10.0.0a39",
   "evidence_class": "committed_controlled_artifacts",
   "limitations": [
@@ -8,13 +8,43 @@
     "legacy_partial artifacts cannot establish current-head empirical effects.",
     "Development calibration and structural manifests cannot establish confirmatory competence effects."
   ],
-  "result_count": 54,
+  "result_count": 59,
   "results": [
     {
       "bytes": 3346,
       "metadata_state": "legacy_partial",
       "path": "benchmarks/results/deferred_vs_eager.json",
       "sha256": "32074437faf69641c5f19fdd63aaf67438991f96aa914924b9506427fbc0919e"
+    },
+    {
+      "bytes": 72342,
+      "metadata_state": "fixed_stratum_local_control_audit_metadata_only",
+      "path": "benchmarks/results/fixed_l3_forge_2026-09-06.json",
+      "sha256": "bba408c34da5fbc03765fd57d856ebd73ff47f3229c278770f9afccf0ef4e698"
+    },
+    {
+      "bytes": 45831,
+      "metadata_state": "fixed_cohort_export_requires_current_instrument_interpretation",
+      "path": "benchmarks/results/fixed_l3_prereg_2026-09-06.json",
+      "sha256": "20a419f5b0ae59106cd7302d2780deea8ec8377d157c3f2e8f92db65f56542cb"
+    },
+    {
+      "bytes": 3406,
+      "metadata_state": "fixed_cohort_export_requires_current_instrument_interpretation",
+      "path": "benchmarks/results/fixed_l3_stage0_2026-09-06.json",
+      "sha256": "35282fe0b420ae2b239efeea7ce1802730010b3c523348068ab9ef9e168a5f0b"
+    },
+    {
+      "bytes": 3568,
+      "metadata_state": "fixed_cohort_export_requires_current_instrument_interpretation",
+      "path": "benchmarks/results/fixed_l3_stage1_2026-09-06.json",
+      "sha256": "9d473a9e1fcdbddd8f31481d8db9a08a74787d035f5c6b2897c73693f9eb3db8"
+    },
+    {
+      "bytes": 3755,
+      "metadata_state": "posthoc_archived_transport_audit_not_new_model_result",
+      "path": "benchmarks/results/fixed_l3_transport_audit_2026-09-06.json",
+      "sha256": "c1c0a13f5f03b18788909359dced876c9f3470658fb7a7897491dae4714c07bd"
     },
     {
       "bytes": 2016,
@@ -340,5 +370,5 @@
     "system": "Windows"
   },
   "schema_version": "cortex-benchmark-result-manifest/1.0",
-  "source_commit": "67ac0f17d139b3b7ac8e3869387b86d73ee97ab4"
+  "source_commit": "16d2d52ff5903959070c32d8c00dbfdb2482924b"
 }
