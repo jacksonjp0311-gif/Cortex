@@ -141,15 +141,20 @@ def verify_executable_repair_bundle(public: Mapping[str, Any], private: Mapping[
     return {"valid": not errors, "errors": errors}
 
 
-def _write_fixture(root: Path, case: Mapping[str, Any], private: Mapping[str, Any]) -> None:
+def _write_fixture(root: Path, case: Mapping[str, Any], private: Mapping[str, Any], *, exact_bytes: bool = False) -> None:
     validate_source_files(case.get("files"))
     root.mkdir(parents=True)
     for name, content in (case.get("files") or {}).items():
         (root / str(name)).parent.mkdir(parents=True, exist_ok=True)
-        (root / str(name)).write_text(str(content), encoding="utf-8")
+        if exact_bytes:
+            (root / str(name)).write_bytes(str(content).encode("utf-8"))
+        else:
+            (root / str(name)).write_text(str(content), encoding="utf-8")
     (root / "TASK.md").write_text(str(case["task"]) + "\n", encoding="utf-8")
     (root / "external_test.py").write_text(str(private["external_test"]), encoding="utf-8")
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    if exact_bytes:
+        subprocess.run(["git", "config", "core.autocrlf", "false"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.email", "cortex@example.invalid"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "Cortex Forge"], cwd=root, check=True)
     subprocess.run(["git", "add", "."], cwd=root, check=True)
@@ -175,9 +180,11 @@ def evaluate_executable_patch(
     private_case: Mapping[str, Any],
     patch_text: str,
     root: Path,
+    *,
+    compilation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Measure one proposed patch while retaining malformed candidates as FAIL."""
-    _write_fixture(root, public_case, private_case)
+    _write_fixture(root, public_case, private_case, exact_bytes=compilation is not None)
     step = {
         "id": "frozen_external_test",
         "argv": ["{python}", "external_test.py"],
@@ -192,9 +199,11 @@ def evaluate_executable_patch(
     }
     candidate_error: str | None = None
     try:
-        proposal = create_patch_proposal(root, patch_text, "frontier-model executable repair candidate")
+        proposal = compilation["proposal"] if compilation is not None else create_patch_proposal(root, patch_text, "frontier-model executable repair candidate")
+        if compilation is not None and proposal["patch"] != patch_text:
+            raise ValueError("COMPILED_PATCH_BINDING_FAILURE")
         proposal_hash = str(proposal["proposal_hash"])
-        candidate = verify_patch_in_isolated_worktree(root, proposal, _verification_contract(proposal))
+        candidate = verify_patch_in_isolated_worktree(root, proposal, _verification_contract(proposal), compilation=compilation)
     except (OSError, RuntimeError, ValueError) as exc:
         candidate_error = type(exc).__name__ + ":" + str(exc)[:500]
     baseline_pass = bool(baseline.get("passed"))
@@ -206,7 +215,7 @@ def evaluate_executable_patch(
         else "IMPROVEMENT_HELD"
     )
     material: dict[str, Any] = {
-        "schema_version": "cortex-executable-patch-evaluation/1.0",
+        "schema_version": "cortex-executable-patch-evaluation/2.0" if compilation is not None else "cortex-executable-patch-evaluation/1.0",
         "case_id": str(public_case["case_id"]),
         "source_head": repository_head(root),
         "evaluator_commitment": str(public_case["private_evaluator_commitment"]),

@@ -70,7 +70,14 @@ verification contract and bounded environment. It requires exact UTF-8/LF bytes;
 CR-containing preimages are unsupported, not normalized. Applied bytes must equal
 compiler expected bytes before evaluator execution; target mutations afterward
 hold the path. This is verification v2.0, not a retroactive upgrade of historical
-receipts. The structured repair screen does not yet supply this compilation object.
+receipts. New structured repair case/result v2 records now supply this compilation
+object and preserve it for zero-execution reconstruction from archived model
+output. Their verifier checks compiled patch identity, expected/applied/post-run
+hashes on successful observations, environment identity and raw observation
+bindings. Legacy v1 records retain their historical reconstruction path. New
+compiled fixtures write exact UTF-8 bytes and disable Git autocrlf locally;
+legacy fixture behavior is unchanged. This is a delivery-path revision, not new
+live evidence or permission to rerun an exhausted cohort.
 No evaluator-validity, OS isolation, or general cognitive inference follows.
 
 | Area | Evidence-supported disposition | Where to verify |

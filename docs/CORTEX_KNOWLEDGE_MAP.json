@@ -177,6 +177,7 @@
         "tests/test_raw_verification_observation.py",
         "tests/test_verification_environment.py",
         "tests/test_compiled_observation_binding.py",
+        "tests/test_screen_observation_binding.py",
         "tests/test_patch_transport.py"
       ],
       "benchmarks": [
@@ -2065,7 +2066,7 @@
     "cortex/edit_intent.py": "5f4d1dfdf52d43d67a98fa56613892ba0eb514bd7e5c3bbf4bb5e08f32436928",
     "cortex/epistemic_instrumentation.py": "f65e5b9f0785d407c723d655d17bc9eef6584dad31929741b9dce8ef57862091",
     "cortex/epistemic_kernel.py": "bb22f0ed95c2a92fac7964b7d7ce1ab5c4475751e94f5826dac849004308b568",
-    "cortex/executable_repair_forge.py": "40857ce69f7da53b573b04fe5c08973d3a16f7b6e8e09bd780f73e180b8f44e2",
+    "cortex/executable_repair_forge.py": "8141d7fccda4a0825d2e6adc7cdb69d8d731c825aa00e07c256671f163cb28c0",
     "cortex/memory_projection.py": "9b667a5b2e43732c15ecfcc2de4193de9ac8b0fff1da34597264ca4c9a95ca2e",
     "cortex/native_agent.py": "6334e9cb2313e63fd47187f5b354f5ec859536ad095c5dfa10109c38e9c2967a",
     "cortex/provider_fabric.py": "e2978aa9bf748cffb11782f8a7be6e3edbe8552611c7364ee434b31d6b69b68c",
@@ -2073,6 +2074,6 @@
     "cortex/secret_store.py": "fae47248f04bb6b353d01c8f87ab18831cbe15cbe71b8c3bcf70397210ec10dc",
     "cortex/semantic_projection.py": "48cbce0456dcc69f51dfde32c06450db9cf9678ee6c92d62b9bb055109d9e35b",
     "cortex/store.py": "9b49c580608bcd32e6d45df78954c43401accc27690782c74eaef6679e60e4d0",
-    "cortex/structured_repair_screen.py": "e40e804f0daf89df3dd225ef5501d3f80ebf3ea0ba9f781dd3f0630afc6e1863"
+    "cortex/structured_repair_screen.py": "9eaa11181660718d2853e10d4691a9a5d4b953f5cfbf038eb793161a3191807c"
   }
 }

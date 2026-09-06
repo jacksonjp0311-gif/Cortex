@@ -25,6 +25,61 @@ from .information_calibration import assess_sequential_level
 from .epistemic_instrumentation import verify_instrument
 
 
+def _compiled_case_errors(expected, case, trajectory):
+    """Reconstruct v2 compilation without executing archived candidates."""
+    errors = []
+    rebuilt = None
+    try:
+        with tempfile.TemporaryDirectory(prefix="cortex-reconstruct-") as parent:
+            root = Path(parent)
+            validate_source_files(expected["files"])
+            for name, content in expected["files"].items():
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content.encode("utf-8"))
+            rebuilt = compile_edit_intent(root, trajectory.get("final_answer") or "",
+                                          allowed_targets=sorted(expected["files"]))
+    except (OSError, ValueError):
+        if case.get("compilation") is not None or not case.get("compiler_error") or case.get("task_success"):
+            errors.append("compiler_failure_binding_invalid")
+        return errors
+    if (rebuilt != case.get("compilation") or case.get("compiler_error") is not None
+            or case.get("compilation_hash") != rebuilt["compilation_hash"]
+            or case.get("proposal_hash") != rebuilt["proposal_hash"]):
+        return ["compiler_reconstruction_invalid"]
+    evaluation = case.get("evaluation") or {}
+    if evaluation.get("patch_hash") != hashlib.sha256(rebuilt["proposal"]["patch"].encode()).hexdigest():
+        errors.append("compiled_patch_binding_invalid")
+    candidate = evaluation.get("candidate") or {}
+    if not candidate.get("steps"):
+        return errors  # Delivery failure is not a reasoning observation.
+    contract = candidate.get("transduction_contract") or {}
+    if (contract.get("contract_hash") != _sha({k: v for k, v in contract.items() if k != "contract_hash"})
+            or contract.get("compilation_hash") != rebuilt["compilation_hash"]
+            or contract.get("proposal_hash") != rebuilt["proposal_hash"]
+            or contract.get("source_head") != evaluation.get("source_head")
+            or contract.get("verification_contract_hash") != candidate.get("contract_hash")
+            or contract.get("expected_postimage_hashes") != rebuilt["postimage_hashes"]
+            or candidate.get("applied_postimage_hashes") != rebuilt["postimage_hashes"]
+            or contract.get("authority_effect") is not False):
+        errors.append("transduction_binding_invalid")
+    environment = contract.get("environment") or {}
+    if environment.get("environment_hash") != _sha({k: v for k, v in environment.items() if k != "environment_hash"}):
+        errors.append("environment_identity_invalid")
+    for step in candidate["steps"]:
+        raw = step.get("raw_observation") or {}
+        if (step.get("raw_observation_hash") != _sha(raw)
+                or raw.get("environment_hash") != environment.get("environment_hash")
+                or raw.get("returncode") != step.get("returncode")):
+            errors.append("raw_observation_binding_invalid")
+    if case.get("task_success") and (
+        candidate.get("postimage_hashes") != rebuilt["postimage_hashes"]
+        or candidate.get("transduction_state") != "PASS_WITHIN_DECLARED_SURFACE"
+    ):
+        errors.append("post_evaluator_binding_invalid")
+    return errors
+
+
 def fresh_task_fingerprints(cases: list[dict[str, Any]], prior: tuple[str, ...] = ()) -> list[str]:
     """Exact-source freshness only; renaming IDs/prose cannot create a new sample."""
     identities = [_sha(case["files"]) for case in cases]
@@ -427,7 +482,7 @@ def execute_structured_repair_screen(
             for path, content in case["files"].items():
                 destination = compile_root / path
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_text(content, encoding="utf-8")
+                destination.write_bytes(content.encode("utf-8"))
             try:
                 compilation = compile_edit_intent(
                     compile_root, output, allowed_targets=sorted(case["files"])
@@ -438,10 +493,12 @@ def execute_structured_repair_screen(
                 candidate_text = output
         with tempfile.TemporaryDirectory(prefix="cortex-alpha34-eval-") as parent:
             evaluation = evaluate_executable_patch(
-                case, private_cases[str(case["case_id"])], candidate_text, Path(parent) / "repo"
+                case, private_cases[str(case["case_id"])], candidate_text, Path(parent) / "repo",
+                compilation=compilation,
             )
         material = {
-            "schema_version": "cortex-structured-repair-case/1.0",
+            "schema_version": "cortex-structured-repair-case/2.0",
+            "compilation": compilation,
             "version": __version__,
             "kind": "structured_repair_case",
             "preregistration_receipt_hash": prereg_hash,
@@ -479,7 +536,7 @@ def execute_structured_repair_screen(
         )
     screen = _screen_for_prereg(prereg, sum(case["task_success"] is True for case in sealed))
     material = {
-        "schema_version": "cortex-structured-repair-result/1.0",
+        "schema_version": "cortex-structured-repair-result/2.0",
         "version": __version__,
         "kind": "structured_repair_result",
         "preregistration_receipt_hash": prereg_hash,
@@ -552,7 +609,7 @@ def _verify_structured_repair_screen(
         return {"valid": False, "errors": errors + ["frozen_panel_invalid"]}
     if (
         result.get("kind") != "structured_repair_result"
-        or result.get("schema_version") != "cortex-structured-repair-result/1.0"
+        or result.get("schema_version") not in {"cortex-structured-repair-result/1.0", "cortex-structured-repair-result/2.0"}
         or result.get("status") != "STRUCTURED_REPAIR_SCREEN_RECONSTRUCTED"
         or result.get("model_identity") != prereg.get("model_identity")
         or result.get("evidence_class") != EVIDENCE_LIVE
@@ -581,7 +638,7 @@ def _verify_structured_repair_screen(
         observed.append(str(case.get("case_id") or ""))
         if (
             case.get("kind") != "structured_repair_case"
-            or case.get("schema_version") != "cortex-structured-repair-case/1.0"
+            or case.get("schema_version") != ("cortex-structured-repair-case/2.0" if result.get("schema_version") == "cortex-structured-repair-result/2.0" else "cortex-structured-repair-case/1.0")
             or case.get("preregistration_receipt_hash") != prereg_hash
             or case.get("case_hash") != _sha(expected_case)
             or case.get("evidence_class") != EVIDENCE_LIVE
@@ -622,6 +679,8 @@ def _verify_structured_repair_screen(
         ) or case.get("task_success") is not evaluation.get("candidate_pass"):
             errors.append(f"evaluation_binding_invalid:{case.get('case_id')}")
         baseline, candidate = evaluation.get("baseline") or {}, evaluation.get("candidate") or {}
+        if case.get("schema_version") == "cortex-structured-repair-case/2.0":
+            errors.extend(_compiled_case_errors(expected_case, case, trajectory))
         baseline_pass = baseline.get("passed")
         candidate_pass = candidate.get("status") == "verified"
         classification = (
