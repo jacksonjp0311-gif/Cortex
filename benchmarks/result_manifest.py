@@ -524,6 +524,12 @@ def main() -> int:
                     )
                     else "live_harder_contract_aligned_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") == "cortex-fixed-stratum-forge/1.0":
+                metadata_state = "fixed_stratum_local_control_audit_metadata_only"
+            elif payload.get("schema_version") == "cortex-fixed-cohort-export/1.0":
+                metadata_state = "fixed_cohort_export_requires_current_instrument_interpretation"
+            elif payload.get("schema_version") == "cortex-patch-transport-audit/1.0":
+                metadata_state = "posthoc_archived_transport_audit_not_new_model_result"
             elif payload.get("schema_version") == "cortex-audited-development-screen/1.0":
                 metadata_state = audited_screen_metadata(payload)
             elif payload.get("schema_version") == "cortex-instrument-frontier-audit/1.0":

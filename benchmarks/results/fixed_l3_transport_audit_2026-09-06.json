@@ -1,0 +1,95 @@
+{
+  "schema_version": "cortex-patch-transport-audit/1.0",
+  "new_model_calls": 0,
+  "posthoc_instrument_audit": true,
+  "original_source_commit": "da63167a1e7d7e07aa39360bd12d7d5257525fcf",
+  "fix_source_hash": "3ccaded3d1c6b0af6cfcf17d033e115609838a6197b90e4d555911f08fee658c",
+  "original_model_result": "5/8 retained unchanged",
+  "cases": [
+    {
+      "case_id": "atomic_projection_offset",
+      "original_case_receipt_hash": "00790ba8ffd1dd7a32af1f1cbca578226aefa6ec9986748f3122f0eef958a3c5",
+      "legacy_text_transport_rejected": true,
+      "exact_byte_transport_accepted": true,
+      "archived_candidate_pass_after_transport_fix": true,
+      "evaluator_commitment_unchanged": true,
+      "compilation_hash": "4c461302b0d9e8a9e39d9e64229de84723313126ba1c66dc6c3575e991643f0e",
+      "posthoc_evaluation_hash": "ccc6375b2bc3c4433756bb00646389fad719cc00b4cd6b0b751dc560371c9dda"
+    },
+    {
+      "case_id": "checkpoint_replay_boundary",
+      "original_case_receipt_hash": "a53678cfa087f8397071fb5cb1bd27740bd687e92edda72b3e9ab477cd26199d",
+      "legacy_text_transport_rejected": true,
+      "exact_byte_transport_accepted": true,
+      "archived_candidate_pass_after_transport_fix": true,
+      "evaluator_commitment_unchanged": true,
+      "compilation_hash": "579a75b1add22ee74a8c1333eef1e4cd8c956aad5c0fd8ab6c69d037c7472fca",
+      "posthoc_evaluation_hash": "5391e6ac60acefde4077cd961ee1fad904ab6c4bf238e3d0f9b2f412904b1614"
+    },
+    {
+      "case_id": "disjoint_transaction_merge",
+      "original_case_receipt_hash": "db44a3e6f742eab418a1a71718eb5f03da49bb4658200842c32736d4c021d705",
+      "legacy_text_transport_rejected": true,
+      "exact_byte_transport_accepted": true,
+      "archived_candidate_pass_after_transport_fix": true,
+      "evaluator_commitment_unchanged": true,
+      "compilation_hash": "8169a9b5eeb9312c2232316fea4ae5ec3b358951b42e1a85add9f6f05131d3ae",
+      "posthoc_evaluation_hash": "33cadc592730a41ae897b6470d9168e4b7bf2145b5bbd9d593054905e7f8319c"
+    }
+  ],
+  "inspection": {
+    "schema_version": "cortex-repair-cohort-inspection/1.1",
+    "valid": true,
+    "errors": [],
+    "cohort_receipt_hash": "4711ddd0aad4126a02a94964664dfa608f926dea3336bd6cc3d1e3700e19bf0d",
+    "result_receipt_hashes": [
+      "3ef25329a250a6a48fe095204d2ee11230e53ee9bb00526059f6c522c56760a3",
+      "512431921bc3c4ed3b35164fe20cf69c582d09d10067277ee7a905f9cfafb683"
+    ],
+    "summary": {
+      "state": "calibrated",
+      "recommended_action": "retain_for_heldout_generation",
+      "case_count": 8,
+      "success_count": 5,
+      "success_rate": 0.625,
+      "screening_cases": 4,
+      "confirmation_cases": 8,
+      "attainable_success_rates": [
+        0.0,
+        0.125,
+        0.25,
+        0.375,
+        0.5,
+        0.625,
+        0.75,
+        0.875,
+        1.0
+      ],
+      "eligible_success_counts": [
+        3,
+        4,
+        5
+      ],
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "completed_calls": 8,
+    "confirmation_permitted": false,
+    "candidate_observation_complete": false,
+    "development_region_selected": false,
+    "population_calibration_established": false,
+    "semantic_transfer_established": false,
+    "general_improvement_established": false,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  },
+  "baseline_calibrated": false,
+  "semantic_transfer_established": false,
+  "general_improvement_established": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false
+}

@@ -126,18 +126,21 @@ def approval_challenge(session_id: str, proposal_hash: str) -> str:
 
 
 def _git(root: Path, arguments: list[str], patch: str | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    # Text-mode stdin translates LF to CRLF on Windows. Git can mistake the
+    # inserted CR for trailing whitespace on added lines. Preserve patch bytes;
+    # do not weaken --whitespace=error-all or normalize the authored patch.
+    result = subprocess.run(
         ["git", *arguments],
         cwd=root,
-        input=patch,
-        text=True,
+        input=patch.encode("utf-8") if patch is not None else None,
         capture_output=True,
-        encoding="utf-8",
-        errors="replace",
         timeout=120,
         check=False,
         shell=False,
     )
+    return subprocess.CompletedProcess(result.args, result.returncode,
+        result.stdout.decode("utf-8", errors="replace"),
+        result.stderr.decode("utf-8", errors="replace"))
 
 
 def repository_head(root: str | Path) -> str:

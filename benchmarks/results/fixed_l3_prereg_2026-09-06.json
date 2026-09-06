@@ -1,0 +1,780 @@
+{
+  "schema_version": "cortex-fixed-cohort-export/1.0",
+  "state": "FROZEN_NOT_EXECUTED",
+  "source_commit": "da63167a1e7d7e07aa39360bd12d7d5257525fcf",
+  "cohort_receipt_hash": "4711ddd0aad4126a02a94964664dfa608f926dea3336bd6cc3d1e3700e19bf0d",
+  "screens": [
+    {
+      "adapter_provenance": {
+        "binding_digest": "134b843443a4e1c55712cb36aa64b3cb6f0d868718bcf1ea6cc216258a4d0d9c",
+        "claim_boundary": "Host registration classifies a locally declared execution boundary; it is not provider attestation and does not prove a provider response.",
+        "empirical": true,
+        "evidence_class": "live_empirical",
+        "evidence_state": "host_registered",
+        "execution_boundary": "external_api",
+        "host_identity": {
+          "adapter_id": "cortex.provider-fabric.http",
+          "adapter_version": "10.0.0-alpha.2",
+          "model_id": "gpt-5.6-sol",
+          "model_version": "provider-declared",
+          "provider_family": "openai"
+        },
+        "host_identity_digest": "0c03268008e672d906908c8cbf515de96fbd677d9fdf48127d54795753b4d056",
+        "host_model_classification": {
+          "adapter_or_model_self_assertion_used": false,
+          "authority_basis": "host_principal_registration",
+          "capability_class": "general_reasoning",
+          "model_family": "runtime_selected_frontier",
+          "principal_id": "alpha18-screen-1788178750-65b8a692",
+          "provider_attestation_claimed": false,
+          "schema_version": "cortex-host-model-classification/1.0",
+          "state": "host_registered"
+        },
+        "host_model_classification_digest": "be200fc6bbcfdcb4acda8db1011608c8f4418784676ec169b68a72c53df1923e",
+        "implementation_digest": "5183223c82392dc6a58c9bca5141fc02a57751376789abca72c2efb0c8b6c9c5",
+        "principal_id": "alpha18-screen-1788178750-65b8a692",
+        "provider_attestation": "not_available",
+        "provider_attestation_claimed": false,
+        "registration_hash": "f205a67aef2567388b1491b4d2f5b3c4fc691e47ace46e9fa9ede8db66241386",
+        "registration_id": "f205a67aef2567388b1491b4d2f5b3c4fc691e47ace46e9fa9ede8db66241386",
+        "runtime_profile_digest": "3a0a53158f38ea01e92150b1581eb2fbbfc2ab9d5f018b9e0e1a4a928d017024",
+        "schema_version": "cortex-adapter-provenance/1.0",
+        "trust_basis": "host_principal_registration"
+      },
+      "advisory_only": true,
+      "body_epoch_id": "43b7e9e23a994d65081c1645b36e37cdec3804f6baa153a8738fccf07eae4f82",
+      "cases": [
+        {
+          "case_id": "retry_after_commit",
+          "files": {
+            "ledger.py": "class Ledger:\n    def __init__(self): self.total=0\n    def apply(self,event_id,amount): self.total+=amount\n",
+            "report.py": "def currency(n): return str(n)\n",
+            "service.py": "from ledger import Ledger\nfrom transport import checkpoint\nclass Processor:\n    def __init__(self):\n        self.ledger=Ledger()\n        self.done={}\n    def process(self, event_id, amount, fault=None):\n        if event_id in self.done:\n            if self.done[event_id] != amount: raise ValueError('conflicting event')\n            return self.ledger.total\n        checkpoint(fault, 'before')\n        self.ledger.apply(event_id,amount)\n        checkpoint(fault, 'after')\n        self.done[event_id]=amount\n        return self.ledger.total\n",
+            "transport.py": "def checkpoint(fault,phase):\n    if fault==phase: raise RuntimeError('transport fault')\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "ledger.py",
+            "report.py",
+            "service.py",
+            "transport.py"
+          ],
+          "private_evaluator_commitment": "f08a70ebdb8e2dd923d5d760f5a48f7512ba78292496c28c0510a9b6936b6c86",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Processor.process(event_id,amount,fault=None) credits integer amounts exactly once per event ID. A fault before application applies nothing and a retry must still apply; a fault after application raises RuntimeError but a retry must not credit again. Reusing an applied ID with a different amount raises ValueError without altering total, including after an after-application fault. ledger.total is the observable total. Valid inputs only; no specified internal receipt strategy."
+        },
+        {
+          "case_id": "atomic_projection_offset",
+          "files": {
+            "metrics.py": "def count(values): return sum(map(len,values.values()))\n",
+            "reducer.py": "def apply(values,key,delta):\n    if not isinstance(delta,int) or isinstance(delta,bool): raise ValueError('delta')\n    values.setdefault(key,[]).append(delta)\n",
+            "service.py": "from reducer import apply\nfrom state import State\nclass Projector:\n    def __init__(self): self.state=State()\n    def consume(self,offset,events):\n        if offset<=self.state.offset: return dict(self.state.values)\n        working=self.state.values.copy()\n        for key,delta in events: apply(working,key,delta)\n        self.state.values=working\n        self.state.offset=offset\n        return {k:list(v) for k,v in working.items()}\n",
+            "state.py": "class State:\n    def __init__(self): self.offset=-1; self.values={}\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "metrics.py",
+            "reducer.py",
+            "service.py",
+            "state.py"
+          ],
+          "private_evaluator_commitment": "d6a91bc71921587844549d87b27fc58c1b259954f6fe7ba6d407ccfaa5054d58",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Projector.consume(offset,events) applies a newer integer offset atomically, appending each integer delta (bool invalid) to its key history. Invalid delta raises ValueError with histories and offset unchanged. Replayed or older offsets are ignored, returning a deep snapshot; successful results are deep snapshots too. state.offset and state.values are observable state. No particular copy or validation order is prescribed."
+        },
+        {
+          "case_id": "superseded_expiry",
+          "files": {
+            "clockwork.py": "def is_expired(deadline,now): return deadline<=now\n",
+            "display.py": "def status(active): return \"active\" if active else \"expired\"\n",
+            "pool.py": "class Pool:\n    def __init__(self): self.current={}; self.pending=[]\n",
+            "service.py": "from clockwork import is_expired\nfrom pool import Pool\nclass Reservations:\n    def __init__(self): self.pool=Pool(); self.next_id=0\n    def reserve(self,name,now,ttl):\n        self.next_id+=1\n        token=self.next_id\n        self.pool.current[name]=(token,now+ttl)\n        self.pool.pending.append((name,token,now+ttl))\n        return token\n    def sweep(self,now):\n        remaining=[]\n        for name,token,deadline in self.pool.pending:\n            if is_expired(deadline,now): self.pool.current.pop(name,None)\n            else: remaining.append((name,token,deadline))\n        self.pool.pending=remaining\n    def active(self,name): return name in self.pool.current\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "clockwork.py",
+            "display.py",
+            "pool.py",
+            "service.py"
+          ],
+          "private_evaluator_commitment": "a189e0705426489aa42d42c630feb007f00ae49496c9ad151534f72667298ffd",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Reservations.reserve(name,now,ttl) replaces any earlier reservation of that name and returns a distinct positive token. sweep(now) expires the latest reservation exactly at its deadline, not earlier because an older reservation expired. Different names are independent; repeated sweeps are harmless. active(name) reports presence after sweeps. Times are nondecreasing and ttl positive. Queue strategy is unspecified."
+        },
+        {
+          "case_id": "catalog_partition_l3",
+          "files": {
+            "catalog/__init__.py": "",
+            "catalog/cache.py": "from copy import deepcopy\n\nclass TimedCache:\n    def __init__(self, lifetime):\n        self.lifetime = lifetime\n        self.entries = {}\n\n    def read(self, key, now):\n        entry = self.entries.get(key)\n        if entry is None or now >= entry[0]:\n            return None\n        return deepcopy(entry[1])\n\n    def write(self, key, value, now):\n        self.entries[key] = (now + self.lifetime, deepcopy(value))\n",
+            "catalog/presentation.py": "def format_price(record):\n    return '{:.2f}'.format(record['price'])\n\ndef stable_listing(records):\n    return sorted(records, key=lambda row: row.get('label', ''))\n",
+            "catalog/service.py": "from .storage import RecordStore\nfrom .cache import TimedCache\n\nclass Catalog:\n    def __init__(self, lifetime=30):\n        self.store = RecordStore()\n        self.cache = TimedCache(lifetime)\n\n    def publish(self, tenant, sku, value):\n        self.store.write(tenant, sku, value)\n\n    def get(self, tenant, sku, now):\n        version = self.store.revision(tenant, sku)\n        key = (sku, version)\n        result = self.cache.read(key, now)\n        if result is None:\n            result = self.store.load(tenant, sku)\n            self.cache.write(key, result, now)\n        return result\n",
+            "catalog/storage.py": "from copy import deepcopy\n\nclass RecordStore:\n    def __init__(self):\n        self.records = {}\n        self.revisions = {}\n\n    def write(self, tenant, sku, value):\n        key = (tenant, sku)\n        self.revisions[key] = self.revisions.get(key, 0) + 1\n        self.records[key] = deepcopy(value)\n\n    def revision(self, tenant, sku):\n        return self.revisions[(tenant, sku)]\n\n    def load(self, tenant, sku):\n        return deepcopy(self.records[(tenant, sku)])\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "catalog/__init__.py",
+            "catalog/cache.py",
+            "catalog/presentation.py",
+            "catalog/service.py",
+            "catalog/storage.py"
+          ],
+          "private_evaluator_commitment": "58292a4d5d9a15225b906d53d99129bb6cfde8ea2377691655d5a378e2703a35",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Catalog publishes independent JSON-like non-null records by tenant and SKU. get returns the latest published value for that tenant/SKU regardless of the order other tenants or SKUs are queried. Unknown records raise KeyError. Public method signatures remain unchanged.\n[R2] A publish becomes visible on the next get even while earlier results remain within cache lifetime. Advancing time beyond cache lifetime must not alter the logical record. There is no required internal cache key or revision allocation scheme.\n[R3] Caller mutations to published records and to values returned by get must not change subsequently returned records. Inputs to this task are valid strings and JSON-like values; times are nondecreasing."
+        }
+      ],
+      "context_treatment": "task_only_control",
+      "contract_alignment_binding": {
+        "aligned_corpus_hash": "819b398ebed1477b0ae287ff535940652c850616f4d15dc18d403597ac451e29",
+        "alignment_result_hash": "3801b560d74107c7262accef884c685dca9d156b1c7aec14001b5795b7ccf978",
+        "all_private_assertions_publicly_mapped": true,
+        "all_public_requirements_covered": true,
+        "executable_corpus_hash": "e55fa9b8c44d04b791a4f28ae53f964d16c70c975795987c58ca65cd52826461",
+        "semantic_entailment_established": false
+      },
+      "corpus_hash": "e55fa9b8c44d04b791a4f28ae53f964d16c70c975795987c58ca65cd52826461",
+      "created_at": 1788669356.0603461,
+      "development_only": true,
+      "event_id": "structured_repair_prereg_e745a789eaa23298f4a792fd",
+      "execution_authorized": false,
+      "forge_result_hash": "3801b560d74107c7262accef884c685dca9d156b1c7aec14001b5795b7ccf978",
+      "frontier_binding": {
+        "case_fingerprints": [
+          "286ed23b1f0b5ad735c53db42a4c59eef599d13af8dcf2c094702d127b0f4c54",
+          "c67aa09aed88ea9c933dfe54c6b85f9e6a23abb887d72925f8d6975b98cecece",
+          "6b6c675e1221bab49ceea78fdfe30a78c952ab3d78db91df771cc92a7573bf8e",
+          "fd29dcad747a07f6640fa96bd87be693dfad9c082d8577d0f90d5825742a3dc1"
+        ],
+        "instrument_receipt_hash": "72bb5be1f67b031727f2154e1a8dbbcb06d103312cc98f8ad2cedc7f150d250c",
+        "stratum": "L3"
+      },
+      "governed_prerequisite": {
+        "automatic_retries": 0,
+        "maximum_calls": 8,
+        "model_configuration": "provider_defaults_unpinned",
+        "source_commit": "da63167a1e7d7e07aa39360bd12d7d5257525fcf",
+        "task_independence": "not_established"
+      },
+      "host_mutate_authorized": false,
+      "kind": "structured_repair_preregistration",
+      "memory_admission_authorized": false,
+      "model_identity": {
+        "adapter_id": "cortex.provider-fabric.http",
+        "adapter_version": "10.0.0-alpha.2",
+        "model_id": "gpt-5.6-sol",
+        "model_version": "provider-declared",
+        "provider_family": "openai"
+      },
+      "planned_calls": 4,
+      "policy_effect": false,
+      "prior_screen_binding": null,
+      "private_bundle_hash": "c787c94cd28f37ede02eecd2345f8a6cb379770c1fe2e6f8df688503cbcf23fc",
+      "private_specs_origin": "outside_repository",
+      "repo": "Cortex",
+      "repository_id": "bca000b2ec3c85672013dc41",
+      "response_contract": {
+        "allowed_paths": [
+          "catalog/__init__.py",
+          "catalog/cache.py",
+          "catalog/presentation.py",
+          "catalog/service.py",
+          "catalog/storage.py",
+          "clockwork.py",
+          "display.py",
+          "ledger.py",
+          "metrics.py",
+          "pool.py",
+          "reducer.py",
+          "report.py",
+          "service.py",
+          "state.py",
+          "transport.py"
+        ],
+        "edit_keys": [
+          "path",
+          "old",
+          "new"
+        ],
+        "exact_top_level_keys": [
+          "schema_version",
+          "summary",
+          "edits"
+        ],
+        "format": "one JSON object only; no markdown fences",
+        "rule": "old must be an exact unique source substring; express the smallest complete repair",
+        "schema_version": "cortex-structured-edit-intent/1.0"
+      },
+      "schema_version": "cortex-structured-repair-preregistration/1.3",
+      "screening_control_audit": {
+        "additional_model_calls": 0,
+        "corpus_hash": "819b398ebed1477b0ae287ff535940652c850616f4d15dc18d403597ac451e29",
+        "evaluator_commitments": {
+          "atomic_projection_offset": "d6a91bc71921587844549d87b27fc58c1b259954f6fe7ba6d407ccfaa5054d58",
+          "catalog_partition_l3": "58292a4d5d9a15225b906d53d99129bb6cfde8ea2377691655d5a378e2703a35",
+          "retry_after_commit": "f08a70ebdb8e2dd923d5d760f5a48f7512ba78292496c28c0510a9b6936b6c86",
+          "superseded_expiry": "a189e0705426489aa42d42c630feb007f00ae49496c9ad151534f72667298ffd"
+        },
+        "evidence_class": "local_instrument_audit",
+        "execution_authorized": false,
+        "expected_labels": "host_reviewed_not_semantically_proven",
+        "general_improvement_established": false,
+        "host_mutate_authorized": false,
+        "memory_admission_authorized": false,
+        "observations": [
+          {
+            "case_id": "retry_after_commit",
+            "control_id": "reference",
+            "evaluation_hash": "37c1294ffb8b1a2cae36ad13f04c11778f736e912650de330f79f4ec9eb46031",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "743e1a5362c259c6e8f4a38ae68c8993a4ba279504bfbcc3d77a5c5c620166d9"
+          },
+          {
+            "case_id": "retry_after_commit",
+            "control_id": "alternate",
+            "evaluation_hash": "80b2e587506a782f8d9b28364b426eb5c0ae40f80025347783ef61756c001726",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "86eb6c3efef4a04b031c9aebc4efc35e5ecc74da7d6673eed9cf0a85e178d18f"
+          },
+          {
+            "case_id": "retry_after_commit",
+            "control_id": "premature_receipt",
+            "evaluation_hash": "6d3620799f72e7527a8d185d84db0335d487f6a30464455da66970f5b5fe4583",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "e0fb6c5310b8789ddcecc32718999770ffce32a7063338d5795810ca1a042ef7"
+          },
+          {
+            "case_id": "retry_after_commit",
+            "control_id": "ignore_conflict",
+            "evaluation_hash": "2b7d9fc4025048ec60f58353ce77440c9675763384f6b6c3a20392d09d202c78",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "583045f8aa2ef2bc64f121a093841d2752ec41841d74bd67d403c14904f413cd"
+          },
+          {
+            "case_id": "atomic_projection_offset",
+            "control_id": "reference",
+            "evaluation_hash": "81272bbaaedcf715ebf8723e3c1cc23f0e974919867886cb440018d8af4df11a",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "dd6d25feb4b35849cdb1ac0e83464d60d0d454dd5c7814b526574c8faeaa8e8e"
+          },
+          {
+            "case_id": "atomic_projection_offset",
+            "control_id": "alternate",
+            "evaluation_hash": "3bb050a50177595497d977a61e0dde8b205f358b82a0ce0ccfcd4ce2b9a91f15",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "2e41156db72fa5be1d6125baa67067a2a715d5dfc1d6a7232a5b66acdca75224"
+          },
+          {
+            "case_id": "atomic_projection_offset",
+            "control_id": "offset_committed_early",
+            "evaluation_hash": "1bedd6d5965a69a4a6a7a26bfe5a3f3059c4d55725031c97814991760d80e794",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "40609a7f409993c3d3ebf2117c7689eb7e7a6a57a932e0cdd83676fa11d88a3c"
+          },
+          {
+            "case_id": "atomic_projection_offset",
+            "control_id": "replay_reapplies",
+            "evaluation_hash": "69beb87d6c61c3c97d553c429936ff2ec0a5194e59b039051de6d90390eef2f3",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "f867da3dbf8260cef661d8c08a2d5031c1e57c5243bfd6f2a0880c4408e5d049"
+          },
+          {
+            "case_id": "superseded_expiry",
+            "control_id": "reference",
+            "evaluation_hash": "b44eb2dbcb0c3c9a9e7bff32d81f3c82827c9a429d83986a7c8e89059a886f60",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "f210bf324f27302308b2840defa0b51d4d0ca69aa770e9e2606b27ab09207f94"
+          },
+          {
+            "case_id": "superseded_expiry",
+            "control_id": "alternate",
+            "evaluation_hash": "7af4b750602579b89385a850ee22ced141db4f35b8b97c78a26930205ca352d2",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "9af4acd423e80056cf7d5611ad8763a5748da598b7968afc9005d1ded8d5878f"
+          },
+          {
+            "case_id": "superseded_expiry",
+            "control_id": "late_boundary",
+            "evaluation_hash": "760051206e07f6d365506368cb31808e6f26bb2137296cbedd68d08c234cceec",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "b4c1b8345dd99b48019fa221a0f82dc532ea9b055c5c26605b32214276d05985"
+          },
+          {
+            "case_id": "superseded_expiry",
+            "control_id": "clears_other_names",
+            "evaluation_hash": "f18966e200ddfd3458ed068a1d31452672ea783aba50ab241ce85450630126fd",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "57d4aa35bc8c0692294b516eeb58193116cf9139b634dc41cdbf5d427eec398c"
+          },
+          {
+            "case_id": "catalog_partition_l3",
+            "control_id": "reference",
+            "evaluation_hash": "d805d370242ff13cecbefdcc7eeffac7a3c046e029dd4f92fda6a19d8fa38de8",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "d04468e8246960673b99cd4036d765092174bd4b06bcad68f1810a6f976bc6e0"
+          },
+          {
+            "case_id": "catalog_partition_l3",
+            "control_id": "alternate",
+            "evaluation_hash": "0249c70dd7839bb977012b7f1a74111c91fc302783c03b352eb0a3749080cbe8",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "90287258004bbce56c4ebbd7387420e9b86d102fadcc7241140a30d4bdaa3f38"
+          },
+          {
+            "case_id": "catalog_partition_l3",
+            "control_id": "stale",
+            "evaluation_hash": "9111283ecc2d0e8795052f7fb84526b9c4549d3f55a8972f22f01b3a65de3b49",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "4466213e40c78587cb55c804d3120f9684e6a60ec942f1f0770d5ab158558695"
+          }
+        ],
+        "policy_effect": false,
+        "result_hash": "9cc98ac5afc8383054b2df8465edd51fc814f2bd12de3d6628b594356aaebec5",
+        "schema_version": "cortex-evaluator-control-audit/1.0",
+        "semantic_transfer_established": false,
+        "state": "CONTROL_PANEL_PASS",
+        "universal_implementation_equivalence": false
+      },
+      "screening_policy": {
+        "confirmation_cases": 8,
+        "maximum_success_rate": 0.7,
+        "minimum_success_rate": 0.3,
+        "screening_cases": 4
+      },
+      "semantic_transfer_established": false,
+      "session_id": "sym_a77c9974799da44f3894",
+      "status": "frozen_before_execution",
+      "tools": [],
+      "turn_id": 0,
+      "version": "10.0.0a39",
+      "receipt_hash": "d57313dc169bf198c8bfe1ebf15e8217079dd497073677c50015b7eaf8ffcd0e",
+      "subject_receipt_hash": "518e685d3b77dfe88237081e891bea32b27ad75a95d4b408492448247f2f4123",
+      "previous_receipt_hash": "8556b65c27719f64d3009eedbbbb936cefbe13fc6dac6ca47756bef100189ea9",
+      "chain_sequence": 3,
+      "ledger_schema_version": "cortex-symbiotic-circulation-ledger/1.1",
+      "inserted": true,
+      "duplicate": false,
+      "chain_valid": true
+    },
+    {
+      "adapter_provenance": {
+        "binding_digest": "134b843443a4e1c55712cb36aa64b3cb6f0d868718bcf1ea6cc216258a4d0d9c",
+        "claim_boundary": "Host registration classifies a locally declared execution boundary; it is not provider attestation and does not prove a provider response.",
+        "empirical": true,
+        "evidence_class": "live_empirical",
+        "evidence_state": "host_registered",
+        "execution_boundary": "external_api",
+        "host_identity": {
+          "adapter_id": "cortex.provider-fabric.http",
+          "adapter_version": "10.0.0-alpha.2",
+          "model_id": "gpt-5.6-sol",
+          "model_version": "provider-declared",
+          "provider_family": "openai"
+        },
+        "host_identity_digest": "0c03268008e672d906908c8cbf515de96fbd677d9fdf48127d54795753b4d056",
+        "host_model_classification": {
+          "adapter_or_model_self_assertion_used": false,
+          "authority_basis": "host_principal_registration",
+          "capability_class": "general_reasoning",
+          "model_family": "runtime_selected_frontier",
+          "principal_id": "alpha18-screen-1788178750-65b8a692",
+          "provider_attestation_claimed": false,
+          "schema_version": "cortex-host-model-classification/1.0",
+          "state": "host_registered"
+        },
+        "host_model_classification_digest": "be200fc6bbcfdcb4acda8db1011608c8f4418784676ec169b68a72c53df1923e",
+        "implementation_digest": "5183223c82392dc6a58c9bca5141fc02a57751376789abca72c2efb0c8b6c9c5",
+        "principal_id": "alpha18-screen-1788178750-65b8a692",
+        "provider_attestation": "not_available",
+        "provider_attestation_claimed": false,
+        "registration_hash": "f205a67aef2567388b1491b4d2f5b3c4fc691e47ace46e9fa9ede8db66241386",
+        "registration_id": "f205a67aef2567388b1491b4d2f5b3c4fc691e47ace46e9fa9ede8db66241386",
+        "runtime_profile_digest": "3a0a53158f38ea01e92150b1581eb2fbbfc2ab9d5f018b9e0e1a4a928d017024",
+        "schema_version": "cortex-adapter-provenance/1.0",
+        "trust_basis": "host_principal_registration"
+      },
+      "advisory_only": true,
+      "body_epoch_id": "43b7e9e23a994d65081c1645b36e37cdec3804f6baa153a8738fccf07eae4f82",
+      "cases": [
+        {
+          "case_id": "equal_timestamp_sync",
+          "files": {
+            "cursor.py": "class Cursor:\n    def __init__(self): self.time=-1\n",
+            "files.py": "class FileStore:\n    def __init__(self): self.data={}\n    def put(self,name,value): self.data[name]=value\n",
+            "ordering.py": "def chronological(rows): return sorted(rows)\n",
+            "service.py": "from files import FileStore\nfrom cursor import Cursor\nclass Sync:\n    def __init__(self): self.files=FileStore(); self.cursor=Cursor()\n    def run(self,records):\n        pending=[r for r in records if r[0]>self.cursor.time]\n        for stamp,name,value in sorted(pending):\n            self.files.put(name,value)\n            self.cursor.time=stamp\n        return dict(self.files.data)\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "cursor.py",
+            "files.py",
+            "ordering.py",
+            "service.py"
+          ],
+          "private_evaluator_commitment": "b219b465bd0d7436c72984641d98b765c239b0ee6c1b4c11a64beb472b2e3011",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Sync.run(records) receives (nonnegative timestamp,name,string value) records and returns current name-to-value state. New names sharing a timestamp with earlier calls must not be lost. Each name is delivered in increasing timestamp order, repeated identical records may recur, and timestamps across names may differ. The most recent value per name must remain visible; replayed older records must not overwrite it. No watermark representation is required."
+        },
+        {
+          "case_id": "checkpoint_replay_boundary",
+          "files": {
+            "formatting.py": "def keys(values): return sorted(values)\n",
+            "journal.py": "class Journal:\n    def __init__(self): self.rows=[]\n    def append(self,key,value): self.rows.append((key,value))\n",
+            "service.py": "from snapshots import Snapshot\nfrom journal import Journal\nclass Database:\n    def __init__(self): self.values={}; self.journal=Journal()\n    def put(self,key,value):\n        self.values[key]=value\n        self.journal.append(key,value)\n    def checkpoint(self): return Snapshot(dict(self.values),len(self.journal.rows))\n    def restore(self,snapshot):\n        restored=dict(snapshot.values)\n        for key,value in self.journal.rows[snapshot.position+1:]: restored[key]=value\n        return restored\n",
+            "snapshots.py": "class Snapshot:\n    def __init__(self,values,position): self.values=values; self.position=position\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "formatting.py",
+            "journal.py",
+            "service.py",
+            "snapshots.py"
+          ],
+          "private_evaluator_commitment": "8178256d5bb08cb73e161f3fcb59c040d0778b3af58fcddc6c069c1dbdeb1a94",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Database.put records string values. checkpoint returns an opaque immutable-in-use snapshot; restore(snapshot) reconstructs the latest state from that snapshot and subsequent writes without changing live state. It must work for an empty snapshot, for no writes after a checkpoint, and for one or several subsequent writes including overwrites. Snapshot position conventions are not part of the public contract."
+        },
+        {
+          "case_id": "superseded_job_delivery",
+          "files": {
+            "encoding.py": "def encode(row): return repr(row)\n",
+            "queueing.py": "class Queue:\n    def __init__(self): self.rows=[]\n    def push(self,row): self.rows.append(row)\n    def take_all(self):\n        rows,self.rows=self.rows,[]\n        return rows\n",
+            "service.py": "from queueing import Queue\nclass Worker:\n    def __init__(self): self.queue=Queue(); self.generation={}; self.completed=[]\n    def schedule(self,name,payload):\n        self.generation[name]=self.generation.get(name,0)+1\n        self.queue.push((name,self.generation[name],payload))\n    def drain(self):\n        for name,generation,payload in self.queue.take_all():\n            self.completed.append((name,payload))\n        return list(self.completed)\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "encoding.py",
+            "queueing.py",
+            "service.py"
+          ],
+          "private_evaluator_commitment": "81fae9f56f389533afcd6c67180faf6fe79a4fc15ac1da592eec79febec27265",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Worker.schedule(name,payload) replaces pending work for that name. drain processes only the latest pending payload per name in the order of those latest schedule calls and returns cumulative completed (name,payload) pairs. A later schedule after a drain is new work even for a previously completed name. Empty drains add nothing. Inputs are strings. Pending queue storage is not prescribed."
+        },
+        {
+          "case_id": "disjoint_transaction_merge",
+          "files": {
+            "records.py": "class Records:\n    def __init__(self): self.values={}\n",
+            "service.py": "from records import Records\nclass Transactions:\n    def __init__(self): self.records=Records()\n    def begin(self): return dict(self.records.values)\n    def commit(self,base,changes):\n        for key,value in changes.items():\n            if self.records.values.get(key)!=base.get(key): return False\n        self.records.values=dict(base)\n        self.records.values.update(changes)\n        return True\n",
+            "view.py": "def ordered(values): return sorted(values.items())\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "records.py",
+            "service.py",
+            "view.py"
+          ],
+          "private_evaluator_commitment": "5e38224e89e21f0bd43e72aa55fb0289c507465c55143cb6f63a8532b98811f5",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Transactions.begin returns a string-value snapshot. commit(base,changes) is optimistic: reject False atomically if any changed key has changed since base; otherwise apply just changes and return True. Concurrent changes to disjoint keys must survive. Inputs contain no null values and snapshots are not modified by callers. records.values exposes committed state. This contract compares values, not revision tokens; ABA prevention is not required."
+        }
+      ],
+      "context_treatment": "task_only_control",
+      "contract_alignment_binding": {
+        "aligned_corpus_hash": "9ad66fb67525b3f7dbe3661f23152a87870f31e8216493efe92c57807fb931b7",
+        "alignment_result_hash": "254ae23f0c29696d4fda18ff4860bfde3e79ccc7a3840e08d6ffa145c670ade2",
+        "all_private_assertions_publicly_mapped": true,
+        "all_public_requirements_covered": true,
+        "executable_corpus_hash": "06934f07a5c3e2f5833aa6b52faa422f1a18d9c9e70f3260f6acff502a89abbd",
+        "semantic_entailment_established": false
+      },
+      "corpus_hash": "06934f07a5c3e2f5833aa6b52faa422f1a18d9c9e70f3260f6acff502a89abbd",
+      "created_at": 1788669356.3285677,
+      "development_only": true,
+      "event_id": "structured_repair_prereg_eeb73e6b7bc0858651685cf4",
+      "execution_authorized": false,
+      "forge_result_hash": "254ae23f0c29696d4fda18ff4860bfde3e79ccc7a3840e08d6ffa145c670ade2",
+      "frontier_binding": {
+        "case_fingerprints": [
+          "79663266e1e881d8897bd9e7e699618cd1fe2ec2beefc62145d799330647d0a1",
+          "703d6d83b867617b993fb474b1a746e8fd21018dd43ac6c1367c81816f58e1b8",
+          "fc0ac0deeff129519815ef6842d390dca1486b34bcc06d65b2cede63d19f1a02",
+          "4858738a63e60499bcaf66ddae7e65430fd04ca7b64655f61a8f410813f58c76"
+        ],
+        "instrument_receipt_hash": "5449b3cf7afb9d7e76bdca626703045d6d4846d2d10d4e9f9fea0e8900e2f56f",
+        "stratum": "L3"
+      },
+      "governed_prerequisite": {
+        "automatic_retries": 0,
+        "maximum_calls": 8,
+        "model_configuration": "provider_defaults_unpinned",
+        "source_commit": "da63167a1e7d7e07aa39360bd12d7d5257525fcf",
+        "task_independence": "not_established"
+      },
+      "host_mutate_authorized": false,
+      "kind": "structured_repair_preregistration",
+      "memory_admission_authorized": false,
+      "model_identity": {
+        "adapter_id": "cortex.provider-fabric.http",
+        "adapter_version": "10.0.0-alpha.2",
+        "model_id": "gpt-5.6-sol",
+        "model_version": "provider-declared",
+        "provider_family": "openai"
+      },
+      "planned_calls": 4,
+      "policy_effect": false,
+      "prior_screen_binding": null,
+      "private_bundle_hash": "b6b73797712a5d37844ac966d10832671edac382aab975b55630028b48b2285f",
+      "private_specs_origin": "outside_repository",
+      "repo": "Cortex",
+      "repository_id": "bca000b2ec3c85672013dc41",
+      "response_contract": {
+        "allowed_paths": [
+          "cursor.py",
+          "encoding.py",
+          "files.py",
+          "formatting.py",
+          "journal.py",
+          "ordering.py",
+          "queueing.py",
+          "records.py",
+          "service.py",
+          "snapshots.py",
+          "view.py"
+        ],
+        "edit_keys": [
+          "path",
+          "old",
+          "new"
+        ],
+        "exact_top_level_keys": [
+          "schema_version",
+          "summary",
+          "edits"
+        ],
+        "format": "one JSON object only; no markdown fences",
+        "rule": "old must be an exact unique source substring; express the smallest complete repair",
+        "schema_version": "cortex-structured-edit-intent/1.0"
+      },
+      "schema_version": "cortex-structured-repair-preregistration/1.3",
+      "screening_control_audit": {
+        "additional_model_calls": 0,
+        "corpus_hash": "9ad66fb67525b3f7dbe3661f23152a87870f31e8216493efe92c57807fb931b7",
+        "evaluator_commitments": {
+          "checkpoint_replay_boundary": "8178256d5bb08cb73e161f3fcb59c040d0778b3af58fcddc6c069c1dbdeb1a94",
+          "disjoint_transaction_merge": "5e38224e89e21f0bd43e72aa55fb0289c507465c55143cb6f63a8532b98811f5",
+          "equal_timestamp_sync": "b219b465bd0d7436c72984641d98b765c239b0ee6c1b4c11a64beb472b2e3011",
+          "superseded_job_delivery": "81fae9f56f389533afcd6c67180faf6fe79a4fc15ac1da592eec79febec27265"
+        },
+        "evidence_class": "local_instrument_audit",
+        "execution_authorized": false,
+        "expected_labels": "host_reviewed_not_semantically_proven",
+        "general_improvement_established": false,
+        "host_mutate_authorized": false,
+        "memory_admission_authorized": false,
+        "observations": [
+          {
+            "case_id": "equal_timestamp_sync",
+            "control_id": "reference",
+            "evaluation_hash": "bfe73b9651233414aa317dae4fcbd7667d94fe19a61dffe7e0390aee1e1046d5",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "6c30404a1deba2436ec355b2d39d46ac68e5dd88b49f83c19bac875acefe8009"
+          },
+          {
+            "case_id": "equal_timestamp_sync",
+            "control_id": "alternate",
+            "evaluation_hash": "16c6588d9cc2c3766a5648ead4deadf46974817d12341f1d7d65d3ef5af8adeb",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "48cfb840160208f64a3064771d29a94a41d078a016a5d569c69ae5e4a529461d"
+          },
+          {
+            "case_id": "equal_timestamp_sync",
+            "control_id": "inclusive_replays",
+            "evaluation_hash": "873f70608533094f8834e6e7518ae67a36ee4a90d31c0176d4c4c09921fad060",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "cbec5a329a3d109e74dde58f1694b2fe3138d07fa2239b16a12e2a7335abd56c"
+          },
+          {
+            "case_id": "equal_timestamp_sync",
+            "control_id": "loses_name_identity",
+            "evaluation_hash": "2f11d09cba429897f850fafb602ecef8eb616e5a842cd3f88a384c0b47d44268",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "7f07565fbfc8639516eeaf24166dc4c2b337665c2ed333e47d73a64cbe0eec94"
+          },
+          {
+            "case_id": "checkpoint_replay_boundary",
+            "control_id": "reference",
+            "evaluation_hash": "0494e6691c4a9a89e163547e1bdb9de8d1ff2c8910cf00829aea30c058a753c8",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "a36042d44003bd48a43a95da530800f4de7d3d39967142e2b46d0c3fb50ba56c"
+          },
+          {
+            "case_id": "checkpoint_replay_boundary",
+            "control_id": "alternate",
+            "evaluation_hash": "d7e1698cdcae1957ebe8cd6b9fb62b81e41a4ee2fc7e5f385819e397bb939be5",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "be8fb3ae7cdf8dbde946c4f6d99c3f54ecc08f697e94b9ad4975281752195034"
+          },
+          {
+            "case_id": "checkpoint_replay_boundary",
+            "control_id": "omits_tail",
+            "evaluation_hash": "917e30d79a85647b16656c1e78eddc2cb32e24626e90cd17dc3a066c16a167c3",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "b8a2d89ff142b613705ed98189763232f884a263dac7f900c518ce176893a388"
+          },
+          {
+            "case_id": "checkpoint_replay_boundary",
+            "control_id": "mutates_live",
+            "evaluation_hash": "c2a1e51460976cdbb15a29787d9323333a6224e97152ac0b7e7a85924e283c16",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "da68cae2b355a38df511264405ecb5018109f145fbdd5d84e243720c59f76865"
+          },
+          {
+            "case_id": "superseded_job_delivery",
+            "control_id": "reference",
+            "evaluation_hash": "83e0448a51e102a1d287664c53593bd34c0793590fb1c5fa6e07687ac0cb3cea",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "6f95d1d83ad28fb2104c901b74d826f4e07207a88b8870e47e34a8d105f1136c"
+          },
+          {
+            "case_id": "superseded_job_delivery",
+            "control_id": "alternate",
+            "evaluation_hash": "820859dfa7e7f98127d5fbb0b9c0f39bff3437cfc2037a6add5aae2316e95baf",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "5f833135dbfd1d63500c62b51e7e6b13e9e25b9c94c2eb4356c75c3682fb1fde"
+          },
+          {
+            "case_id": "superseded_job_delivery",
+            "control_id": "first_wins",
+            "evaluation_hash": "394f8bcbc2704d2e39a7d63a8c2f3c279d2724d2a74efb2d9f42160192ca2116",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "feee5ab68a499d581193bdc49d5004d26f5135f505424a2e75cc94cfe1900ff0"
+          },
+          {
+            "case_id": "superseded_job_delivery",
+            "control_id": "queue_not_consumed",
+            "evaluation_hash": "2c7cf9ea68071bf75880ea62c592b403a68ec2eed4bbd9acbcd0f5f3e3f80854",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "924e20760130a4097c28663e75dee2fa0527888fda5240369235f4e96e11bd37"
+          },
+          {
+            "case_id": "disjoint_transaction_merge",
+            "control_id": "reference",
+            "evaluation_hash": "8040ed1bde66bf10c47170fd928f18db4f29f86b91515b4dbaedf8f7db03833b",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "cb70078f780722d51c1be69463f79d84ba7a8c4d4da5b9005e14fd7c4845d2d3"
+          },
+          {
+            "case_id": "disjoint_transaction_merge",
+            "control_id": "alternate",
+            "evaluation_hash": "de25db86301b4cbf5a6d2e0b0ab6edcb6177d493b721f8b125969b65e85fca75",
+            "expectation_met": true,
+            "expected_pass": true,
+            "observed_pass": true,
+            "patch_hash": "3de0665c681ace493ac2cefd381afefd1d648cd1f774bafbfd4327a182312af3"
+          },
+          {
+            "case_id": "disjoint_transaction_merge",
+            "control_id": "partial_conflict",
+            "evaluation_hash": "207cab001dbb9fe632c7a088be5bd886142c9eccb223e3ef8b81a9173d75c7d8",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "8d7f1c9a5895934e15c64aa424fa2181e271cfcad7343b8d1fcbf09f47964f21"
+          },
+          {
+            "case_id": "disjoint_transaction_merge",
+            "control_id": "checks_all_keys",
+            "evaluation_hash": "82b2b708c1d8d819a8cde29cdb0c0b489378a764d1fe4a4bdf1d1d9f0b69f9ad",
+            "expectation_met": true,
+            "expected_pass": false,
+            "observed_pass": false,
+            "patch_hash": "14737d9a9df222d21ee1e6e5d72a58381b1bdbc819727116032a3c92569e7485"
+          }
+        ],
+        "policy_effect": false,
+        "result_hash": "700c337fce4b7a800261110f0f66586301a24d9ec1d7d35ee4d6280c9198297c",
+        "schema_version": "cortex-evaluator-control-audit/1.0",
+        "semantic_transfer_established": false,
+        "state": "CONTROL_PANEL_PASS",
+        "universal_implementation_equivalence": false
+      },
+      "screening_policy": {
+        "confirmation_cases": 8,
+        "maximum_success_rate": 0.7,
+        "minimum_success_rate": 0.3,
+        "screening_cases": 4
+      },
+      "semantic_transfer_established": false,
+      "session_id": "sym_33259305aff9e5b92b9d",
+      "status": "frozen_before_execution",
+      "tools": [],
+      "turn_id": 0,
+      "version": "10.0.0a39",
+      "receipt_hash": "2fa34a3c5ab126e2168e44e67f5993e326503a5031a844355831219d9b0d3132",
+      "subject_receipt_hash": "d00b9f6209ce038cb3e6a3d1cec9f5f00c51d932835d647500832b0b1743a58f",
+      "previous_receipt_hash": "d03c04eec05fe879319a2c5e9e8f8e02950df8dc9fd7377809b105fc8d803053",
+      "chain_sequence": 3,
+      "ledger_schema_version": "cortex-symbiotic-circulation-ledger/1.1",
+      "inserted": true,
+      "duplicate": false,
+      "chain_valid": true
+    }
+  ],
+  "model_identity": {
+    "adapter_id": "cortex.provider-fabric.http",
+    "adapter_version": "10.0.0-alpha.2",
+    "model_id": "gpt-5.6-sol",
+    "model_version": "provider-declared",
+    "provider_family": "openai"
+  },
+  "policy": {
+    "screening_calls": 4,
+    "confirmation_calls": 4,
+    "maximum_total_calls": 8,
+    "confirmation_requires": "mixed_screen",
+    "automatic_retries": 0,
+    "minimum_success_rate": 0.3,
+    "maximum_success_rate": 0.7,
+    "difficulty_change_authorized": false,
+    "confirmatory_effect_eligible": false
+  },
+  "calls_executed": 0
+}

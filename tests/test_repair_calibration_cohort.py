@@ -48,7 +48,8 @@ def add_result(s, stage, successes, claim_time=110):
     s.rows[f"claim{stage}"] = {"kind": "structured_repair_execution_claim", "created_at": claim_time,
                                 "preregistration_receipt_hash": f"screen{stage}"}
     for j in range(4):
-        s.rows[f"case{stage}{j}"] = {"kind": "structured_repair_case", "task_success": j < successes}
+        s.rows[f"case{stage}{j}"] = {"kind": "structured_repair_case", "task_success": j < successes,
+            "evaluation": {"candidate_error": None, "candidate": {"steps": [{"passed": j < successes}]}}}
     s.rows[f"result{stage}"] = {"kind": "structured_repair_result", "receipt_hash": f"result{stage}",
         "preregistration_receipt_hash": f"screen{stage}", "execution_claim_receipt_hash": f"claim{stage}",
         "created_at": claim_time+10, "screen": {"success_count": successes},
@@ -72,6 +73,18 @@ def test_eight_fresh_mixed_cases_only_select_development_region(store):
     assert result["valid"] and result["development_region_selected"]
     assert result["completed_calls"] == 8 and not result["semantic_transfer_established"]
     assert all(result[k] is False for k in AUTHORITY)
+
+
+@pytest.mark.parametrize("evaluation", [{}, {"candidate_error": "application failed", "candidate": {"steps": []}}])
+def test_unobserved_candidate_cannot_establish_task_difficulty(store, evaluation):
+    add_result(store, 0, 3)
+    add_result(store, 1, 2, claim_time=130)
+    store.rows["case03"]["evaluation"] = evaluation
+    with patch("cortex.repair_calibration_cohort.verify_structured_repair_screen", return_value={"valid": True}):
+        result = inspect_repair_cohort(store, "test", "cohort")
+    assert result["valid"] and result["summary"]["success_count"] == 5
+    assert not result["candidate_observation_complete"]
+    assert not result["development_region_selected"]
 
 
 @pytest.mark.parametrize("mutation", ["repeat", "model", "stratum", "treatment", "budget"])

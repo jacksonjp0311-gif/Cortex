@@ -69,6 +69,54 @@ and a separately frozen experiment exist.
 
 ## Verification and outcomes
 
-Record exact zero-call controls, tests, source identities, calls and results below
-after execution. A failed control holds inference; a ceiling is preserved as a
-ceiling. No evaluator will be changed after inspecting model answers.
+Frozen runtime source: `da63167a1e7d7e07aa39360bd12d7d5257525fcf`.
+Cohort receipt: `4711ddd0aad4126a02a94964664dfa608f926dea3336bd6cc3d1e3700e19bf0d`.
+Eight tasks passed finite controls: **16 valid repairs accepted, 15 broken repairs
+rejected**. Both forge and instrument reconstructions were READY before inference.
+
+OpenAI / `gpt-5.6-sol` executed eight calls, zero tools, zero retries:
+
+| Observation | Original result |
+|---|---|
+| Initial screen | 3/4 |
+| Fresh confirmation | 2/4 |
+| Total | 5/8 |
+| Structured intents compiled | 8/8 |
+| Provider-reported tokens | 7,299 input + 4,657 output = 11,956 total |
+
+**The apparent mixed frontier is instrument-confounded.** All three non-passes
+were rejected by Git before candidate tests ran. Windows text-mode stdin converted
+LF patch lines into CRLF; Git's strict whitespace check interpreted inserted CRs
+on leading added lines as trailing whitespace. This was not demonstrated model
+reasoning failure. Direct reference patches had not covered this transport shape.
+
+The repair sends exact UTF-8 bytes to Git and decodes output separately. Strict
+`--whitespace=error-all` remains enabled; genuine trailing spaces still fail.
+Zero-call replay of the three archived candidates passed the **unchanged** tests.
+This is post-hoc transport auditing, **not a new 8/8 live result**. The original
+5/8 and both stage exports remain unchanged, including their earlier interpretation.
+
+Inspection schema `cortex-repair-cohort-inspection/1.1` now requires observed
+candidate evaluation before selecting a development region. Its numeric summary
+still reconstructs 5/8; `candidate_observation_complete=false` and
+`development_region_selected=false` prevent that fraction from qualifying a
+reasoning frontier. Missing observation metadata also holds eligibility.
+
+Artifacts: [forge](../../benchmarks/results/fixed_l3_forge_2026-09-06.json),
+[preregistration](../../benchmarks/results/fixed_l3_prereg_2026-09-06.json),
+[screen](../../benchmarks/results/fixed_l3_stage0_2026-09-06.json),
+[confirmation](../../benchmarks/results/fixed_l3_stage1_2026-09-06.json),
+[transport audit and current interpretation](../../benchmarks/results/fixed_l3_transport_audit_2026-09-06.json).
+Private tests/reference patches and credentials remain outside Git.
+
+The new law is operational: **a failed delivery path cannot calibrate reasoning
+difficulty**. Next: audit the complete intent → patch → isolated execution path
+with alternative edit shapes before commissioning fresh tasks. No further calls
+are authorized by this exhausted cohort. No semantic-transfer claim follows.
+
+Focused verification after the fix: **61 tests passed in 47.88s** across cohort,
+transport, multi-file instrument, epistemic instrumentation, sequential calibration,
+coding workspace, edit-intent and source-improvement tests; **3 manifest tests
+passed in 0.08s**. Ruff, targeted compileall, diff whitespace check, public-artifact
+private-field scan and diff credential-shape scan passed. Full repository suite
+and exact-HEAD CI were not run locally. No credentials were committed.

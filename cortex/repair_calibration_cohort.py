@@ -122,14 +122,21 @@ def inspect_repair_cohort(store, repo, cohort_receipt_hash):
     try:
         cohort, _ = _cohort(store, repo, cohort_receipt_hash)
         results = _stage_results(store, repo, cohort)
-        outcomes = [store.symbiotic_receipt(h, repo=repo)["task_success"]
-                    for result in results if result for h in result["case_receipt_hashes"]]
+        cases = [store.symbiotic_receipt(h, repo=repo)
+                 for result in results if result for h in result["case_receipt_hashes"]]
+        outcomes = [case["task_success"] for case in cases]
+        observed = bool(cases) and all(
+            case.get("evaluation", {}).get("candidate_error", "UNKNOWN") is None
+            and bool(case.get("evaluation", {}).get("candidate", {}).get("steps"))
+            for case in cases)
         summary = assess_sequential_level(outcomes)
-        return {"valid": True, "errors": [], "cohort_receipt_hash": cohort_receipt_hash,
+        return {"schema_version": "cortex-repair-cohort-inspection/1.1",
+                "valid": True, "errors": [], "cohort_receipt_hash": cohort_receipt_hash,
                 "result_receipt_hashes": [r["receipt_hash"] if r else None for r in results],
                 "summary": summary, "completed_calls": len(outcomes),
                 "confirmation_permitted": bool(results[0] and not results[1] and 0 < sum(outcomes) < 4),
-                "development_region_selected": len(outcomes) == 8 and summary["state"] == "calibrated",
+                "candidate_observation_complete": observed,
+                "development_region_selected": observed and len(outcomes) == 8 and summary["state"] == "calibrated",
                 "population_calibration_established": False, "semantic_transfer_established": False,
                 "general_improvement_established": False, **AUTHORITY}
     except (KeyError, TypeError, ValueError) as exc:

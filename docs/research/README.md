@@ -22,6 +22,12 @@ instead of overinterpreting the four-case fraction.
 
 ## Read order (agents)
 
+Latest: [Fixed L3 cohort and transport audit — September 6, 2026](FIXED_L3_COHORT_2026-09-06.md).
+Eight frozen calls returned 5/8, but all three non-passes occurred before candidate
+evaluation because Windows patch transport inserted CR bytes. The transport is
+fixed; archived replay is separate evidence, not a revised live score. Task
+calibration and semantic transfer remain held.
+
 Current measurement consolidation: [Epistemic instrumentation and evidence-governed state](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md).
 Bounded dual-support instrument audits, explicit assurance anchors, claim gates
 and a versioned multi-file repair path. One zero-call prototype is not a

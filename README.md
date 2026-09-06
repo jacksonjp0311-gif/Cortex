@@ -36,6 +36,15 @@ The central idea is simple:
 continuity repeats itself. Authority without a human gate is unsafe. Cortex
 connects persistence, evidence, and explicit boundaries.**
 
+### Latest measurement: we found a harness failure, not a reasoning frontier
+
+The fixed eight-call development run returned **5/8**, but all three non-passes
+were patch-transport failures before candidate tests ran. Cortex now sends exact
+patch bytes on Windows while retaining strict whitespace checks. The three
+archived candidates passed unchanged tests after that fix; this is **post-hoc
+auditing, not a new 8/8 model result**. Calibration and semantic transfer remain
+unestablished. [Run, mathematics, and evidence](docs/research/FIXED_L3_COHORT_2026-09-06.md).
+
 ## Cortex in plain English
 
 Think of Cortex as a disciplined companion around an AI coding agent:

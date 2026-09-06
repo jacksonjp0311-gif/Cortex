@@ -1,0 +1,102 @@
+{
+  "schema_version": "cortex-fixed-cohort-export/1.0",
+  "state": "STAGE_RECONSTRUCTED",
+  "source_commit": "da63167a1e7d7e07aa39360bd12d7d5257525fcf",
+  "stage": 1,
+  "cohort_receipt_hash": "4711ddd0aad4126a02a94964664dfa608f926dea3336bd6cc3d1e3700e19bf0d",
+  "result_receipt_hash": "512431921bc3c4ed3b35164fe20cf69c582d09d10067277ee7a905f9cfafb683",
+  "calls_executed": 4,
+  "model_identity": {
+    "adapter_id": "cortex.provider-fabric.http",
+    "adapter_version": "10.0.0-alpha.2",
+    "model_id": "gpt-5.6-sol",
+    "model_version": "provider-declared",
+    "provider_family": "openai"
+  },
+  "evidence_class": "live_empirical",
+  "cases": [
+    {
+      "case_id": "equal_timestamp_sync",
+      "task_success": true,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "9c04a4fc81a85003f466271c3eca75fd8020c20207b10fcd5ec14c20f619f684",
+      "trajectory_receipt_hash": "d597c3fc8dd41def0ef49edbe7c47fe2b5d13374c0f8f26241a557303a73ccf4"
+    },
+    {
+      "case_id": "checkpoint_replay_boundary",
+      "task_success": false,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "a53678cfa087f8397071fb5cb1bd27740bd687e92edda72b3e9ab477cd26199d",
+      "trajectory_receipt_hash": "556fdbe5422630c0311ef1e3c86778ea879af0943b71b8bdb26c798fc1a85e73"
+    },
+    {
+      "case_id": "superseded_job_delivery",
+      "task_success": true,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "785db6a7b1f847381206cb90b9f233140b7de7bf40ccc1d4e21791432e95fe6d",
+      "trajectory_receipt_hash": "543e52ccfc370ff897330d25acf20a3c5e6a57303feebbe1cd5f32306beb9424"
+    },
+    {
+      "case_id": "disjoint_transaction_merge",
+      "task_success": false,
+      "compilation_succeeded": true,
+      "case_receipt_hash": "db44a3e6f742eab418a1a71718eb5f03da49bb4658200842c32736d4c021d705",
+      "trajectory_receipt_hash": "7e40fe80ae766b1359c73bee30a286b0fb017fdda5174d86e0d53d0660f20fe1"
+    }
+  ],
+  "inspection": {
+    "valid": true,
+    "errors": [],
+    "cohort_receipt_hash": "4711ddd0aad4126a02a94964664dfa608f926dea3336bd6cc3d1e3700e19bf0d",
+    "result_receipt_hashes": [
+      "3ef25329a250a6a48fe095204d2ee11230e53ee9bb00526059f6c522c56760a3",
+      "512431921bc3c4ed3b35164fe20cf69c582d09d10067277ee7a905f9cfafb683"
+    ],
+    "summary": {
+      "state": "calibrated",
+      "recommended_action": "retain_for_heldout_generation",
+      "case_count": 8,
+      "success_count": 5,
+      "success_rate": 0.625,
+      "screening_cases": 4,
+      "confirmation_cases": 8,
+      "attainable_success_rates": [
+        0.0,
+        0.125,
+        0.25,
+        0.375,
+        0.5,
+        0.625,
+        0.75,
+        0.875,
+        1.0
+      ],
+      "eligible_success_counts": [
+        3,
+        4,
+        5
+      ],
+      "development_only": true,
+      "confirmatory_eligible": false
+    },
+    "completed_calls": 8,
+    "confirmation_permitted": false,
+    "development_region_selected": true,
+    "population_calibration_established": false,
+    "semantic_transfer_established": false,
+    "general_improvement_established": false,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  },
+  "provider_reported_usage": {
+    "input_tokens": 3359,
+    "output_tokens": 2859,
+    "total_tokens": 6218
+  },
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false
+}
