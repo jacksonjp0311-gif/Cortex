@@ -133,6 +133,30 @@ there was **no treatment arm and no measured Cortex improvement**. The next
 priority is realistic defects requiring localization, not more elaborate toy
 requirements. [Protocol, results and limitations](docs/research/FRESH_AUDITED_SCREEN_2026-09-05.md).
 
+### Epistemic instrumentation: harder to fool, not more autonomous
+
+Evaluators now receive their own bounded evidence record. Cortex separately
+tracks **rejected valid repairs** and **accepted broken repairs**, including
+conflicting or incomplete control panels. Hash-valid evidence is not automatically
+semantically valid.
+
+\[
+\Theta_{\mathrm{claim}}=\min(\mathrm{source},\mathrm{instrument},
+\mathrm{experiment},\mathrm{causal\ evidence}),\qquad
+\mathrm{eligible}\iff\Theta_{\mathrm{claim}}=\mathrm{PASS}.
+\]
+
+Assurance terminates at declared host-reviewed labels and local observations,
+not an infinite chain of verifiers. Stronger claims stay `UNKNOWN` without their
+own evidence. Historical receipts are preserved when an instrument is challenged.
+
+The existing repair path now supports multiple source files. A cross-module
+catalog prototype is being audited without model calls; its difficulty and
+semantic-transfer value are unmeasured. This is measurement infrastructure,
+not training or a demonstrated capability gain. Product version remains alpha.39.
+
+[Architecture, equations, implementation boundaries and audit results](docs/research/EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md).
+
 ### Kernel foundation
 
 Cortex now treats memory as controlled reconstruction of epistemic state, not

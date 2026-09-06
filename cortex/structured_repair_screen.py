@@ -18,10 +18,19 @@ from .contract_aligned_repair import (
     verify_control_panel,
 )
 from .edit_intent import INTENT_SCHEMA, compile_edit_intent
-from .executable_repair_forge import evaluate_executable_patch, verify_executable_repair_bundle
+from .executable_repair_forge import evaluate_executable_patch, verify_executable_repair_bundle, validate_source_files
 from .native_agent import NativeAgentRuntime, verify_native_agent_trajectory
 from .symbiosis import open_symbiotic_session
 from .information_calibration import assess_sequential_level
+from .epistemic_instrumentation import verify_instrument
+
+
+def fresh_task_fingerprints(cases: list[dict[str, Any]], prior: tuple[str, ...] = ()) -> list[str]:
+    """Exact-source freshness only; renaming IDs/prose cannot create a new sample."""
+    identities = [_sha(case["files"]) for case in cases]
+    if len(set(identities)) != len(identities) or set(identities) & set(prior):
+        raise ValueError("repeated source is not a fresh task sample")
+    return identities
 
 PLANNED_CALLS = 4
 REPEAT_POLICY = {
@@ -52,6 +61,9 @@ def _identity(adapter: Any) -> dict[str, str]:
 
 
 def _case_task(case: Mapping[str, Any], response_contract: Mapping[str, Any]) -> str:
+    if set(case["files"]) != {"module.py"}:
+        files = "\n\n".join(f"FILE: {name}\n```\n{content}\n```" for name, content in sorted(case["files"].items()))
+        return f"{case['task']}\n\n{files}\n\nRESPONSE_CONTRACT\n{_canonical(response_contract)}"
     return (
         f"{case['task']}\n\nFILE: module.py\n```python\n{case['files']['module.py']}\n```"
         f"\n\nRESPONSE_CONTRACT\n{_canonical(response_contract)}"
@@ -72,6 +84,10 @@ def _private_binding_errors(prereg: Mapping[str, Any], private: Mapping[str, Any
     if [case.get("case_id") for case in cases] != [case.get("case_id") for case in expected]:
         errors.append("private_case_order_invalid")
     for public, secret in zip(expected, cases):
+        try:
+            validate_source_files(public.get("files"))
+        except (TypeError, ValueError):
+            errors.append("unsafe_source_files")
         material = {key: secret.get(key) for key in ("case_id", "external_test", "reference_patch")}
         if public.get("private_evaluator_commitment") != _sha({"salt": secret.get("salt"), "private": material}):
             errors.append("private_evaluator_binding_invalid")
@@ -135,8 +151,22 @@ def _screen_for_prereg(prereg: Mapping[str, Any], successes: int) -> dict[str, A
 def _repeat_binding_errors(store: Any, repo: str, prereg: Mapping[str, Any]) -> list[str]:
     if prereg.get("screening_control_audit") is not None:
         alignment = prereg.get("contract_alignment_binding") or {}
+        frontier = prereg.get("frontier_binding")
+        if frontier is not None:
+            try:
+                verified = verify_instrument(store, repo, frontier["instrument_receipt_hash"])
+                receipt = store.symbiotic_receipt(frontier["instrument_receipt_hash"], repo=repo) or {}
+                if (prereg.get("schema_version") != "cortex-structured-repair-preregistration/1.3"
+                        or not verified["valid"] or verified["state"] != "READY"
+                        or receipt["audit"] != prereg["screening_control_audit"]
+                        or frontier["case_fingerprints"] != fresh_task_fingerprints(prereg["cases"])
+                        or frontier["stratum"] not in ("L1", "L2", "L3")
+                        or prereg["context_treatment"] != "task_only_control"):
+                    return ["frontier_binding_invalid"]
+            except (KeyError, TypeError, ValueError):
+                return ["frontier_binding_invalid"]
         if (
-            prereg.get("schema_version") != "cortex-structured-repair-preregistration/1.2"
+            prereg.get("schema_version") != ("cortex-structured-repair-preregistration/1.3" if frontier is not None else "cortex-structured-repair-preregistration/1.2")
             or prereg.get("repeatability_binding") is not None
             or prereg.get("prior_screen_binding") is not None
             or _canonical(prereg.get("screening_policy")) != _canonical({"screening_cases": 4, "confirmation_cases": 8, "minimum_success_rate": 0.3, "maximum_success_rate": 0.7})
@@ -202,6 +232,8 @@ def freeze_structured_repair_screen(
     governed_prerequisite: Mapping[str, Any] | None = None,
     repeat_of_result_receipt_hash: str | None = None,
     screening_control_audit: Mapping[str, Any] | None = None,
+    instrument_receipt_hash: str | None = None,
+    task_stratum: str | None = None,
 ) -> dict[str, Any]:
     public = forge_artifact.get("public_corpus") or {}
     alignment_binding: dict[str, Any] | None = None
@@ -236,6 +268,9 @@ def freeze_structured_repair_screen(
     ):
         raise ValueError("host-registered live adapter provenance is required")
     cases = list(public.get("cases") or ())
+    multi = public.get("schema_version") == "cortex-executable-repair-corpus/2.0"
+    if multi and not instrument_receipt_hash:
+        raise ValueError("multi-file screening requires canonical instrument assurance")
     _assert_evaluators_unchallenged(store, repo, cases)
     if len(cases) != PLANNED_CALLS:
         raise ValueError("structured screen requires exactly four cases")
@@ -265,7 +300,7 @@ def freeze_structured_repair_screen(
         "format": "one JSON object only; no markdown fences",
         "exact_top_level_keys": ["schema_version", "summary", "edits"],
         "edit_keys": ["path", "old", "new"],
-        "allowed_paths": ["module.py"],
+        "allowed_paths": sorted({path for case in cases for path in case["files"]}),
         "rule": "old must be an exact unique source substring; express the smallest complete repair",
     }
     material = {
@@ -308,8 +343,16 @@ def freeze_structured_repair_screen(
         material["schema_version"] = "cortex-structured-repair-preregistration/1.2"
         material["screening_control_audit"] = dict(screening_control_audit)
         material["screening_policy"] = {"screening_cases": 4, "confirmation_cases": 8, "minimum_success_rate": 0.3, "maximum_success_rate": 0.7}
+        if instrument_receipt_hash:
+            material["schema_version"] = "cortex-structured-repair-preregistration/1.3"
+            material["frontier_binding"] = {
+                "instrument_receipt_hash": instrument_receipt_hash,
+                "case_fingerprints": fresh_task_fingerprints(cases), "stratum": task_stratum,
+            }
         if _repeat_binding_errors(store, repo, material):
             raise ValueError("complete valid evaluator control panel required before screening")
+    elif instrument_receipt_hash:
+        raise ValueError("instrument audit must be bound before screening")
     session = open_symbiotic_session(
         store, repo, task="freeze external-private structured repair screen", persist=True
     )
@@ -381,12 +424,13 @@ def execute_structured_repair_screen(
         compiler_error = None
         with tempfile.TemporaryDirectory(prefix="cortex-alpha34-compile-") as parent:
             compile_root = Path(parent)
-            (compile_root / "module.py").write_text(
-                str(case["files"]["module.py"]), encoding="utf-8"
-            )
+            for path, content in case["files"].items():
+                destination = compile_root / path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_text(content, encoding="utf-8")
             try:
                 compilation = compile_edit_intent(
-                    compile_root, output, allowed_targets=["module.py"]
+                    compile_root, output, allowed_targets=sorted(case["files"])
                 )
                 candidate_text = compilation["proposal"]["patch"]
             except (OSError, ValueError) as exc:

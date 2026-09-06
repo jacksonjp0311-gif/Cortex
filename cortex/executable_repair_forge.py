@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,25 @@ CLAIM_BOUNDARY = (
 )
 
 
+def validate_source_files(files: Mapping[str, str]) -> None:
+    """Portable relative source paths only; reject aliases and evaluator overwrite."""
+    if not isinstance(files, Mapping) or not files:
+        raise ValueError("nonempty source file map required")
+    seen = set()
+    for name, content in files.items():
+        if (not isinstance(name, str) or not isinstance(content, str)
+                or not re.fullmatch(r"[A-Za-z0-9_./-]+", name)
+                or any(part.lower() in ("", ".", "..", ".git") or part.endswith(".")
+                       or part.split(".")[0].upper() in {"CON", "PRN", "AUX", "NUL", *{f"COM{i}" for i in range(10)}, *{f"LPT{i}" for i in range(10)}}
+                       for part in name.split("/"))
+                or name.lower() in ("task.md", "external_test.py")
+                or name.lower() in seen):
+            raise ValueError("unsafe or conflicting source path")
+        seen.add(name.lower())
+    if any(name.startswith(other + "/") for name in seen for other in seen if name != other):
+        raise ValueError("source file/directory collision")
+
+
 def _canonical(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
 
@@ -53,25 +73,28 @@ def build_executable_repair_bundle(
         raise ValueError("a non-empty host secret seed is required")
     public_cases: list[dict[str, Any]] = []
     private_cases: list[dict[str, Any]] = []
+    multi = any("files" in raw for raw in case_specs)
     if not case_specs:
         raise ValueError("host-private executable case specifications are required")
     for raw in case_specs:
-        required = {"case_id", "task", "source", "test", "patch"}
+        required = {"case_id", "task", "files" if multi else "source", "test", "patch"}
         if set(raw) != required or any(not str(raw.get(key) or "") for key in required):
             raise ValueError("each private case specification must contain exactly the required fields")
         salt = _sha({"seed": secret_seed, "case_id": raw["case_id"]})
+        files = dict(raw["files"]) if multi else {"module.py": raw["source"]}
+        validate_source_files(files)
         private_body = {"case_id": raw["case_id"], "external_test": raw["test"], "reference_patch": raw["patch"]}
         commitment = _sha({"salt": salt, "private": private_body})
         public_cases.append({
             "case_id": raw["case_id"],
             "task": raw["task"],
-            "files": {"module.py": raw["source"]},
-            "model_visible_files": ["TASK.md", "module.py"],
+            "files": files,
+            "model_visible_files": ["TASK.md", *sorted(files)],
             "private_evaluator_commitment": commitment,
         })
         private_cases.append({**private_body, "salt": salt})
     public: dict[str, Any] = {
-        "schema_version": PUBLIC_SCHEMA,
+        "schema_version": PUBLIC_SCHEMA.replace("1.0", "2.0") if multi else PUBLIC_SCHEMA,
         "development_only": True,
         "case_count": len(public_cases),
         "cases": public_cases,
@@ -81,7 +104,7 @@ def build_executable_repair_bundle(
     }
     public["corpus_hash"] = _sha(public)
     private: dict[str, Any] = {
-        "schema_version": PRIVATE_SCHEMA,
+        "schema_version": PRIVATE_SCHEMA.replace("1.0", "2.0") if multi else PRIVATE_SCHEMA,
         "corpus_hash": public["corpus_hash"],
         "cases": private_cases,
     }
@@ -93,9 +116,10 @@ def verify_executable_repair_bundle(public: Mapping[str, Any], private: Mapping[
     errors: list[str] = []
     public_body = {key: value for key, value in public.items() if key != "corpus_hash"}
     private_body = {key: value for key, value in private.items() if key != "private_bundle_hash"}
-    if public.get("schema_version") != PUBLIC_SCHEMA or public.get("corpus_hash") != _sha(public_body):
+    multi = public.get("schema_version") == PUBLIC_SCHEMA.replace("1.0", "2.0")
+    if public.get("schema_version") not in (PUBLIC_SCHEMA, PUBLIC_SCHEMA.replace("1.0", "2.0")) or public.get("corpus_hash") != _sha(public_body):
         errors.append("public_identity_invalid")
-    if private.get("schema_version") != PRIVATE_SCHEMA or private.get("private_bundle_hash") != _sha(private_body):
+    if private.get("schema_version") != (PRIVATE_SCHEMA.replace("1.0", "2.0") if multi else PRIVATE_SCHEMA) or private.get("private_bundle_hash") != _sha(private_body):
         errors.append("private_identity_invalid")
     if private.get("corpus_hash") != public.get("corpus_hash"):
         errors.append("corpus_binding_invalid")
@@ -104,6 +128,10 @@ def verify_executable_repair_bundle(public: Mapping[str, Any], private: Mapping[
     if set(public_cases) != set(private_cases) or len(public_cases) != int(public.get("case_count") or -1):
         errors.append("case_identity_invalid")
     for case_id, case in public_cases.items():
+        try:
+            validate_source_files(case.get("files"))
+        except (TypeError, ValueError):
+            errors.append(f"unsafe_source_files:{case_id}")
         secret = private_cases.get(case_id, {})
         private_material = {key: secret.get(key) for key in ("case_id", "external_test", "reference_patch")}
         if case.get("private_evaluator_commitment") != _sha({"salt": secret.get("salt"), "private": private_material}):
@@ -114,8 +142,10 @@ def verify_executable_repair_bundle(public: Mapping[str, Any], private: Mapping[
 
 
 def _write_fixture(root: Path, case: Mapping[str, Any], private: Mapping[str, Any]) -> None:
+    validate_source_files(case.get("files"))
     root.mkdir(parents=True)
     for name, content in (case.get("files") or {}).items():
+        (root / str(name)).parent.mkdir(parents=True, exist_ok=True)
         (root / str(name)).write_text(str(content), encoding="utf-8")
     (root / "TASK.md").write_text(str(case["task"]) + "\n", encoding="utf-8")
     (root / "external_test.py").write_text(str(private["external_test"]), encoding="utf-8")

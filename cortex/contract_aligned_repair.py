@@ -21,6 +21,7 @@ from .executable_repair_forge import (
     verify_executable_repair_bundle,
     verify_executable_repair_forge_result,
     evaluate_executable_patch,
+    validate_source_files,
 )
 
 PUBLIC_SCHEMA = "cortex-contract-aligned-repair-corpus/1.0"
@@ -143,9 +144,9 @@ def _parse_statements(source: str, *, field: str) -> ast.Module:
         raise ValueError(f"{field} must be valid Python") from exc
 
 
-def _public_task(requirements: Sequence[Mapping[str, str]]) -> str:
+def _public_task(requirements: Sequence[Mapping[str, str]], *, multi: bool = False) -> str:
     lines = [
-        "Repair module.py so it satisfies every public requirement below.",
+        "Repair the supplied source files to satisfy every public requirement below." if multi else "Repair module.py so it satisfies every public requirement below.",
         "Preserve public signatures unless a requirement explicitly says otherwise.",
         "",
     ]
@@ -156,7 +157,7 @@ def _public_task(requirements: Sequence[Mapping[str, str]]) -> str:
 def _validate_case_spec(raw: Mapping[str, Any]) -> tuple[list[dict[str, str]], list[dict[str, Any]]]:
     required = {
         "case_id",
-        "source",
+        "files" if "files" in raw else "source",
         "requirements",
         "private_setup",
         "private_assertions",
@@ -164,9 +165,11 @@ def _validate_case_spec(raw: Mapping[str, Any]) -> tuple[list[dict[str, str]], l
     }
     if set(raw) != required:
         raise ValueError("each aligned case must contain exactly the required fields")
-    for field in ("case_id", "source", "patch"):
+    for field in (("case_id", "patch") if "files" in raw else ("case_id", "source", "patch")):
         if not isinstance(raw[field], str) or not raw[field]:
             raise ValueError(f"{field} must be a non-empty string")
+    if "files" in raw:
+        validate_source_files(raw["files"])
     if not isinstance(raw["private_setup"], str):
         raise ValueError("private_setup must be a string")
 
@@ -258,18 +261,21 @@ def build_contract_aligned_repair_bundle(
         raise ValueError("host-private aligned case specifications are required")
 
     normalized: list[dict[str, Any]] = []
+    multi = any("files" in raw for raw in case_specs)
+    if multi and not all("files" in raw for raw in case_specs):
+        raise ValueError("mixed source schemas are not permitted")
     executable_specs: list[dict[str, str]] = []
     for raw in case_specs:
         if not isinstance(raw, Mapping):
             raise ValueError("each aligned case must be an object")
         requirements, assertions = _validate_case_spec(raw)
-        task = _public_task(requirements)
+        task = _public_task(requirements, multi=multi)
         external_test = _external_test(str(raw["private_setup"]), assertions)
         executable_specs.append(
             {
                 "case_id": str(raw["case_id"]),
                 "task": task,
-                "source": str(raw["source"]),
+                **({"files": dict(raw["files"])} if multi else {"source": str(raw["source"])}),
                 "test": external_test,
                 "patch": str(raw["patch"]),
             }
@@ -328,7 +334,7 @@ def build_contract_aligned_repair_bundle(
         )
 
     public: dict[str, Any] = {
-        "schema_version": PUBLIC_SCHEMA,
+        "schema_version": PUBLIC_SCHEMA.replace("1.0", "2.0") if multi else PUBLIC_SCHEMA,
         "development_only": True,
         "case_count": len(public_cases),
         "cases": public_cases,
@@ -339,7 +345,7 @@ def build_contract_aligned_repair_bundle(
     }
     public["corpus_hash"] = _sha(public)
     private: dict[str, Any] = {
-        "schema_version": PRIVATE_SCHEMA,
+        "schema_version": PRIVATE_SCHEMA.replace("1.0", "2.0") if multi else PRIVATE_SCHEMA,
         "corpus_hash": public["corpus_hash"],
         "cases": private_cases,
         "executable_private_bundle": executable_private,
@@ -354,9 +360,10 @@ def verify_contract_aligned_repair_bundle(
     errors: list[str] = []
     public_body = {key: value for key, value in public.items() if key != "corpus_hash"}
     private_body = {key: value for key, value in private.items() if key != "private_bundle_hash"}
-    if public.get("schema_version") != PUBLIC_SCHEMA or public.get("corpus_hash") != _sha(public_body):
+    multi = public.get("schema_version") == PUBLIC_SCHEMA.replace("1.0", "2.0")
+    if public.get("schema_version") not in (PUBLIC_SCHEMA, PUBLIC_SCHEMA.replace("1.0", "2.0")) or public.get("corpus_hash") != _sha(public_body):
         errors.append("public_identity_invalid")
-    if private.get("schema_version") != PRIVATE_SCHEMA or private.get("private_bundle_hash") != _sha(private_body):
+    if private.get("schema_version") != (PRIVATE_SCHEMA.replace("1.0", "2.0") if multi else PRIVATE_SCHEMA) or private.get("private_bundle_hash") != _sha(private_body):
         errors.append("private_identity_invalid")
     if private.get("corpus_hash") != public.get("corpus_hash"):
         errors.append("corpus_binding_invalid")
@@ -380,7 +387,7 @@ def verify_contract_aligned_repair_bundle(
         errors.append("case_identity_invalid")
 
     executable_public = {
-        "schema_version": "cortex-executable-repair-corpus/1.0",
+        "schema_version": "cortex-executable-repair-corpus/2.0" if multi else "cortex-executable-repair-corpus/1.0",
         "development_only": True,
         "case_count": len(public_cases),
         "cases": [case.get("executable_case") for case in public.get("cases", [])],
@@ -425,6 +432,9 @@ def verify_contract_aligned_repair_bundle(
                 )
             ),
         }
+        if multi:
+            reconstructed.pop("source")
+            reconstructed["files"] = (case.get("executable_case") or {}).get("files")
         try:
             normalized_requirements, normalized_assertions = _validate_case_spec(reconstructed)
         except ValueError as exc:
@@ -445,7 +455,7 @@ def verify_contract_aligned_repair_bundle(
         ):
             errors.append(f"public_private_alignment_invalid:{case_id}")
         executable_case = case.get("executable_case") or {}
-        if executable_case.get("task") != _public_task(normalized_requirements):
+        if executable_case.get("task") != _public_task(normalized_requirements, multi=multi):
             errors.append(f"public_task_invalid:{case_id}")
         executable_secret = next(
             (
@@ -475,7 +485,7 @@ def commission_contract_aligned_repair_forge(
     if alignment_audit["valid"] is not True:
         raise ValueError("contract-aligned bundle invalid: " + ",".join(alignment_audit["errors"]))
     executable_public = {
-        "schema_version": "cortex-executable-repair-corpus/1.0",
+        "schema_version": "cortex-executable-repair-corpus/2.0" if public["schema_version"].endswith("/2.0") else "cortex-executable-repair-corpus/1.0",
         "development_only": True,
         "case_count": public["case_count"],
         "cases": [case["executable_case"] for case in public["cases"]],
@@ -539,7 +549,7 @@ def executable_bundle_from_contract_aligned(
     if audit["valid"] is not True:
         raise ValueError("contract-aligned bundle invalid: " + ",".join(audit["errors"]))
     executable_public = {
-        "schema_version": "cortex-executable-repair-corpus/1.0",
+        "schema_version": "cortex-executable-repair-corpus/2.0" if public["schema_version"].endswith("/2.0") else "cortex-executable-repair-corpus/1.0",
         "development_only": True,
         "case_count": public["case_count"],
         "cases": [case["executable_case"] for case in public["cases"]],

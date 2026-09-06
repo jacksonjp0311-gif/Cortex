@@ -12,7 +12,7 @@ from cortex.contract_aligned_repair import (
 )
 
 
-def fixture(overconstrained=False):
+def fixture(overconstrained=False, underconstrained=False):
     source = "def successor(n):\n    return n\n"
     correct = "def successor(n):\n    return n + 1\n"
     alternate = "def successor(n):\n    return 1.0 + n\n"
@@ -29,6 +29,8 @@ def fixture(overconstrained=False):
     assertion = "from module import successor\nassert successor(5) == 6\n"
     if overconstrained:
         assertion += "assert type(successor(5)) is int\n"
+    if underconstrained:
+        assertion = "from module import successor\nassert isinstance(successor(5), (int, float))\n"
     public, private = build_contract_aligned_repair_bundle(secret_seed="unit-only-control-panel", case_specs=[{
         "case_id": "successor", "source": source,
         "requirements": [{"requirement_id": "R1", "text": "For numeric n, return a number equal to n+1. Integer and float results are equally acceptable."}],
@@ -65,3 +67,13 @@ def test_control_panel_rejects_invalid_panel_before_execution(change):
         controls["successor"][0]["expected_pass"] = 1
     with pytest.raises(ValueError):
         audit_contract_aligned_controls(public, private, controls, Path("unused-controls"))
+
+
+def test_actual_underconstrained_evaluator_holds_known_invalid_acceptance(tmp_path):
+    from cortex.epistemic_instrumentation import instrument_state
+    public, private, controls = fixture(underconstrained=True)
+    report = audit_contract_aligned_controls(public, private, controls, tmp_path / "controls")
+    state = instrument_state(report, corpus_hash=public["corpus_hash"], commitments=report["evaluator_commitments"])
+    assert report["state"] == "EVALUATOR_CHALLENGED"
+    assert state["state"] == "UNDERCONSTRAINED"
+    assert state["panels"]["successor"]["invalid_acceptance_count"] == 1

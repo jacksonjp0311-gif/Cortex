@@ -526,6 +526,18 @@ def main() -> int:
                 )
             elif payload.get("schema_version") == "cortex-audited-development-screen/1.0":
                 metadata_state = audited_screen_metadata(payload)
+            elif payload.get("schema_version") == "cortex-instrument-frontier-audit/1.0":
+                metadata_state = (
+                    "zero_call_multifile_instrument_prototype"
+                    if payload.get("model_calls") == 0
+                    and payload.get("evidence_class") == "local_instrument_audit"
+                    and payload.get("complete_screen_ready") is False
+                    and payload.get("task_difficulty_measured") is False
+                    and (payload.get("reconstruction") or {}).get("valid") is True
+                    and payload.get("baseline_calibrated") is False
+                    and payload.get("semantic_transfer_established") is False
+                    else "instrument_frontier_metadata_held"
+                )
             elif payload.get("schema_version") == "cortex-repair-instrument-revision/1.0":
                 metadata_state = (
                     "local_instrument_audit_archived_reanalysis"

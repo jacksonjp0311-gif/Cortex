@@ -22,6 +22,11 @@ instead of overinterpreting the four-case fraction.
 
 ## Read order (agents)
 
+Current measurement consolidation: [Epistemic instrumentation and evidence-governed state](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md).
+Bounded dual-support instrument audits, explicit assurance anchors, claim gates
+and a versioned multi-file repair path. One zero-call prototype is not a
+calibrated frontier or a semantic-transfer result.
+
 1. **[`EMERGENT_MATH_AND_COMPOSITION_V0.1.md`](EMERGENT_MATH_AND_COMPOSITION_V0.1.md)** — primary map: spectral vs constitutional geometry, epochs, Hamming paths, multi-host product, claim residual  
 2. **[`RESONANT_FRAME_THEORY_V0.1.md`](RESONANT_FRAME_THEORY_V0.1.md)** — v7.3 temporal field layer (advisory only)  
 3. [`RESONANT_FRAME_MATHEMATICS_V0.1.md`](RESONANT_FRAME_MATHEMATICS_V0.1.md) — exact frame math  
