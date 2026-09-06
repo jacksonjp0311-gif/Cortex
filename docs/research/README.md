@@ -22,6 +22,11 @@ instead of overinterpreting the four-case fraction.
 
 ## Read order (agents)
 
+Current zero-call prerequisite audit: [Governed self-organization](GOVERNED_SELF_ORGANIZATION.md).
+The end-to-end control panel is HELD (13/16 expectations): missing-newline
+compilation, numeric type coercion and evaluator mutation remain unresolved.
+This blocks new inference and recursive-retention commissioning.
+
 Latest: [Fixed L3 cohort and transport audit — September 6, 2026](FIXED_L3_COHORT_2026-09-06.md).
 Eight frozen calls returned 5/8, but all three non-passes occurred before candidate
 evaluation because Windows patch transport inserted CR bytes. The transport is

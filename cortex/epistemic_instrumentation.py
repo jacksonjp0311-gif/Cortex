@@ -197,3 +197,50 @@ def governed_state_view(store: Any, repo: str, receipt_hash: str) -> dict[str, A
             view["opposition"] = {key: {axis: p[axis]["opposition"] for axis in ("accepts_known_valid", "rejects_known_invalid")} for key, p in panels.items()}
             view["native_state"] = checked["state"]
     return view
+
+
+def inspect_repair_observation_path(store: Any, repo: str, result_receipt_hash: str) -> dict[str, Any]:
+    """Read-only interpretation of legacy repair observations, never a new trial.
+
+    Receipt reconstruction and candidate observation are distinct. Legacy cases
+    lack independently bound before/after-evaluator artifact identities, so this
+    view cannot declare their complete observation path READY.
+    """
+    from .structured_repair_screen import verify_structured_repair_screen
+
+    audit = verify_structured_repair_screen(store, repo, result_receipt_hash=result_receipt_hash)
+    rows = []
+    if audit.get("valid") is True:
+        result = store.symbiotic_receipt(result_receipt_hash, repo=repo)
+        for identity in result["case_receipt_hashes"]:
+            case = store.symbiotic_receipt(identity, repo=repo)
+            evaluation = case.get("evaluation") or {}
+            candidate = evaluation.get("candidate") or {}
+            steps = candidate.get("steps") or []
+            if case.get("compiler_error"):
+                stage = "INTENT_COMPILE_FAILURE"
+            elif evaluation.get("candidate_error"):
+                stage = "PRE_EVALUATION_FAILURE"
+            elif not steps:
+                stage = "UNRESOLVED"
+            elif case.get("task_success") is True:
+                stage = "OBSERVED_CANDIDATE_PASS"
+            else:
+                stage = "OBSERVED_NONPASS_CAUSE_UNRESOLVED"
+            rows.append({"case_receipt_hash": identity, "case_id": case["case_id"],
+                         "recorded_task_success": case["task_success"],
+                         "failure_stage": stage, "candidate_test_executed": bool(steps),
+                         "compiler_reconstruction": "UNKNOWN",
+                         "pre_evaluation_artifact_binding": "UNKNOWN",
+                         "post_evaluation_nonmutation": "UNKNOWN",
+                         "reasoning_failure_established": False})
+    body = {"schema_version": "cortex-repair-observation-path-view/1.0",
+            "source_result_receipt_hash": result_receipt_hash,
+            "receipt_reconstruction_valid": audit.get("valid") is True,
+            "state": "INCOMPLETE" if not rows or any(not r["candidate_test_executed"] for r in rows) else "UNRESOLVED",
+            "cases": rows, "errors": audit.get("errors", []),
+            "anchors": ["canonical Store reconstruction", "host-recorded execution metadata"],
+            "scope": "legacy repair path inspection; no re-execution or retention",
+            "complete_path_assured": False, "capability_inference_eligible": False,
+            "adaptation_authorized": False, **AUTHORITY}
+    return {**body, "projection_hash": _sha(body)}

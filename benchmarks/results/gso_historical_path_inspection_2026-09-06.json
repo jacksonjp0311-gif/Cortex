@@ -1,0 +1,153 @@
+{
+  "schema_version": "cortex-historical-path-inspection/1.0",
+  "model_calls": 0,
+  "views": [
+    {
+      "schema_version": "cortex-repair-observation-path-view/1.0",
+      "source_result_receipt_hash": "3ef25329a250a6a48fe095204d2ee11230e53ee9bb00526059f6c522c56760a3",
+      "receipt_reconstruction_valid": true,
+      "state": "INCOMPLETE",
+      "cases": [
+        {
+          "case_receipt_hash": "309cccf30c8ef0f8af2a418807b892ae18025489f803c104792a4b5a959d6373",
+          "case_id": "retry_after_commit",
+          "recorded_task_success": true,
+          "failure_stage": "OBSERVED_CANDIDATE_PASS",
+          "candidate_test_executed": true,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        },
+        {
+          "case_receipt_hash": "00790ba8ffd1dd7a32af1f1cbca578226aefa6ec9986748f3122f0eef958a3c5",
+          "case_id": "atomic_projection_offset",
+          "recorded_task_success": false,
+          "failure_stage": "PRE_EVALUATION_FAILURE",
+          "candidate_test_executed": false,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        },
+        {
+          "case_receipt_hash": "0906446138c1cd983a2ede539f890e285a2dffd908e2611cd82793ae7ecd8f35",
+          "case_id": "superseded_expiry",
+          "recorded_task_success": true,
+          "failure_stage": "OBSERVED_CANDIDATE_PASS",
+          "candidate_test_executed": true,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        },
+        {
+          "case_receipt_hash": "aa928364039d8f1d549d06e3a9e0d6abb52197c94214fa9e58493775ecfe9e15",
+          "case_id": "catalog_partition_l3",
+          "recorded_task_success": true,
+          "failure_stage": "OBSERVED_CANDIDATE_PASS",
+          "candidate_test_executed": true,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        }
+      ],
+      "errors": [],
+      "anchors": [
+        "canonical Store reconstruction",
+        "host-recorded execution metadata"
+      ],
+      "scope": "legacy repair path inspection; no re-execution or retention",
+      "complete_path_assured": false,
+      "capability_inference_eligible": false,
+      "adaptation_authorized": false,
+      "host_mutate_authorized": false,
+      "execution_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false,
+      "projection_hash": "78dd2c0b3e0f615f8d0c1e43bc652ec3134ac391b9412923073c11719b0f830d"
+    },
+    {
+      "schema_version": "cortex-repair-observation-path-view/1.0",
+      "source_result_receipt_hash": "512431921bc3c4ed3b35164fe20cf69c582d09d10067277ee7a905f9cfafb683",
+      "receipt_reconstruction_valid": true,
+      "state": "INCOMPLETE",
+      "cases": [
+        {
+          "case_receipt_hash": "9c04a4fc81a85003f466271c3eca75fd8020c20207b10fcd5ec14c20f619f684",
+          "case_id": "equal_timestamp_sync",
+          "recorded_task_success": true,
+          "failure_stage": "OBSERVED_CANDIDATE_PASS",
+          "candidate_test_executed": true,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        },
+        {
+          "case_receipt_hash": "a53678cfa087f8397071fb5cb1bd27740bd687e92edda72b3e9ab477cd26199d",
+          "case_id": "checkpoint_replay_boundary",
+          "recorded_task_success": false,
+          "failure_stage": "PRE_EVALUATION_FAILURE",
+          "candidate_test_executed": false,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        },
+        {
+          "case_receipt_hash": "785db6a7b1f847381206cb90b9f233140b7de7bf40ccc1d4e21791432e95fe6d",
+          "case_id": "superseded_job_delivery",
+          "recorded_task_success": true,
+          "failure_stage": "OBSERVED_CANDIDATE_PASS",
+          "candidate_test_executed": true,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        },
+        {
+          "case_receipt_hash": "db44a3e6f742eab418a1a71718eb5f03da49bb4658200842c32736d4c021d705",
+          "case_id": "disjoint_transaction_merge",
+          "recorded_task_success": false,
+          "failure_stage": "PRE_EVALUATION_FAILURE",
+          "candidate_test_executed": false,
+          "compiler_reconstruction": "UNKNOWN",
+          "pre_evaluation_artifact_binding": "UNKNOWN",
+          "post_evaluation_nonmutation": "UNKNOWN",
+          "reasoning_failure_established": false
+        }
+      ],
+      "errors": [],
+      "anchors": [
+        "canonical Store reconstruction",
+        "host-recorded execution metadata"
+      ],
+      "scope": "legacy repair path inspection; no re-execution or retention",
+      "complete_path_assured": false,
+      "capability_inference_eligible": false,
+      "adaptation_authorized": false,
+      "host_mutate_authorized": false,
+      "execution_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false,
+      "projection_hash": "8c3f5882cf07cbc314b34cfcdc721f5fa02305c90e43387bc2675aec85a9225b"
+    }
+  ],
+  "state": "HELD",
+  "adaptation_authorized": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "source_commit": "a3726be910892b79bcd74d0bb48e91d12784d5bb",
+  "python_version": "3.12.2",
+  "operating_system": "Windows",
+  "implementation_hashes": {
+    "cortex/edit_intent.py": "e49e2f6fc0080094f5b95e1f8a8e5ae675bbbebcd50b1d728b81a88485fbf1d8",
+    "cortex/coding_workspace.py": "3ccaded3d1c6b0af6cfcf17d033e115609838a6197b90e4d555911f08fee658c",
+    "cortex/epistemic_instrumentation.py": "f65e5b9f0785d407c723d655d17bc9eef6584dad31929741b9dce8ef57862091",
+    "benchmarks/transduction_assurance.py": "d39d101ed78eb81be171e9dc76e5f8504878fcb86110c06008246b843b7550c6"
+  }
+}

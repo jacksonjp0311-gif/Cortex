@@ -1,0 +1,139 @@
+{
+  "schema_version": "cortex-transduction-control-audit/1.0",
+  "state": "HELD",
+  "observations": [
+    {
+      "control": "first_line_import",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "interior",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "final_line",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "multi_hunk",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "multi_file_nested",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "utf8",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "blank_added",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "repeated_target_sequential",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": true,
+      "compiled": true,
+      "error": null
+    },
+    {
+      "control": "no_terminal_newline",
+      "expected": "DELIVER_EXACTLY",
+      "expectation_met": false,
+      "compiled": true,
+      "error": "ValueError:git could not parse the proposed patch"
+    },
+    {
+      "control": "trailing_whitespace",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:proposal does not apply to isolated source HEAD"
+    },
+    {
+      "control": "stale_preimage",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:edit preimage must resolve exactly once: a.py:0"
+    },
+    {
+      "control": "unauthorized_target",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:edit target is outside the host-declared scope"
+    },
+    {
+      "control": "malformed_patch",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "ValueError:proposal must be a git unified diff"
+    },
+    {
+      "control": "numeric_edit",
+      "expected": "REJECT",
+      "expectation_met": false,
+      "reason": "ACCEPTED"
+    },
+    {
+      "control": "distorted_patch",
+      "expected": "REJECT",
+      "expectation_met": true,
+      "reason": "EVALUATOR_REJECTION"
+    },
+    {
+      "control": "evaluator_changes_candidate",
+      "expected": "HOLD_DISTORTED_OBSERVATION",
+      "expectation_met": false,
+      "verifier_status": "verified",
+      "expected_vs_recorded_postimage_mismatch": true
+    }
+  ],
+  "expectations_met": 13,
+  "control_count": 16,
+  "model_calls": 0,
+  "evidence_class": "local_structural_audit",
+  "anchors": [
+    "host-authored expected bytes and controls",
+    "local Git and Python execution"
+  ],
+  "unresolved": [
+    "finite controls only",
+    "host execution not independently attested",
+    "raw subprocess observation transport not lossless",
+    "no recursive organization experiment"
+  ],
+  "adaptation_authorized": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false,
+  "source_commit": "a3726be910892b79bcd74d0bb48e91d12784d5bb",
+  "python_version": "3.12.2",
+  "operating_system": "Windows",
+  "implementation_hashes": {
+    "cortex/edit_intent.py": "e49e2f6fc0080094f5b95e1f8a8e5ae675bbbebcd50b1d728b81a88485fbf1d8",
+    "cortex/coding_workspace.py": "3ccaded3d1c6b0af6cfcf17d033e115609838a6197b90e4d555911f08fee658c",
+    "benchmarks/transduction_assurance.py": "3679dffe75e69135f6d171505856add1a0d68f044ff210d2661d909f16a692b1"
+  }
+}

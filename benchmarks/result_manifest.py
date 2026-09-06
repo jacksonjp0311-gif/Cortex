@@ -524,6 +524,8 @@ def main() -> int:
                     )
                     else "live_harder_contract_aligned_repair_screen_invalid"
                 )
+            elif payload.get("schema_version") in ("cortex-transduction-control-audit/1.0", "cortex-historical-path-inspection/1.0"):
+                metadata_state = "zero_call_gso_path_audit_not_adaptation_evidence"
             elif payload.get("schema_version") == "cortex-fixed-stratum-forge/1.0":
                 metadata_state = "fixed_stratum_local_control_audit_metadata_only"
             elif payload.get("schema_version") == "cortex-fixed-cohort-export/1.0":
