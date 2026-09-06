@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
 import subprocess
 import sys
 import tempfile
@@ -19,7 +20,7 @@ from typing import Any
 
 PROPOSAL_SCHEMA = "cortex-coding-patch-proposal/1.0"
 APPLICATION_SCHEMA = "cortex-coding-patch-application/1.0"
-VERIFICATION_SCHEMA = "cortex-coding-patch-verification/1.1"
+VERIFICATION_SCHEMA = "cortex-coding-patch-verification/1.3"
 CONTRACT_SCHEMA = "cortex-host-verification-contract/1.0"
 MAX_PATCH_BYTES = 262_144
 ZERO_HASH = "0" * 64
@@ -198,48 +199,88 @@ def _verify_contract(contract: Mapping[str, Any], targets: list[str]) -> dict[st
     return {"valid": not errors, "errors": errors}
 
 
+def verification_environment() -> dict[str, Any]:
+    """Declared host coordinates only; no hostname, paths, env vars or credentials.
+
+    This is not a dependency fingerprint or an attestation of arbitrary tools.
+    """
+    try:
+        git = subprocess.run(["git", "--version"], capture_output=True, timeout=5,
+                             check=False, shell=False)
+        git_version = git.stdout.decode("ascii", errors="strict").strip() if git.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired, UnicodeError):
+        git_version = None
+    body = {
+        "schema_version": "cortex-verification-environment/1.0",
+        "os_family": platform.system(),
+        "os_release": platform.release(),
+        "architecture": platform.machine(),
+        "python_implementation": platform.python_implementation(),
+        "python_version": platform.python_version(),
+        "git_version": git_version,
+        "execution_policy": "host-subprocess-shell-false/1.0",
+        "unresolved": ["dependency_state", "non_python_toolchain", "inherited_process_environment"],
+        "authority_effect": False,
+    }
+    return {**body, "environment_hash": _sha(body)}
+
+
 def run_host_verification_step(root: str | Path, step: Mapping[str, Any]) -> dict[str, Any]:
     root = Path(root).resolve()
     raw = step.get("argv")
     if not isinstance(raw, list) or not raw or not all(isinstance(value, str) and value for value in raw):
         return {"id": str(step.get("id") or "invalid"), "passed": False, "returncode": -1, "output": "invalid host command vector"}
     argv = [sys.executable if value == "{python}" else value for value in raw]
+    environment = verification_environment()
     started = time.perf_counter()
+    timed_out = False
     try:
         result = subprocess.run(
             argv,
             cwd=root,
-            text=True,
             capture_output=True,
-            encoding="utf-8",
-            errors="replace",
             timeout=max(1, min(int(step.get("timeout_seconds") or 120), 1800)),
             check=False,
             shell=False,
         )
-        return {
-            "id": str(step.get("id") or "step"),
-            "argv": list(raw),
-            "returncode": result.returncode,
-            "passed": result.returncode == 0,
-            "duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
-            "output": (result.stdout + result.stderr).strip()[-4000:],
-        }
-    except subprocess.TimeoutExpired:
-        return {
-            "id": str(step.get("id") or "step"),
-            "argv": list(raw),
-            "returncode": -1,
-            "passed": False,
-            "duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
-            "output": "host verification step timed out",
-        }
+        stdout, stderr, returncode = result.stdout, result.stderr, result.returncode
+    except subprocess.TimeoutExpired as exc:
+        stdout, stderr, returncode = exc.stdout or b"", exc.stderr or b"", -1
+        timed_out = True
+    # Hash exact captured bytes before decoding or truncating for presentation.
+    # Timeout digests cover only captured partial output, never a complete run.
+    observation = {
+        "schema_version": "cortex-host-raw-observation/1.1",
+        "stdout_sha256": hashlib.sha256(stdout).hexdigest(),
+        "stderr_sha256": hashlib.sha256(stderr).hexdigest(),
+        "stdout_byte_length": len(stdout),
+        "stderr_byte_length": len(stderr),
+        "returncode": returncode,
+        "timed_out": timed_out,
+        "capture_complete": not timed_out,
+        "environment_hash": environment["environment_hash"],
+        "duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
+    }
+    return {
+        "id": str(step.get("id") or "step"),
+        "argv": list(raw),
+        "returncode": returncode,
+        "passed": returncode == 0 and not timed_out,
+        "duration_ms": observation["duration_ms"],
+        "raw_observation": observation,
+        "environment": environment,
+        "raw_observation_hash": _sha(observation),
+        "output": "host verification step timed out" if timed_out else
+                  (stdout.decode("utf-8", errors="replace") + stderr.decode("utf-8", errors="replace")).strip()[-4000:],
+    }
 
 
 def verify_patch_in_isolated_worktree(
     root: str | Path,
     proposal: Mapping[str, Any],
     contract: Mapping[str, Any],
+    *,
+    compilation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Evaluate an immutable proposal away from the operator's active tree."""
     workspace = Path(root).resolve()
@@ -258,6 +299,36 @@ def verify_patch_in_isolated_worktree(
     if not contract_check["valid"]:
         raise ValueError("host verification contract invalid: " + ",".join(contract_check["errors"]))
     source_head = repository_head(workspace)
+    transduction = None
+    if compilation is not None:
+        from .edit_intent import verify_edit_intent_compilation
+        if not verify_edit_intent_compilation(workspace, compilation)["valid"]:
+            raise ValueError("COMPILER_BINDING_FAILURE")
+        if compilation["proposal"] != canonical:
+            raise ValueError("PROPOSAL_BINDING_FAILURE")
+        # Initial strict surface: LF-authored UTF-8 only. Never normalize an
+        # observed artifact to make it match a compiler's semantic hash.
+        if any(b"\r" in _contained(workspace, target).read_bytes() for target in targets):
+            raise ValueError("TRANSDUCTION_REPRESENTATION_UNSUPPORTED")
+        transduction = {
+            "schema_version": "cortex-transduction-contract/1.0",
+            "source_head": source_head,
+            "compilation_hash": compilation["compilation_hash"],
+            "intent_hash": compilation["intent_hash"],
+            "compiler_id": compilation["compiler_id"],
+            "implementation_hashes": {
+                name: _file_hash(Path(__file__).with_name(name))
+                for name in ("coding_workspace.py", "edit_intent.py")
+            },
+            "proposal_hash": canonical["proposal_hash"],
+            "preimage_hashes": canonical["preimage_hashes"],
+            "expected_postimage_hashes": compilation["postimage_hashes"],
+            "verification_contract_hash": contract["contract_hash"],
+            "environment": verification_environment(),
+            "representation": "utf8-lf-exact-bytes/1.0",
+            "authority_effect": False,
+        }
+        transduction["contract_hash"] = _sha(transduction)
 
     with tempfile.TemporaryDirectory(prefix="cortex-verify-") as parent:
         candidate = Path(parent) / "candidate"
@@ -276,6 +347,8 @@ def verify_patch_in_isolated_worktree(
             if applied.returncode != 0:
                 raise RuntimeError("isolated proposal application failed")
             applied_postimages = {target: _file_hash(_contained(candidate, target)) for target in targets}
+            if transduction and applied_postimages != transduction["expected_postimage_hashes"]:
+                raise ValueError("PRE_EVAL_ARTIFACT_MISMATCH")
             for step in contract["steps"]:
                 result = run_host_verification_step(candidate, step)
                 steps.append(result)
@@ -289,8 +362,16 @@ def verify_patch_in_isolated_worktree(
 
     artifact_preserved = applied_postimages == postimages
     passed = artifact_preserved and len(steps) == len(contract["steps"]) and all(step["passed"] for step in steps)
+    environment_matches = transduction is not None and all(
+        step.get("environment", {}).get("environment_hash") == transduction["environment"]["environment_hash"]
+        for step in steps
+    )
+    if transduction and not environment_matches:
+        passed = False
     return {
-        "schema_version": VERIFICATION_SCHEMA,
+        "schema_version": "cortex-coding-patch-verification/2.0" if transduction else VERIFICATION_SCHEMA,
+        "transduction_contract": transduction,
+        "transduction_state": "PASS_WITHIN_DECLARED_SURFACE" if transduction and artifact_preserved and environment_matches else "HELD",
         "proposal_hash": canonical["proposal_hash"],
         "source_head": source_head,
         "contract_hash": contract["contract_hash"],

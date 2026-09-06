@@ -30,6 +30,10 @@ SCHEMA = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 
+-- Serialize schema/trigger replacement across independent connections. The
+-- journal and foreign-key pragmas must run before this transaction begins.
+BEGIN IMMEDIATE;
+
 CREATE TABLE IF NOT EXISTS repositories(
     name TEXT PRIMARY KEY,
     repository_id TEXT NOT NULL,
@@ -1163,12 +1167,18 @@ class Store:
         # model turns independent Store connections. Disabling Python's thread
         # affinity guard permits that governed loopback-service boundary.
         self.db = sqlite3.connect(path, check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.execute("PRAGMA busy_timeout=5000")
-        self.db.executescript(SCHEMA)
-        self._ensure_v5_columns()
-        self._ensure_v625_tables()
-        self._ensure_symbiotic_v842()
+        try:
+            self.db.row_factory = sqlite3.Row
+            self.db.execute("PRAGMA busy_timeout=5000")
+            self.db.executescript(SCHEMA + "\nCOMMIT;\n")
+            self._ensure_v5_columns()
+            self._ensure_v625_tables()
+            self._ensure_symbiotic_v842()
+        except BaseException:
+            # Failed construction has no owner to call close(). Closing also
+            # rolls back an incomplete schema transaction, restoring guards.
+            self.db.close()
+            raise
 
     def _ensure_symbiotic_v842(self) -> None:
         """Migrate v8.4.1 session/kind uniqueness to v8.4.2 turn-scoped uniqueness."""

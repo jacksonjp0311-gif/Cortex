@@ -9,7 +9,29 @@ contains its own final commit. Use `git rev-parse HEAD` for checkout identity an
 
 ## Current gate
 
-**CURRENT: transduction assurance. NEXT: complete observation binding.**
+**CURRENT: platform-health closure. NEXT: complete observation binding.**
+
+Gate A audit of `d80d020000b443d4313203e5479568ea5a6b1ca5`:
+[CI run 34034718191](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34034718191)
+failed only Windows/Python 3.10; the other five matrix coordinates passed.
+`test_parallel_nonce_is_database_exactly_once` encountered interleaved Store
+trigger replacement (`trigger ... already exists`), followed by a leaked handle
+during Windows cleanup. This is a concurrency defect, not evidence that Python
+3.10 support should be removed. Schema replacement now uses one SQLite write
+transaction; constructor failure closes the connection and rolls back that
+transaction. Regression controls cover contended opens and failed initialization
+restoring receipt guards. Historical receipt contents are unchanged.
+
+Local validation: 43 focused Store/control/receipt tests passed on Windows
+Python 3.12.2; 37 focused tests passed on Windows Python 3.10.20 (the failed CI
+coordinate used 3.10.11). Four documentation checker tests and canonical-map
+validation also passed. These are deterministic controls, with zero model calls.
+The matrix now includes the new initialization controls explicitly.
+
+The corrected full remote matrix remains **UNVERIFIED**. No stronger GSO gate is
+declared passed on the basis of local tests alone. This repair does not claim to
+serialize every legacy migration or prove universal concurrent migration safety.
+
 Strict compiler v2 rejects non-string edits and represents missing terminal
 newlines explicitly. Compiler v1 remains reconstructable for historical objects.
 Isolated verification v1.1 records applied target hashes before execution and
@@ -18,8 +40,38 @@ links focused tests and the new zero-call control artifact.
 
 These changes close the three sampled counterexamples, not universal path
 assurance. Structured-screen reconstruction still lacks full compiler-to-observed
-artifact binding; raw observation transport remains bounded/lossy; worktrees are
+artifact binding; worktrees are
 not OS sandboxes. No shadow organization kernel or new live experiment is commissioned.
+
+Parallel engineering while CI is pending: isolated verification v1.3 now records
+separate stdout/stderr SHA-256 digests and byte lengths, return code, duration,
+timeout and capture-completeness state before producing a lossy bounded preview.
+Timeout hashes describe partial capture only. Four new zero-call controls cover
+lossy decoding, truncation, real binary subprocess capture, and partial timeout
+capture. Together with workspace and transduction controls, 14 focused tests pass.
+Historical v1.1 observations are not retroactively upgraded. This is raw capture
+identity, not complete observation binding. Raw observation v1.1 additionally
+binds a bounded environment identity: OS family/release, architecture, Python
+implementation/version, Git version where available, and subprocess execution
+policy. It does not capture hostnames, filesystem paths, or environment variables.
+Dependency state, non-Python toolchain and inherited process environment remain
+unresolved; no full environment-applicability claim follows. Four environment
+controls cover runtime differences, missing Git, Git timeout and observation
+binding. Compiler-to-applied equality in structured-screen receipts remains unresolved:
+compiler postimages are normalized text hashes, while applied postimages are raw
+byte hashes. These representations require an explicit transformation contract.
+Captured streams are
+currently buffered in memory; output resource limits remain an explicit gap.
+
+An opt-in `compilation=` path in isolated verification now reconstructs compiler
+identity and binds a prospective transduction contract to source HEAD, intent,
+compiler implementation files, proposal, preimages, expected postimages, host
+verification contract and bounded environment. It requires exact UTF-8/LF bytes;
+CR-containing preimages are unsupported, not normalized. Applied bytes must equal
+compiler expected bytes before evaluator execution; target mutations afterward
+hold the path. This is verification v2.0, not a retroactive upgrade of historical
+receipts. The structured repair screen does not yet supply this compilation object.
+No evaluator-validity, OS isolation, or general cognitive inference follows.
 
 | Area | Evidence-supported disposition | Where to verify |
 |---|---|---|

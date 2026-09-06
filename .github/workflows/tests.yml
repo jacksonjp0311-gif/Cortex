@@ -23,6 +23,12 @@ jobs:
           python -m pip install -e ".[dev]"
       - name: Compile
         run: python -m compileall -q cortex thalamus tests
+      - name: Store initialization atomicity
+        run: python -m pytest -q tests/test_store_initialization.py --tb=short
+      - name: Raw verification observation identity
+        run: python -m pytest -q tests/test_raw_verification_observation.py tests/test_verification_environment.py --tb=short
+      - name: Compiled observation binding
+        run: python -m pytest -q tests/test_compiled_observation_binding.py --tb=short
       - name: v10 native agent and interface gates
         run: python -m pytest -q tests/test_v100_native_agent.py tests/test_v100_alpha2_interface.py --tb=line
       - name: v9.8-v9.8.2 semantic, causal, discriminability, and heldout gates

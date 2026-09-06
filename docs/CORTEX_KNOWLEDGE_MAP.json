@@ -26,7 +26,9 @@
         "docs/DATA_MODEL.md"
       ],
       "tests": [
-        "tests/test_symbiosis_ledger.py"
+        "tests/test_symbiosis_ledger.py",
+        "tests/test_store_initialization.py",
+        "tests/test_v100_alpha11_integrity.py"
       ],
       "benchmarks": [],
       "evidence": [
@@ -172,6 +174,9 @@
       ],
       "tests": [
         "tests/test_transduction_assurance.py",
+        "tests/test_raw_verification_observation.py",
+        "tests/test_verification_environment.py",
+        "tests/test_compiled_observation_binding.py",
         "tests/test_patch_transport.py"
       ],
       "benchmarks": [
@@ -2053,7 +2058,7 @@
     "cortex/admitted_memory.py": "e9a2ce1efc4191c1d82916a687d1056bfa1a7b8a7591cff017e87ee672297d92",
     "cortex/autonomous_improvement.py": "4fa6afb871be06fc2e8c5630e1337441d595c4dc1fe677067ca31fcb7af222ac",
     "cortex/chat_service.py": "2065dc896e5d6b7dcc21e3f2c87d77d9bd76d45952ed4a97a80ba2aae9f543fa",
-    "cortex/coding_workspace.py": "634a3784d55db058ea64a6eb6ee3f0140cc10c46ffc5caee71d9bb12d28eafad",
+    "cortex/coding_workspace.py": "f0d88d2efcf9d6b3c13c846ba55fdfe4e0546536c3942167881909ae83ee279a",
     "cortex/competence.py": "1beeb1ad01d02591d9a059bbc06c5cce4fb98fd11afadf31e0d6ceb95ec5dad8",
     "cortex/competence_revision.py": "dfc1d68e58d99db4abf308aa69849a19d09dede4ed81464355333c3290d159e6",
     "cortex/contract_aligned_repair.py": "ae6d1655e919d41a3612984715c240ad401f60d86c29b4d8b5d72d25b354cfc2",
@@ -2067,7 +2072,7 @@
     "cortex/repair_calibration_cohort.py": "22928d260a32bf4e4306f1c4b47a4ad34a2042ac45cc7eeb04e20520c5197666",
     "cortex/secret_store.py": "fae47248f04bb6b353d01c8f87ab18831cbe15cbe71b8c3bcf70397210ec10dc",
     "cortex/semantic_projection.py": "48cbce0456dcc69f51dfde32c06450db9cf9678ee6c92d62b9bb055109d9e35b",
-    "cortex/store.py": "0953d92f30455d7a028eaa420ca0e97c12540be87d55a1433e8ea1ab7a5611e4",
+    "cortex/store.py": "9b49c580608bcd32e6d45df78954c43401accc27690782c74eaef6679e60e4d0",
     "cortex/structured_repair_screen.py": "e40e804f0daf89df3dd225ef5501d3f80ebf3ea0ba9f781dd3f0630afc6e1863"
   }
 }
