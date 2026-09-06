@@ -49,6 +49,9 @@ support/opposition, freshness, applicability, temporal coordinates, supersession
 and closed authority effects. Unsupported domain mappings explicitly remain
 `UNKNOWN` or null. Receipt integrity does **not** populate those missing gates.
 This is a read-only inspection interface, not a superclass or admission path.
+The initial executable resolver covers symbiotic Store receipts. Adapters for
+specialized admitted-memory and host-policy ledgers remain deferred; the table
+below describes the shared geometry, not a completed migration of every domain.
 
 | Domain | Native meaning retained | Required specialist boundary |
 |---|---|---|
@@ -253,6 +256,79 @@ These are design constraints and claim boundaries, not new physical laws.
 
 ## Closure record
 
-Exact tests and zero-call audit result are appended after execution. No historical
-benchmark artifact is modified, no positive result is manufactured, and no alpha.40
-release is sealed solely because these interfaces exist.
+The prototype audit completed on September 6 at source
+`92b0e1f18245fd399e478d8007ec2883a5e999b7`:
+
+| Observation | Result |
+|---|---|
+| Tenant-partitioned cache-key repair | Accepted |
+| Globally unique revision repair | Accepted |
+| Tenant-only cache key (loses SKU) | Rejected |
+| Key ignores revision | Rejected |
+| Cached return aliases internal value | Rejected |
+| Baseline → reference | Failure → pass |
+| Instrument | `READY`, bounded finite controls |
+| Canonical reconstruction | `valid=true` |
+| New model calls | **0** |
+| Complete four-case frontier | **Not ready** |
+| Difficulty / transfer / improvement | **Not measured** |
+
+Corpus: `c8db8bb36ff3556ba53a90973f1bca72c62574e5cafc99f81ce47219355f769e`.
+Instrument receipt: `31f5fd4747391ee74488abb235650638c847416ce4980eea636edb0d42da9853`.
+[Public audit artifact](../../benchmarks/results/instrument_frontier_2026-09-06.json).
+
+### Executed verification
+
+| Command scope (`pytest -o addopts='' ... -q --tb=short`) | Exact result |
+|---|---|
+| Instrumentation, controls, alpha36, alpha34, alpha14, alpha16, v982 calibration | 49 passed in 108.30s |
+| Multi-file frontier + alpha14 (including new unresolved-applicability test) | 16 passed in 25.18s |
+| Instrumentation rerun + mathematical contracts | 28 passed in 3.78s |
+| Evaluator controls, including new actual underconstraint test | 6 passed in 9.41s |
+
+These batches cover **79 distinct focused tests**, with overlapping reruns.
+Ruff, targeted compileall and `git diff --check` passed. No full suite, paid
+inference, provider validation call, or release ceremony ran. Ordinary tests use
+fixtures; their mocked external adapters are not empirical evidence.
+
+During implementation, one test import failed collection, one immutability test
+incorrectly compared transient insertion flags with the persisted record, and
+the first multi-file fixture supplied the wrong edit-intent schema string. These
+test-harness defects were corrected and rerun; none changed an empirical evaluator
+after seeing model output. An earlier asynchronous test process lost its result
+handle and is not counted. The completed batches above are the executed evidence.
+
+Both historical result receipts were reloaded with current code: the original
+alpha.39 `36e11f0e…` still reconstructs **3/4**, and the fresh `cf4757d1…` still
+reconstructs **4/4**. No inference was repeated and no old artifact changed.
+
+### Adversarial coverage map
+
+| Requested boundary | Executed coverage |
+|---|---|
+| 1 Valid alternative rejected | Real overconstrained control fixture; diagnostic holds |
+| 2 Invalid repair accepted | Real underconstrained control fixture; diagnostic holds |
+| 3–4 Rehashed wrong corpus/evaluator | Instrumentation binding tests reject |
+| 5 Historical rewrite | Store rejects changed content under same identity |
+| 6 Four-case calibration claim | Structured reconstruction rejects forged claim |
+| 7 Repeated task as fresh | Exact-source fingerprint test rejects renamed ID/prose |
+| 8 Semantic treatment in task-only screen | Frontier binding rejects; existing trajectory verifier checks treatment |
+| 9 Caller competence | Claim inspector retains unknown causal/experimental/replication gates |
+| 10 Authority from success | Authority tampering rejected; reports remain closed |
+| 11 Assurance budget exceeded | Fixed-path depth check holds unknown |
+| 12 Incomplete controls | Missing coverage remains unresolved |
+| 13 Hidden side of contradiction | Existing mathematical context-budget adversarial tests pass |
+| 14 Unresolved lesson applicability | New projection test emits no active lesson |
+
+### Next threshold
+
+Prepare the remaining **fresh** development cases at a declared fixed stratum,
+independently review positive/negative labels, and freeze a bounded prospective
+confirmation policy before additional outcomes. Exact-source freshness is not a
+semantic-independence proof. A complete confirmation executor and the A/B/C
+transfer experiment remain deferred. Do not launch another call merely because
+the multi-file path now exists.
+
+No historical benchmark artifact was modified, no positive model result was
+manufactured, and alpha.40 remains unsealed. This phase strengthens measurement
+assurance; it does not establish a model-performance gain.

@@ -151,7 +151,7 @@ not an infinite chain of verifiers. Stronger claims stay `UNKNOWN` without their
 own evidence. Historical receipts are preserved when an instrument is challenged.
 
 The existing repair path now supports multiple source files. A cross-module
-catalog prototype is being audited without model calls; its difficulty and
+catalog prototype passed two positive and three negative controls without model calls; its difficulty and
 semantic-transfer value are unmeasured. This is measurement infrastructure,
 not training or a demonstrated capability gain. Product version remains alpha.39.
 

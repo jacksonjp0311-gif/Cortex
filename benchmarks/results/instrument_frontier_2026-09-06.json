@@ -1,0 +1,342 @@
+{
+  "schema_version": "cortex-instrument-frontier-audit/1.0",
+  "source_commit": "92b0e1f18245fd399e478d8007ec2883a5e999b7",
+  "private_driver_hash": "f34d3d5daa9d4a39c6c6e6f3ea9ba99e7b253d6faf8b1b8f2f3330ed074cc31c",
+  "model_calls": 0,
+  "evidence_class": "local_instrument_audit",
+  "development_only": true,
+  "stratum": "L3",
+  "task_difficulty_measured": false,
+  "complete_screen_ready": false,
+  "public_corpus": {
+    "schema_version": "cortex-contract-aligned-repair-corpus/2.0",
+    "development_only": true,
+    "case_count": 1,
+    "cases": [
+      {
+        "case_id": "catalog_partition_l3",
+        "requirements": [
+          {
+            "requirement_id": "R1",
+            "text": "Catalog publishes independent JSON-like non-null records by tenant and SKU. get returns the latest published value for that tenant/SKU regardless of the order other tenants or SKUs are queried. Unknown records raise KeyError. Public method signatures remain unchanged."
+          },
+          {
+            "requirement_id": "R2",
+            "text": "A publish becomes visible on the next get even while earlier results remain within cache lifetime. Advancing time beyond cache lifetime must not alter the logical record. There is no required internal cache key or revision allocation scheme."
+          },
+          {
+            "requirement_id": "R3",
+            "text": "Caller mutations to published records and to values returned by get must not change subsequently returned records. Inputs to this task are valid strings and JSON-like values; times are nondecreasing."
+          }
+        ],
+        "requirement_commitment": "888618e9d710b0e8b3d4e9527f0ec10086e3161a99ee345d352577986998c57d",
+        "assertion_count": 2,
+        "alignment_commitment": "7ed7d1a4f4bd18626286641999b38db1284894727673d9258f44886c3c9fbdbf",
+        "executable_case": {
+          "case_id": "catalog_partition_l3",
+          "task": "Repair the supplied source files to satisfy every public requirement below.\nPreserve public signatures unless a requirement explicitly says otherwise.\n\n[R1] Catalog publishes independent JSON-like non-null records by tenant and SKU. get returns the latest published value for that tenant/SKU regardless of the order other tenants or SKUs are queried. Unknown records raise KeyError. Public method signatures remain unchanged.\n[R2] A publish becomes visible on the next get even while earlier results remain within cache lifetime. Advancing time beyond cache lifetime must not alter the logical record. There is no required internal cache key or revision allocation scheme.\n[R3] Caller mutations to published records and to values returned by get must not change subsequently returned records. Inputs to this task are valid strings and JSON-like values; times are nondecreasing.",
+          "files": {
+            "catalog/__init__.py": "",
+            "catalog/storage.py": "from copy import deepcopy\n\nclass RecordStore:\n    def __init__(self):\n        self.records = {}\n        self.revisions = {}\n\n    def write(self, tenant, sku, value):\n        key = (tenant, sku)\n        self.revisions[key] = self.revisions.get(key, 0) + 1\n        self.records[key] = deepcopy(value)\n\n    def revision(self, tenant, sku):\n        return self.revisions[(tenant, sku)]\n\n    def load(self, tenant, sku):\n        return deepcopy(self.records[(tenant, sku)])\n",
+            "catalog/cache.py": "from copy import deepcopy\n\nclass TimedCache:\n    def __init__(self, lifetime):\n        self.lifetime = lifetime\n        self.entries = {}\n\n    def read(self, key, now):\n        entry = self.entries.get(key)\n        if entry is None or now >= entry[0]:\n            return None\n        return deepcopy(entry[1])\n\n    def write(self, key, value, now):\n        self.entries[key] = (now + self.lifetime, deepcopy(value))\n",
+            "catalog/service.py": "from .storage import RecordStore\nfrom .cache import TimedCache\n\nclass Catalog:\n    def __init__(self, lifetime=30):\n        self.store = RecordStore()\n        self.cache = TimedCache(lifetime)\n\n    def publish(self, tenant, sku, value):\n        self.store.write(tenant, sku, value)\n\n    def get(self, tenant, sku, now):\n        version = self.store.revision(tenant, sku)\n        key = (sku, version)\n        result = self.cache.read(key, now)\n        if result is None:\n            result = self.store.load(tenant, sku)\n            self.cache.write(key, result, now)\n        return result\n",
+            "catalog/presentation.py": "def format_price(record):\n    return '{:.2f}'.format(record['price'])\n\ndef stable_listing(records):\n    return sorted(records, key=lambda row: row.get('label', ''))\n"
+          },
+          "model_visible_files": [
+            "TASK.md",
+            "catalog/__init__.py",
+            "catalog/cache.py",
+            "catalog/presentation.py",
+            "catalog/service.py",
+            "catalog/storage.py"
+          ],
+          "private_evaluator_commitment": "85ef1b2dba34d20d092f93b3ad8d4c544a05e57b20d5766fe7a2ceec65c94b82"
+        }
+      }
+    ],
+    "executable_corpus_hash": "da111ea97c513cc26837cb6a51415522b2eb43e0944d046dab79217cf0588ba0",
+    "private_assertions_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+    "corpus_hash": "c8db8bb36ff3556ba53a90973f1bca72c62574e5cafc99f81ce47219355f769e"
+  },
+  "forge": {
+    "schema_version": "cortex-alpha36-contract-aligned-repair-forge/1.0",
+    "state": "CONTRACT_ALIGNED_REPAIR_FORGE_READY",
+    "corpus_hash": "c8db8bb36ff3556ba53a90973f1bca72c62574e5cafc99f81ce47219355f769e",
+    "executable_corpus_hash": "da111ea97c513cc26837cb6a51415522b2eb43e0944d046dab79217cf0588ba0",
+    "case_count": 1,
+    "requirement_count": 3,
+    "assertion_count": 2,
+    "all_private_assertions_publicly_mapped": true,
+    "all_public_requirements_covered": true,
+    "reference_repairs_measured": 1,
+    "executable_result_hash": "2918d60d736bddc0d7a899e0cf8a38ccabc97de15a2f0fb6293d95a371357a1d",
+    "additional_model_calls": 0,
+    "private_assertions_in_model_context": false,
+    "private_reference_patches_in_model_context": false,
+    "private_bundle_persisted_in_artifact": false,
+    "structural_contract_alignment_established": true,
+    "semantic_entailment_established": false,
+    "baseline_calibration_established": false,
+    "semantic_transfer_established": false,
+    "general_improvement_established": false,
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "next_action": "freeze_contract_aligned_baseline_screen",
+    "claim_boundary": "Every host-private executable assertion is structurally mapped to an explicit public requirement. The mapping is host-authored and does not itself prove semantic entailment, model repair ability, or improvement. Zero model calls execute.",
+    "result_hash": "c4dd27836e3358627f62a56d07da6c96c6b15c5de2d1d16229fb85b5b8d8bbb4"
+  },
+  "instrument_receipt": {
+    "additional_model_calls": 0,
+    "audit": {
+      "additional_model_calls": 0,
+      "corpus_hash": "c8db8bb36ff3556ba53a90973f1bca72c62574e5cafc99f81ce47219355f769e",
+      "evaluator_commitments": {
+        "catalog_partition_l3": "85ef1b2dba34d20d092f93b3ad8d4c544a05e57b20d5766fe7a2ceec65c94b82"
+      },
+      "evidence_class": "local_instrument_audit",
+      "execution_authorized": false,
+      "expected_labels": "host_reviewed_not_semantically_proven",
+      "general_improvement_established": false,
+      "host_mutate_authorized": false,
+      "memory_admission_authorized": false,
+      "observations": [
+        {
+          "case_id": "catalog_partition_l3",
+          "control_id": "partitioned_key",
+          "evaluation_hash": "505ee0d46775a6eb705c996638abb7c84d9be1c900e08a29737148d2bc30384b",
+          "expectation_met": true,
+          "expected_pass": true,
+          "observed_pass": true,
+          "patch_hash": "d04468e8246960673b99cd4036d765092174bd4b06bcad68f1810a6f976bc6e0"
+        },
+        {
+          "case_id": "catalog_partition_l3",
+          "control_id": "globally_unique_revision",
+          "evaluation_hash": "315acf0544c1983de2681d921821e7781fc436bcc5b96a54fa7fa2a02789c62b",
+          "expectation_met": true,
+          "expected_pass": true,
+          "observed_pass": true,
+          "patch_hash": "90287258004bbce56c4ebbd7387420e9b86d102fadcc7241140a30d4bdaa3f38"
+        },
+        {
+          "case_id": "catalog_partition_l3",
+          "control_id": "tenant_only_key",
+          "evaluation_hash": "dddd6125b6d5fa2988ee839babb445a5457fcfbf654c45cdd2183f68b06dd59a",
+          "expectation_met": true,
+          "expected_pass": false,
+          "observed_pass": false,
+          "patch_hash": "1364ad1329ea35c4a1a0b77f829bb23622fa8d9fa5d27466d9f1665397913fa6"
+        },
+        {
+          "case_id": "catalog_partition_l3",
+          "control_id": "ignores_version",
+          "evaluation_hash": "29d7e4ed05fa1850b2a2d27edd8ca49e6198bd619497cf0fe703c1338deab1d0",
+          "expectation_met": true,
+          "expected_pass": false,
+          "observed_pass": false,
+          "patch_hash": "4466213e40c78587cb55c804d3120f9684e6a60ec942f1f0770d5ab158558695"
+        },
+        {
+          "case_id": "catalog_partition_l3",
+          "control_id": "return_alias",
+          "evaluation_hash": "ed770158de4a699f471d97d400ec9efa00b85e3a22056b4df6169b6d59caafe0",
+          "expectation_met": true,
+          "expected_pass": false,
+          "observed_pass": false,
+          "patch_hash": "1553c7e4e4ed6d3b12ec169f9a9f902c2d35adfff51917ea50056e3011675af8"
+        }
+      ],
+      "policy_effect": false,
+      "result_hash": "46bb4a8132ec0d6dd54bbd661461e20885642fe0e36cc6894675880ba3808fa8",
+      "schema_version": "cortex-evaluator-control-audit/1.0",
+      "semantic_transfer_established": false,
+      "state": "CONTROL_PANEL_PASS",
+      "universal_implementation_equivalence": false
+    },
+    "body_epoch_id": "43b7e9e23a994d65081c1645b36e37cdec3804f6baa153a8738fccf07eae4f82",
+    "created_at": 1788667760.597093,
+    "event_id": "instrument_audit_5fbe8fda78249d0f7cbf7a34224e8c98326f837f2aa19284b23e3aceaab8960d",
+    "execution_authorized": false,
+    "host_mutate_authorized": false,
+    "instrument": {
+      "active_guidance_authorized": false,
+      "assurance": {
+        "anchor_types": [
+          "host_reviewed_control_labels",
+          "host_observed_local_execution"
+        ],
+        "assurance_scope": "finite_control_panel_only",
+        "maximum_depth": 3,
+        "path": [
+          "public_contract",
+          "evaluator",
+          "control_panel",
+          "local_observation"
+        ],
+        "state": "PASS",
+        "unresolved_assumptions": [
+          "control labels may be wrong",
+          "controls are not exhaustive",
+          "host execution environment is trusted, not independently attested",
+          "distinct patches do not prove independent repair strategies"
+        ],
+        "verification_depth": 3
+      },
+      "audit_hash": "46bb4a8132ec0d6dd54bbd661461e20885642fe0e36cc6894675880ba3808fa8",
+      "binding_state": "PASS",
+      "corpus_hash": "c8db8bb36ff3556ba53a90973f1bca72c62574e5cafc99f81ce47219355f769e",
+      "errors": [],
+      "evaluator_commitments": {
+        "catalog_partition_l3": "85ef1b2dba34d20d092f93b3ad8d4c544a05e57b20d5766fe7a2ceec65c94b82"
+      },
+      "execution_authorized": false,
+      "host_mutate_authorized": false,
+      "memory_admission_authorized": false,
+      "panels": {
+        "catalog_partition_l3": {
+          "accepts_known_valid": {
+            "opposition": [],
+            "support": [
+              "505ee0d46775a6eb705c996638abb7c84d9be1c900e08a29737148d2bc30384b",
+              "315acf0544c1983de2681d921821e7781fc436bcc5b96a54fa7fa2a02789c62b"
+            ]
+          },
+          "allowed_rejection_count": 0,
+          "coverage_complete": true,
+          "invalid_acceptance_count": 0,
+          "negative_count": 3,
+          "positive_count": 2,
+          "rejects_known_invalid": {
+            "opposition": [],
+            "support": [
+              "dddd6125b6d5fa2988ee839babb445a5457fcfbf654c45cdd2183f68b06dd59a",
+              "29d7e4ed05fa1850b2a2d27edd8ca49e6198bd619497cf0fe703c1338deab1d0",
+              "ed770158de4a699f471d97d400ec9efa00b85e3a22056b4df6169b6d59caafe0"
+            ]
+          }
+        }
+      },
+      "policy_effect": false,
+      "projection_hash": "5fbe8fda78249d0f7cbf7a34224e8c98326f837f2aa19284b23e3aceaab8960d",
+      "schema_version": "cortex-instrument-assurance/1.0",
+      "state": "READY",
+      "universal_semantic_validity": "UNKNOWN"
+    },
+    "kind": "instrument_assurance",
+    "memory_admission_authorized": false,
+    "policy_effect": false,
+    "repo": "Cortex",
+    "repository_id": "bca000b2ec3c85672013dc41",
+    "schema_version": "cortex-instrument-assurance/1.0",
+    "session_id": "sym_550ba7d48123845fed83",
+    "source_commit": "92b0e1f18245fd399e478d8007ec2883a5e999b7",
+    "status": "instrument_assurance",
+    "turn_id": 0,
+    "receipt_hash": "31f5fd4747391ee74488abb235650638c847416ce4980eea636edb0d42da9853",
+    "subject_receipt_hash": "4600c8fd4375907f927015c4979a928bcd6c6ca50f48e0a305aad5db30d907eb",
+    "previous_receipt_hash": "10431a1e483417b4d04cc3bce0d88b7411ecf2a75e2ef1dbbc345fc107669722",
+    "chain_sequence": 3,
+    "ledger_schema_version": "cortex-symbiotic-circulation-ledger/1.1",
+    "inserted": true,
+    "duplicate": false,
+    "chain_valid": true
+  },
+  "reconstruction": {
+    "valid": true,
+    "state": "READY",
+    "instrument": {
+      "schema_version": "cortex-instrument-assurance/1.0",
+      "state": "READY",
+      "panels": {
+        "catalog_partition_l3": {
+          "accepts_known_valid": {
+            "support": [
+              "505ee0d46775a6eb705c996638abb7c84d9be1c900e08a29737148d2bc30384b",
+              "315acf0544c1983de2681d921821e7781fc436bcc5b96a54fa7fa2a02789c62b"
+            ],
+            "opposition": []
+          },
+          "rejects_known_invalid": {
+            "support": [
+              "dddd6125b6d5fa2988ee839babb445a5457fcfbf654c45cdd2183f68b06dd59a",
+              "29d7e4ed05fa1850b2a2d27edd8ca49e6198bd619497cf0fe703c1338deab1d0",
+              "ed770158de4a699f471d97d400ec9efa00b85e3a22056b4df6169b6d59caafe0"
+            ],
+            "opposition": []
+          },
+          "coverage_complete": true,
+          "allowed_rejection_count": 0,
+          "invalid_acceptance_count": 0,
+          "positive_count": 2,
+          "negative_count": 3
+        }
+      },
+      "binding_state": "PASS",
+      "errors": [],
+      "audit_hash": "46bb4a8132ec0d6dd54bbd661461e20885642fe0e36cc6894675880ba3808fa8",
+      "corpus_hash": "c8db8bb36ff3556ba53a90973f1bca72c62574e5cafc99f81ce47219355f769e",
+      "evaluator_commitments": {
+        "catalog_partition_l3": "85ef1b2dba34d20d092f93b3ad8d4c544a05e57b20d5766fe7a2ceec65c94b82"
+      },
+      "assurance": {
+        "state": "PASS",
+        "verification_depth": 3,
+        "maximum_depth": 3,
+        "path": [
+          "public_contract",
+          "evaluator",
+          "control_panel",
+          "local_observation"
+        ],
+        "anchor_types": [
+          "host_reviewed_control_labels",
+          "host_observed_local_execution"
+        ],
+        "assurance_scope": "finite_control_panel_only",
+        "unresolved_assumptions": [
+          "control labels may be wrong",
+          "controls are not exhaustive",
+          "host execution environment is trusted, not independently attested",
+          "distinct patches do not prove independent repair strategies"
+        ]
+      },
+      "active_guidance_authorized": false,
+      "universal_semantic_validity": "UNKNOWN",
+      "host_mutate_authorized": false,
+      "execution_authorized": false,
+      "memory_admission_authorized": false,
+      "policy_effect": false,
+      "projection_hash": "5fbe8fda78249d0f7cbf7a34224e8c98326f837f2aa19284b23e3aceaab8960d"
+    },
+    "errors": [],
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  },
+  "bounded_claim": {
+    "claim": "bounded_instrument_controls",
+    "state": "PASS",
+    "gates": {
+      "source": "PASS",
+      "instrument": "PASS"
+    },
+    "claim_eligible": true,
+    "receipt_hash": "31f5fd4747391ee74488abb235650638c847416ce4980eea636edb0d42da9853",
+    "scope": "sampled_controls_only",
+    "host_mutate_authorized": false,
+    "execution_authorized": false,
+    "memory_admission_authorized": false,
+    "policy_effect": false
+  },
+  "semantic_transfer_established": false,
+  "baseline_calibrated": false,
+  "host_mutate_authorized": false,
+  "execution_authorized": false,
+  "memory_admission_authorized": false,
+  "policy_effect": false
+}
