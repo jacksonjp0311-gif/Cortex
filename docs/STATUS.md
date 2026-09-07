@@ -11,6 +11,18 @@ contains its own final commit. Use `git rev-parse HEAD` for checkout identity an
 
 **CURRENT: platform-health closure. NEXT: complete observation binding.**
 
+GSO-Ib read-in at `61869b68348efe85b114fb7bb7c2d986fb4295b3`:
+[exact-HEAD CI](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34063844849)
+passed five matrix coordinates but failed Windows/Python 3.10 in two raw-observation
+tests. The traceback localized a broad subprocess mock intercepting Python's
+own platform discovery, returning bytes to a text parser. This is a test-harness
+failure, distinct from the earlier Store race. Mocks now intercept only their
+declared fixture/Git command and delegate unrelated subprocesses unchanged.
+Controls explicitly exercise cold platform discovery and a text-mode discovery
+subprocess. Platform closure remains **HELD** until the corrected matrix passes;
+prospective-policy, assurance-case, snapshot and shadow gates are not declared
+complete by this repair. No runtime schemas or historical observations changed.
+
 Gate A audit of `d80d020000b443d4313203e5479568ea5a6b1ca5`:
 [CI run 34034718191](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34034718191)
 failed only Windows/Python 3.10; the other five matrix coordinates passed.
