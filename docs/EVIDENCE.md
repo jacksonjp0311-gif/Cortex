@@ -28,6 +28,7 @@ used **zero calls** and unchanged tests. It is not a new live 8/8 result.
 [Current revision](research/TRANSDUCTION_REVISION_2026-09-06.md) ·
 [Epistemic substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md) ·
 [GSO-II](research/GSO_II_INVARIANT_CLOSURE_2026-09-07.md) ·
+[GSI-II](research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md) ·
 [Claim registry](CORTEX_CLAIM_REGISTRY.json) ·
 [Invariants](CORTEX_INVARIANTS.json).
 

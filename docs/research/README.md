@@ -9,6 +9,7 @@
 | Does the candidate survive its complete measurement path? | Prospective policy/receipt and bounded capture added; complete path still HELD for OS isolation | [Epistemic substrate](EPISTEMIC_SUBSTRATE_2026-09-07.md) | Environment applicability and OS isolation remain UNKNOWN |
 | Can verified semantics improve fresh cognition? | NOT ESTABLISHED | [Epistemic instrumentation](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md) | Fresh discriminative tasks; frozen A/B/C study |
 | Can retained organization improve future variation? | Mechanical shadow self-assembly demonstrated; utility/heredity NOT ESTABLISHED | [GSO-IIb](GSO_IIB_METABOLIC_ASSEMBLY_2026-09-07.md) | GSO-III preregistered, not executed |
+| Can Cortex improve itself under frozen gates? | GSI-II mechanism verified in deterministic controls; cumulative live gain NOT ESTABLISHED | [GSI-II](GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md) | Live provider trial unauthorized |
 | Can humans and agents find the correct canonical state? | Finite 12-task navigation panel; population utility unmeasured | [Documentation migration](../DOCUMENTATION_MIGRATION.md) | Claim registry plus snapshot-bound context, not more documentation volume |
 
 ## Current measurement theory
