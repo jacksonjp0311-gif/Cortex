@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -16,9 +15,12 @@ from typing import Any
 from . import __version__
 from .assurance import load_claim_registry, registry_hash
 
-SNAPSHOT_SCHEMA = "cortex-epistemic-snapshot/1.0"
-PACKET_SCHEMA = "cortex-context-packet/1.0"
-NAVIGATION_SCHEMA = "cortex-navigation-fidelity/1.0"
+SNAPSHOT_SCHEMA = "cortex-epistemic-snapshot/1.1"
+SNAPSHOT_SCHEMA_V10 = "cortex-epistemic-snapshot/1.0"
+PACKET_SCHEMA = "cortex-context-packet/1.1"
+NAVIGATION_SCHEMA = "cortex-navigation-fidelity/1.1"
+NAVIGATION_CONTRACT_SCHEMA = "cortex-navigation-contract/1.0"
+NAVIGATION_GENERALIZATION_SCHEMA = "cortex-navigation-generalization/1.0"
 CANONICAL_DOCS = (
     "docs/STATUS.md",
     "docs/SYSTEM_MAP.md",
@@ -26,7 +28,21 @@ CANONICAL_DOCS = (
     "docs/EVIDENCE.md",
     "docs/CORTEX_KNOWLEDGE_MAP.json",
     "docs/CORTEX_CLAIM_REGISTRY.json",
+    "docs/CORTEX_INVARIANTS.json",
     "docs/research/GOVERNED_SELF_ORGANIZATION.md",
+)
+BOUND_IMPLEMENTATIONS = (
+    "cortex/transduction_policy.py",
+    "cortex/coding_workspace.py",
+    "cortex/edit_intent.py",
+    "cortex/shadow_organization.py",
+    "cortex/epistemic_snapshot.py",
+    "cortex/assurance.py",
+    "cortex/invariants.py",
+    "cortex/observation_capture.py",
+    "cortex/native_agent.py",
+    "cortex/autonomous_improvement.py",
+    "cortex/structured_repair_screen.py",
 )
 HISTORICAL_MARKERS = ("HISTORICAL", "historical", "exhausted cohort", "post-hoc")
 
@@ -94,6 +110,102 @@ NAVIGATION_TASKS: tuple[dict[str, Any], ...] = (
     },
 )
 
+# Phrase features only. Withheld paraphrases are NOT stored here.
+NAVIGATION_FEATURES: tuple[dict[str, Any], ...] = (
+    {
+        "id": "transduction_policy",
+        "expected": ["cortex/transduction_policy.py"],
+        "phrases": ("pre-cognition", "execution requirements", "transduction policy", "frozen policy", "policy precedes"),
+    },
+    {
+        "id": "ai_entry",
+        "expected": ["docs/AGENT_START.md"],
+        "phrases": ("agent start", "ai entry", "canonical ai", "tracked ai orientation", "begin orientation"),
+    },
+    {
+        "id": "evidence_guide",
+        "expected": ["docs/EVIDENCE.md"],
+        "phrases": ("evidence guide", "how to read evidence", "claim evidence"),
+    },
+    {
+        "id": "gso_claim",
+        "expected": ["docs/research/GOVERNED_SELF_ORGANIZATION.md", "docs/CORTEX_CLAIM_REGISTRY.json"],
+        "phrases": ("gso claim", "self-organization status", "held organization", "cumulative organization"),
+    },
+    {
+        "id": "authority_path",
+        "expected": ["docs/intelligence/TOPOLOGY_LAW.md", "cortex/native_agent.py"],
+        "phrases": ("authority logic", "topology law", "who may grant capability", "host authority"),
+    },
+    {
+        "id": "claim_status_held",
+        "expected": ["docs/CORTEX_CLAIM_REGISTRY.json"],
+        "phrases": ("which claim is held", "held claim", "unresolved environment applicability"),
+    },
+    {
+        "id": "invariants",
+        "expected": ["docs/CORTEX_INVARIANTS.json", "cortex/invariants.py"],
+        "phrases": ("constitutional invariant", "invariant registry", "homeostatic monotonicity", "constitutional constraints", "machine-readable laws"),
+    },
+    {
+        "id": "shadow",
+        "expected": ["cortex/shadow_organization.py"],
+        "phrases": ("shadow organization", "proposal prior", "retention candidate"),
+    },
+)
+
+# Expected answers defined independently of routing features.
+NAVIGATION_GENERALIZATION_PANEL: tuple[dict[str, Any], ...] = (
+    {
+        "id": "policy_paraphrase",
+        "query": "Which module owns the pre-cognition execution requirements?",
+        "expected": ["cortex/transduction_policy.py"],
+        "distractors": ["cortex/autonomous_improvement.py", "docs/research/TRANSDUCTION_REVISION_2026-09-06.md"],
+    },
+    {
+        "id": "ai_entry_paraphrase",
+        "query": "Where should an agent begin orientation without searching the whole tree?",
+        "expected": ["docs/AGENT_START.md"],
+        "distractors": ["README.md", "README_ARCHIVE_2026-09-06.md"],
+    },
+    {
+        "id": "held_claim_paraphrase",
+        "query": "Which machine-readable surface lists currently HELD claims?",
+        "expected": ["docs/CORTEX_CLAIM_REGISTRY.json"],
+        "distractors": ["docs/research/GOVERNED_SELF_ORGANIZATION.md"],
+    },
+    {
+        "id": "authority_paraphrase",
+        "query": "Which files bound host capability grants before changing authority logic?",
+        "expected": ["docs/intelligence/TOPOLOGY_LAW.md", "cortex/native_agent.py"],
+        "distractors": ["cortex/competence.py"],
+    },
+    {
+        "id": "gso_not_alpha8",
+        "query": "Does historical autonomous-improvement screening currently prove governed self-organization?",
+        "expected": ["docs/research/GOVERNED_SELF_ORGANIZATION.md", "docs/CORTEX_CLAIM_REGISTRY.json"],
+        "distractors": ["cortex/autonomous_improvement.py"],
+    },
+    {
+        "id": "invariant_paraphrase",
+        "query": "Where are Cortex constitutional constraints recorded as machine-readable laws?",
+        "expected": ["docs/CORTEX_INVARIANTS.json", "cortex/invariants.py"],
+        "distractors": ["cortex/constitutional.py"],
+    },
+    {
+        "id": "shadow_paraphrase",
+        "query": "Which production-inert module holds proposal priors?",
+        "expected": ["cortex/shadow_organization.py"],
+        "distractors": ["cortex/self_org.py"],
+    },
+    {
+        "id": "stale_term",
+        "query": "Where is the current evidence guide after the documentation migration?",
+        "expected": ["docs/EVIDENCE.md"],
+        "distractors": ["BENCHMARK_REPORT.md"],
+    },
+)
+
 
 def _canonical(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
@@ -117,6 +229,7 @@ def derive_epistemic_snapshot(root: str | Path | None = None) -> dict[str, Any]:
     workspace = Path(root) if root else Path(__file__).resolve().parents[1]
     knowledge_map = json.loads((workspace / "docs/CORTEX_KNOWLEDGE_MAP.json").read_text(encoding="utf-8"))
     registry = load_claim_registry(workspace / "docs/CORTEX_CLAIM_REGISTRY.json")
+    head = _git_head(workspace)
     documents = {
         path: {
             "digest": _file_digest(workspace / path),
@@ -125,19 +238,43 @@ def derive_epistemic_snapshot(root: str | Path | None = None) -> dict[str, Any]:
         for path in CANONICAL_DOCS
         if (workspace / path).is_file()
     }
+    bound_sources = {
+        path: _file_digest(workspace / path)
+        for path in (
+            *CANONICAL_DOCS,
+            *BOUND_IMPLEMENTATIONS,
+            "docs/EVIDENCE.md",
+            "docs/intelligence/TOPOLOGY_LAW.md",
+            "docs/research/TRANSDUCTION_REVISION_2026-09-06.md",
+        )
+        if (workspace / path).is_file()
+    }
     classified = {
         item["path"]: item.get("canonicality")
         for item in knowledge_map.get("documents") or []
     }
     body = {
         "schema_version": SNAPSHOT_SCHEMA,
-        "source_head": _git_head(workspace),
+        "source_head": head,
         "product_version": __version__,
+        "provenance": {
+            "baseline_revision": "6f134f15a88123b690094daa642f2aee5a5a5c8f",
+            "implementation_revision": head,
+            "evidence_revision": head,
+            "verification_revision": head,
+            "current_checkout_revision": head,
+        },
         "knowledge_map_hash": _file_digest(workspace / "docs/CORTEX_KNOWLEDGE_MAP.json"),
         "claim_registry_hash": registry_hash(registry),
         "status_identity": _file_digest(workspace / "docs/STATUS.md"),
         "evidence_manifest_identity": _file_digest(workspace / "benchmarks/results/MANIFEST.json") if (workspace / "benchmarks/results/MANIFEST.json").is_file() else None,
         "canonical_document_identities": documents,
+        "implementation_digests": {
+            path: _file_digest(workspace / path)
+            for path in BOUND_IMPLEMENTATIONS
+            if (workspace / path).is_file()
+        },
+        "bound_source_digests": bound_sources,
         "classified_canonicality": classified,
         "active_concept_versions": [
             {"id": concept["id"], "claim_status": concept.get("claim_status"), "lifecycle": concept.get("lifecycle")}
@@ -182,6 +319,9 @@ def _select_paths(task: str, snapshot: Mapping[str, Any], budget: int) -> list[d
     if "snapshot" in text or "context" in text or "navigation" in text:
         add("cortex/epistemic_snapshot.py", "implementation")
         add("docs/SYSTEM_MAP.md", "architecture")
+    if any(token in text for token in ("invariant", "constitution", "homeostasis")):
+        add("docs/CORTEX_INVARIANTS.json", "invariants")
+        add("cortex/invariants.py", "implementation")
     encoded = _canonical(selected)
     while selected and len(encoded) > budget:
         selected.pop()
@@ -195,12 +335,23 @@ def compile_context_packet(
     *,
     budget: int = 8000,
     root: str | Path | None = None,
+    historical_checkout: bool = False,
 ) -> dict[str, Any]:
-    if snapshot.get("schema_version") != SNAPSHOT_SCHEMA or "snapshot_hash" not in snapshot:
+    if snapshot.get("schema_version") not in {SNAPSHOT_SCHEMA, SNAPSHOT_SCHEMA_V10} or "snapshot_hash" not in snapshot:
         raise ValueError("invalid snapshot identity")
     workspace = Path(root) if root else Path(__file__).resolve().parents[1]
+    checkout = _git_head(workspace)
     selected = _select_paths(task, snapshot, budget)
     errors: list[str] = []
+    if snapshot.get("snapshot_hash") != _sha({key: value for key, value in snapshot.items() if key != "snapshot_hash"}):
+        errors.append("stale_snapshot_identity")
+    if snapshot.get("source_head") != checkout:
+        errors.append("SNAPSHOT_STALE")
+    bound = dict(snapshot.get("bound_source_digests") or {})
+    for doc, meta in (snapshot.get("canonical_document_identities") or {}).items():
+        bound.setdefault(doc, meta.get("digest") if isinstance(meta, Mapping) else meta)
+    for path, digest in (snapshot.get("implementation_digests") or {}).items():
+        bound.setdefault(path, digest)
     for item in selected:
         path = workspace / item["path"]
         if not path.is_file():
@@ -208,36 +359,38 @@ def compile_context_packet(
             continue
         digest = _file_digest(path)
         item["digest"] = digest
+        expected = bound.get(item["path"])
+        if expected is None:
+            errors.append("SOURCE_NOT_BOUND:" + item["path"])
+        elif expected != digest:
+            errors.append("SOURCE_NOT_BOUND:" + item["path"])
         classified = (snapshot.get("classified_canonicality") or {}).get(item["path"])
         if classified == "HISTORICAL" and not item["historical"]:
             errors.append("historical_doc_as_current:" + item["path"])
-        if item["historical"] and classified not in (None, "HISTORICAL", "REFERENCE", "RESEARCH_ACTIVE"):
-            item["historical"] = True
-    if snapshot.get("snapshot_hash") != _sha({key: value for key, value in snapshot.items() if key != "snapshot_hash"}):
-        errors.append("stale_snapshot_identity")
     body = {
         "schema_version": PACKET_SCHEMA,
         "snapshot_identity": snapshot["snapshot_hash"],
         "task": task,
         "selected": selected,
+        "checkout_head": checkout,
+        "snapshot_head": snapshot.get("source_head"),
+        "historical_checkout": historical_checkout,
         "current_claim_states": [
             concept for concept in snapshot.get("active_concept_versions") or []
         ],
         "unresolved_assumptions": [
             "OS isolation of worktrees is DECLARATIVE_ONLY",
-            "process-tree cleanup after capture is UNKNOWN",
-            "environment applicability is incomplete",
+            "network isolation is UNENFORCED",
+            "external path isolation is DECLARATIVE_ONLY",
         ],
         "authority_constraints": {
             "authority_effect": False,
             "host_repository_rules_control": True,
             "historical_sources_remain_historical": True,
         },
-        "provenance": {
-            "source_head": snapshot.get("source_head"),
-            "product_version": snapshot.get("product_version"),
-            "knowledge_map_hash": snapshot.get("knowledge_map_hash"),
-            "claim_registry_hash": snapshot.get("claim_registry_hash"),
+        "provenance": snapshot.get("provenance") or {
+            "current_checkout_revision": checkout,
+            "implementation_revision": snapshot.get("source_head"),
         },
         "character_budget": int(budget),
         "errors": errors,
@@ -247,42 +400,94 @@ def compile_context_packet(
     return {**body, "packet_hash": _sha(body)}
 
 
-def route_navigation(query: str) -> list[str]:
+def route_navigation_contract(query: str) -> list[str]:
+    """Exact frozen questions only. Not a generalization measure."""
     for task in NAVIGATION_TASKS:
         if query.strip() == task["query"]:
-            return list(task["expected"])
-    folded = query.lower()
-    for task in NAVIGATION_TASKS:
-        needles = [token for token in re.findall(r"[a-z0-9.]+", task["query"].lower()) if len(token) > 3]
-        if sum(needle in folded for needle in needles) >= max(2, len(needles) // 3):
             return list(task["expected"])
     return ["docs/AGENT_START.md", "docs/STATUS.md"]
 
 
-def measure_navigation_fidelity() -> dict[str, Any]:
+def route_navigation(query: str) -> list[str]:
+    return route_navigation_contract(query)
+
+
+def route_navigation_generalization(query: str) -> list[str]:
+    """Phrase features only. Does not look up the full query string."""
+    folded = query.lower()
+    scored = []
+    for route in NAVIGATION_FEATURES:
+        hits = sum(1 for phrase in route["phrases"] if phrase in folded)
+        if hits:
+            scored.append((hits, route["id"], list(route["expected"])))
+    if not scored:
+        return ["docs/AGENT_START.md"]
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return scored[0][2]
+
+
+def measure_navigation_contract() -> dict[str, Any]:
     results = []
     correct = 0
     for task in NAVIGATION_TASKS:
-        routed = route_navigation(task["query"])
+        routed = route_navigation_contract(task["query"])
         ok = routed == list(task["expected"])
         correct += int(ok)
         results.append({"id": task["id"], "expected": task["expected"], "routed": routed, "correct": ok})
     body = {
-        "schema_version": NAVIGATION_SCHEMA,
+        "schema_version": NAVIGATION_CONTRACT_SCHEMA,
         "n_tasks": len(NAVIGATION_TASKS),
         "correct": correct,
-        "N_f": correct / len(NAVIGATION_TASKS),
+        "N_contract": correct / len(NAVIGATION_TASKS),
         "results": results,
-        "scope": "finite_frozen_navigation_panel",
+        "scope": "exact_query_contract_panel",
+        "authority_effect": False,
+    }
+    return {**body, "panel_hash": _sha(body)}
+
+
+def measure_navigation_fidelity() -> dict[str, Any]:
+    contract = measure_navigation_contract()
+    return {
+        **contract,
+        "schema_version": NAVIGATION_SCHEMA,
+        "N_f": contract["N_contract"],
+        "scope": "finite_frozen_navigation_contract_panel",
+    }
+
+
+def measure_navigation_generalization() -> dict[str, Any]:
+    results = []
+    correct = 0
+    for task in NAVIGATION_GENERALIZATION_PANEL:
+        if any(task["query"] == item["query"] for item in NAVIGATION_TASKS):
+            raise ValueError("generalization query leaked into contract panel")
+        routed = route_navigation_generalization(task["query"])
+        ok = routed == list(task["expected"])
+        correct += int(ok)
+        results.append({"id": task["id"], "expected": task["expected"], "routed": routed, "correct": ok})
+    body = {
+        "schema_version": NAVIGATION_GENERALIZATION_SCHEMA,
+        "n_tasks": len(NAVIGATION_GENERALIZATION_PANEL),
+        "correct": correct,
+        "N_generalization": correct / len(NAVIGATION_GENERALIZATION_PANEL),
+        "results": results,
+        "scope": "withheld_paraphrase_panel",
+        "uses_exact_query_table": False,
         "authority_effect": False,
     }
     return {**body, "panel_hash": _sha(body)}
 
 
 __all__ = [
+    "NAVIGATION_GENERALIZATION_PANEL",
     "NAVIGATION_TASKS",
     "compile_context_packet",
     "derive_epistemic_snapshot",
+    "measure_navigation_contract",
     "measure_navigation_fidelity",
+    "measure_navigation_generalization",
     "route_navigation",
+    "route_navigation_contract",
+    "route_navigation_generalization",
 ]

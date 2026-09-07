@@ -73,6 +73,8 @@ def validate(root, data):
         'docs/DOCUMENTATION_MIGRATION.md',
         'docs/research/TRANSDUCTION_REVISION_2026-09-06.md',
         'docs/research/EPISTEMIC_SUBSTRATE_2026-09-07.md',
+        'docs/research/GSO_II_INVARIANT_CLOSURE_2026-09-07.md',
+        'docs/research/GSO_IIB_METABOLIC_ASSEMBLY_2026-09-07.md',
         '.github/copilot-instructions.md',
     }
     for p in sorted(checked):
@@ -103,6 +105,22 @@ def validate(root, data):
     readme = (root/'README.md').read_text(encoding='utf-8')
     if 'assets/cortex-neural-brain.png' not in readme or readme.count('<td') != 8:
         errors.append('readme_hero_or_grid_missing')
+    status_text = (root/'docs/STATUS.md').read_text(encoding='utf-8')
+    history_marker = '## Preserved historical gate chronology'
+    if history_marker not in status_text:
+        errors.append('status_missing_historical_boundary')
+    else:
+        current_status = status_text.split(history_marker, 1)[0]
+        stale_current_assertions = (
+            'No shadow organization kernel',
+            'Captured streams are\ncurrently buffered in memory',
+            'Structured-screen reconstruction still lacks full compiler-to-observed',
+        )
+        if any(assertion in current_status for assertion in stale_current_assertions):
+            errors.append('status_current_surface_contains_superseded_claim')
+    status_anchor = re.search(r'Runtime revision anchor: `([0-9a-f]{40})`', status_text)
+    if status_anchor and status_anchor.group(1) != data.get('source_commit'):
+        errors.append('status_knowledge_map_anchor_drift')
     registry_path = root/'docs/CORTEX_CLAIM_REGISTRY.json'
     if not registry_path.is_file():
         errors.append('missing_canonical_files:docs/CORTEX_CLAIM_REGISTRY.json')
@@ -117,6 +135,16 @@ def validate(root, data):
         d['path'] for d in data.get('documents', [])
     }:
         errors.append('knowledge-map drift:claim_registry_unclassified')
+    invariants_path = root/'docs/CORTEX_INVARIANTS.json'
+    if not invariants_path.is_file():
+        errors.append('missing_canonical_files:docs/CORTEX_INVARIANTS.json')
+    else:
+        if str(root) not in sys.path:
+            sys.path.insert(0, str(root))
+        from cortex.invariants import validate_invariant_registry
+        errors.extend(validate_invariant_registry(json.loads(invariants_path.read_text(encoding='utf-8')), root=root))
+        if 'docs/CORTEX_INVARIANTS.json' not in {d['path'] for d in data.get('documents', [])}:
+            errors.append('knowledge-map drift:invariant_registry_unclassified')
     return sorted(set(errors))
 
 

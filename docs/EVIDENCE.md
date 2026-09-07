@@ -27,7 +27,9 @@ used **zero calls** and unchanged tests. It is not a new live 8/8 result.
 [Original GSO audit](research/GOVERNED_SELF_ORGANIZATION.md) ·
 [Current revision](research/TRANSDUCTION_REVISION_2026-09-06.md) ·
 [Epistemic substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md) ·
-[Claim registry](CORTEX_CLAIM_REGISTRY.json).
+[GSO-II](research/GSO_II_INVARIANT_CLOSURE_2026-09-07.md) ·
+[Claim registry](CORTEX_CLAIM_REGISTRY.json) ·
+[Invariants](CORTEX_INVARIANTS.json).
 
 ## Review a claim
 

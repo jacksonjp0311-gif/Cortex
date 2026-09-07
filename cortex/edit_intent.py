@@ -66,7 +66,8 @@ def _parse(payload: str | Mapping[str, Any], *, legacy: bool = False) -> dict[st
         if len((row["old"] + row["new"]).encode("utf-8")) > MAX_TEXT_BYTES:
             raise ValueError("edit text exceeds the bounded limit")
         normalized.append(row)
-    return {"schema_version": INTENT_SCHEMA, "summary": summary, "edits": normalized}
+    identity = INTENT_SCHEMA if legacy else schema
+    return {"schema_version": identity, "summary": summary, "edits": normalized}
 
 
 def _target(root: Path, relative: str, allowed: set[str]) -> Path:
@@ -94,10 +95,8 @@ def _compile_edit_intent(
 ) -> dict[str, Any]:
     workspace = Path(root).resolve()
     intent = _parse(payload, legacy=legacy)
-    if allowed_intent_schema and intent["schema_version"] not in {allowed_intent_schema, INTENT_SCHEMA}:
-        # v2 policy may still accept historical 1.0 objects under explicit strict semantics.
-        if not (allowed_intent_schema == INTENT_SCHEMA_V2 and intent["schema_version"] == INTENT_SCHEMA and not legacy):
-            raise ValueError("edit intent schema is invalid")
+    if allowed_intent_schema and intent["schema_version"] != allowed_intent_schema:
+        raise ValueError("edit intent schema is invalid")
     if parser_semantics_id == PARSER_SEMANTICS_LEGACY and not legacy:
         raise ValueError("historical intent interpreted under new parser semantics")
     if parser_semantics_id == PARSER_SEMANTICS_STRICT and legacy:

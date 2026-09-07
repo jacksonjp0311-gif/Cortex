@@ -8,7 +8,9 @@ Direct-child termination does not prove process-tree cleanup.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import signal
 import subprocess
 import threading
 import time
@@ -22,6 +24,30 @@ READ_CHUNK = 8192
 DEFAULT_MAX_STDOUT = 1_048_576
 DEFAULT_MAX_STDERR = 1_048_576
 PROCESS_TREE_CLEANUP = "UNKNOWN"
+ENV_ALLOWLIST = (
+    "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP",
+    "HOME", "USER", "USERNAME", "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "LANG", "LC_ALL",
+    "PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV", "NUMBER_OF_PROCESSORS",
+)
+
+
+def experiment_environment() -> dict[str, str]:
+    env = {key: os.environ[key] for key in ENV_ALLOWLIST if key in os.environ}
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
+def environment_policy() -> dict[str, Any]:
+    body = {
+        "schema_version": "cortex-experiment-environment-policy/1.0",
+        "mode": "explicit-allowlist",
+        "allowlist": list(ENV_ALLOWLIST),
+        "inherits_full_process_environment": False,
+        "network_isolation": "UNENFORCED",
+        "external_path_isolation": "DECLARATIVE_ONLY",
+        "authority_effect": False,
+    }
+    return {**body, "environment_policy_hash": hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
 
 
 def _kill(proc: subprocess.Popen[bytes]) -> None:
@@ -29,6 +55,27 @@ def _kill(proc: subprocess.Popen[bytes]) -> None:
         proc.kill()
     except OSError:
         return
+
+
+def _terminate_tree(proc: subprocess.Popen[bytes]) -> str:
+    if os.name == "nt":
+        try:
+            completed = subprocess.run(
+                ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                capture_output=True, timeout=5, check=False, shell=False,
+            )
+            if completed.returncode == 0:
+                return "windows-taskkill-tree/attempted"
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        _kill(proc)
+        return "UNKNOWN"
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        return "posix-killpg/attempted"
+    except OSError:
+        _kill(proc)
+        return "UNKNOWN"
 
 
 def _reader(
@@ -83,16 +130,23 @@ def capture_bounded_subprocess(
     stderr_eof = [False]
     timed_out = False
     creationflags = 0
+    popen_kwargs: dict[str, Any] = {}
     if os.name == "nt":
         creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        popen_kwargs["start_new_session"] = True
+    env_policy = environment_policy()
     proc = subprocess.Popen(
         list(argv),
         cwd=str(cwd),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=False,
+        env=experiment_environment(),
         creationflags=creationflags,
+        **popen_kwargs,
     )
+    tree_status = PROCESS_TREE_CLEANUP
     assert proc.stdout is not None and proc.stderr is not None
     threads = [
         threading.Thread(
@@ -114,11 +168,11 @@ def capture_bounded_subprocess(
         while True:
             output_limit_exceeded = stdout_exceeded[0] or stderr_exceeded[0]
             if output_limit_exceeded:
-                _kill(proc)
+                tree_status = _terminate_tree(proc)
                 break
             if time.monotonic() >= deadline:
                 timed_out = True
-                _kill(proc)
+                tree_status = _terminate_tree(proc)
                 break
             if proc.poll() is not None and not any(thread.is_alive() for thread in threads):
                 break
@@ -128,7 +182,7 @@ def capture_bounded_subprocess(
         try:
             proc.wait(timeout=1.0)
         except subprocess.TimeoutExpired:
-            _kill(proc)
+            tree_status = _terminate_tree(proc)
             proc.wait(timeout=1.0)
     finally:
         for stream in (proc.stdout, proc.stderr):
@@ -164,7 +218,8 @@ def capture_bounded_subprocess(
         "max_stdout_bytes": max_stdout_bytes,
         "max_stderr_bytes": max_stderr_bytes,
         "duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
-        "process_tree_cleanup": PROCESS_TREE_CLEANUP,
+        "process_tree_cleanup": tree_status,
+        "environment_policy_hash": env_policy["environment_policy_hash"],
         "failure_attribution": failure,
         "preview_bytes": preview,
         "passed": returncode == 0 and capture_complete and not timed_out and not output_limit_exceeded,
@@ -196,6 +251,7 @@ def observation_from_capture(
             "max_stdout_bytes": capture["max_stdout_bytes"],
             "max_stderr_bytes": capture["max_stderr_bytes"],
             "process_tree_cleanup": capture["process_tree_cleanup"],
+            "environment_policy_hash": capture.get("environment_policy_hash"),
             "preview_policy": "bounded-tail-4096/1.0",
         })
     return body
@@ -207,5 +263,7 @@ __all__ = [
     "OBSERVATION_SCHEMA_V11",
     "OBSERVATION_SCHEMA_V12",
     "capture_bounded_subprocess",
+    "environment_policy",
+    "experiment_environment",
     "observation_from_capture",
 ]

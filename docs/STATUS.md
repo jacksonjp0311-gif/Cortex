@@ -1,7 +1,7 @@
 # Current Cortex status
 
-Canonical current status · reviewed September 6, 2026 · product **10.0.0a39**.
-Runtime revision anchor: `6f134f15a88123b690094daa642f2aee5a5a5c8f`.
+Canonical current status · reviewed September 7, 2026 · product **10.0.0a39**.
+Runtime revision anchor: `89779803ef48f94816172929bd08be86dc148e8a`.
 Initial review baseline: `ad29b81a2b961294368fa795998fefd1134a4b5b`.
 The anchor is the reviewed baseline, not a self-referential claim that this document
 contains its own final commit. Use `git rev-parse HEAD` for checkout identity and
@@ -9,7 +9,7 @@ contains its own final commit. Use `git rev-parse HEAD` for checkout identity an
 
 ## Current gate
 
-**CURRENT: epistemic substrate + shadow kernel (production unused). NEXT: live retention utility is still unauthorized.**
+**CURRENT: GSO-IIb metabolic assembly (shadow). NEXT: GSO-III retention utility remains preregistered and not executed.**
 
 ### Platform health and substrate at b0106c7
 
@@ -18,6 +18,8 @@ completed **success** on the declared matrix: Windows/Ubuntu × Python 3.10/3.12
 `PLATFORM_HEALTH = PASS_WITHIN_DECLARED_MATRIX` at
 `b0106c762b5784a33259141b9c1e5de35de17dce`. Public `main` later moved only by a
 star-lattice metrics refresh (`ba927df`); that is not a product-source revision.
+Substrate HEAD `89779803ef48f94816172929bd08be86dc148e8a` then passed the same
+declared matrix: [run 34090571873](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34090571873).
 
 A prior read-only audit found that `_compiled_case_errors` does not reject
 successful-but-incomplete capture, successful-but-timed-out capture, negative
@@ -37,7 +39,33 @@ context packets are derived. Shadow organization, mechanical recursive closure
 and bounded self-stabilization are production-inert. See
 [epistemic substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md).
 
+GSO-II adds a non-authoritative invariant registry, snapshot checkout/source
+binding, independent receipt attestation, preserved v2 intent identity, a
+withheld navigation generalization panel, and recovery from corrupted state
+without being handed disturbance names. Process-tree cleanup is attempted
+(`taskkill /T` on Windows, `killpg` on POSIX) and still not a universal
+guarantee. Experiment subprocesses use an explicit environment allowlist.
+Network and external-path isolation remain UNENFORCED / DECLARATIVE_ONLY.
+See [GSO-II](research/GSO_II_INVARIANT_CLOSURE_2026-09-07.md) and
+[invariants](CORTEX_INVARIANTS.json).
+
 No live retention-utility or model-turnover heredity experiment was run.
+[GSO-III](research/GSO_III_RETENTION_UTILITY_PREREG.md) is preregistered only.
+
+The current GSO-IIb tightening makes component composition fail closed: type
+and schema compatibility are independent gates, missing or `NOT_TESTED`
+environment state remains `UNKNOWN`, and only bounded positive claim states
+satisfy claim dependencies. Retention candidates can no longer declare
+themselves `RETENTION_ELIGIBLE`; eligibility is reconstructed across adjacent
+`PROPOSED -> OBSERVED -> VERIFIED -> REPLICATED -> RETENTION_ELIGIBLE`
+transitions. The zero-call assembly control now changes candidate ranking, not
+only a topology identity hash. Its lifecycle evidence is explicitly synthetic;
+external receipt authenticity and retention utility remain **NOT TESTED**.
+
+## Preserved historical gate chronology
+
+The records below preserve earlier gate states. They are not descriptions of
+the current runtime when a later statement above supersedes them.
 
 GSO-Ib read-in at `61869b68348efe85b114fb7bb7c2d986fb4295b3`:
 [exact-HEAD CI](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34063844849)
@@ -78,10 +106,10 @@ Isolated verification v1.1 records applied target hashes before execution and
 holds candidates changed by the evaluator. The [revision report](research/TRANSDUCTION_REVISION_2026-09-06.md)
 links focused tests and the new zero-call control artifact.
 
-These changes close the three sampled counterexamples, not universal path
-assurance. Structured-screen reconstruction still lacks full compiler-to-observed
-artifact binding; worktrees are
-not OS sandboxes. No shadow organization kernel or new live experiment is commissioned.
+At that revision, the changes closed three sampled counterexamples, not
+universal path assurance. Structured-screen reconstruction still lacked full
+compiler-to-observed artifact binding; worktrees were not OS sandboxes, and no
+shadow organization kernel or new live experiment was commissioned.
 
 Parallel engineering while CI is pending: isolated verification v1.3 now records
 separate stdout/stderr SHA-256 digests and byte lengths, return code, duration,
@@ -100,8 +128,9 @@ controls cover runtime differences, missing Git, Git timeout and observation
 binding. Compiler-to-applied equality in structured-screen receipts remains unresolved:
 compiler postimages are normalized text hashes, while applied postimages are raw
 byte hashes. These representations require an explicit transformation contract.
-Captured streams are
-currently buffered in memory; output resource limits remain an explicit gap.
+At that historical revision, captured streams were buffered in memory and
+output resource limits remained an explicit gap. The current bounded streaming
+capture is described in the current-state section above.
 
 An opt-in `compilation=` path in isolated verification now reconstructs compiler
 identity and binds a prospective transduction contract to source HEAD, intent,
@@ -130,7 +159,7 @@ No evaluator-validity, OS isolation, or general cognitive inference follows.
 | Declared CI matrix at b0106c7 | PASS_WITHIN_DECLARED_MATRIX | [run 34077635691](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34077635691) |
 | Current finite controls | Bounded revision, see exact executed receipt | [Revision](research/TRANSDUCTION_REVISION_2026-09-06.md) |
 | Prospective policy / receipt | PRELIMINARY within tests | [Substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md), [claims](CORTEX_CLAIM_REGISTRY.json) |
-| Mechanical recursive closure | PRELIMINARY; not utility | [Shadow kernel](../cortex/shadow_organization.py) |
+| Mechanical recursive closure | PRELIMINARY within synthetic zero-call controls; behavioral ranking delta, not utility | [Shadow kernel](../cortex/shadow_organization.py) |
 | Retention utility / heredity | NOT ESTABLISHED | [GSO report](research/GOVERNED_SELF_ORGANIZATION.md) |
 | Reasoning frontier | NOT ESTABLISHED | [GSO report](research/GOVERNED_SELF_ORGANIZATION.md) |
 | Semantic treatment gain | NOT ESTABLISHED | [Evidence guide](EVIDENCE.md) |

@@ -8,7 +8,7 @@
 |---|---|---|---|
 | Does the candidate survive its complete measurement path? | Prospective policy/receipt and bounded capture added; complete path still HELD for OS isolation | [Epistemic substrate](EPISTEMIC_SUBSTRATE_2026-09-07.md) | Environment applicability and OS isolation remain UNKNOWN |
 | Can verified semantics improve fresh cognition? | NOT ESTABLISHED | [Epistemic instrumentation](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md) | Fresh discriminative tasks; frozen A/B/C study |
-| Can retained organization improve future variation? | Mechanical closure only; utility/heredity NOT ESTABLISHED | [GSO audit](GOVERNED_SELF_ORGANIZATION.md) | Self-stabilization panel exists; no live retention experiment |
+| Can retained organization improve future variation? | Mechanical shadow self-assembly demonstrated; utility/heredity NOT ESTABLISHED | [GSO-IIb](GSO_IIB_METABOLIC_ASSEMBLY_2026-09-07.md) | GSO-III preregistered, not executed |
 | Can humans and agents find the correct canonical state? | Finite 12-task navigation panel; population utility unmeasured | [Documentation migration](../DOCUMENTATION_MIGRATION.md) | Claim registry plus snapshot-bound context, not more documentation volume |
 
 ## Current measurement theory
@@ -33,6 +33,7 @@ proof of model utility. Organizational heredity remains a future causal question
 | [GSO initial audit](GOVERNED_SELF_ORGANIZATION.md) | Historical 13/16 local expectations; preserved counterexamples |
 | [Current revision](TRANSDUCTION_REVISION_2026-09-06.md) | New zero-call controls, separate from every historical score |
 | [Epistemic substrate](EPISTEMIC_SUBSTRATE_2026-09-07.md) | Policy/receipt/snapshot/shadow kernel; no live utility claim |
+| [GSO-II](GSO_II_INVARIANT_CLOSURE_2026-09-07.md) | Invariant registry, snapshot freshness, attestation, state-derived recovery |
 
 [Machine evidence index](../../benchmarks/results/MANIFEST.json). Nulls, challenged
 instruments and failed methods are useful records, not candidates for erasure.

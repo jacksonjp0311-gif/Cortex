@@ -489,6 +489,100 @@ def execute_bound_transduction(
         }
 
 
+def attest_transduction_receipt(
+    receipt: Mapping[str, Any],
+    policy: Mapping[str, Any],
+    root: str | Path,
+    contract: Mapping[str, Any] | None = None,
+    compilation: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Independent attestation. Does not trust execute_bound_transduction."""
+    unresolved: list[str] = []
+    invalid: list[str] = []
+    checked: list[str] = []
+
+    def ok(name: str) -> None:
+        checked.append(name)
+
+    def bad(name: str) -> None:
+        invalid.append(name)
+
+    expected_receipt = _sha({key: value for key, value in receipt.items() if key != "receipt_hash"})
+    (ok if receipt.get("receipt_hash") == expected_receipt else bad)("receipt_hash")
+    expected_policy = _sha({key: value for key, value in policy.items() if key != "policy_hash"})
+    (ok if policy.get("policy_hash") == expected_policy and receipt.get("policy_hash") == policy.get("policy_hash") else bad)("policy_hash")
+    subject = receipt.get("subject_source_identity") or {}
+    expected_subject = _sha({key: value for key, value in subject.items() if key != "identity_hash"})
+    (ok if subject.get("identity_hash") == expected_subject else bad)("subject_identity_hash")
+    try:
+        head = repository_head(root)
+        (ok if subject.get("subject_source_head") == head == policy.get("subject_source_head") else bad)("subject_HEAD")
+    except (OSError, ValueError):
+        unresolved.append("subject_HEAD")
+    instrument = instrument_implementation_identity(
+        compiler_id=str(policy.get("compiler_id") or ""),
+        evaluator_id=str(policy.get("evaluator_identity") or ""),
+    )
+    (ok if instrument["compiler_implementation_hashes"] == policy.get("allowed_compiler_implementation_identity") else bad)("instrument_implementation_hashes")
+    if compilation is None:
+        unresolved.append("compilation_identity")
+        unresolved.append("proposal_identity")
+        unresolved.append("parser_semantics")
+        unresolved.append("compiler_identity")
+    else:
+        (ok if verify_edit_intent_compilation(root, compilation)["valid"] else bad)("compilation_identity")
+        (ok if compilation.get("compiler_id") == policy.get("compiler_id") else bad)("compiler_identity")
+        (ok if compilation.get("parser_semantics_id") == policy.get("parser_semantics_id") else bad)("parser_semantics")
+        (ok if compilation.get("proposal_hash") == receipt.get("proposal_identity") else bad)("proposal_identity")
+        (ok if compilation.get("postimage_hashes") == receipt.get("expected_postimages") else bad)("expected_postimages")
+    if contract is None:
+        unresolved.append("verification_contract_identity")
+    else:
+        (ok if contract.get("contract_hash") == receipt.get("verification_contract") == policy.get("verification_contract_identity") else bad)("verification_contract_identity")
+    applied = receipt.get("applied_before_evaluator_hashes")
+    post = receipt.get("post_evaluator_hashes")
+    expected = receipt.get("expected_postimages")
+    if applied is None or post is None or expected is None:
+        unresolved.append("artifact_hashes")
+    else:
+        (ok if applied == expected else bad)("applied_before_evaluator_hashes")
+        if receipt.get("typed_outcome") == "PASS":
+            (ok if post == applied else bad)("post_evaluator_hashes")
+        else:
+            ok("post_evaluator_hashes")
+    for observation in receipt.get("raw_observations") or []:
+        if not observation:
+            unresolved.append("raw_observation_hashes")
+            continue
+        (ok if observation.get("environment_hash") == (receipt.get("environment_identity") or {}).get("environment_hash") else bad)("environment_hash")
+        conformance = inspect_observation_conformance({"raw_observation": observation, "returncode": observation.get("returncode"), "passed": False, "environment": receipt.get("environment_identity") or {}})
+        if not conformance["valid"] and any(item.startswith("negative") or item == "environment_authority_leak" for item in conformance["errors"]):
+            bad("raw_observation_structural_conformance")
+        else:
+            ok("raw_observation_structural_conformance")
+    if not (receipt.get("raw_observations") or []):
+        unresolved.append("raw_observation_hashes")
+    for field in ("authority_effect", "host_mutate_authorized", "execution_authorized", "memory_admission_authorized", "policy_effect", "production_effect"):
+        (ok if receipt.get(field) is False else bad)("authority_fields")
+    if receipt.get("failure_attribution") == "REASONING_FAILURE":
+        bad("failure_localization")
+    if invalid:
+        status = "INVALID"
+    elif unresolved:
+        status = "PARTIALLY_ATTESTED"
+    else:
+        status = "ATTESTED"
+    body = {
+        "schema_version": "cortex-transduction-receipt-attestation/1.0",
+        "status": status,
+        "checked": checked,
+        "invalid": invalid,
+        "unresolved": unresolved,
+        **_authority(),
+    }
+    return {**body, "attestation_hash": _sha(body)}
+
+
 __all__ = [
     "COMPILATION_SCHEMA_V21",
     "FAILURE_ATTRIBUTIONS",
@@ -497,6 +591,7 @@ __all__ = [
     "PARSER_SEMANTICS_STRICT",
     "POLICY_SCHEMA",
     "RECEIPT_SCHEMA",
+    "attest_transduction_receipt",
     "compile_under_policy",
     "execute_bound_transduction",
     "freeze_transduction_policy",

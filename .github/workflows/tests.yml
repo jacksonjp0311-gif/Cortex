@@ -30,7 +30,7 @@ jobs:
       - name: Compiled observation binding
         run: python -m pytest -q tests/test_compiled_observation_binding.py tests/test_screen_observation_binding.py --tb=short
       - name: Epistemic substrate and shadow kernel
-        run: python -m pytest -q tests/test_epistemic_substrate.py tests/test_docs_check.py --tb=short
+        run: python -m pytest -q tests/test_epistemic_substrate.py tests/test_gso_ii.py tests/test_metabolic_assembly.py tests/test_docs_check.py --tb=short
       - name: v10 native agent and interface gates
         run: python -m pytest -q tests/test_v100_native_agent.py tests/test_v100_alpha2_interface.py --tb=line
       - name: v9.8-v9.8.2 semantic, causal, discriminability, and heldout gates
