@@ -1,0 +1,276 @@
+{
+  "schema_version": "cortex-claim-registry/1.0",
+  "source_commit": "b0106c762b5784a33259141b9c1e5de35de17dce",
+  "source_commit_semantics": "CI-verified product HEAD before this substrate commit; not self-referential",
+  "product_version": "10.0.0a39",
+  "authority_effect": false,
+  "claims": [
+    {
+      "claim_id": "platform.declared_ci_matrix",
+      "subject": "declared GitHub Actions python matrix",
+      "scope": "ubuntu-latest and windows-latest × Python 3.10/3.12/3.13 at b0106c7",
+      "status": "POSITIVE_WITHIN_DECLARED_WORKLOAD",
+      "evidence": [
+        {
+          "path": "docs/STATUS.md",
+          "currency": "current",
+          "note": "https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34077635691"
+        }
+      ],
+      "counterevidence": [],
+      "dependencies": [],
+      "applicability": {
+        "matrix": ["windows-latest/3.10", "windows-latest/3.12", "windows-latest/3.13", "ubuntu-latest/3.10", "ubuntu-latest/3.12", "ubuntu-latest/3.13"]
+      },
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "NOT_TESTED",
+        "environment": "PASS",
+        "instrument": "PASS",
+        "experiment": "PASS",
+        "causal": "NOT_TESTED",
+        "applicability": "PASS",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "environment", "instrument", "experiment", "applicability"],
+      "assumptions": ["GitHub-hosted runners match the declared workflow file"],
+      "active_defeaters": [],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "transduction.raw_observation_identity",
+      "subject": "host raw observation identity",
+      "scope": "isolated verification stdout/stderr SHA-256, lengths, returncode, timeout, capture completeness",
+      "status": "POSITIVE_WITHIN_DECLARED_WORKLOAD",
+      "evidence": [
+        {"path": "tests/test_raw_verification_observation.py", "currency": "current"},
+        {"path": "cortex/coding_workspace.py", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": [],
+      "applicability": {"observation_schema": ["cortex-host-raw-observation/1.1", "cortex-host-raw-observation/1.2"]},
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "PASS",
+        "environment": "HELD",
+        "instrument": "PASS",
+        "experiment": "PASS",
+        "causal": "UNKNOWN",
+        "applicability": "HELD",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["process-tree cleanup after capture is UNKNOWN"],
+      "active_defeaters": [],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "transduction.compiled_artifact_binding",
+      "subject": "compiler expected vs applied vs post-eval artifact hashes",
+      "scope": "UTF-8/LF exact-byte compiled isolated verification",
+      "status": "POSITIVE_WITHIN_DECLARED_WORKLOAD",
+      "evidence": [
+        {"path": "tests/test_compiled_observation_binding.py", "currency": "current"},
+        {"path": "tests/test_screen_observation_binding.py", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["transduction.raw_observation_identity"],
+      "applicability": {"representation": "utf8-lf-exact-bytes/1.0"},
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "PASS",
+        "environment": "HELD",
+        "instrument": "PASS",
+        "experiment": "PASS",
+        "causal": "UNKNOWN",
+        "applicability": "HELD",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["worktrees isolate repository edits, not the operating system"],
+      "active_defeaters": [],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "transduction.prospective_policy_closure",
+      "subject": "TransductionPolicy frozen before cognition; receipt satisfies policy",
+      "scope": "deterministic policy-bound compile/verify path",
+      "status": "PRELIMINARY",
+      "evidence": [
+        {"path": "cortex/transduction_policy.py", "currency": "current"},
+        {"path": "tests/test_epistemic_substrate.py", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["transduction.compiled_artifact_binding"],
+      "applicability": {"policy_schema": "cortex-transduction-policy/1.0"},
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "PASS",
+        "environment": "HELD",
+        "instrument": "PASS",
+        "experiment": "PASS",
+        "causal": "UNKNOWN",
+        "applicability": "HELD",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["policy is host-authored; model cannot select it"],
+      "active_defeaters": [],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "environment.full_applicability",
+      "subject": "complete execution-environment applicability",
+      "scope": "dependency state, non-Python toolchain, inherited process environment",
+      "status": "HELD",
+      "evidence": [
+        {"path": "tests/test_verification_environment.py", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": [],
+      "applicability": {"unresolved": ["dependency_state", "non_python_toolchain", "inherited_process_environment"]},
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "UNKNOWN",
+        "environment": "HELD",
+        "instrument": "PASS",
+        "experiment": "NOT_TESTED",
+        "causal": "UNKNOWN",
+        "applicability": "HELD",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["environment", "applicability"],
+      "assumptions": [],
+      "active_defeaters": ["unresolved_environment_dimensions"],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "observation.os_isolation",
+      "subject": "operating-system isolation of isolated verification",
+      "scope": "network, external paths, process tree",
+      "status": "UNRESOLVED",
+      "evidence": [
+        {"path": "cortex/transduction_policy.py", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": [],
+      "applicability": {"os_isolation": "DECLARATIVE_ONLY"},
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "UNKNOWN",
+        "environment": "UNKNOWN",
+        "instrument": "UNKNOWN",
+        "experiment": "NOT_TESTED",
+        "causal": "UNKNOWN",
+        "applicability": "UNKNOWN",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["environment", "instrument"],
+      "assumptions": ["worktree is not an OS sandbox"],
+      "active_defeaters": ["os_isolation_unenforced"],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "gso.recursive_closure",
+      "subject": "mechanical recursive closure of shadow priors",
+      "scope": "zero-call synthetic ranking influence",
+      "status": "PRELIMINARY",
+      "evidence": [
+        {"path": "cortex/shadow_organization.py", "currency": "current"},
+        {"path": "tests/test_epistemic_substrate.py", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["transduction.prospective_policy_closure"],
+      "applicability": {"production_effect": false},
+      "assurance_debt": {
+        "source": "PASS",
+        "transduction": "PASS",
+        "environment": "NOT_TESTED",
+        "instrument": "PASS",
+        "experiment": "PASS",
+        "causal": "HELD",
+        "applicability": "HELD",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "instrument", "experiment"],
+      "assumptions": ["closure is ranking difference, not utility"],
+      "active_defeaters": [],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "gso.retention_utility",
+      "subject": "fresh matched retention utility",
+      "scope": "live U_r experiment",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [],
+      "counterevidence": [],
+      "dependencies": ["gso.recursive_closure"],
+      "applicability": {},
+      "assurance_debt": {
+        "source": "NOT_TESTED",
+        "transduction": "NOT_TESTED",
+        "environment": "NOT_TESTED",
+        "instrument": "NOT_TESTED",
+        "experiment": "NOT_TESTED",
+        "causal": "NOT_TESTED",
+        "applicability": "NOT_TESTED",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["experiment", "causal", "replication"],
+      "assumptions": [],
+      "active_defeaters": ["experiment_not_authorized"],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    },
+    {
+      "claim_id": "gso.organizational_heredity",
+      "subject": "institutional transfer across model replacement",
+      "scope": "M1→R1→M2 A/B/C heredity experiment",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [],
+      "counterevidence": [],
+      "dependencies": ["gso.retention_utility"],
+      "applicability": {},
+      "assurance_debt": {
+        "source": "NOT_TESTED",
+        "transduction": "NOT_TESTED",
+        "environment": "NOT_TESTED",
+        "instrument": "NOT_TESTED",
+        "experiment": "NOT_TESTED",
+        "causal": "NOT_TESTED",
+        "applicability": "NOT_TESTED",
+        "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["experiment", "causal", "replication"],
+      "assumptions": [],
+      "active_defeaters": ["experiment_not_authorized"],
+      "source_revision": "b0106c762b5784a33259141b9c1e5de35de17dce",
+      "supersedes": [],
+      "superseded_by": [],
+      "authority_effect": false
+    }
+  ]
+}

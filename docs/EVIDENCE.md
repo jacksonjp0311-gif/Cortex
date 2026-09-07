@@ -25,7 +25,9 @@ before tests because of Windows patch transport. Their corrected-transport repla
 used **zero calls** and unchanged tests. It is not a new live 8/8 result.
 [Original experiment](research/FIXED_L3_COHORT_2026-09-06.md) ·
 [Original GSO audit](research/GOVERNED_SELF_ORGANIZATION.md) ·
-[Current revision](research/TRANSDUCTION_REVISION_2026-09-06.md).
+[Current revision](research/TRANSDUCTION_REVISION_2026-09-06.md) ·
+[Epistemic substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md) ·
+[Claim registry](CORTEX_CLAIM_REGISTRY.json).
 
 ## Review a claim
 

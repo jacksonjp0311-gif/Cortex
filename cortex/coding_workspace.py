@@ -232,6 +232,34 @@ def run_host_verification_step(root: str | Path, step: Mapping[str, Any]) -> dic
         return {"id": str(step.get("id") or "invalid"), "passed": False, "returncode": -1, "output": "invalid host command vector"}
     argv = [sys.executable if value == "{python}" else value for value in raw]
     environment = verification_environment()
+    bounded = any(step.get(key) is not None for key in ("max_stdout_bytes", "max_stderr_bytes", "observation_schema"))
+    if bounded:
+        from .observation_capture import capture_bounded_subprocess, observation_from_capture
+        capture = capture_bounded_subprocess(
+            argv,
+            cwd=root,
+            timeout_seconds=max(1, min(int(step.get("timeout_seconds") or 120), 1800)),
+            max_stdout_bytes=int(step.get("max_stdout_bytes") or 1_048_576),
+            max_stderr_bytes=int(step.get("max_stderr_bytes") or 1_048_576),
+        )
+        observation = observation_from_capture(capture, environment_hash=environment["environment_hash"])
+        preview = capture["preview_bytes"].decode("utf-8", errors="replace").strip()[-4000:]
+        if capture["timed_out"]:
+            preview = "host verification step timed out"
+        elif capture["output_limit_exceeded"]:
+            preview = "host verification step exceeded output limit"
+        return {
+            "id": str(step.get("id") or "step"),
+            "argv": list(raw),
+            "returncode": capture["returncode"],
+            "passed": capture["passed"],
+            "duration_ms": observation["duration_ms"],
+            "raw_observation": observation,
+            "environment": environment,
+            "raw_observation_hash": _sha(observation),
+            "failure_attribution": capture["failure_attribution"],
+            "output": preview,
+        }
     started = time.perf_counter()
     timed_out = False
     try:
@@ -281,6 +309,7 @@ def verify_patch_in_isolated_worktree(
     contract: Mapping[str, Any],
     *,
     compilation: Mapping[str, Any] | None = None,
+    policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Evaluate an immutable proposal away from the operator's active tree."""
     workspace = Path(root).resolve()
@@ -329,6 +358,21 @@ def verify_patch_in_isolated_worktree(
             "authority_effect": False,
         }
         transduction["contract_hash"] = _sha(transduction)
+    if policy is not None:
+        from .transduction_policy import POLICY_SCHEMA, _sha as policy_sha
+        material = {key: value for key, value in dict(policy).items() if key != "policy_hash"}
+        if policy.get("schema_version") != POLICY_SCHEMA or policy.get("policy_hash") != policy_sha(material):
+            raise ValueError("POLICY_BINDING_FAILURE")
+        if compilation is None:
+            raise ValueError("POLICY_BINDING_FAILURE")
+        if policy.get("compiler_id") != compilation.get("compiler_id"):
+            raise ValueError("COMPILER_BINDING_FAILURE")
+        if policy.get("parser_semantics_id") != compilation.get("parser_semantics_id"):
+            raise ValueError("POLICY_BINDING_FAILURE")
+        if policy.get("verification_contract_identity") != contract.get("contract_hash"):
+            raise ValueError("POLICY_BINDING_FAILURE")
+        if transduction and transduction["source_head"] != repository_head(workspace):
+            raise ValueError("SUBJECT_SOURCE_BINDING_FAILURE")
 
     with tempfile.TemporaryDirectory(prefix="cortex-verify-") as parent:
         candidate = Path(parent) / "candidate"
@@ -336,6 +380,7 @@ def verify_patch_in_isolated_worktree(
         if added.returncode != 0:
             raise RuntimeError("isolated verification worktree could not be created")
         steps: list[dict[str, Any]] = []
+        surface_violation = False
         try:
             for target, digest in canonical["preimage_hashes"].items():
                 if _file_hash(_contained(candidate, target)) != digest:
@@ -349,12 +394,32 @@ def verify_patch_in_isolated_worktree(
             applied_postimages = {target: _file_hash(_contained(candidate, target)) for target in targets}
             if transduction and applied_postimages != transduction["expected_postimage_hashes"]:
                 raise ValueError("PRE_EVAL_ARTIFACT_MISMATCH")
+            surface_before = None
+            if policy is not None:
+                from .transduction_policy import worktree_payload_hashes
+                surface_before = worktree_payload_hashes(candidate)
             for step in contract["steps"]:
-                result = run_host_verification_step(candidate, step)
+                bound_step = dict(step)
+                if policy is not None:
+                    bound_step["max_stdout_bytes"] = policy["stdout_limit"]
+                    bound_step["max_stderr_bytes"] = policy["stderr_limit"]
+                    bound_step["timeout_seconds"] = min(int(step.get("timeout_seconds") or policy["timeout_seconds"]), policy["timeout_seconds"])
+                    bound_step["observation_schema"] = policy["observation_policy"]
+                result = run_host_verification_step(candidate, bound_step)
                 steps.append(result)
                 if not result["passed"] or any(_file_hash(_contained(candidate, target)) != digest for target, digest in applied_postimages.items()):
                     break
             postimages = {target: _file_hash(_contained(candidate, target)) for target in targets}
+            surface_violation = False
+            if surface_before is not None:
+                from .transduction_policy import surface_violations, worktree_payload_hashes
+                extra = surface_violations(
+                    surface_before,
+                    worktree_payload_hashes(candidate),
+                    declared_targets=targets,
+                    applied_postimages=applied_postimages,
+                )
+                surface_violation = bool(extra)
         finally:
             removed = _git(workspace, ["worktree", "remove", "--force", str(candidate)])
             if removed.returncode != 0:
@@ -368,10 +433,26 @@ def verify_patch_in_isolated_worktree(
     )
     if transduction and not environment_matches:
         passed = False
+    capture_fault = next((step.get("failure_attribution") for step in steps if step.get("failure_attribution")), None)
+    if capture_fault:
+        passed = False
+    if surface_violation:
+        passed = False
+    attribution = None
+    if surface_violation:
+        attribution = "OBSERVATION_SURFACE_VIOLATION"
+    elif not artifact_preserved:
+        attribution = "EVALUATOR_MUTATED_CANDIDATE"
+    elif capture_fault:
+        attribution = capture_fault
+    elif transduction and not environment_matches:
+        attribution = "ENVIRONMENT_MISMATCH"
+    elif not passed:
+        attribution = "EVALUATOR_REJECTION"
     return {
         "schema_version": "cortex-coding-patch-verification/2.0" if transduction else VERIFICATION_SCHEMA,
         "transduction_contract": transduction,
-        "transduction_state": "PASS_WITHIN_DECLARED_SURFACE" if transduction and artifact_preserved and environment_matches else "HELD",
+        "transduction_state": "PASS_WITHIN_DECLARED_SURFACE" if transduction and artifact_preserved and environment_matches and not surface_violation else "HELD",
         "proposal_hash": canonical["proposal_hash"],
         "source_head": source_head,
         "contract_hash": contract["contract_hash"],
@@ -380,7 +461,8 @@ def verify_patch_in_isolated_worktree(
         "postimage_hashes": postimages,
         "applied_postimage_hashes": applied_postimages,
         "candidate_artifact_preserved": artifact_preserved,
-        "failure_attribution": "EVALUATOR_MUTATED_CANDIDATE" if not artifact_preserved else None,
+        "observation_surface_violation": surface_violation,
+        "failure_attribution": attribution,
         "status": "verified" if passed else "held",
         "isolated_worktree": True,
         "active_tree_mutated": False,

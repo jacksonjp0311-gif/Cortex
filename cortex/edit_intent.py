@@ -16,8 +16,12 @@ from typing import Any
 from .coding_workspace import create_patch_proposal
 
 INTENT_SCHEMA = "cortex-structured-edit-intent/1.0"
+INTENT_SCHEMA_V2 = "cortex-structured-edit-intent/2.0"
 LEGACY_COMPILATION_SCHEMA = "cortex-edit-intent-compilation/1.0"
 COMPILATION_SCHEMA = "cortex-edit-intent-compilation/2.0"
+COMPILATION_SCHEMA_V21 = "cortex-edit-intent-compilation/2.1"
+PARSER_SEMANTICS_STRICT = "strict-string-fields/2.0"
+PARSER_SEMANTICS_LEGACY = "legacy-coercing/1.0"
 MAX_EDITS = 16
 MAX_TEXT_BYTES = 65_536
 
@@ -39,8 +43,11 @@ def _parse(payload: str | Mapping[str, Any], *, legacy: bool = False) -> dict[st
         raise ValueError("edit intent must be one valid JSON object")
     if set(value) != {"schema_version", "summary", "edits"}:
         raise ValueError("edit intent contains missing or unknown top-level fields")
-    if value.get("schema_version") != INTENT_SCHEMA:
+    schema = value.get("schema_version")
+    if schema not in {INTENT_SCHEMA, INTENT_SCHEMA_V2}:
         raise ValueError("edit intent schema is invalid")
+    if schema == INTENT_SCHEMA_V2 and legacy:
+        raise ValueError("historical intent interpreted under new parser semantics")
     if not legacy and not isinstance(value.get("summary"), str):
         raise ValueError("edit summary must be a string")
     summary = str(value.get("summary") or "").strip()
@@ -82,9 +89,19 @@ def _compile_edit_intent(
     *,
     allowed_targets: Sequence[str],
     legacy: bool = False,
+    parser_semantics_id: str | None = None,
+    allowed_intent_schema: str | None = None,
 ) -> dict[str, Any]:
     workspace = Path(root).resolve()
     intent = _parse(payload, legacy=legacy)
+    if allowed_intent_schema and intent["schema_version"] not in {allowed_intent_schema, INTENT_SCHEMA}:
+        # v2 policy may still accept historical 1.0 objects under explicit strict semantics.
+        if not (allowed_intent_schema == INTENT_SCHEMA_V2 and intent["schema_version"] == INTENT_SCHEMA and not legacy):
+            raise ValueError("edit intent schema is invalid")
+    if parser_semantics_id == PARSER_SEMANTICS_LEGACY and not legacy:
+        raise ValueError("historical intent interpreted under new parser semantics")
+    if parser_semantics_id == PARSER_SEMANTICS_STRICT and legacy:
+        raise ValueError("historical intent interpreted under new parser semantics")
     allowed = {Path(str(value)).as_posix() for value in allowed_targets}
     if not allowed:
         raise ValueError("host-declared target scope is required")
@@ -117,8 +134,12 @@ def _compile_edit_intent(
     if not patch.endswith("\n"):
         patch += "\n"
     proposal = create_patch_proposal(workspace, patch, intent["summary"])
+    emit_semantics = parser_semantics_id is not None
     material: dict[str, Any] = {
-        "schema_version": LEGACY_COMPILATION_SCHEMA if legacy else COMPILATION_SCHEMA,
+        "schema_version": (
+            LEGACY_COMPILATION_SCHEMA if legacy else
+            COMPILATION_SCHEMA_V21 if emit_semantics else COMPILATION_SCHEMA
+        ),
         "compiler_id": "cortex.edit-intent.deterministic-replacement.v1" if legacy else "cortex.edit-intent.deterministic-replacement.v2",
         "intent": intent,
         "intent_hash": _sha(intent),
@@ -137,24 +158,47 @@ def _compile_edit_intent(
         "memory_admission_authorized": False,
         "policy_effect": False,
     }
+    if emit_semantics:
+        material["parser_semantics_id"] = parser_semantics_id
+        material["allowed_intent_schema"] = allowed_intent_schema or intent["schema_version"]
     material["compilation_hash"] = _sha(material)
     return material
 
 
-def compile_edit_intent(root: str | Path, payload: str | Mapping[str, Any], *, allowed_targets: Sequence[str]) -> dict[str, Any]:
-    """New compilations use strict v2; v1 remains available only for reconstruction."""
-    return _compile_edit_intent(root, payload, allowed_targets=allowed_targets)
+def compile_edit_intent(
+    root: str | Path,
+    payload: str | Mapping[str, Any],
+    *,
+    allowed_targets: Sequence[str],
+    parser_semantics_id: str | None = None,
+    allowed_intent_schema: str | None = None,
+) -> dict[str, Any]:
+    """New compilations use strict v2; v1 remains available only for reconstruction.
+
+    Default identity remains compilation/2.0. Parser semantics are explicit only
+    when parser_semantics_id is supplied (compilation/2.1).
+    """
+    return _compile_edit_intent(
+        root,
+        payload,
+        allowed_targets=allowed_targets,
+        parser_semantics_id=parser_semantics_id,
+        allowed_intent_schema=allowed_intent_schema,
+    )
 
 
 def verify_edit_intent_compilation(root: str | Path, compilation: Mapping[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     body = {key: value for key, value in compilation.items() if key != "compilation_hash"}
-    if compilation.get("schema_version") not in {COMPILATION_SCHEMA, LEGACY_COMPILATION_SCHEMA} or compilation.get("compilation_hash") != _sha(body):
+    allowed_schemas = {COMPILATION_SCHEMA, LEGACY_COMPILATION_SCHEMA, COMPILATION_SCHEMA_V21}
+    if compilation.get("schema_version") not in allowed_schemas or compilation.get("compilation_hash") != _sha(body):
         errors.append("compilation_identity_invalid")
     try:
         rebuilt = _compile_edit_intent(
             root, compilation.get("intent") or {}, allowed_targets=compilation.get("allowed_targets") or (),
             legacy=compilation.get("schema_version") == LEGACY_COMPILATION_SCHEMA,
+            parser_semantics_id=compilation.get("parser_semantics_id"),
+            allowed_intent_schema=compilation.get("allowed_intent_schema"),
         )
     except (OSError, ValueError) as exc:
         errors.append("compilation_reconstruction_failed:" + str(exc))
@@ -167,4 +211,13 @@ def verify_edit_intent_compilation(root: str | Path, compilation: Mapping[str, A
     return {"valid": not errors, "errors": errors}
 
 
-__all__ = ["INTENT_SCHEMA", "COMPILATION_SCHEMA", "compile_edit_intent", "verify_edit_intent_compilation"]
+__all__ = [
+    "INTENT_SCHEMA",
+    "INTENT_SCHEMA_V2",
+    "COMPILATION_SCHEMA",
+    "COMPILATION_SCHEMA_V21",
+    "PARSER_SEMANTICS_LEGACY",
+    "PARSER_SEMANTICS_STRICT",
+    "compile_edit_intent",
+    "verify_edit_intent_compilation",
+]

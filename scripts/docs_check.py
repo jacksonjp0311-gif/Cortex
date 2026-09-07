@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -68,7 +69,12 @@ def validate(root, data):
         errors.append('version_drift')
     if data.get('implementation_hashes') != fingerprints(root, data):
         errors.append('implementation_changed_review_map_and_status')
-    checked = set(data['entry_points'].values()) | {'docs/DOCUMENTATION_MIGRATION.md', 'docs/research/TRANSDUCTION_REVISION_2026-09-06.md', '.github/copilot-instructions.md'}
+    checked = set(data['entry_points'].values()) | {
+        'docs/DOCUMENTATION_MIGRATION.md',
+        'docs/research/TRANSDUCTION_REVISION_2026-09-06.md',
+        'docs/research/EPISTEMIC_SUBSTRATE_2026-09-07.md',
+        '.github/copilot-instructions.md',
+    }
     for p in sorted(checked):
         if not (root/p).exists():
             continue
@@ -97,6 +103,20 @@ def validate(root, data):
     readme = (root/'README.md').read_text(encoding='utf-8')
     if 'assets/cortex-neural-brain.png' not in readme or readme.count('<td') != 8:
         errors.append('readme_hero_or_grid_missing')
+    registry_path = root/'docs/CORTEX_CLAIM_REGISTRY.json'
+    if not registry_path.is_file():
+        errors.append('missing_canonical_files:docs/CORTEX_CLAIM_REGISTRY.json')
+    else:
+        if str(root) not in sys.path:
+            sys.path.insert(0, str(root))
+        from cortex.assurance import validate_claim_registry
+        errors.extend(validate_claim_registry(json.loads(registry_path.read_text(encoding='utf-8')), root=root))
+        if data['product_version'] != json.loads(registry_path.read_text(encoding='utf-8')).get('product_version'):
+            errors.append('claim_registry_version_drift')
+    if 'docs/CORTEX_CLAIM_REGISTRY.json' not in data.get('entry_points', {}) and 'docs/CORTEX_CLAIM_REGISTRY.json' not in {
+        d['path'] for d in data.get('documents', [])
+    }:
+        errors.append('knowledge-map drift:claim_registry_unclassified')
     return sorted(set(errors))
 
 

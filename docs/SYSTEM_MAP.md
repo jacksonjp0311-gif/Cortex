@@ -45,7 +45,10 @@ requires separate host policy. No production GSO loop is commissioned.
 | Host authority | [native_agent.py](../cortex/native_agent.py)<br/>[autonomous_improvement.py](../cortex/autonomous_improvement.py) | [TOPOLOGY_LAW.md](../docs/intelligence/TOPOLOGY_LAW.md)<br/>[SECURITY.md](../SECURITY.md) | [test_v100_native_agent.py](../tests/test_v100_native_agent.py) | No dedicated empirical artifact; see tests | MECHANISM TESTED; HOST CONTROL |
 | Structured repair | [structured_repair_screen.py](../cortex/structured_repair_screen.py)<br/>[repair_calibration_cohort.py](../cortex/repair_calibration_cohort.py)<br/>[executable_repair_forge.py](../cortex/executable_repair_forge.py) | [FIXED_L3_COHORT_2026-09-06.md](../docs/research/FIXED_L3_COHORT_2026-09-06.md) | [test_repair_calibration_cohort.py](../tests/test_repair_calibration_cohort.py)<br/>[test_multifile_instrument_frontier.py](../tests/test_multifile_instrument_frontier.py) | [fixed_l3_stage0_2026-09-06.json](../benchmarks/results/fixed_l3_stage0_2026-09-06.json)<br/>[fixed_l3_stage1_2026-09-06.json](../benchmarks/results/fixed_l3_stage1_2026-09-06.json) | HISTORICAL 5/8; FRONTIER HELD |
 | Competence candidates | [competence.py](../cortex/competence.py)<br/>[competence_revision.py](../cortex/competence_revision.py) | [EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md](../docs/research/EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md) | [test_v91_competence.py](../tests/test_v91_competence.py) | No dedicated empirical artifact; see tests | GENERAL COMPETENCE NOT ESTABLISHED |
-| Governed cumulative organization | PLANNED — no implementation | [GOVERNED_SELF_ORGANIZATION.md](../docs/research/GOVERNED_SELF_ORGANIZATION.md) | No cycle test | [gso_historical_path_inspection_2026-09-06.json](../benchmarks/results/gso_historical_path_inspection_2026-09-06.json) | HELD; NO RECURSIVE EFFECT |
+| Transduction policy / receipt | [transduction_policy.py](../cortex/transduction_policy.py)<br/>[observation_capture.py](../cortex/observation_capture.py) | [EPISTEMIC_SUBSTRATE_2026-09-07.md](../docs/research/EPISTEMIC_SUBSTRATE_2026-09-07.md) | [test_epistemic_substrate.py](../tests/test_epistemic_substrate.py) | Zero-call adversarial panel | PRELIMINARY WITHIN TESTS |
+| Claim / assurance | [assurance.py](../cortex/assurance.py)<br/>[CORTEX_CLAIM_REGISTRY.json](../docs/CORTEX_CLAIM_REGISTRY.json) | [STATUS.md](STATUS.md) | [test_epistemic_substrate.py](../tests/test_epistemic_substrate.py) | Derived claim surface | PRELIMINARY WITHIN TESTS |
+| Epistemic snapshot | [epistemic_snapshot.py](../cortex/epistemic_snapshot.py) | [AGENT_START.md](AGENT_START.md) | [test_epistemic_substrate.py](../tests/test_epistemic_substrate.py) | Finite navigation panel | PRELIMINARY WITHIN TESTS |
+| Governed cumulative organization | [shadow_organization.py](../cortex/shadow_organization.py) | [GOVERNED_SELF_ORGANIZATION.md](../docs/research/GOVERNED_SELF_ORGANIZATION.md) | [test_epistemic_substrate.py](../tests/test_epistemic_substrate.py) | [gso_historical_path_inspection_2026-09-06.json](../benchmarks/results/gso_historical_path_inspection_2026-09-06.json) | HELD; MECHANICAL CLOSURE ONLY |
 
 ## Epistemic topology (architectural hypothesis)
 
@@ -59,8 +62,8 @@ navigation tasks. No population measurement is claimed here. Organizational here
 would additionally require proven causal influence from retained state to fresh
 behavior; map relationships do not establish that influence.
 
-CURRENT: transduction closure. NEXT: full observation binding and shadow kernel.
-FUTURE: mechanical recursion → homeostasis → matched retention → second-cycle
-replication → organizational heredity/model ecology → bounded active adaptation.
-All later stages remain planned; none follows merely from this diagram.
+CURRENT: epistemic substrate and production-inert shadow kernel.
+NEXT: environment/OS-isolation applicability, then an authorized retention-utility
+experiment. FUTURE: matched retention → second-cycle replication → organizational
+heredity. None of those later stages follows merely from this diagram.
 

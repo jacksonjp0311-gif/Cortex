@@ -1,5 +1,14 @@
 # Governed self-organization: observation-path audit
 
+**Current overlay (September 7, 2026):** platform health at `b0106c7` is
+PASS_WITHIN_DECLARED_MATRIX. A shadow organization kernel, mechanical recursive
+closure, and bounded self-stabilization panel now exist with
+`authority_effect=false` and `production_effect=false`. They do **not** unHOLD
+live GSO, retention utility, or organizational heredity. See
+[epistemic substrate](EPISTEMIC_SUBSTRATE_2026-09-07.md) and
+[claim registry](../CORTEX_CLAIM_REGISTRY.json). The historical audit below is
+unchanged.
+
 September 6, 2026. Reconstructed local and fetched public HEAD:
 `a3726be910892b79bcd74d0bb48e91d12784d5bb`, Cortex `10.0.0a39`.
 The worktree was clean. This pass uses **zero model calls**. Audit artifacts bind

@@ -9,7 +9,35 @@ contains its own final commit. Use `git rev-parse HEAD` for checkout identity an
 
 ## Current gate
 
-**CURRENT: platform-health closure. NEXT: complete observation binding.**
+**CURRENT: epistemic substrate + shadow kernel (production unused). NEXT: live retention utility is still unauthorized.**
+
+### Platform health and substrate at b0106c7
+
+[CI run 34077635691](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34077635691)
+completed **success** on the declared matrix: Windows/Ubuntu × Python 3.10/3.12/3.13.
+`PLATFORM_HEALTH = PASS_WITHIN_DECLARED_MATRIX` at
+`b0106c762b5784a33259141b9c1e5de35de17dce`. Public `main` later moved only by a
+star-lattice metrics refresh (`ba927df`); that is not a product-source revision.
+
+A prior read-only audit found that `_compiled_case_errors` does not reject
+successful-but-incomplete capture, successful-but-timed-out capture, negative
+byte lengths, or `authority_effect=true` environments. That historical helper
+identity is unchanged. Derived inspection is now
+`cortex-observation-conformance/1.0` and does not silently upgrade archived
+verifiers.
+
+Prospective `TransductionPolicy` is frozen before compilation.
+`TransductionReceipt` must satisfy that policy. Subject, instrument and
+environment identities are separate. Observation-surface enforcement is
+worktree-file CHECKED and otherwise DECLARATIVE_ONLY. Bounded streaming capture
+(`cortex-host-raw-observation/1.2`) hashes incrementally; process-tree cleanup
+remains UNKNOWN. Claims live in [CORTEX_CLAIM_REGISTRY.json](CORTEX_CLAIM_REGISTRY.json).
+Assurance cases and typed debt cannot grant authority. Epistemic snapshots and
+context packets are derived. Shadow organization, mechanical recursive closure
+and bounded self-stabilization are production-inert. See
+[epistemic substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md).
+
+No live retention-utility or model-turnover heredity experiment was run.
 
 GSO-Ib read-in at `61869b68348efe85b114fb7bb7c2d986fb4295b3`:
 [exact-HEAD CI](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34063844849)
@@ -40,9 +68,9 @@ coordinate used 3.10.11). Four documentation checker tests and canonical-map
 validation also passed. These are deterministic controls, with zero model calls.
 The matrix now includes the new initialization controls explicitly.
 
-The corrected full remote matrix remains **UNVERIFIED**. No stronger GSO gate is
-declared passed on the basis of local tests alone. This repair does not claim to
-serialize every legacy migration or prove universal concurrent migration safety.
+The corrected full remote matrix at `b0106c7` is now **PASS_WITHIN_DECLARED_MATRIX**.
+This repair does not claim to serialize every legacy migration or prove universal
+concurrent migration safety.
 
 Strict compiler v2 rejects non-string edits and represents missing terminal
 newlines explicitly. Compiler v1 remains reconstructable for historical objects.
@@ -99,7 +127,11 @@ No evaluator-validity, OS isolation, or general cognitive inference follows.
 | Original fixed L3 outcome | 3/4 + 2/4 = **5/8**, transport-confounded | [Stage 0](../benchmarks/results/fixed_l3_stage0_2026-09-06.json), [stage 1](../benchmarks/results/fixed_l3_stage1_2026-09-06.json) |
 | Archived candidate replay | Zero new calls; three passed unchanged tests | [Transport audit](../benchmarks/results/fixed_l3_transport_audit_2026-09-06.json) |
 | Initial GSO audit | Historical HELD, 13/16 expectations | [Original audit](../benchmarks/results/gso_transduction_committed_check_2026-09-06.json) |
+| Declared CI matrix at b0106c7 | PASS_WITHIN_DECLARED_MATRIX | [run 34077635691](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34077635691) |
 | Current finite controls | Bounded revision, see exact executed receipt | [Revision](research/TRANSDUCTION_REVISION_2026-09-06.md) |
+| Prospective policy / receipt | PRELIMINARY within tests | [Substrate](research/EPISTEMIC_SUBSTRATE_2026-09-07.md), [claims](CORTEX_CLAIM_REGISTRY.json) |
+| Mechanical recursive closure | PRELIMINARY; not utility | [Shadow kernel](../cortex/shadow_organization.py) |
+| Retention utility / heredity | NOT ESTABLISHED | [GSO report](research/GOVERNED_SELF_ORGANIZATION.md) |
 | Reasoning frontier | NOT ESTABLISHED | [GSO report](research/GOVERNED_SELF_ORGANIZATION.md) |
 | Semantic treatment gain | NOT ESTABLISHED | [Evidence guide](EVIDENCE.md) |
 | Cumulative organization / heredity | NOT ESTABLISHED | [Research roadmap](research/README.md) |
@@ -117,7 +149,7 @@ has closed mutation, execution, admission, policy and adaptation authority.
 
 ## Next threshold
 
-Bind reconstructed compiler output to applied-before-evaluation artifacts and
-freeze observation-path/instrument requirements prospectively. Then audit faults
-and contamination. Only after explicit readiness may shadow retention be tested;
-only after that may a fresh matched effect study be proposed.
+OS isolation, process-tree cleanup, and full environment applicability remain
+UNKNOWN/HELD. Do not run a live retention-utility or model-turnover heredity
+experiment until those applicability gates are explicit and a new authorization
+is issued. Production runtime must not consume shadow priors.

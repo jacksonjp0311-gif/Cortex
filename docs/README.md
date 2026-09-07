@@ -9,7 +9,7 @@
 | Operate Cortex | [Native chat](v10/CORTEX_CHAT.md) · [Troubleshooting](TROUBLESHOOTING.md) |
 | Connect AI systems | [Agent start](AGENT_START.md) · [Integration reference](AI_INTEGRATION.md) |
 | Understand permissions | [Authority](SYSTEM_MAP.md#authority) · [Security policy](../SECURITY.md) · [Secret storage](v10/SECRET_STORAGE.md) |
-| Evaluate a claim | [Evidence guide](EVIDENCE.md) → [Status](STATUS.md) → linked artifact |
+| Evaluate a claim | [Claim registry](CORTEX_CLAIM_REGISTRY.json) → [Evidence guide](EVIDENCE.md) → [Status](STATUS.md) |
 | Explore active research | [Research hub](research/README.md) |
 | Understand foundational mathematics | [Foundational geometry](research/EMERGENT_MATH_AND_COMPOSITION_V0.1.md) |
 | Follow historical development | [Intelligence phases](intelligence/) · [Preserved README](../README_ARCHIVE_2026-09-06.md) |

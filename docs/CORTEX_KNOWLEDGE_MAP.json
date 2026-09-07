@@ -10,7 +10,8 @@
     "architecture": "docs/SYSTEM_MAP.md",
     "status": "docs/STATUS.md",
     "evidence": "docs/EVIDENCE.md",
-    "research": "docs/research/README.md"
+    "research": "docs/research/README.md",
+    "claims": "docs/CORTEX_CLAIM_REGISTRY.json"
   },
   "concepts": [
     {
@@ -167,10 +168,13 @@
       "canonicality": "RESEARCH_ACTIVE",
       "implementation": [
         "cortex/edit_intent.py",
-        "cortex/coding_workspace.py"
+        "cortex/coding_workspace.py",
+        "cortex/transduction_policy.py",
+        "cortex/observation_capture.py"
       ],
       "documentation": [
-        "docs/research/TRANSDUCTION_REVISION_2026-09-06.md"
+        "docs/research/TRANSDUCTION_REVISION_2026-09-06.md",
+        "docs/research/EPISTEMIC_SUBSTRATE_2026-09-07.md"
       ],
       "tests": [
         "tests/test_transduction_assurance.py",
@@ -178,7 +182,8 @@
         "tests/test_verification_environment.py",
         "tests/test_compiled_observation_binding.py",
         "tests/test_screen_observation_binding.py",
-        "tests/test_patch_transport.py"
+        "tests/test_patch_transport.py",
+        "tests/test_epistemic_substrate.py"
       ],
       "benchmarks": [
         "benchmarks/transduction_assurance.py"
@@ -355,14 +360,19 @@
     {
       "id": "gso",
       "name": "Governed cumulative organization",
-      "summary": "Governed cumulative organization; follow domain evidence and authority boundaries.",
-      "lifecycle": "PLANNED",
+      "summary": "Shadow kernel and mechanical closure only; production priors unused; utility/heredity not established.",
+      "lifecycle": "EXPERIMENTAL",
       "canonicality": "RESEARCH_ACTIVE",
-      "implementation": [],
-      "documentation": [
-        "docs/research/GOVERNED_SELF_ORGANIZATION.md"
+      "implementation": [
+        "cortex/shadow_organization.py"
       ],
-      "tests": [],
+      "documentation": [
+        "docs/research/GOVERNED_SELF_ORGANIZATION.md",
+        "docs/research/EPISTEMIC_SUBSTRATE_2026-09-07.md"
+      ],
+      "tests": [
+        "tests/test_epistemic_substrate.py"
+      ],
       "benchmarks": [],
       "evidence": [
         "benchmarks/results/gso_historical_path_inspection_2026-09-06.json"
@@ -376,8 +386,73 @@
       "related_to": [],
       "supersedes": [],
       "superseded_by": [],
-      "claim_status": "HELD; NO RECURSIVE EFFECT",
+      "claim_status": "HELD; MECHANICAL CLOSURE ONLY",
       "evidence_gap": "Evidence is scoped; not universal validation.",
+      "authority_effect": false
+    },
+    {
+      "id": "assurance",
+      "name": "Claim registry and assurance cases",
+      "summary": "Machine-readable current claims, typed assurance debt, and read-only assurance cases.",
+      "lifecycle": "EXPERIMENTAL",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [
+        "cortex/assurance.py"
+      ],
+      "documentation": [
+        "docs/CORTEX_CLAIM_REGISTRY.json",
+        "docs/STATUS.md"
+      ],
+      "tests": [
+        "tests/test_epistemic_substrate.py",
+        "tests/test_docs_check.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [
+        "transduction"
+      ],
+      "supports": [
+        "gso"
+      ],
+      "related_to": [
+        "epistemic"
+      ],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "PRELIMINARY WITHIN TESTS",
+      "evidence_gap": "Claim surface is derived and tests are not empirical utility.",
+      "authority_effect": false
+    },
+    {
+      "id": "snapshot",
+      "name": "Epistemic snapshot and context packets",
+      "summary": "Derived coherent knowledge-state identity and snapshot-bound bounded context.",
+      "lifecycle": "EXPERIMENTAL",
+      "canonicality": "RESEARCH_ACTIVE",
+      "implementation": [
+        "cortex/epistemic_snapshot.py"
+      ],
+      "documentation": [
+        "docs/SYSTEM_MAP.md",
+        "docs/AGENT_START.md"
+      ],
+      "tests": [
+        "tests/test_epistemic_substrate.py"
+      ],
+      "benchmarks": [],
+      "evidence": [],
+      "depends_on": [
+        "assurance"
+      ],
+      "supports": [],
+      "related_to": [
+        "epistemic"
+      ],
+      "supersedes": [],
+      "superseded_by": [],
+      "claim_status": "PRELIMINARY WITHIN TESTS",
+      "evidence_gap": "Finite navigation panel only; not population retrieval accuracy.",
       "authority_effect": false
     }
   ],
@@ -509,6 +584,14 @@
       "role": "REFERENCE",
       "canonicality": "REFERENCE",
       "classification_basis": "scope_from_path; content not asserted current",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
+      "path": "docs/CORTEX_CLAIM_REGISTRY.json",
+      "role": "CURRENT_CLAIMS",
+      "canonicality": "CANONICAL_CURRENT",
+      "classification_basis": "reviewed_entry_role",
       "superseded_by": [],
       "supersession_scope": null
     },
@@ -1609,6 +1692,14 @@
       "supersession_scope": null
     },
     {
+      "path": "docs/research/EPISTEMIC_SUBSTRATE_2026-09-07.md",
+      "role": "ACTIVE_RESEARCH",
+      "canonicality": "RESEARCH_ACTIVE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
       "path": "docs/security/MEMORY_POISONING_THREAT_MODEL.md",
       "role": "REFERENCE",
       "canonicality": "REFERENCE",
@@ -2057,23 +2148,28 @@
   "authority_effect": false,
   "implementation_hashes": {
     "cortex/admitted_memory.py": "e9a2ce1efc4191c1d82916a687d1056bfa1a7b8a7591cff017e87ee672297d92",
+    "cortex/assurance.py": "0765974eb5aef5ea5a44e47685c03897681d46e83b6357e7d24428d2ae4a0a81",
     "cortex/autonomous_improvement.py": "4fa6afb871be06fc2e8c5630e1337441d595c4dc1fe677067ca31fcb7af222ac",
     "cortex/chat_service.py": "2065dc896e5d6b7dcc21e3f2c87d77d9bd76d45952ed4a97a80ba2aae9f543fa",
-    "cortex/coding_workspace.py": "f0d88d2efcf9d6b3c13c846ba55fdfe4e0546536c3942167881909ae83ee279a",
+    "cortex/coding_workspace.py": "f49e12e7acf89b61e66c218c929f9f91d87ec02f184a98ff124dafa5899416e3",
     "cortex/competence.py": "1beeb1ad01d02591d9a059bbc06c5cce4fb98fd11afadf31e0d6ceb95ec5dad8",
     "cortex/competence_revision.py": "dfc1d68e58d99db4abf308aa69849a19d09dede4ed81464355333c3290d159e6",
     "cortex/contract_aligned_repair.py": "ae6d1655e919d41a3612984715c240ad401f60d86c29b4d8b5d72d25b354cfc2",
-    "cortex/edit_intent.py": "5f4d1dfdf52d43d67a98fa56613892ba0eb514bd7e5c3bbf4bb5e08f32436928",
+    "cortex/edit_intent.py": "38bd30a2183c46cebe1694df75c3d49d139a61594974cc3343c4311209106243",
     "cortex/epistemic_instrumentation.py": "f65e5b9f0785d407c723d655d17bc9eef6584dad31929741b9dce8ef57862091",
     "cortex/epistemic_kernel.py": "bb22f0ed95c2a92fac7964b7d7ce1ab5c4475751e94f5826dac849004308b568",
+    "cortex/epistemic_snapshot.py": "c913ae2a29feb5a658dcedcea53f24a46c124f013666899769351b066efec668",
     "cortex/executable_repair_forge.py": "8141d7fccda4a0825d2e6adc7cdb69d8d731c825aa00e07c256671f163cb28c0",
     "cortex/memory_projection.py": "9b667a5b2e43732c15ecfcc2de4193de9ac8b0fff1da34597264ca4c9a95ca2e",
     "cortex/native_agent.py": "6334e9cb2313e63fd47187f5b354f5ec859536ad095c5dfa10109c38e9c2967a",
+    "cortex/observation_capture.py": "5366e3f17334d47cef9678e8c0e5953e29c1d27877c73ef8b7e338868ed7b338",
     "cortex/provider_fabric.py": "e2978aa9bf748cffb11782f8a7be6e3edbe8552611c7364ee434b31d6b69b68c",
     "cortex/repair_calibration_cohort.py": "22928d260a32bf4e4306f1c4b47a4ad34a2042ac45cc7eeb04e20520c5197666",
     "cortex/secret_store.py": "fae47248f04bb6b353d01c8f87ab18831cbe15cbe71b8c3bcf70397210ec10dc",
     "cortex/semantic_projection.py": "48cbce0456dcc69f51dfde32c06450db9cf9678ee6c92d62b9bb055109d9e35b",
+    "cortex/shadow_organization.py": "fe31da5b672f369e67d1132248e4e579c358b7d495bd2b3d842b412cc2483b46",
     "cortex/store.py": "9b49c580608bcd32e6d45df78954c43401accc27690782c74eaef6679e60e4d0",
-    "cortex/structured_repair_screen.py": "9eaa11181660718d2853e10d4691a9a5d4b953f5cfbf038eb793161a3191807c"
+    "cortex/structured_repair_screen.py": "9eaa11181660718d2853e10d4691a9a5d4b953f5cfbf038eb793161a3191807c",
+    "cortex/transduction_policy.py": "b8830b8b9670b516c8cafb4b1564f0b082f513d31dace3f5421ffdf01846765e"
   }
 }

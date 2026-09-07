@@ -6,10 +6,10 @@
 
 | Question | Status | Latest report | Next gate |
 |---|---|---|---|
-| Does the candidate survive its complete measurement path? | Three sampled defects fixed; complete path HELD | [Transduction revision](TRANSDUCTION_REVISION_2026-09-06.md) | Compiler-to-applied artifact binding and observation assurance |
+| Does the candidate survive its complete measurement path? | Prospective policy/receipt and bounded capture added; complete path still HELD for OS isolation | [Epistemic substrate](EPISTEMIC_SUBSTRATE_2026-09-07.md) | Environment applicability and OS isolation remain UNKNOWN |
 | Can verified semantics improve fresh cognition? | NOT ESTABLISHED | [Epistemic instrumentation](EPISTEMIC_INSTRUMENTATION_AND_EVIDENCE_GOVERNED_STATE.md) | Fresh discriminative tasks; frozen A/B/C study |
-| Can retained organization improve future variation? | PLANNED / HELD | [GSO audit](GOVERNED_SELF_ORGANIZATION.md) | Assured path before shadow recursive kernel |
-| Can humans and agents find the correct canonical state? | Navigation architecture implemented; utility unmeasured | [Documentation migration](../DOCUMENTATION_MIGRATION.md) | Navigation-fidelity study, not more documentation volume |
+| Can retained organization improve future variation? | Mechanical closure only; utility/heredity NOT ESTABLISHED | [GSO audit](GOVERNED_SELF_ORGANIZATION.md) | Self-stabilization panel exists; no live retention experiment |
+| Can humans and agents find the correct canonical state? | Finite 12-task navigation panel; population utility unmeasured | [Documentation migration](../DOCUMENTATION_MIGRATION.md) | Claim registry plus snapshot-bound context, not more documentation volume |
 
 ## Current measurement theory
 
@@ -32,6 +32,7 @@ proof of model utility. Organizational heredity remains a future causal question
 | [Fixed L3 cohort](FIXED_L3_COHORT_2026-09-06.md) | Historical 5/8; transport-confounded, no reasoning calibration |
 | [GSO initial audit](GOVERNED_SELF_ORGANIZATION.md) | Historical 13/16 local expectations; preserved counterexamples |
 | [Current revision](TRANSDUCTION_REVISION_2026-09-06.md) | New zero-call controls, separate from every historical score |
+| [Epistemic substrate](EPISTEMIC_SUBSTRATE_2026-09-07.md) | Policy/receipt/snapshot/shadow kernel; no live utility claim |
 
 [Machine evidence index](../../benchmarks/results/MANIFEST.json). Nulls, challenged
 instruments and failed methods are useful records, not candidates for erasure.
