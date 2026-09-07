@@ -367,6 +367,97 @@
       "violation_types": ["overclaim"],
       "recovery_constraints": ["HOLD"],
       "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-HOLDOUT-METRIC-INDEPENDENCE",
+      "name": "Holdout metric independence",
+      "statement": "Development gain is not withheld-partition gain.",
+      "formal_expression": "Delta_dev and Delta_holdout are recorded separately; strong improvement requires both frozen thresholds",
+      "scope": "GSI comparison",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["collapsed_holdout_metric"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-ATTESTATION-STRICTNESS",
+      "name": "Attestation strictness",
+      "statement": "Partial or unknown attestation cannot be treated as PASS.",
+      "formal_expression": "ATTESTED->PASS; PARTIALLY_ATTESTED->HELD; INVALID->FAIL; UNKNOWN!=PASS",
+      "scope": "GSI attestation",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["partial_as_pass"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-WORKLOAD-VS-CONSTITUTION",
+      "name": "Workload is not constitution",
+      "statement": "Workload correctness and constitutional invariants are separate noncompensatory gates.",
+      "formal_expression": "workload_correctness AND constitutional_invariants",
+      "scope": "GSI selection",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["collapsed_gates"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-CONSTRAINT-PERSISTENCE",
+      "name": "Constraint persistence by identity",
+      "statement": "A revision change does not automatically forget a still-applicable constraint.",
+      "formal_expression": "HEAD change != forgetting; changed subject/instrument identity -> REVALIDATION_REQUIRED",
+      "scope": "GSI recycling",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["revision_forgetting"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-CONSTRAINT-ENFORCEMENT",
+      "name": "Constraint enforcement",
+      "statement": "Applicable machine-checkable constraints reject prohibited candidates before evaluation.",
+      "formal_expression": "SearchSpace_{t+1} = SearchSpace_t - VerifiedApplicableFailureRegions",
+      "scope": "GSI candidate admission",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["awareness_without_enforcement"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-CANDIDATE-NE-PROMOTED",
+      "name": "Candidate is not promoted state",
+      "statement": "Isolated candidate success is not promoted runtime success.",
+      "formal_expression": "candidate_worktree_pass != promoted_remeasurement_pass",
+      "scope": "GSI promotion",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["unremeasured_promotion"],
+      "recovery_constraints": ["HOLD", "ROLLBACK"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-GENERATION-ADJACENCY",
+      "name": "Generation adjacency",
+      "statement": "Generation n may only parent generation n+1.",
+      "formal_expression": "G_n parents G_{n+1}; skip G0->G2 rejected",
+      "scope": "GSI generations",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii1.py"],
+      "claim_dependencies": [],
+      "violation_types": ["generation_skip"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
     }
   ]
 }

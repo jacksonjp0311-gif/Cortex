@@ -11,7 +11,7 @@ from cortex.self_improvement import (
     HARD_GATES, GovernedImprovement, _safe_targets, improvement_disposition,
     inspect_v2_arm,
 )
-from test_v100_alpha8_autonomy import V100Alpha8AutonomyTests as _HostFixture
+import test_v100_alpha8_autonomy as legacy_fixture
 
 
 def contract(mode="dev"):
@@ -28,8 +28,13 @@ def contract(mode="dev"):
 
 @pytest.fixture
 def host():
-    fixture = _HostFixture()
+    fixture = legacy_fixture.V100Alpha8AutonomyTests()
     fixture.setUp()
+    # v2 declares exact LF bytes; preserve the legacy v1 fixture unchanged.
+    (fixture.host / "app/value.txt").write_bytes(b"bad\n")
+    _git(fixture.host, ["config", "core.autocrlf", "false"])
+    _git(fixture.host, ["add", "app/value.txt"])
+    _git(fixture.host, ["commit", "--allow-empty", "-qm", "exact LF v2 fixture"])
     _git(fixture.host, ["config", "core.autocrlf", "false"])
     (fixture.host / "app" / "value.txt").write_bytes(b"bad\n")
     _git(fixture.host, ["add", "-A"])
@@ -109,7 +114,8 @@ def test_candidate_cannot_change_rules(host, field):
 
 
 @pytest.mark.parametrize("path", ["tests/test.py", ".github/workflows/test.yml", "cortex/will.py",
-    "cortex/native_agent.py", "cortex/source_improvement.py", "../escape.py", "C:/escape.py", "app/../tests/x.py"])
+    "cortex/native_agent.py", "cortex/source_improvement.py", "cortex/self_improvement.py",
+    "cortex/transduction_policy.py", "../escape.py", "C:/escape.py", "app/../tests/x.py"])
 def test_scope_is_closed(path):
     with pytest.raises(ValueError):
         _safe_targets([path])
@@ -136,7 +142,7 @@ def test_speed_does_not_compensate_for_correctness():
 def test_dev_gain_holdout_failure(host):
     experiment = freeze(host, contract("reject"))
     result = host.run(experiment["receipt_hash"], payload)["object"]
-    assert result["comparison"]["gates"]["holdout"] == "FAIL"
+    assert result["comparison"]["gates"]["workload_correctness"] == "FAIL"
     assert result["status"] in {"HELD", "REGRESSION_DETECTED"}
     assert result["status"] not in {"REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"}
 
@@ -209,9 +215,13 @@ def test_next_generation_consumes_scoped_constraints(host):
         seen.append(context)
         return payload()
     later = host.run(second["receipt_hash"], generate)["object"]
-    hashes = [item["constraint_hash"] for item in seen[0]["applicable_constraints"]]
-    assert constraint["object_hash"] in hashes
-    assert later["failure_constraints_consumed"] == [constraint["object_hash"]]
+    assert constraint["object_hash"] in later["constraints_present"]
+    assert later["constraints_consumed"] == []
+    persistence = host.constraint_persistence(
+        constraint, environment=second["object"]["environment"], targets=["app/value.txt"],
+        subject_identity=second["object"]["subject_identity"],
+        instrument_identity=second["object"]["instrument_identity"])
+    assert persistence == "REVALIDATION_REQUIRED"
     assert "holdout" not in json.dumps(seen)
 
 

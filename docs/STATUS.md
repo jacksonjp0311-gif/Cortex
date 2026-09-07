@@ -2,18 +2,18 @@
 
 Canonical current status · reviewed September 7, 2026 · product **10.0.0a39**.
 Runtime revision anchor: `89779803ef48f94816172929bd08be86dc148e8a`.
-Public HEAD at this review: `dc5bebc564b0d2de70224681060f067ff2bb9f6d`
-("Close shadow organizational assurance gates").
+Public HEAD at this review: `3863ad5490e5a13e2a721e2aee14472fcead25a1`
+("Add GSI-II cumulative governed self-improvement coordinator").
 Initial review baseline: `ad29b81a2b961294368fa795998fefd1134a4b5b`.
 The anchor is the reviewed baseline, not a self-referential claim that this document
 contains its own final commit. Use `git rev-parse HEAD` for checkout identity and
 [knowledge map](CORTEX_KNOWLEDGE_MAP.json) for version/content drift checks.
-Exact-head CI for `dc5bebc` must be re-checked; do not treat an in-progress
+Exact-head CI for `3863ad5` must be re-checked; do not treat an in-progress
 matrix as passed.
 
 ## Current gate
 
-**CURRENT: GSI-II mechanism verified in deterministic controls. NEXT: live provider GSI trial and GSO-III remain unauthorized.**
+**CURRENT: Two-generation governed self-improvement mechanics verified in deterministic controls. NEXT: live provider GSI trial and GSO-III remain unauthorized.**
 
 ### Platform health and substrate at b0106c7
 
@@ -54,11 +54,14 @@ See [GSO-II](research/GSO_II_INVARIANT_CLOSURE_2026-09-07.md) and
 [invariants](CORTEX_INVARIANTS.json).
 
 GSI-II adds `cortex/self_improvement.py` beside preserved source-improvement v1.
-Deterministic controls freeze the experiment before a one-shot host callback,
-run candidates through bounded transduction/attestation, and recycle failures
-as scoped constraints. Verified-improvement objects are historical evidence
-only (`active_guidance=false`). No live provider trial was run.
-See [GSI-II](research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md).
+GSI-II.1 closes the loop: withheld metric comparison, strict attestation,
+workload vs constitutional gates, identity-persistent constraints with machine
+enforcement, historical success reuse, generation adjacency, and post-promotion
+remeasurement through existing canary/apply/rollback. Two synthetic generations
+verify mechanics only. `cumulative_self_improvement_established` remains false.
+No live provider trial was run.
+See [GSI-II](research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md)
+and [GSI-II.1](research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md).
 
 No live retention-utility or model-turnover heredity experiment was run.
 [GSO-III](research/GSO_III_RETENTION_UTILITY_PREREG.md) is preregistered only.

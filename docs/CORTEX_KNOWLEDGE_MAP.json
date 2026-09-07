@@ -278,11 +278,13 @@
       "documentation": [
         "docs/intelligence/TOPOLOGY_LAW.md",
         "SECURITY.md",
-        "docs/research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md"
+        "docs/research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md",
+        "docs/research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md"
       ],
       "tests": [
         "tests/test_v100_native_agent.py",
-        "tests/test_gsi_ii.py"
+        "tests/test_gsi_ii.py",
+        "tests/test_gsi_ii1.py"
       ],
       "benchmarks": [],
       "evidence": [],
@@ -1735,6 +1737,14 @@
       "supersession_scope": null
     },
     {
+      "path": "docs/research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md",
+      "role": "ACTIVE_RESEARCH",
+      "canonicality": "RESEARCH_ACTIVE",
+      "classification_basis": "reviewed_entry_role",
+      "superseded_by": [],
+      "supersession_scope": null
+    },
+    {
       "path": "docs/research/GSO_IIB_METABOLIC_ASSEMBLY_2026-09-07.md",
       "role": "ACTIVE_RESEARCH",
       "canonicality": "RESEARCH_ACTIVE",
@@ -2227,7 +2237,7 @@
     "cortex/provider_fabric.py": "e2978aa9bf748cffb11782f8a7be6e3edbe8552611c7364ee434b31d6b69b68c",
     "cortex/repair_calibration_cohort.py": "22928d260a32bf4e4306f1c4b47a4ad34a2042ac45cc7eeb04e20520c5197666",
     "cortex/secret_store.py": "fae47248f04bb6b353d01c8f87ab18831cbe15cbe71b8c3bcf70397210ec10dc",
-    "cortex/self_improvement.py": "c5adba54d7d8bb6ffd65d112eace62233ddc823979c801a184f654debdc7e730",
+    "cortex/self_improvement.py": "7a83c0cd28c78ae0b1eda863edc947b1112b94ef117c227a03fe74432a7785c8",
     "cortex/semantic_projection.py": "48cbce0456dcc69f51dfde32c06450db9cf9678ee6c92d62b9bb055109d9e35b",
     "cortex/shadow_organization.py": "33adeb8826b0d5ff4e4ab727da479c23a8e5aca3cee9af27631dadc655761707",
     "cortex/store.py": "9b49c580608bcd32e6d45df78954c43401accc27690782c74eaef6679e60e4d0",
