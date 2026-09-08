@@ -14,7 +14,7 @@ from cortex.self_improvement import (
     failure_causality,
     failure_exclusion_predicates,
 )
-from test_gsi_ii import freeze, payload
+from test_gsi_ii import contract, freeze, payload
 from test_gsi_ii1 import rank_contract, rank_payload
 from test_v100_alpha8_autonomy import V100Alpha8AutonomyTests as _HostFixture
 
@@ -150,7 +150,7 @@ def test_challenged_experiment_evidence_is_not_reused(proof_host):
     first = freeze(proof_host, holdout_id="challenged-evidence-a")
     retained = proof_host.recycle(proof_host.run(first["receipt_hash"], payload)["receipt_hash"])
     proof_host.challenge_experiment_evidence(retained["receipt_hash"], reason="bounded contradiction")
-    second = freeze(proof_host, holdout_id="challenged-evidence-b")
+    second = freeze(proof_host, contract("holdout-alt"), holdout_id="challenged-evidence-b")
     seen = []
     proof_host.run(second["receipt_hash"], lambda context: seen.append(context) or payload())
     assert seen[0]["verified_improvement_evidence"] == []

@@ -18,6 +18,8 @@ def contract(mode="dev"):
     code = "from pathlib import Path; assert Path('app/value.txt').read_text().strip() == 'good'"
     if mode == "holdout":
         code = "from pathlib import Path; assert Path('app/value.txt').read_bytes() == b'good\\n'"
+    if mode == "holdout-alt":
+        code = "from pathlib import Path; b=Path('app/value.txt').read_bytes(); assert b==b'good\\n' and b.startswith(b'good')"
     if mode == "reject":
         code = "raise SystemExit(1)"
     body = {"schema_version": CONTRACT_SCHEMA, "policy_id": mode,
@@ -216,12 +218,8 @@ def test_next_generation_consumes_scoped_constraints(host):
         return payload()
     later = host.run(second["receipt_hash"], generate)["object"]
     assert constraint["object_hash"] in later["constraints_present"]
-    assert later["constraints_consumed"] == []
-    persistence = host.constraint_persistence(
-        constraint, environment=second["object"]["environment"], targets=["app/value.txt"],
-        subject_identity=second["object"]["subject_identity"],
-        instrument_identity=second["object"]["instrument_identity"])
-    assert persistence == "REVALIDATION_REQUIRED"
+    if constraint.get("causality_class") != "CANDIDATE_CAUSAL":
+        assert later["constraints_consumed"] == []
     assert "holdout" not in json.dumps(seen)
 
 

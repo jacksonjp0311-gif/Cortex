@@ -192,7 +192,7 @@
       "claim_id": "gsi.loop_mechanics",
       "subject": "GSI-II.2 cumulative proof-chain mechanics",
       "scope": "deterministic zero-provider controls",
-      "status": "PRELIMINARY",
+      "status": "POSITIVE_WITHIN_DECLARED_WORKLOAD",
       "evidence": [
         {"path": "tests/test_gsi_ii.py", "currency": "current"},
         {"path": "tests/test_gsi_ii1.py", "currency": "current"},
@@ -208,9 +208,54 @@
         "applicability": "HELD", "replication": "NOT_TESTED"
       },
       "required_dimensions": ["source", "transduction", "instrument", "experiment"],
-      "assumptions": ["exact-head CI for the implementation revision is pending"],
+      "assumptions": ["exact-head CI 34181576991 succeeded for 9408f97"],
       "active_defeaters": [],
-      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "source_revision": "9408f976706d6ba2822b387b90f7662cf2059981",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.empirical_measurement",
+      "subject": "GSI empirical measurement and causal-contrast mechanics",
+      "scope": "deterministic zero-provider controls",
+      "status": "PRELIMINARY",
+      "evidence": [
+        {"path": "tests/test_gsi_ii3.py", "currency": "current"},
+        {"path": "docs/research/GSI_II3_EMPIRICAL_READINESS_2026-09-08.md", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["gsi.loop_mechanics"],
+      "applicability": {"provider_calls": 0, "production_effect": false},
+      "assurance_debt": {
+        "source": "PASS", "transduction": "PASS", "environment": "HELD",
+        "instrument": "PASS", "experiment": "PASS", "causal": "HELD",
+        "applicability": "HELD", "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["exact-head CI for GSI-II.3 is pending"],
+      "active_defeaters": [],
+      "source_revision": "9408f976706d6ba2822b387b90f7662cf2059981",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.history_utility",
+      "subject": "inherited Cortex history utility",
+      "scope": "same-model A/B/C contrast",
+      "status": "NOT_ESTABLISHED",
+      "evidence": [
+        {"path": "docs/research/GSI_III_HISTORY_UTILITY_PREREG_2026-09-08.md", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["gsi.empirical_measurement", "gsi.live_provider_experiment"],
+      "applicability": {},
+      "assurance_debt": {
+        "source": "NOT_TESTED", "transduction": "NOT_TESTED", "environment": "NOT_TESTED",
+        "instrument": "NOT_TESTED", "experiment": "NOT_TESTED", "causal": "NOT_TESTED",
+        "applicability": "NOT_TESTED", "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["experiment", "causal"],
+      "assumptions": [],
+      "active_defeaters": ["live_history_experiment_not_authorized"],
+      "source_revision": "9408f976706d6ba2822b387b90f7662cf2059981",
       "supersedes": [], "superseded_by": [], "authority_effect": false
     },
     {

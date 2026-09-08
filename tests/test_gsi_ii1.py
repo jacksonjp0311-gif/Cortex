@@ -164,7 +164,7 @@ def test_ignored_constraint_is_still_enforced(host):
     evil = {"schema_version": "cortex-structured-edit-intent/2.0", "summary": "bad",
             "edits": [{"path": "app/value.txt", "old": "bad", "new": "evil"}]}
     host.recycle(host.run(first["receipt_hash"], lambda _: evil)["receipt_hash"])
-    second = freeze(host, holdout_id="evil-b")
+    second = freeze(host, contract("holdout-alt"), holdout_id="evil-b")
     result = host.run(second["receipt_hash"], lambda _: evil)["object"]
     assert result["candidates_rejected_by_constraint"] == 1
     assert result["status"] not in {"REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"}
@@ -180,7 +180,7 @@ def test_success_evidence_is_historical_and_consumed(host):
     assert retained["authority_effect"] is False
     assert retained["admission_required"] is True
     seen = []
-    second = freeze(host, holdout_id="ok-b")
+    second = freeze(host, contract("holdout-alt"), holdout_id="ok-b")
     host.run(second["receipt_hash"], lambda context: seen.append(context) or payload())
     evidence = seen[0]["verified_improvement_evidence"]
     assert retained["object_hash"] in [item["improvement_hash"] for item in evidence]
@@ -213,7 +213,10 @@ def test_cumulative_delta_from_canonical_chain(host):
     g1 = host.record_generation(parent="G0", trial_receipt=trial["receipt_hash"], candidate_generation="G1")
     g2 = host.record_generation(parent="G1", trial_receipt=trial["receipt_hash"], candidate_generation="G2",
                                 parent_receipt=g1["receipt_hash"])
-    assert g2["object"]["cumulative_delta_from_G0"] == g1["object"]["cumulative_delta_from_G0"] + g2["object"]["delta_dev"]
+    assert g1["object"]["generation_state"] == "CANDIDATE_GENERATION"
+    assert g1["object"]["delta_dev"] is None
+    assert g1["object"]["candidate_delta_dev"] == trial["object"]["comparison"]["delta_dev"]
+    assert g2["object"]["delta_dev"] is None
     with pytest.raises(ValueError):
         host.record_generation(parent="G1", trial_receipt=trial["receipt_hash"], candidate_generation="G2",
                                parent_receipt="0" * 64)

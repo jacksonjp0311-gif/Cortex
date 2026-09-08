@@ -78,6 +78,8 @@ def validate(root, data):
         'docs/research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md',
         'docs/research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md',
         'docs/research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md',
+        'docs/research/GSI_II3_EMPIRICAL_READINESS_2026-09-08.md',
+        'docs/research/GSI_III_HISTORY_UTILITY_PREREG_2026-09-08.md',
         '.github/copilot-instructions.md',
     }
     for p in sorted(checked):

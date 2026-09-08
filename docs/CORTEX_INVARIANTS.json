@@ -549,6 +549,45 @@
       "violation_types": ["candidate_as_generation", "source_lineage_break"],
       "recovery_constraints": ["HOLD"],
       "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-GENERATION-DELTA-FROM-PROMOTED-STATE",
+      "name": "Generation delta from promoted state",
+      "statement": "Canonical generation gain is the post-promotion state delta, not the candidate-worktree delta.",
+      "formal_expression": "Delta_generation = U(S_{t+1}) - U(S_t)",
+      "scope": "GSI generation accounting",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii3.py"],
+      "claim_dependencies": [],
+      "violation_types": ["trial_delta_as_generation"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-HOLDOUT-CONTENT-IDENTITY",
+      "name": "Holdout content identity",
+      "statement": "Withheld workload identity is content-addressed; labels cannot recycle consumed holdout content.",
+      "formal_expression": "HoldoutConsumed(x) -> FutureExperimentMayNotConsume(x)",
+      "scope": "GSI evaluation partitions",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii3.py"],
+      "claim_dependencies": [],
+      "violation_types": ["holdout_relabel"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-AUTHORITY-STATE-IDENTITY",
+      "name": "Authority state identity",
+      "statement": "A normal GSI generation leaves the external authority-state hash unchanged.",
+      "formal_expression": "H(AuthorityBefore) = H(AuthorityAfter)",
+      "scope": "GSI authority",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii3.py"],
+      "claim_dependencies": [],
+      "violation_types": ["authority_widening"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
     }
   ]
 }

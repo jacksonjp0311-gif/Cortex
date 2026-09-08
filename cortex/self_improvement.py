@@ -1,4 +1,4 @@
-"""GSI-II.2 proof-chain closure; no production activation and no provider calls.
+"""GSI-II.3 empirical readiness; no production activation and no provider calls.
 
 Composes signed autonomy policy, Store receipts, TransductionPolicy, bounded
 capture, independent attestation, and existing canary/apply/rollback primitives.
@@ -41,10 +41,17 @@ GENERATION_SCHEMA = "cortex-improvement-generation/1.0"
 COMPARISON_SCHEMA = "cortex-improvement-comparison/1.1"
 PROMOTION_SCHEMA = "cortex-gsi-promotion/1.0"
 UTILITY_SCHEMA = "cortex-improvement-utility-contract/1.0"
+UTILITY_FAMILY_SCHEMA = "cortex-improvement-utility-family/1.0"
+PARTITION_SCHEMA = "cortex-evaluation-partition/1.0"
+AUTHORITY_STATE_SCHEMA = "cortex-gsi-authority-state/1.0"
+CAPABILITY_SCHEMA = "cortex-gsi-capability-manifest/1.0"
+TREATMENT_SCHEMA = "cortex-gsi-treatment/1.0"
+SEARCH_EPISODE_SCHEMA = "cortex-gsi-search-episode/1.0"
+HOLDOUT_RESERVATION_SCHEMA = "cortex-gsi-holdout-reservation/1.0"
 EXPERIMENT_EVIDENCE_SCHEMA = "cortex-experiment-evidence/1.0"
 REALIZED_GENERATION_SCHEMA = "cortex-realized-improvement-generation/1.0"
 REMEASUREMENT_SCHEMA = "cortex-gsi-post-promotion-measurement/1.0"
-CUMULATIVE_SCHEMA = "cortex-cumulative-improvement-disposition/1.1"
+CUMULATIVE_SCHEMA = "cortex-cumulative-improvement-disposition/1.2"
 METRICS = {"task_success": "increase", "duration_ms": "decrease", "output_bytes": "decrease"}
 HARD_GATES = (
     "source", "transduction", "attestation", "workload_correctness",
@@ -259,6 +266,9 @@ def failure_causality(trial: Mapping[str, Any]) -> str:
     )
     if any(any(marker in value for marker in candidate_markers) for value in classes):
         return "CANDIDATE_CAUSAL"
+    development = ((trial.get("candidates") or {}).get("development") or {}).get("receipt") or {}
+    if development.get("typed_outcome") == "FAIL":
+        return "CANDIDATE_CAUSAL"
     return "UNKNOWN_CAUSAL"
 
 
@@ -277,6 +287,112 @@ def failure_exclusion_predicates(payload: Mapping[str, Any], causality_class: st
     return predicates
 
 
+def utility_family(
+    *,
+    task_family: str,
+    metric: str,
+    epsilon_dev: float,
+    epsilon_holdout: float,
+    holdout_degradation_tolerance: float,
+) -> dict[str, Any]:
+    if metric not in METRICS:
+        raise ValueError("unknown utility metric")
+    return _sealed(
+        UTILITY_FAMILY_SCHEMA,
+        task_family=task_family,
+        metric_vector=[metric],
+        metric_directions={metric: METRICS[metric]},
+        metric_scales={metric: "native_declared_units"},
+        aggregation_rule="single_metric_signed_delta",
+        comparison_semantics="matched_baseline_candidate_and_promoted_state/1.0",
+        evaluator_semantics="frozen_host_verification_contract/1.0",
+        epsilon_dev=epsilon_dev,
+        epsilon_holdout=epsilon_holdout,
+        holdout_degradation_tolerance=holdout_degradation_tolerance,
+        budget_semantics={"candidate_budget": 1, "call_budget": 0},
+        applicability="declared_task_family_only",
+    )
+
+
+def evaluation_partition(*, development: Mapping[str, Any], holdout: Mapping[str, Any],
+                         holdout_id: str, utility_family_hash: str) -> dict[str, Any]:
+    return _sealed(
+        PARTITION_SCHEMA,
+        development_workload_identity=development["contract_hash"],
+        holdout_workload_identity=holdout["contract_hash"],
+        holdout_label=holdout_id,
+        partition_role={"development": "tuning_forbidden_for_claim", "holdout": "one_use_withheld"},
+        utility_family_hash=utility_family_hash,
+        one_use=True,
+    )
+
+
+def holdout_content_hash(*, holdout: Mapping[str, Any], utility_family_hash: str,
+                         evaluator_identity: str) -> str:
+    return _sha({
+        "canonical_holdout_contract": holdout["contract_hash"],
+        "holdout_steps": holdout.get("steps"),
+        "utility_family_hash": utility_family_hash,
+        "evaluator_identity": evaluator_identity,
+    })
+
+
+def authority_state(policy: Mapping[str, Any], *, policy_receipt_hash: str) -> dict[str, Any]:
+    return _sealed(
+        AUTHORITY_STATE_SCHEMA,
+        policy_receipt_hash=policy_receipt_hash,
+        principal_id=policy.get("principal_id"),
+        policy_hash=policy.get("policy_hash"),
+        allowed_scopes=list(policy.get("allowed_path_prefixes") or ()),
+        protected_scopes=list(policy.get("forbidden_path_prefixes") or CONTROL_PLANE_PREFIXES),
+        allow_auto_promotion=bool(policy.get("allow_auto_promotion")),
+        allow_recursive_generation=bool(policy.get("allow_recursive_generation")),
+        host_issued=policy.get("host_issued") is True,
+        model_may_modify_policy=bool(policy.get("model_may_modify_policy")),
+        revocation_state="active",
+    )
+
+
+def capability_manifests() -> dict[str, Any]:
+    candidate = ["declared_source", "development_metrics", "diagnosed_deficiency",
+                 "allowed_targets", "experiment_evidence", "failure_constraints"]
+    holdout = ["holdout_contract", "holdout_executor", "holdout_receipt", "holdout_partition_content"]
+    return _sealed(
+        CAPABILITY_SCHEMA,
+        candidate_capabilities=candidate,
+        holdout_capabilities=holdout,
+        intersection=[],
+        enforcement="INTERFACE_ENFORCED",
+        provider_context_enforced=False,
+        tool_using_agent="HELD",
+        live_provider_holdout_eligible=False,
+    )
+
+
+def comparison_schema_noncompensatory() -> bool:
+    """Hard gates are not members of the optimizable metric vector."""
+    return not set(METRICS) & set(HARD_GATES)
+
+
+def utilities_compatible(generations: Sequence[Mapping[str, Any]]) -> bool:
+    families = [row.get("utility_family_hash") for row in generations]
+    if families and None not in families and len(set(families)) == 1:
+        return True
+    contracts = [row.get("utility_contract_hash") for row in generations]
+    return bool(contracts) and None not in contracts and len(set(contracts)) == 1
+
+
+def reconstruct_realized_delta(baseline: Mapping[str, Any], measurement: Mapping[str, Any],
+                               metric: str) -> dict[str, float | None]:
+    measured = measurement.get("measured") or {}
+    return {
+        "delta_dev": signed_delta(baseline.get("development", {}).get("metrics") or {},
+                                  (measured.get("development") or {}).get("metrics") or {}, metric),
+        "delta_holdout": signed_delta(baseline.get("holdout", {}).get("metrics") or {},
+                                      (measured.get("holdout") or {}).get("metrics") or {}, metric),
+    }
+
+
 def utility_contract(
     *,
     metric: str,
@@ -285,6 +401,8 @@ def utility_contract(
     epsilon_dev: float,
     epsilon_holdout: float,
     holdout_degradation_tolerance: float,
+    family: Mapping[str, Any] | None = None,
+    partition: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     if metric not in METRICS:
         raise ValueError("unknown utility metric")
@@ -295,6 +413,8 @@ def utility_contract(
         metric_scales={metric: "native_declared_units"},
         development_workload_identity=development_contract["contract_hash"],
         holdout_workload_identity=holdout_contract["contract_hash"],
+        utility_family_hash=None if not family else family.get("object_hash"),
+        evaluation_partition_hash=None if not partition else partition.get("object_hash"),
         aggregation_rule="single_metric_signed_delta",
         comparison_semantics="matched_baseline_candidate_and_promoted_state/1.0",
         epsilon_dev=epsilon_dev,
@@ -422,8 +542,7 @@ def cumulative_improvement_disposition(generations: Sequence[Mapping[str, Any]])
             errors.append("lineage_break")
         if index and _gen_index(generation.get("candidate_generation") or "") != (_gen_index(generation.get("parent_generation") or "") or -1) + 1:
             errors.append("nonadjacent_generation")
-    utility_hashes = [generation.get("utility_contract_hash") for generation in generations]
-    compatible = bool(utility_hashes) and None not in utility_hashes and len(set(utility_hashes)) == 1
+    compatible = utilities_compatible(generations)
     scalar = sum(float(generation.get("delta_dev") or 0) for generation in generations) if compatible else None
     vector = [{"generation": generation.get("candidate_generation"),
                "utility_contract_hash": generation.get("utility_contract_hash"),
@@ -437,6 +556,7 @@ def cumulative_improvement_disposition(generations: Sequence[Mapping[str, Any]])
                    cumulative_scalar_gain=scalar,
                    cumulative_utility_vector=vector,
                    cumulative_self_improvement_established=False,
+                   history_utility_established=False,
                    claim_ceiling="TWO_GENERATION_MECHANICS_VERIFIED_IN_DETERMINISTIC_CONTROLS" if mechanics
                    else "DETERMINISTIC_CONTROLS_ONLY")
 
@@ -567,6 +687,28 @@ class GovernedImprovement:
                 self.root, policy_id="gsi-" + label, allowed_targets=targets,
                 verification_contract=contract, allowed_intent_schema=INTENT_SCHEMA_V2,
                 environment_requirements=verification_environment())
+        family = utility_family(
+            task_family=str(opportunity.get("subject_component") or "declared"),
+            metric=primary_metric, epsilon_dev=epsilon_dev, epsilon_holdout=epsilon_holdout,
+            holdout_degradation_tolerance=float(holdout_degradation_tolerance),
+        )
+        partition = evaluation_partition(
+            development=development, holdout=holdout, holdout_id=holdout_id,
+            utility_family_hash=family["object_hash"],
+        )
+        content_hash = holdout_content_hash(
+            holdout=holdout, utility_family_hash=family["object_hash"],
+            evaluator_identity=holdout["contract_hash"],
+        )
+        prior_holdouts = self.store.symbiotic_receipts_by_kind(self.repo, "gsi_holdout_reservation")
+        if any((r.get("object") or {}).get("holdout_content_hash") == content_hash for r in prior_holdouts):
+            raise ValueError("holdout content already reserved")
+        holdout_reservation = self._record(
+            "gsi_holdout_reservation",
+            _sealed(HOLDOUT_RESERVATION_SCHEMA, holdout_content_hash=content_hash),
+        )
+        if holdout_reservation.get("inserted") is not True:
+            raise ValueError("holdout content already reserved")
         utility = utility_contract(
             metric=primary_metric,
             development_contract=development,
@@ -574,8 +716,11 @@ class GovernedImprovement:
             epsilon_dev=epsilon_dev,
             epsilon_holdout=epsilon_holdout,
             holdout_degradation_tolerance=float(holdout_degradation_tolerance),
+            family=family, partition=partition,
         )
         utility_receipt = self._record("gsi_utility_contract", utility)
+        authority = authority_state(self._policy(), policy_receipt_hash=self.policy_receipt_hash)
+        capabilities = capability_manifests()
         dependencies = bounded_dependency_identity(self.root, targets)
         obj = _sealed(EXPERIMENT_SCHEMA, source_contract_schema=CONTRACT_SCHEMA_V2,
                       baseline_head=repository_head(self.root), opportunity_receipt=opportunity_receipt,
@@ -592,6 +737,11 @@ class GovernedImprovement:
                       dependency_identity=dependencies,
                       utility_contract_receipt=utility_receipt["receipt_hash"],
                       utility_contract_hash=utility["object_hash"],
+                      utility_family=family, utility_family_hash=family["object_hash"],
+                      evaluation_partition=partition, evaluation_partition_hash=partition["object_hash"],
+                      holdout_content_hash=content_hash,
+                      authority_state=authority, authority_state_hash=authority["object_hash"],
+                      capability_manifest=capabilities,
                       primary_metric=primary_metric, epsilon=epsilon_dev, epsilon_dev=epsilon_dev,
                       epsilon_holdout=epsilon_holdout, holdout_degradation_tolerance=float(holdout_degradation_tolerance),
                       holdout_id=holdout_id, policy_receipt_hash=self.policy_receipt_hash,
@@ -600,11 +750,12 @@ class GovernedImprovement:
                       stopping_rule="one_candidate_one_use", tournament_rule="feasible_then_primary",
                       canary_rule="existing_authenticated_promotion_only", rollback_rule="existing_policy_rollback",
                       holdout_used_for_generation=False, full_os_isolation="UNKNOWN",
-                      candidate_capability_set=["declared_source", "development_metrics", "experiment_evidence"],
-                      holdout_capability_set=["holdout_contract", "holdout_executor", "holdout_receipt"],
-                      holdout_capability_intersection=[],
-                      holdout_capability_enforcement="INTERFACE_ONLY_DETERMINISTIC_CONTROLS",
+                      candidate_capability_set=capabilities["candidate_capabilities"],
+                      holdout_capability_set=capabilities["holdout_capabilities"],
+                      holdout_capability_intersection=capabilities["intersection"],
+                      holdout_capability_enforcement=capabilities["enforcement"],
                       live_provider_holdout_eligible=False,
+                      history_utility_established=False,
                       control_surface=worktree_payload_hashes(self.root))
         return self._record("gsi_experiment", obj)
 
@@ -630,6 +781,15 @@ class GovernedImprovement:
                     for label in ("development", "holdout")}
         present = self._constraint_records(exp)
         consumed = [item for item in present if item["persistence"] == "APPLY"]
+        callback_constraints = [{
+            "constraint_hash": item.get("constraint_hash"),
+            "status": item.get("status"),
+            "failure_classes": item.get("failure_classes") or [],
+            "scope": item.get("scope") or [],
+            "predicates": item.get("predicates") or [],
+            "persistence": item.get("persistence"),
+            "causality_class": item.get("causality_class"),
+        } for item in consumed]
         improvements = self._applicable_improvements(exp)
         opportunity = self._resolve(exp["opportunity_receipt"], "gsi_opportunity")["object"]
         context = {
@@ -644,7 +804,7 @@ class GovernedImprovement:
             "epsilon_dev": exp.get("epsilon_dev", exp.get("epsilon")),
             "withheld_epsilon": exp.get("epsilon_holdout", exp.get("epsilon")),
             "withheld_degradation_tolerance": exp.get("holdout_degradation_tolerance", 0.0),
-            "applicable_constraints": consumed,
+            "applicable_constraints": callback_constraints,
             "verified_improvement_evidence": improvements,
         }
         arms, errors, payload, rejected = {}, [], None, {"admissible": True, "rejected": [], "enforced": [],
@@ -684,6 +844,11 @@ class GovernedImprovement:
         except (ValueError, PermissionError, KeyError, TypeError) as exc:
             errors.append(str(exc))
         gates = {name: "UNKNOWN" for name in HARD_GATES}
+        current_authority = authority_state(self._policy(), policy_receipt_hash=self.policy_receipt_hash)
+        protected_now = {path: digest for path, digest in worktree_payload_hashes(self.root).items()
+                         if path.startswith(CONTROL_PLANE_PREFIXES)}
+        protected_then = {path: digest for path, digest in (exp.get("control_surface") or {}).items()
+                          if path.startswith(CONTROL_PLANE_PREFIXES)}
         constitutional_evidence = {
             "measured_opportunity_evidence": bool(opportunity.get("evidence_roots")
                                                     and opportunity.get("observation_receipts")
@@ -691,20 +856,26 @@ class GovernedImprovement:
             "evaluator_unchanged": evaluator_mutation == 0 and policy_mutation == 0
                                     and exp["control_surface"] == worktree_payload_hashes(self.root),
             "experiment_preceded_candidate": reservation.get("inserted") is True,
-            "noncompensatory_gates": True,
-            "holdout_capability_separated": not set(exp.get("candidate_capability_set") or [])
-                                             & set(exp.get("holdout_capability_set") or [])
-                                             and not any("holdout" in key for key in context),
+            "noncompensatory_gates": comparison_schema_noncompensatory(),
+            "holdout_capability_separated": (
+                not set(exp.get("candidate_capability_set") or []) & set(exp.get("holdout_capability_set") or [])
+                and not any(key.startswith("holdout") or "holdout_" in key for key in context)
+            ),
             "failure_constraints_causally_scoped": all(
                 item.get("causality_class") == "CANDIDATE_CAUSAL" for item in consumed
             ),
-            "generation_not_self_authorized": self._policy().get("allow_recursive_generation") in (True, False),
-            "cumulative_claim_closed": True,
-            "authority_unchanged": True,
-            "protected_surface_unchanged": (
-                evaluator_mutation == 0
-                and all(not target.startswith(CONTROL_PLANE_PREFIXES) for target in exp["allowed_targets"])
+            "generation_not_self_authorized": (
+                current_authority.get("host_issued") is True
+                and current_authority.get("model_may_modify_policy") is False
+                and exp.get("policy_hash") == current_authority.get("policy_hash")
+                and exp.get("policy_receipt_hash") == self.policy_receipt_hash
+                and policy_mutation == 0
             ),
+            "cumulative_claim_closed": True,
+            "authority_unchanged": current_authority.get("object_hash") == exp.get("authority_state_hash"),
+            "protected_surface_unchanged": evaluator_mutation == 0 and protected_now == protected_then
+                                           and all(not target.startswith(CONTROL_PLANE_PREFIXES)
+                                                   for target in exp["allowed_targets"]),
         }
         verdict = evaluate_gsi_constitution(constitutional_evidence)
         if len(arms) == 2:
@@ -740,6 +911,10 @@ class GovernedImprovement:
             gates=gates, before_holdout=baseline["holdout"]["metrics"],
             after_holdout=(arms.get("holdout") or {}).get("metrics") or {},
         )
+        constitutional_evidence["cumulative_claim_closed"] = comparison.get("general_improvement_established") is False
+        verdict = evaluate_gsi_constitution(constitutional_evidence)
+        if "constitutional_invariants" in gates:
+            gates["constitutional_invariants"] = verdict["status"]
         obj = _sealed(RESULT_SCHEMA_V2, experiment_receipt=experiment_receipt,
                       experiment_hash=exp["object_hash"], baseline=baseline, candidates=arms,
                       candidate_payload=payload, comparison=comparison, errors=errors,
@@ -760,6 +935,7 @@ class GovernedImprovement:
                       claim_ceiling="DETERMINISTIC_CONTROLS_ONLY", promotion_count=0,
                       authority_leakage=0, cumulative_improvement_established=False,
                       cumulative_self_improvement_established=False,
+                      history_utility_established=False,
                       cumulative_generation_mechanics_verified=False)
         return self._record("gsi_trial", obj, session=session)
 
@@ -780,6 +956,7 @@ class GovernedImprovement:
             "environment_identity": exp["environment"],
             "instrument_identity": exp.get("instrument_identity"),
             "representation_identity": exp.get("representation_identity"),
+            "utility_family_hash": exp.get("utility_family_hash"),
             "failure_class": (trial.get("errors") or [None])[0],
             "scope": exp["allowed_targets"],
         }
@@ -809,7 +986,7 @@ class GovernedImprovement:
             obj = record.get("object") or {}
             persistence = (self.constraint_persistence(
                 obj, environment=exp["environment"], targets=exp["allowed_targets"],
-                subject_identity=subject, instrument_identity=exp.get("instrument_identity") or {}
+                subject_identity=subject, instrument_identity=None
             ) if obj.get("causality_class") == "CANDIDATE_CAUSAL" else "NOT_APPLICABLE")
             records.append({
                 "constraint_hash": obj.get("object_hash"), "status": obj.get("status"),
@@ -848,7 +1025,8 @@ class GovernedImprovement:
                 continue
             if apply.get("relevant_dependency_closure") != exp.get("dependency_identity"):
                 continue
-            if apply.get("instrument_identity") != exp.get("instrument_identity"):
+            if (apply.get("utility_family_hash") and exp.get("utility_family_hash")
+                    and apply.get("utility_family_hash") != exp.get("utility_family_hash")):
                 continue
             if apply.get("representation_identity") != exp.get("representation_identity"):
                 continue
@@ -945,6 +1123,9 @@ class GovernedImprovement:
             errors.append("environment_applicability_degraded")
         if exp["subject_identity"] != {path: _file_hash(self.root / path) for path in exp["allowed_targets"]}:
             errors.append("subject_preimage_changed")
+        after_authority = authority_state(policy, policy_receipt_hash=self.policy_receipt_hash)
+        if exp.get("authority_state_hash") and after_authority["object_hash"] != exp.get("authority_state_hash"):
+            errors.append("authority_state_changed")
         arms = trial.get("candidates") or {}
         dev, hold = arms.get("development") or {}, arms.get("holdout") or {}
         dev_compilation, hold_compilation = dev.get("compilation") or {}, hold.get("compilation") or {}
@@ -1068,13 +1249,21 @@ class GovernedImprovement:
             errors.append("generation_source_before_mismatch")
         if parent_obj and parent_obj.get("source_revision_after") != (promotion or {}).get("source_revision_before"):
             errors.append("parent_source_continuity_failure")
-        delta_dev = trial["comparison"].get("delta_dev")
-        compatible_utility = not parent_obj or parent_obj.get("utility_contract_hash") == exp.get("utility_contract_hash")
+        candidate_delta_dev = trial["comparison"].get("delta_dev")
+        candidate_delta_holdout = trial["comparison"].get("delta_holdout")
+        realized = reconstruct_realized_delta(trial["baseline"], remeasurement or {}, exp["primary_metric"]) if remeasurement else {"delta_dev": None, "delta_holdout": None}
+        delta_dev, delta_holdout = realized["delta_dev"], realized["delta_holdout"]
+        after_authority = authority_state(policy, policy_receipt_hash=self.policy_receipt_hash)
+        if exp.get("authority_state_hash") and after_authority["object_hash"] != exp.get("authority_state_hash"):
+            errors.append("authority_state_changed")
+        compatible_utility = not parent_obj or parent_obj.get("utility_family_hash") == exp.get("utility_family_hash")
         parent_cumulative = parent_obj.get("cumulative_scalar_gain") if parent_obj else 0.0
         cumulative = (None if not compatible_utility or delta_dev is None or parent_cumulative is None
                       else float(parent_cumulative) + float(delta_dev))
         generation_state = "REALIZED_GENERATION" if not errors else "CANDIDATE_GENERATION"
-        status = trial["status"] if generation_state == "REALIZED_GENERATION" else "HELD"
+        status = (remeasurement or {}).get("comparison", {}).get("status") or trial["status"]
+        if generation_state != "REALIZED_GENERATION":
+            status = "HELD"
         obj = _sealed(REALIZED_GENERATION_SCHEMA if generation_state == "REALIZED_GENERATION" else GENERATION_SCHEMA,
                       generation_id=candidate_generation, parent_generation=parent,
                       candidate_generation=candidate_generation, verifier_generation=parent,
@@ -1088,20 +1277,28 @@ class GovernedImprovement:
                       post_promotion_measurement_hash=(remeasurement or {}).get("object_hash"),
                       utility_contract_receipt=exp.get("utility_contract_receipt"),
                       utility_contract_hash=exp.get("utility_contract_hash"),
+                      utility_family_hash=exp.get("utility_family_hash"),
+                      evaluation_partition_hash=exp.get("evaluation_partition_hash"),
                       source_revision_before=(promotion or {}).get("source_revision_before") or exp.get("baseline_head"),
                       source_revision_after=(promotion or {}).get("source_revision_after"),
                       before_dev_metrics=trial["baseline"]["development"]["metrics"],
-                      after_dev_metrics=(trial["candidates"].get("development") or {}).get("metrics"),
+                      after_dev_metrics=((remeasurement or {}).get("measured") or {}).get("development", {}).get("metrics")
+                                        or (trial["candidates"].get("development") or {}).get("metrics"),
                       before_holdout_metrics=trial["baseline"]["holdout"]["metrics"],
-                      after_holdout_metrics=(trial["candidates"].get("holdout") or {}).get("metrics"),
-                      delta_dev=delta_dev, delta_holdout=trial["comparison"].get("delta_holdout"),
+                      after_holdout_metrics=((remeasurement or {}).get("measured") or {}).get("holdout", {}).get("metrics")
+                                            or (trial["candidates"].get("holdout") or {}).get("metrics"),
+                      candidate_delta_dev=candidate_delta_dev, candidate_delta_holdout=candidate_delta_holdout,
+                      delta_dev=delta_dev, delta_holdout=delta_holdout,
                       holdout_degradation_tolerance=trial["comparison"].get("holdout_degradation_tolerance", 0),
                       cumulative_delta_from_G0=cumulative, cumulative_scalar_gain=cumulative,
+                      authority_before_hash=exp.get("authority_state_hash"),
+                      authority_after_hash=after_authority["object_hash"],
                       cumulative_utility_vector=[{
                           "generation": candidate_generation,
+                          "utility_family_hash": exp.get("utility_family_hash"),
                           "utility_contract_hash": exp.get("utility_contract_hash"),
                           "delta_dev": delta_dev,
-                          "delta_holdout": trial["comparison"].get("delta_holdout"),
+                          "delta_holdout": delta_holdout,
                       }],
                       failure_constraints_consumed=list(trial.get("failure_constraints_consumed") or []),
                       constraints_consumed=list(trial.get("constraints_consumed") or []),
@@ -1114,6 +1311,7 @@ class GovernedImprovement:
                       policy_mutation=int(trial.get("policy_mutation") or 0),
                       cumulative_improvement_established=False,
                       cumulative_self_improvement_established=False,
+                      history_utility_established=False,
                       cumulative_generation_mechanics_verified=False,
                       status=status, errors=errors)
         return self._record("gsi_generation", obj)
@@ -1162,12 +1360,19 @@ class GovernedImprovement:
                     errors.append("parent_receipt_mismatch")
                 if previous.get("source_revision_after") != generation.get("source_revision_before"):
                     errors.append("source_state_continuity_failure")
+            try:
+                experiment = self._resolve(trial["experiment_receipt"], "gsi_experiment")["object"]
+                reconstructed = reconstruct_realized_delta(trial["baseline"], measurement, experiment["primary_metric"])
+                if (reconstructed["delta_dev"] != generation.get("delta_dev")
+                        or reconstructed["delta_holdout"] != generation.get("delta_holdout")):
+                    errors.append("CHAIN_INVALID")
+            except (KeyError, TypeError, ValueError):
+                errors.append("CHAIN_INVALID")
             previous_receipt, previous = receipt_hash, generation
             generations.append(generation)
         inspected = cumulative_improvement_disposition(generations)
         errors.extend(inspected.get("errors") or [])
-        utility_hashes = [row.get("utility_contract_hash") for row in generations]
-        compatible = bool(utility_hashes) and None not in utility_hashes and len(set(utility_hashes)) == 1
+        compatible = utilities_compatible(generations)
         scalar = sum(float(row.get("delta_dev") or 0) for row in generations) if compatible else None
         vector = [item for row in generations for item in row.get("cumulative_utility_vector") or []]
         unique_errors = sorted(set(errors))
@@ -1182,6 +1387,61 @@ class GovernedImprovement:
             cumulative_utility_vector=vector,
             cumulative_generation_mechanics_verified=mechanics,
             cumulative_self_improvement_established=False,
+            history_utility_established=False,
             claim_ceiling=("PROOF_CHAIN_MECHANICS_VERIFIED_IN_DETERMINISTIC_CONTROLS"
                            if mechanics else "DETERMINISTIC_CONTROLS_ONLY"),
         )
+
+    def freeze_treatment(self, *, arm: str, history_kind: str, utility_family_hash: str,
+                         history_items: Sequence[Mapping[str, Any]] = ()) -> dict[str, Any]:
+        """Deterministic A/B/C treatment envelope. Does not authorize live calls."""
+        if arm not in {"A", "B", "C"} or history_kind not in {"NO_HISTORY", "SHAM_HISTORY", "APPLICABLE_HISTORY"}:
+            raise ValueError("invalid treatment arm")
+        expected = {"A": "NO_HISTORY", "B": "SHAM_HISTORY", "C": "APPLICABLE_HISTORY"}[arm]
+        if history_kind != expected:
+            raise ValueError("treatment history mismatch")
+        applicable = []
+        for item in history_items:
+            if history_kind == "SHAM_HISTORY" and item.get("applicability_valid") is True:
+                raise ValueError("sham history must be inapplicable")
+            if history_kind == "APPLICABLE_HISTORY" and item.get("applicability_valid") is not True:
+                raise ValueError("applicable history required")
+            if history_kind != "NO_HISTORY":
+                applicable.append({
+                    "object_hash": item.get("object_hash"),
+                    "influence_class": item.get("influence_class") or "EXPERIMENT_EVIDENCE",
+                    "applicability_valid": item.get("applicability_valid") is True,
+                    "active_guidance": False,
+                })
+        if history_kind == "NO_HISTORY" and history_items:
+            raise ValueError("no-history arm cannot carry inherited evidence")
+        obj = _sealed(
+            TREATMENT_SCHEMA, arm=arm, history_kind=history_kind,
+            utility_family_hash=utility_family_hash, history_items=applicable,
+            live_execution_authorized=False, provider_calls=0,
+            history_utility_established=False, authority_effect=False,
+        )
+        return self._record("gsi_treatment", obj)
+
+    def record_search_episode(self, *, treatment_receipt: str, trial_receipt: str,
+                              candidate_evaluations: int, model_calls: int = 0,
+                              token_cost: int = 0, duration_ms: float = 0,
+                              realized_generation_receipt: str | None = None) -> dict[str, Any]:
+        treatment = self._resolve(treatment_receipt, "gsi_treatment")["object"]
+        trial = self._resolve(trial_receipt, "gsi_trial")["object"]
+        if candidate_evaluations < 1:
+            raise ValueError("candidate evaluations required")
+        realized = 1 if realized_generation_receipt else 0
+        eta = realized / candidate_evaluations
+        obj = _sealed(
+            SEARCH_EPISODE_SCHEMA,
+            treatment_receipt=treatment_receipt, treatment_arm=treatment["arm"],
+            trial_receipt=trial_receipt, realized_generation_receipt=realized_generation_receipt,
+            candidate_evaluations=candidate_evaluations, model_calls=model_calls,
+            token_cost=token_cost, duration_ms=duration_ms,
+            realized_verified_improvements=realized,
+            eta=eta, provider_calls=0, live_execution_authorized=False,
+            history_utility_established=False,
+            trial_status=trial.get("status"),
+        )
+        return self._record("gsi_search_episode", obj)

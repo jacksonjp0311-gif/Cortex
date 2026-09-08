@@ -1,20 +1,21 @@
 # Current Cortex status
 
-Canonical current status · reviewed September 7, 2026 · product **10.0.0a39**.
+Canonical current status · reviewed September 8, 2026 · product **10.0.0a39**.
 Runtime revision anchor: `89779803ef48f94816172929bd08be86dc148e8a`.
-Public HEAD at GSI-II.2 implementation start: `8e05bd171b2ac5f3c73d9534298be7f6c2c2a753`
-("Close GSI-II cumulative loop mechanics").
+Public product-source HEAD: `9408f976706d6ba2822b387b90f7662cf2059981`
+("Close GSI-II.2 cumulative self-improvement proof chain").
 That revision's exact-head matrix completed success:
-[CI run 34164000790](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34164000790).
+[CI run 34181576991](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34181576991).
+Public `main` later moved only by a star-lattice metrics refresh (`f673c3e`).
 Initial review baseline: `ad29b81a2b961294368fa795998fefd1134a4b5b`.
 The anchor is the reviewed baseline, not a self-referential claim that this document
 contains its own final commit. Use `git rev-parse HEAD` for checkout identity and
 [knowledge map](CORTEX_KNOWLEDGE_MAP.json) for version/content drift checks.
-Exact-head CI for the GSI-II.2 revision must be re-checked after push; do not treat a queued or in-progress matrix as passed.
+Exact-head CI for the GSI-II.3 revision must be re-checked after push; do not treat a queued or in-progress matrix as passed.
 
 ## Current gate
 
-**CURRENT: GSI-II.2 proof-chain mechanics verified in deterministic controls; exact-head CI pending. NEXT: live provider GSI trial and GSO-III remain unauthorized.**
+**CURRENT: GSI empirical measurement and causal-contrast mechanics verified in deterministic controls; exact-head CI pending. NEXT: GSI-III same-model history experiment remains unauthorized.**
 
 ### Platform health and substrate at b0106c7
 
@@ -72,6 +73,15 @@ failures, and reconstructs realized-generation chains from canonical Store
 receipts. Incommensurable utilities remain a vector. Holdout capability
 separation is interface-only and live-provider eligibility remains false. See
 [GSI-II.2](research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md).
+
+GSI-II.3 makes realized-generation gain the post-promotion state delta, splits
+utility-family identity from evaluation-partition identity, content-addresses
+holdout exhaustion, derives constitutional evidence from receipts, binds
+authority-state identity before and after, and freezes A/B/C treatment plus
+search-episode receipts. No live provider trial was run.
+`history_utility_established` remains false.
+See [GSI-II.3](research/GSI_II3_EMPIRICAL_READINESS_2026-09-08.md) and
+[GSI-III preregistration](research/GSI_III_HISTORY_UTILITY_PREREG_2026-09-08.md).
 
 No live retention-utility or model-turnover heredity experiment was run.
 [GSO-III](research/GSO_III_RETENTION_UTILITY_PREREG.md) is preregistered only.
