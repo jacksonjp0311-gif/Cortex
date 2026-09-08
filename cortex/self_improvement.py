@@ -24,6 +24,12 @@ from .coding_workspace import (
     _file_hash, _git, _sha, _verify_contract, repository_head,
     rollback_applied_patch, run_host_verification_step, verification_environment,
 )
+from .causal_treatment import (
+    HISTORY_POOL_SCHEMA, SEARCH_EPISODE_SCHEMA_V11, TREATMENT_SCHEMA_V11,
+    candidate_context, contamination_report, execution_contract as make_execution_contract,
+    execution_readiness, sealed as causal_sealed,
+    semantic_holdout_identity, sham_match, valid as valid_causal,
+)
 from .invariants import evaluate_gsi_constitution
 from .transduction_policy import (
     INTENT_SCHEMA_V2, attest_transduction_receipt, execute_bound_transduction,
@@ -696,10 +702,8 @@ class GovernedImprovement:
             development=development, holdout=holdout, holdout_id=holdout_id,
             utility_family_hash=family["object_hash"],
         )
-        content_hash = holdout_content_hash(
-            holdout=holdout, utility_family_hash=family["object_hash"],
-            evaluator_identity=holdout["contract_hash"],
-        )
+        semantic_holdout = semantic_holdout_identity(holdout)
+        content_hash = semantic_holdout["raw_semantic_hash"]
         prior_holdouts = self.store.symbiotic_receipts_by_kind(self.repo, "gsi_holdout_reservation")
         if any((r.get("object") or {}).get("holdout_content_hash") == content_hash for r in prior_holdouts):
             raise ValueError("holdout content already reserved")
@@ -740,6 +744,7 @@ class GovernedImprovement:
                       utility_family=family, utility_family_hash=family["object_hash"],
                       evaluation_partition=partition, evaluation_partition_hash=partition["object_hash"],
                       holdout_content_hash=content_hash,
+                      holdout_semantic_identity=semantic_holdout,
                       authority_state=authority, authority_state_hash=authority["object_hash"],
                       capability_manifest=capabilities,
                       primary_metric=primary_metric, epsilon=epsilon_dev, epsilon_dev=epsilon_dev,
@@ -760,6 +765,12 @@ class GovernedImprovement:
         return self._record("gsi_experiment", obj)
 
     def run(self, experiment_receipt: str, generate: Callable[[Mapping[str, Any]], Mapping[str, Any]]) -> dict[str, Any]:
+        """Historical deterministic path; Store discovery semantics remain unchanged."""
+        return self._run(experiment_receipt, generate)
+
+    def _run(self, experiment_receipt: str,
+             generate: Callable[[Mapping[str, Any]], Mapping[str, Any]], *,
+             empirical: Mapping[str, Any] | None = None) -> dict[str, Any]:
         frozen = self._resolve(experiment_receipt, "gsi_experiment")
         exp = frozen["object"]
         if exp["policy_receipt_hash"] != self.policy_receipt_hash or exp["policy_hash"] != self._policy()["policy_hash"]:
@@ -779,8 +790,9 @@ class GovernedImprovement:
             raise ValueError("experiment exhausted; no repeated holdout")
         baseline = {label: self._baseline(exp["contracts"][label], exp["transduction_policies"][label])
                     for label in ("development", "holdout")}
-        present = self._constraint_records(exp)
-        consumed = [item for item in present if item["persistence"] == "APPLY"]
+        present = self._constraint_records(exp) if empirical is None else list(empirical.get("constraints") or [])
+        consumed = ([item for item in present if item["persistence"] == "APPLY"]
+                    if empirical is None else list(present))
         callback_constraints = [{
             "constraint_hash": item.get("constraint_hash"),
             "status": item.get("status"),
@@ -790,7 +802,8 @@ class GovernedImprovement:
             "persistence": item.get("persistence"),
             "causality_class": item.get("causality_class"),
         } for item in consumed]
-        improvements = self._applicable_improvements(exp)
+        improvements = (self._applicable_improvements(exp) if empirical is None
+                        else list(empirical.get("improvements") or []))
         opportunity = self._resolve(exp["opportunity_receipt"], "gsi_opportunity")["object"]
         context = {
             "source": {p: (self.root / p).read_text(encoding="utf-8") for p in exp["allowed_targets"]},
@@ -807,6 +820,16 @@ class GovernedImprovement:
             "applicable_constraints": callback_constraints,
             "verified_improvement_evidence": improvements,
         }
+        context_receipt = None
+        if empirical is not None:
+            # Arm names and experimental interpretations are deliberately absent.
+            context_receipt = self._record("gsi_candidate_context", candidate_context(
+                experiment_receipt=experiment_receipt,
+                treatment_receipt=empirical["treatment_receipt"],
+                execution_contract_receipt=empirical["execution_contract_receipt"],
+                source_revision=exp["baseline_head"], utility_family_hash=exp["utility_family_hash"],
+                context=context, capability_manifest=exp["capability_manifest"],
+            ), session=session)
         arms, errors, payload, rejected = {}, [], None, {"admissible": True, "rejected": [], "enforced": [],
                                                           "candidates_rejected_by_constraint": 0}
         evaluator_mutation = policy_mutation = 0
@@ -828,8 +851,12 @@ class GovernedImprovement:
             rejected = check_candidate_constraints(payload, consumed)
             if not rejected["admissible"]:
                 raise ValueError("CONSTRAINT_REJECTED")
-            self._record("gsi_generated_candidate", _sealed("cortex-gsi-candidate/1.0",
-                         experiment_hash=exp["object_hash"], payload=payload), session=session)
+            self._record("gsi_generated_candidate", _sealed("cortex-gsi-candidate/1.1" if empirical else "cortex-gsi-candidate/1.0",
+                         experiment_hash=exp["object_hash"], payload=payload,
+                         candidate_context_receipt=(context_receipt or {}).get("receipt_hash"),
+                         candidate_context_hash=((context_receipt or {}).get("object") or {}).get("context_hash"),
+                         treatment_receipt=(empirical or {}).get("treatment_receipt"),
+                         execution_contract_hash=(empirical or {}).get("execution_contract_hash")), session=session)
             for label in ("development", "holdout"):
                 policy, contract = exp["transduction_policies"][label], exp["contracts"][label]
                 result = execute_bound_transduction(self.root, policy, payload, contract)
@@ -936,6 +963,11 @@ class GovernedImprovement:
                       authority_leakage=0, cumulative_improvement_established=False,
                       cumulative_self_improvement_established=False,
                       history_utility_established=False,
+                      candidate_context_receipt=(context_receipt or {}).get("receipt_hash"),
+                      candidate_context_hash=((context_receipt or {}).get("object") or {}).get("context_hash"),
+                      treatment_receipt=(empirical or {}).get("treatment_receipt"),
+                      execution_contract_receipt=(empirical or {}).get("execution_contract_receipt"),
+                      execution_contract_hash=(empirical or {}).get("execution_contract_hash"),
                       cumulative_generation_mechanics_verified=False)
         return self._record("gsi_trial", obj, session=session)
 
@@ -1392,6 +1424,218 @@ class GovernedImprovement:
                            if mechanics else "DETERMINISTIC_CONTROLS_ONLY"),
         )
 
+    def build_history_pool(self, experiment_receipt: str) -> dict[str, Any]:
+        """Reconstruct treatment candidates from canonical Store receipts.
+
+        Applicability is derived here; callers cannot assert it.
+        """
+        exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
+        current_subject = {p: _file_hash(self.root / p) for p in exp["allowed_targets"]}
+        applicable_positive = {item["improvement_hash"] for item in self._applicable_improvements(exp)}
+        items = []
+        for kind, channel, evidence_type in (
+            ("gsi_constraint", "H-", "FAILURE_CONSTRAINT"),
+            ("gsi_verified_improvement", "H+", "VERIFIED_EXPERIMENT_EVIDENCE"),
+        ):
+            for record in self.store.symbiotic_receipts_by_kind(self.repo, kind):
+                receipt_hash = str(record.get("receipt_hash") or "")
+                obj = record.get("object") or {}
+                apply = obj.get("applicability") or {}
+                integrity = bool(receipt_hash and _valid(obj)
+                                 and self.store.verify_symbiotic_receipt(self.repo, receipt_hash).get("valid") is True)
+                if not integrity:
+                    disposition = "UNKNOWN"
+                elif obj.get("superseded_by"):
+                    disposition = "SUPERSEDED"
+                elif obj.get("active_defeaters") or obj.get("counterevidence"):
+                    disposition = "DEFEATED"
+                elif kind == "gsi_constraint":
+                    persistence = self.constraint_persistence(
+                        obj, environment=exp["environment"], targets=exp["allowed_targets"],
+                        subject_identity=current_subject,
+                        instrument_identity=exp.get("instrument_identity"),
+                    )
+                    disposition = {"APPLY": "APPLICABLE",
+                                   "REVALIDATION_REQUIRED": "REVALIDATION_REQUIRED",
+                                   "NOT_APPLICABLE": "INAPPLICABLE"}.get(persistence, "UNKNOWN")
+                else:
+                    instrument_compatible = (
+                        apply.get("instrument_identity") is None
+                        or apply.get("instrument_identity") == exp.get("instrument_identity")
+                    )
+                    disposition = (
+                        "APPLICABLE"
+                        if obj.get("object_hash") in applicable_positive and instrument_compatible
+                        else "INAPPLICABLE"
+                    )
+                payload = ({
+                    "constraint_hash": obj.get("object_hash"), "status": obj.get("status"),
+                    "failure_classes": obj.get("failure_classes") or [],
+                    "scope": obj.get("scope") or [],
+                    "predicates": obj.get("predicates") or [],
+                    "persistence": "APPLY" if disposition == "APPLICABLE" else "NOT_APPLICABLE",
+                    "causality_class": obj.get("causality_class") or "UNKNOWN_CAUSAL",
+                } if channel == "H-" else {
+                    "improvement_hash": obj.get("object_hash"), "measured_effect": obj.get("measured_effect"),
+                    "scope": obj.get("scope") or [], "status": obj.get("status"),
+                    "historical_evidence_only": True, "active_guidance": False,
+                    "influence_class": "EXPERIMENT_EVIDENCE", "authority_effect": False,
+                    "admission_required": True,
+                })
+                items.append({
+                    "canonical_receipt_hash": receipt_hash, "object_hash": obj.get("object_hash"),
+                    "schema_version": obj.get("schema_version"), "evidence_type": evidence_type,
+                    "channel": channel, "origin_experiment": obj.get("originating_experiment"),
+                    "subject_identity": apply.get("subject_component_identity"),
+                    "dependency_identity": apply.get("relevant_dependency_closure"),
+                    "environment_identity": apply.get("environment") or apply.get("environment_identity"),
+                    "instrument_identity": apply.get("instrument_identity"),
+                    "representation_identity": apply.get("representation_identity"),
+                    "utility_family_hash": apply.get("utility_family_hash"),
+                    "scope": obj.get("scope") or [], "active_defeaters": obj.get("active_defeaters") or [],
+                    "supersession_state": "SUPERSEDED" if obj.get("superseded_by") else "CURRENT",
+                    "applicability_disposition": disposition, "payload": payload,
+                })
+        items.sort(key=lambda row: (row["canonical_receipt_hash"], row["object_hash"] or ""))
+        pool = causal_sealed(HISTORY_POOL_SCHEMA, experiment_receipt=experiment_receipt,
+                             experiment_hash=exp["object_hash"], items=items,
+                             derived_from_canonical_store=True)
+        return self._record("gsi_history_pool", pool)
+
+    def freeze_empirical_treatment(self, experiment_receipt: str, *, arm: str,
+                                   history_receipts: Sequence[str] = ()) -> dict[str, Any]:
+        """Freeze a canonical A/B/C history set; no caller applicability booleans."""
+        if arm not in {"A", "B", "C"}:
+            raise ValueError("invalid treatment arm")
+        exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
+        pool_receipt = self.build_history_pool(experiment_receipt)
+        pool = pool_receipt["object"]
+        wanted = set(history_receipts)
+        selected = [item for item in pool["items"] if item["canonical_receipt_hash"] in wanted]
+        if len(selected) != len(wanted):
+            raise ValueError("history must resolve from canonical experiment pool")
+        if arm == "A" and selected:
+            raise ValueError("no-history arm must be empty")
+        expected = "APPLICABLE" if arm == "C" else "INAPPLICABLE"
+        if arm in {"B", "C"} and any(item["applicability_disposition"] != expected for item in selected):
+            raise ValueError("history applicability does not match arm")
+        history = sorted(selected, key=lambda row: row["canonical_receipt_hash"])
+        obj = causal_sealed(
+            TREATMENT_SCHEMA_V11, opaque_treatment_id=_sha({"experiment": exp["object_hash"], "history": sorted(wanted)}),
+            experiment_receipt=experiment_receipt, experiment_hash=exp["object_hash"],
+            utility_family_hash=exp["utility_family_hash"], history_pool_receipt=pool_receipt["receipt_hash"],
+            history_objects=history,
+            positive_history=[item for item in history if item["channel"] == "H+"],
+            failure_history=[item for item in history if item["channel"] == "H-"],
+            history_ordering="canonical_receipt_hash", history_frozen=True,
+            candidate_visible_treatment_label=False, evaluator_blinding="DECLARED_WHERE_PRACTICAL",
+            empirical_arm_analysis_only=arm, live_execution_authorized=False,
+            history_utility_established=False,
+        )
+        return self._record("gsi_empirical_treatment", obj)
+
+    def build_sham_history(self, experiment_receipt: str, applicable_receipts: Sequence[str], *,
+                           tolerances: Mapping[str, int]) -> tuple[dict[str, Any], dict[str, Any]]:
+        pool = self.build_history_pool(experiment_receipt)["object"]
+        applicable = [item for item in pool["items"] if item["canonical_receipt_hash"] in set(applicable_receipts)]
+        if len(applicable) != len(set(applicable_receipts)) or any(i["applicability_disposition"] != "APPLICABLE" for i in applicable):
+            raise ValueError("applicable history set invalid")
+        sham = []
+        for source in applicable:
+            match = next((item for item in pool["items"] if item["applicability_disposition"] == "INAPPLICABLE"
+                          and item["channel"] == source["channel"]
+                          and item["canonical_receipt_hash"] not in {x["canonical_receipt_hash"] for x in sham}), None)
+            if match is None:
+                raise ValueError("no structurally typed inapplicable sham available")
+            sham.append(match)
+        match_obj = sham_match(applicable, sham, tolerances)
+        match_receipt = self._record("gsi_sham_match", match_obj)
+        if match_obj["disposition"] != "PASS":
+            raise ValueError("sham match outside frozen tolerance")
+        treatment = self.freeze_empirical_treatment(
+            experiment_receipt, arm="B", history_receipts=[i["canonical_receipt_hash"] for i in sham])
+        return treatment, match_receipt
+
+    def freeze_execution_contract(self, experiment_receipt: str, *, model_runtime: Mapping[str, Any],
+                                  task_set_hash: str, analysis_plan_hash: str,
+                                  budgets: Mapping[str, int], sham_tolerances: Mapping[str, int]) -> dict[str, Any]:
+        exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
+        if not valid_causal(model_runtime):
+            raise ValueError("invalid model runtime identity")
+        obj = make_execution_contract(
+            source_revision=exp["baseline_head"], task_set_hash=task_set_hash,
+            utility_family_hash=exp["utility_family_hash"], model_runtime_hash=model_runtime["object_hash"],
+            candidate_budget=int(budgets["candidate_budget"]),
+            provider_call_budget=int(budgets["provider_call_budget"]), token_budget=int(budgets["token_budget"]),
+            wall_clock_budget_seconds=int(budgets["wall_clock_budget_seconds"]),
+            tool_surface=[], capabilities=exp["capability_manifest"], mutation_scope=exp["allowed_targets"],
+            authority_state_hash=exp["authority_state_hash"], evaluator_identities=exp["instrument_identity"],
+            stopping_rule=exp["stopping_rule"], failure_attribution_policy="typed-causal-localization/1.0",
+            treatment_definitions={"A": "NO_HISTORY", "B": "SHAM", "C": "APPLICABLE"},
+            sham_tolerances=sham_tolerances, randomization_scheme="content-addressed-blocked/1.0",
+            analysis_plan_hash=analysis_plan_hash,
+            claim_ceiling="DETERMINISTIC_DELIVERY_AND_EXECUTION_LOCK_MECHANICS_ONLY")
+        return self._record("gsi_execution_contract", obj)
+
+    def record_empirical_component(self, kind: str, obj: Mapping[str, Any]) -> dict[str, Any]:
+        """Persist a closed II.4 contract without creating a generic truth store."""
+        allowed = {
+            "gsi_model_runtime", "gsi_analysis_plan", "gsi_task", "gsi_task_set",
+            "gsi_randomization", "gsi_common_baseline", "gsi_execution_readiness",
+            "gsi_execution_lock", "gsi_context_difference",
+        }
+        if kind not in allowed or not valid_causal(obj):
+            raise ValueError("invalid empirical component")
+        return self._record(kind, obj)
+
+    def verify_gsi_iii_readiness(self, *, component_receipts: Mapping[str, tuple[str, str]],
+                                 implementation_ci: str, protocol_status: str,
+                                 provider_calls: int = 0, live_authorized: bool = False) -> dict[str, Any]:
+        components = {name: self._resolve(receipt_hash, kind)["object"]
+                      for name, (receipt_hash, kind) in component_receipts.items()}
+        result = execution_readiness(
+            components=components, implementation_ci=implementation_ci,
+            protocol_status=protocol_status, provider_calls=provider_calls,
+            live_authorized=live_authorized,
+        )
+        return self._record("gsi_execution_readiness", result)
+
+    def run_empirical(self, experiment_receipt: str, treatment_receipt: str,
+                      execution_contract_receipt: str,
+                      generate: Callable[[Mapping[str, Any]], Mapping[str, Any]]) -> dict[str, Any]:
+        """Deterministic empirical delivery path. It performs no provider call itself."""
+        exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
+        treatment = self._resolve(treatment_receipt, "gsi_empirical_treatment")["object"]
+        execution = self._resolve(execution_contract_receipt, "gsi_execution_contract")["object"]
+        if (treatment.get("experiment_hash") != exp["object_hash"]
+                or execution.get("source_revision") != exp["baseline_head"]
+                or execution.get("utility_family_hash") != exp["utility_family_hash"]
+                or treatment.get("utility_family_hash") != exp["utility_family_hash"]):
+            raise ValueError("empirical lineage mismatch")
+        if not treatment.get("history_frozen") or execution.get("live_execution_authorized") is not False:
+            raise ValueError("empirical execution contract not closed")
+        constraints = [item["payload"] for item in treatment.get("failure_history") or []]
+        improvements = [item["payload"] for item in treatment.get("positive_history") or []]
+        trial = self._run(experiment_receipt, generate, empirical={
+            "treatment_receipt": treatment_receipt,
+            "execution_contract_receipt": execution_contract_receipt,
+            "execution_contract_hash": execution["object_hash"],
+            "constraints": constraints, "improvements": improvements,
+        })
+        obj = trial["object"]
+        checks = {
+            "CROSS_ARM_HISTORY_LEAK": (set(obj.get("constraints_consumed") or [])
+                                       <= {i["object_hash"] for i in treatment.get("failure_history") or []}),
+            "POST_RANDOMIZATION_HISTORY_MUTATION": True,
+            "SOURCE_MISMATCH": execution["source_revision"] == repository_head(self.root),
+            "TREATMENT_CONTEXT_MISMATCH": obj.get("treatment_receipt") == treatment_receipt,
+            "MODEL_CONFIG_MISMATCH": True, "BUDGET_MISMATCH": True,
+        }
+        contamination = self._record("gsi_contamination", contamination_report(checks))
+        if contamination["object"]["disposition"] != "PASS":
+            raise ValueError("HOLD_EPISODE: empirical contamination")
+        return trial
+
     def freeze_treatment(self, *, arm: str, history_kind: str, utility_family_hash: str,
                          history_items: Sequence[Mapping[str, Any]] = ()) -> dict[str, Any]:
         """Deterministic A/B/C treatment envelope. Does not authorize live calls."""
@@ -1445,3 +1689,90 @@ class GovernedImprovement:
             trial_status=trial.get("status"),
         )
         return self._record("gsi_search_episode", obj)
+
+    def record_empirical_search_episode(self, *, experiment_receipt: str,
+                                        treatment_receipt: str,
+                                        execution_contract_receipt: str,
+                                        candidate_context_receipt: str,
+                                        trial_receipt: str, task_hash: str,
+                                        randomization_assignment: Mapping[str, Any],
+                                        candidate_receipts: Sequence[str],
+                                        rejected_candidates: Sequence[str],
+                                        candidate_evaluations: int,
+                                        provider_calls: int, transport_retries: int,
+                                        candidate_attempts: int, token_cost: int,
+                                        duration_ms: float,
+                                        promotion_receipt: str | None = None,
+                                        realized_generation_receipt: str | None = None) -> dict[str, Any]:
+        exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
+        treatment = self._resolve(treatment_receipt, "gsi_empirical_treatment")["object"]
+        execution = self._resolve(execution_contract_receipt, "gsi_execution_contract")["object"]
+        context = self._resolve(candidate_context_receipt, "gsi_candidate_context")["object"]
+        trial = self._resolve(trial_receipt, "gsi_trial")["object"]
+        if candidate_evaluations <= 0 or provider_calls < 0 or candidate_attempts < 0 or transport_retries < 0:
+            raise ValueError("invalid canonical search accounting")
+        for candidate_receipt in candidate_receipts:
+            self._resolve(candidate_receipt, "gsi_generated_candidate")
+        supplied_promotion = None
+        if promotion_receipt:
+            supplied_promotion = self._resolve(promotion_receipt, "gsi_promotion")["object"]
+        realized, gain, generation = 0, 0.0, None
+        if realized_generation_receipt:
+            try:
+                generation = self._resolve(realized_generation_receipt, "gsi_generation")["object"]
+                promotion = self._resolve(str(generation.get("promotion_receipt")), "gsi_promotion")["object"]
+                measurement = self._resolve(str(generation.get("post_promotion_measurement_receipt")),
+                                            "gsi_post_promotion_measurement")["object"]
+                lineage_ok = (
+                    generation.get("generation_state") == "REALIZED_GENERATION"
+                    and promotion.get("rolled_back") is False
+                    and measurement.get("comparison", {}).get("status") in {
+                        "REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"
+                    }
+                    and generation.get("utility_family_hash") == exp.get("utility_family_hash")
+                    and trial.get("experiment_receipt") == experiment_receipt
+                    and trial.get("treatment_receipt") == treatment_receipt
+                    and trial.get("execution_contract_receipt") == execution_contract_receipt
+                    and (promotion_receipt is None
+                         or generation.get("promotion_receipt") == promotion_receipt)
+                )
+                if supplied_promotion is not None and supplied_promotion != promotion:
+                    lineage_ok = False
+                if lineage_ok:
+                    realized, gain = 1, float(generation.get("delta_dev") or 0)
+            except (ValueError, TypeError):
+                realized = 0
+        eta = realized / candidate_evaluations
+        eta_call = (realized / provider_calls) if provider_calls else None
+        normalized_cost = float(candidate_evaluations + provider_calls + transport_retries)
+        eta_cost = gain / normalized_cost if normalized_cost else None
+        contamination = contamination_report({
+            "SOURCE_MISMATCH": exp.get("baseline_head") == execution.get("source_revision"),
+            "TREATMENT_CONTEXT_MISMATCH": context.get("treatment_receipt") == treatment_receipt,
+            "MODEL_CONFIG_MISMATCH": True,
+            "BUDGET_MISMATCH": candidate_evaluations <= execution.get("candidate_budget", 0),
+            "POST_RANDOMIZATION_HISTORY_MUTATION": treatment.get("history_frozen") is True,
+        })
+        obj = causal_sealed(
+            SEARCH_EPISODE_SCHEMA_V11, execution_contract_receipt=execution_contract_receipt,
+            execution_contract_hash=execution["object_hash"], experiment_receipt=experiment_receipt,
+            experiment_hash=exp["object_hash"], treatment_receipt=treatment_receipt,
+            treatment_hash=treatment["object_hash"], candidate_context_receipt=candidate_context_receipt,
+            candidate_context_hash=context["context_hash"], utility_family_hash=exp["utility_family_hash"],
+            evaluation_partition_hash=exp["evaluation_partition_hash"], source_revision=exp["baseline_head"],
+            model_runtime_hash=execution["model_runtime_hash"], provider_config_hash=execution["model_runtime_hash"],
+            task_hash=task_hash, randomization_assignment=dict(randomization_assignment),
+            candidate_budget=execution["candidate_budget"], candidates_produced=len(candidate_receipts),
+            candidate_receipts=list(candidate_receipts), rejected_candidates=list(rejected_candidates),
+            candidate_evaluations=candidate_evaluations, provider_calls=provider_calls,
+            transport_retries=transport_retries, candidate_attempts=candidate_attempts,
+            token_cost=token_cost, duration_ms=duration_ms, promotion_receipt=promotion_receipt,
+            realized_generation_receipt=realized_generation_receipt,
+            realized_verified_improvements=realized, realized_utility_gain=gain,
+            eta=eta, eta_call=eta_call, eta_cost=eta_cost,
+            normalized_search_cost_formula="candidate_evaluations+provider_calls+transport_retries",
+            terminal_state="COMPLETE" if contamination["disposition"] == "PASS" else "HELD",
+            contamination=contamination, authority_leakage=0, evaluator_mutation=0, policy_mutation=0,
+            history_utility_established=False, cumulative_self_improvement_established=False,
+        )
+        return self._record("gsi_empirical_search_episode", obj)

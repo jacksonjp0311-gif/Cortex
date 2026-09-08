@@ -588,6 +588,58 @@
       "violation_types": ["authority_widening"],
       "recovery_constraints": ["HOLD"],
       "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-TREATMENT-CONTEXT-IDENTITY",
+      "name": "Treatment determines candidate history",
+      "statement": "Empirical candidate history equals the frozen canonical treatment history.",
+      "formal_expression": "SearchHistoryInput = FrozenTreatmentHistory",
+      "scope": "GSI empirical candidate generation",
+      "implementation_refs": ["cortex/causal_treatment.py", "cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii4.py"],
+      "claim_dependencies": ["gsi.causal_treatment_delivery"],
+      "violation_types": ["CROSS_ARM_HISTORY_LEAK", "POST_RANDOMIZATION_HISTORY_MUTATION"],
+      "recovery_constraints": ["HOLD_EPISODE"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-SEMANTIC-HOLDOUT-EXHAUSTION",
+      "name": "Semantic holdout exhaustion",
+      "statement": "Cosmetic labels, utility families and policy identities cannot make consumed hidden semantics fresh.",
+      "formal_expression": "ConsumedRawHoldout(x) -> not Fresh(rename_or_reframe(x))",
+      "scope": "GSI empirical evaluation",
+      "implementation_refs": ["cortex/causal_treatment.py", "cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii4.py"],
+      "claim_dependencies": [],
+      "violation_types": ["semantic_holdout_reuse"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-EXECUTION-LOCK-PRECEDENCE",
+      "name": "Execution lock precedence",
+      "statement": "All empirical identities and analysis rules are locked before the first provider call.",
+      "formal_expression": "ExecutionLockTime < FirstProviderCall",
+      "scope": "GSI-III execution",
+      "implementation_refs": ["cortex/causal_treatment.py"],
+      "test_refs": ["tests/test_gsi_ii4.py"],
+      "claim_dependencies": ["gsi.causal_treatment_delivery"],
+      "violation_types": ["post_outcome_rule_change", "late_randomization"],
+      "recovery_constraints": ["FAIL"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-READINESS-NOT-AUTHORITY",
+      "name": "Readiness is not live authority",
+      "statement": "Technical empirical readiness never authorizes a provider call.",
+      "formal_expression": "EmpiricalReadiness=READY does not imply LiveExecutionAuthorized",
+      "scope": "GSI empirical control plane",
+      "implementation_refs": ["cortex/causal_treatment.py"],
+      "test_refs": ["tests/test_gsi_ii4.py"],
+      "claim_dependencies": [],
+      "violation_types": ["readiness_as_authority"],
+      "recovery_constraints": ["HARD_FAIL"],
+      "authority_effect": false
     }
   ]
 }

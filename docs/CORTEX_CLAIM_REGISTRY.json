@@ -231,9 +231,34 @@
         "applicability": "HELD", "replication": "NOT_TESTED"
       },
       "required_dimensions": ["source", "transduction", "instrument", "experiment"],
-      "assumptions": ["exact-head CI for GSI-II.3 is pending"],
+      "assumptions": ["exact-head CI 34191811644 succeeded for 9880f6e"],
       "active_defeaters": [],
-      "source_revision": "9408f976706d6ba2822b387b90f7662cf2059981",
+      "source_revision": "9880f6e077573f7fa13df56ce9828a38223df45d",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.causal_treatment_delivery",
+      "subject": "GSI-II.4 treatment-bound candidate generation and execution lock",
+      "scope": "47 deterministic zero-provider controls; local checkout",
+      "status": "PRELIMINARY",
+      "evidence": [
+        {"path": "cortex/causal_treatment.py", "currency": "current"},
+        {"path": "cortex/self_improvement.py", "currency": "current"},
+        {"path": "tests/test_gsi_ii4.py", "currency": "current"},
+        {"path": "docs/research/GSI_II4_CAUSAL_TREATMENT_INTEGRATION_2026-09-08.md", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["gsi.empirical_measurement", "transduction.prospective_policy_closure"],
+      "applicability": {"provider_calls": 0, "production_effect": false, "live_execution_authorized": false},
+      "assurance_debt": {
+        "source": "PASS", "transduction": "PASS", "environment": "HELD",
+        "instrument": "PASS", "experiment": "PASS", "causal": "HELD",
+        "applicability": "HELD", "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["exact-head CI is not yet available for the local II.4 revision"],
+      "active_defeaters": [],
+      "source_revision": "9880f6e077573f7fa13df56ce9828a38223df45d",
       "supersedes": [], "superseded_by": [], "authority_effect": false
     },
     {

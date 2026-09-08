@@ -1,6 +1,6 @@
 {
   "schema_version": "cortex-knowledge-map/1.0",
-  "source_commit": "89779803ef48f94816172929bd08be86dc148e8a",
+  "source_commit": "9880f6e077573f7fa13df56ce9828a38223df45d",
   "source_commit_semantics": "reviewed baseline; implementation fingerprints maintained by docs checker, not self-referential HEAD",
   "product_version": "10.0.0a39",
   "entry_points": {
@@ -273,7 +273,8 @@
       "implementation": [
         "cortex/native_agent.py",
         "cortex/autonomous_improvement.py",
-        "cortex/self_improvement.py"
+        "cortex/self_improvement.py",
+        "cortex/causal_treatment.py"
       ],
       "documentation": [
         "docs/intelligence/TOPOLOGY_LAW.md",
@@ -282,6 +283,8 @@
         "docs/research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md",
         "docs/research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md",
         "docs/research/GSI_II3_EMPIRICAL_READINESS_2026-09-08.md",
+        "docs/research/GSI_II4_CAUSAL_TREATMENT_INTEGRATION_2026-09-08.md",
+        "docs/research/GSI_III_EXECUTION_PREREGISTRATION_2026-09-08.md",
         "docs/research/GSI_III_HISTORY_UTILITY_PREREG_2026-09-08.md"
       ],
       "tests": [
@@ -289,7 +292,8 @@
         "tests/test_gsi_ii.py",
         "tests/test_gsi_ii1.py",
         "tests/test_gsi_ii2.py",
-        "tests/test_gsi_ii3.py"
+        "tests/test_gsi_ii3.py",
+        "tests/test_gsi_ii4.py"
       ],
       "benchmarks": [],
       "evidence": [],
@@ -2249,6 +2253,7 @@
     "cortex/assembly.py": "1718ba44804cffa1241e4870d31070dca97923eb3e2e77e9daad3afbcb7bf3ef",
     "cortex/assurance.py": "0765974eb5aef5ea5a44e47685c03897681d46e83b6357e7d24428d2ae4a0a81",
     "cortex/autonomous_improvement.py": "2c0924757f4facfb1bd425e9954110ac33db2f82312019fbb431a66eb1b5c794",
+    "cortex/causal_treatment.py": "d13005eb746056f2a0eeff46008e60f4ebcddb7715b5925a6652e091ac8f492c",
     "cortex/chat_service.py": "2065dc896e5d6b7dcc21e3f2c87d77d9bd76d45952ed4a97a80ba2aae9f543fa",
     "cortex/coding_workspace.py": "f49e12e7acf89b61e66c218c929f9f91d87ec02f184a98ff124dafa5899416e3",
     "cortex/competence.py": "1beeb1ad01d02591d9a059bbc06c5cce4fb98fd11afadf31e0d6ceb95ec5dad8",
@@ -2266,7 +2271,7 @@
     "cortex/provider_fabric.py": "e2978aa9bf748cffb11782f8a7be6e3edbe8552611c7364ee434b31d6b69b68c",
     "cortex/repair_calibration_cohort.py": "22928d260a32bf4e4306f1c4b47a4ad34a2042ac45cc7eeb04e20520c5197666",
     "cortex/secret_store.py": "fae47248f04bb6b353d01c8f87ab18831cbe15cbe71b8c3bcf70397210ec10dc",
-    "cortex/self_improvement.py": "72911baa53a57d9a8c9224dddfb4d7ae70e37d5c2b85711a31239e78e05dc486",
+    "cortex/self_improvement.py": "29d664b3fb1fd080da47d7323ba9a599ef983e9889b35d45c58fe5893715b2d7",
     "cortex/semantic_projection.py": "48cbce0456dcc69f51dfde32c06450db9cf9678ee6c92d62b9bb055109d9e35b",
     "cortex/shadow_organization.py": "33adeb8826b0d5ff4e4ab727da479c23a8e5aca3cee9af27631dadc655761707",
     "cortex/store.py": "9b49c580608bcd32e6d45df78954c43401accc27690782c74eaef6679e60e4d0",

@@ -1,21 +1,21 @@
 # Current Cortex status
 
 Canonical current status · reviewed September 8, 2026 · product **10.0.0a39**.
-Runtime revision anchor: `89779803ef48f94816172929bd08be86dc148e8a`.
-Public product-source HEAD: `9408f976706d6ba2822b387b90f7662cf2059981`
-("Close GSI-II.2 cumulative self-improvement proof chain").
-That revision's exact-head matrix completed success:
-[CI run 34181576991](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34181576991).
-Public `main` later moved only by a star-lattice metrics refresh (`f673c3e`).
+Runtime revision anchor: `9880f6e077573f7fa13df56ce9828a38223df45d`.
+Public product-source HEAD at this phase start: `9880f6e077573f7fa13df56ce9828a38223df45d`
+("Close GSI-II.3 empirical measurement readiness"). Its exact-head matrix is
+[CI run 34191811644](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34191811644)
+and completed successfully across the declared Ubuntu/Windows Python matrix.
 Initial review baseline: `ad29b81a2b961294368fa795998fefd1134a4b5b`.
 The anchor is the reviewed baseline, not a self-referential claim that this document
 contains its own final commit. Use `git rev-parse HEAD` for checkout identity and
 [knowledge map](CORTEX_KNOWLEDGE_MAP.json) for version/content drift checks.
-Exact-head CI for the GSI-II.3 revision must be re-checked after push; do not treat a queued or in-progress matrix as passed.
+That result does not transfer to the local II.4 successor; the successor requires
+its own exact-head run after push.
 
 ## Current gate
 
-**CURRENT: GSI empirical measurement and causal-contrast mechanics verified in deterministic controls; exact-head CI pending. NEXT: GSI-III same-model history experiment remains unauthorized.**
+**CURRENT: GSI-II.4 causal-treatment delivery and execution-lock mechanics pass 47 local deterministic controls; exact-head CI is not yet available. NEXT: GSI-III same-model history experiment remains unauthorized.**
 
 ### Platform health and substrate at b0106c7
 
@@ -82,6 +82,16 @@ search-episode receipts. No live provider trial was run.
 `history_utility_established` remains false.
 See [GSI-II.3](research/GSI_II3_EMPIRICAL_READINESS_2026-09-08.md) and
 [GSI-III preregistration](research/GSI_III_HISTORY_UTILITY_PREREG_2026-09-08.md).
+
+GSI-II.4 adds a canonical empirical path: Store-derived applicability, frozen
+A/B/C treatment history, exact candidate-context receipts, treatment-bound
+candidate and trial receipts, semantic holdout identity independent of utility
+family, model/runtime and retry identity, randomization and analysis contracts,
+contamination checks, canonical search-episode accounting, technical readiness,
+and a non-authorizing execution lock. The historical `run()` path remains
+reconstructable. Forty-seven focused controls pass locally; no provider call or
+treatment result exists. See [GSI-II.4](research/GSI_II4_CAUSAL_TREATMENT_INTEGRATION_2026-09-08.md)
+and the [execution draft](research/GSI_III_EXECUTION_PREREGISTRATION_2026-09-08.md).
 
 No live retention-utility or model-turnover heredity experiment was run.
 [GSO-III](research/GSO_III_RETENTION_UTILITY_PREREG.md) is preregistered only.
