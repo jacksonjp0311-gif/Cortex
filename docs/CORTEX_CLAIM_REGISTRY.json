@@ -189,6 +189,110 @@
       "authority_effect": false
     },
     {
+      "claim_id": "gsi.loop_mechanics",
+      "subject": "GSI-II.2 cumulative proof-chain mechanics",
+      "scope": "deterministic zero-provider controls",
+      "status": "PRELIMINARY",
+      "evidence": [
+        {"path": "tests/test_gsi_ii.py", "currency": "current"},
+        {"path": "tests/test_gsi_ii1.py", "currency": "current"},
+        {"path": "tests/test_gsi_ii2.py", "currency": "current"},
+        {"path": "docs/research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["transduction.prospective_policy_closure"],
+      "applicability": {"provider_calls": 0, "production_effect": false},
+      "assurance_debt": {
+        "source": "PASS", "transduction": "PASS", "environment": "HELD",
+        "instrument": "PASS", "experiment": "PASS", "causal": "HELD",
+        "applicability": "HELD", "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["exact-head CI for the implementation revision is pending"],
+      "active_defeaters": [],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.live_provider_experiment",
+      "subject": "live same-model GSI history experiment",
+      "scope": "future A/B/C experiment",
+      "status": "NOT_ESTABLISHED", "evidence": [], "counterevidence": [],
+      "dependencies": ["gsi.loop_mechanics"], "applicability": {},
+      "assurance_debt": {"source": "NOT_TESTED", "transduction": "NOT_TESTED", "environment": "NOT_TESTED", "instrument": "NOT_TESTED", "experiment": "NOT_TESTED", "causal": "NOT_TESTED", "applicability": "NOT_TESTED", "replication": "NOT_TESTED"},
+      "required_dimensions": ["experiment", "causal"], "assumptions": [],
+      "active_defeaters": ["experiment_not_authorized"],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.causal_evidence",
+      "subject": "causal effect of inherited GSI history",
+      "scope": "fresh matched same-model contrast",
+      "status": "NOT_ESTABLISHED", "evidence": [], "counterevidence": [],
+      "dependencies": ["gsi.live_provider_experiment"], "applicability": {},
+      "assurance_debt": {"source": "NOT_TESTED", "transduction": "NOT_TESTED", "environment": "NOT_TESTED", "instrument": "NOT_TESTED", "experiment": "NOT_TESTED", "causal": "NOT_TESTED", "applicability": "NOT_TESTED", "replication": "NOT_TESTED"},
+      "required_dimensions": ["experiment", "causal"], "assumptions": [],
+      "active_defeaters": ["causal_contrast_not_run"],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.independent_replication",
+      "subject": "independent GSI replication",
+      "scope": "fresh preregistered replication",
+      "status": "NOT_ESTABLISHED", "evidence": [], "counterevidence": [],
+      "dependencies": ["gsi.causal_evidence"], "applicability": {},
+      "assurance_debt": {"source": "NOT_TESTED", "transduction": "NOT_TESTED", "environment": "NOT_TESTED", "instrument": "NOT_TESTED", "experiment": "NOT_TESTED", "causal": "NOT_TESTED", "applicability": "NOT_TESTED", "replication": "NOT_TESTED"},
+      "required_dimensions": ["replication"], "assumptions": [],
+      "active_defeaters": ["replication_not_run"],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.holdout_applicability",
+      "subject": "capability-separated GSI holdout",
+      "scope": "live provider candidate generation",
+      "status": "HELD", "evidence": [
+        {"path": "tests/test_gsi_ii2.py", "currency": "current"}
+      ], "counterevidence": [], "dependencies": ["gsi.loop_mechanics"],
+      "applicability": {"deterministic_interface": true, "os_enforced": false},
+      "assurance_debt": {"source": "PASS", "transduction": "PASS", "environment": "HELD", "instrument": "PASS", "experiment": "PASS", "causal": "UNKNOWN", "applicability": "HELD", "replication": "NOT_TESTED"},
+      "required_dimensions": ["environment", "applicability"],
+      "assumptions": ["candidate callback boundary is not an OS sandbox"],
+      "active_defeaters": ["live_holdout_capability_not_enforced"],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.authority_preservation",
+      "subject": "authority invariance across deterministic GSI controls",
+      "scope": "GSI-II.2 zero-provider proof chain",
+      "status": "PRELIMINARY", "evidence": [
+        {"path": "tests/test_gsi_ii2.py", "currency": "current"},
+        {"path": "cortex/self_improvement.py", "currency": "current"}
+      ], "counterevidence": [], "dependencies": ["gsi.loop_mechanics"],
+      "applicability": {"authority_effect": false},
+      "assurance_debt": {"source": "PASS", "transduction": "PASS", "environment": "HELD", "instrument": "PASS", "experiment": "PASS", "causal": "HELD", "applicability": "HELD", "replication": "NOT_TESTED"},
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["no live production activation"], "active_defeaters": [],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.cumulative_self_improvement",
+      "subject": "cumulative governed self-improvement",
+      "scope": "live successive generations under one frozen utility contract",
+      "status": "NOT_ESTABLISHED", "evidence": [], "counterevidence": [],
+      "dependencies": ["gsi.loop_mechanics", "gsi.live_provider_experiment", "gsi.causal_evidence", "gsi.independent_replication", "gsi.holdout_applicability", "gsi.authority_preservation"],
+      "applicability": {},
+      "assurance_debt": {"source": "NOT_TESTED", "transduction": "NOT_TESTED", "environment": "NOT_TESTED", "instrument": "NOT_TESTED", "experiment": "NOT_TESTED", "causal": "NOT_TESTED", "applicability": "NOT_TESTED", "replication": "NOT_TESTED"},
+      "required_dimensions": ["source", "transduction", "environment", "instrument", "experiment", "causal", "applicability", "replication"],
+      "assumptions": [], "active_defeaters": ["live_cumulative_experiment_not_run"],
+      "source_revision": "8e05bd171b2ac5f3c73d9534298be7f6c2c2a753",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
       "claim_id": "gso.recursive_closure",
       "subject": "mechanical recursive closure of shadow priors",
       "scope": "zero-call synthetic ranking influence",

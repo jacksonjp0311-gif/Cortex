@@ -77,6 +77,7 @@ def validate(root, data):
         'docs/research/GSO_IIB_METABOLIC_ASSEMBLY_2026-09-07.md',
         'docs/research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md',
         'docs/research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md',
+        'docs/research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md',
         '.github/copilot-instructions.md',
     }
     for p in sorted(checked):

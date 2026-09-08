@@ -14,6 +14,19 @@ REGISTRY_PATH = Path(__file__).resolve().parents[1] / "docs" / "CORTEX_INVARIANT
 INVARIANT_SCHEMA = "cortex-invariant-registry/1.0"
 EVALUATION_SCHEMA = "cortex-invariant-evaluation/1.0"
 RECOVERY_POLICY_SCHEMA = "cortex-invariant-recovery-policy/1.0"
+GSI_CONSTITUTION_SCHEMA = "cortex-gsi-constitutional-verdict/1.0"
+GSI_REQUIRED_INVARIANTS = (
+    "INV-IMPROVEMENT-EVIDENCE-REQUIRED",
+    "INV-EVALUATOR-INDEPENDENCE",
+    "INV-EXPERIMENT-PRECEDENCE",
+    "INV-NONCOMPENSATORY-IMPROVEMENT",
+    "INV-HOLDOUT-NONLEAKAGE",
+    "INV-FAILURE-SCOPE",
+    "INV-GENERATION-NONSELFAUTHORIZATION",
+    "INV-CUMULATIVE-CLAIM-BOUNDARY",
+    "authority_invariance",
+    "protected_surface_integrity",
+)
 
 DEFAULT_RECOVERY_POLICY = {
     "schema_version": RECOVERY_POLICY_SCHEMA,
@@ -210,6 +223,63 @@ def evaluate_invariants(
     return {**body, "evaluation_hash": _sha(body)}
 
 
+def evaluate_gsi_constitution(
+    evidence: Mapping[str, Any],
+    *,
+    registry: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Reconstruct GSI invariant states from explicit evidence.
+
+    This evaluator is deliberately closed-world: a missing registry entry or
+    missing evidence produces UNKNOWN, never an implicit PASS.
+    """
+    loaded = registry or load_invariant_registry()
+    registered = {row.get("invariant_id") for row in loaded.get("invariants") or []}
+
+    def state(key: str) -> str:
+        value = evidence.get(key)
+        if value is True:
+            return "PASS"
+        if value is False:
+            return "FAIL"
+        return "UNKNOWN"
+
+    bindings = {
+        "INV-IMPROVEMENT-EVIDENCE-REQUIRED": "measured_opportunity_evidence",
+        "INV-EVALUATOR-INDEPENDENCE": "evaluator_unchanged",
+        "INV-EXPERIMENT-PRECEDENCE": "experiment_preceded_candidate",
+        "INV-NONCOMPENSATORY-IMPROVEMENT": "noncompensatory_gates",
+        "INV-HOLDOUT-NONLEAKAGE": "holdout_capability_separated",
+        "INV-FAILURE-SCOPE": "failure_constraints_causally_scoped",
+        "INV-GENERATION-NONSELFAUTHORIZATION": "generation_not_self_authorized",
+        "INV-CUMULATIVE-CLAIM-BOUNDARY": "cumulative_claim_closed",
+        "authority_invariance": "authority_unchanged",
+        "protected_surface_integrity": "protected_surface_unchanged",
+    }
+    checks: dict[str, str] = {}
+    for invariant_id in GSI_REQUIRED_INVARIANTS:
+        if invariant_id not in registered and invariant_id.startswith("INV-"):
+            checks[invariant_id] = "UNKNOWN"
+        else:
+            checks[invariant_id] = state(bindings[invariant_id])
+    if any(value == "FAIL" for value in checks.values()):
+        status = "FAIL"
+    elif any(value != "PASS" for value in checks.values()):
+        status = "HELD"
+    else:
+        status = "PASS"
+    body = {
+        "schema_version": GSI_CONSTITUTION_SCHEMA,
+        "registry_schema": loaded.get("schema_version"),
+        "registry_hash": _sha(loaded),
+        "checks": checks,
+        "status": status,
+        "evidence": dict(evidence),
+        "authority_effect": False,
+    }
+    return {**body, "verdict_hash": _sha(body)}
+
+
 def validate_invariant_registry(registry: Mapping[str, Any], *, root: str | Path) -> list[str]:
     errors: list[str] = []
     workspace = Path(root)
@@ -238,7 +308,7 @@ __all__ = [
     "DEFAULT_RECOVERY_POLICY",
     "derive_recovery_action",
     "detect_invariant_violations",
-    "evaluate_invariants",
+    "evaluate_gsi_constitution", "evaluate_invariants",
     "freeze_recovery_policy",
     "load_invariant_registry",
     "validate_invariant_registry",

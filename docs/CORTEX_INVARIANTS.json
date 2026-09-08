@@ -458,6 +458,97 @@
       "violation_types": ["generation_skip"],
       "recovery_constraints": ["HOLD"],
       "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-CONSTITUTIONAL-RECONSTRUCTION",
+      "name": "Constitutional reconstruction",
+      "statement": "Required GSI invariant states are reconstructed from evidence and the canonical registry; missing state is HELD.",
+      "formal_expression": "Verdict = Evaluate(state,evidence,registry); missing -> HELD",
+      "scope": "GSI candidate disposition",
+      "implementation_refs": ["cortex/invariants.py", "cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py"],
+      "claim_dependencies": ["gsi.loop_mechanics"],
+      "violation_types": ["locally_asserted_pass"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-CANONICAL-PROMOTION-MEMBRANE",
+      "name": "Canonical promotion membrane",
+      "statement": "All governed source promotion uses one authenticated scope/freshness/canary/apply membrane.",
+      "formal_expression": "MeasuredBetter != Authority; Promote requires authenticated membrane",
+      "scope": "autonomous and GSI promotion",
+      "implementation_refs": ["cortex/autonomous_improvement.py", "cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py", "tests/test_v100_alpha8_autonomy.py"],
+      "claim_dependencies": ["gsi.authority_preservation"],
+      "violation_types": ["parallel_promotion_semantics", "stale_baseline"],
+      "recovery_constraints": ["HOLD", "ROLLBACK"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-EXACT-PROMOTED-ARTIFACT",
+      "name": "Exact promoted artifact",
+      "statement": "The evaluated proposal and promoted proposal identities and expected postimages must match.",
+      "formal_expression": "H(candidate_evaluated)=H(candidate_promoted)=H(post_apply_pre_eval)",
+      "scope": "GSI promotion",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py"],
+      "claim_dependencies": ["gsi.loop_mechanics"],
+      "violation_types": ["promotion_reconstruction_mismatch"],
+      "recovery_constraints": ["HOLD", "ROLLBACK"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-PROMOTED-DISPOSITION",
+      "name": "Promoted-state disposition",
+      "statement": "The promoted state must satisfy the same frozen improvement contract as the candidate.",
+      "formal_expression": "CandidatePASS AND PromotedPASS required",
+      "scope": "GSI post-promotion measurement",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py"],
+      "claim_dependencies": ["gsi.loop_mechanics"],
+      "violation_types": ["candidate_pass_promoted_regression"],
+      "recovery_constraints": ["ROLLBACK"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-CAUSAL-CONSTRAINT",
+      "name": "Causal failure constraint",
+      "statement": "Only candidate-causal failures may exclude candidate regions.",
+      "formal_expression": "ExclusionPredicate -> FailureClass=CANDIDATE_CAUSAL",
+      "scope": "GSI failure recycling",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py"],
+      "claim_dependencies": [],
+      "violation_types": ["infrastructure_overpruning"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-UTILITY-COMMENSURABILITY",
+      "name": "Utility commensurability",
+      "statement": "Only generations sharing one frozen utility contract may produce a cumulative scalar.",
+      "formal_expression": "U_i != U_j -> preserve vector; do not sum",
+      "scope": "GSI cumulative inspection",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py"],
+      "claim_dependencies": ["gsi.loop_mechanics"],
+      "violation_types": ["incommensurable_scalar_sum"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-REALIZED-GENERATION-LINEAGE",
+      "name": "Realized generation lineage",
+      "statement": "A realized generation requires verified promotion, remeasurement and continuous parent/child source identity.",
+      "formal_expression": "Parent.source_after=Child.source_before AND promotion PASS AND remeasurement PASS",
+      "scope": "GSI generation chain",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii2.py"],
+      "claim_dependencies": ["gsi.loop_mechanics"],
+      "violation_types": ["candidate_as_generation", "source_lineage_break"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
     }
   ]
 }

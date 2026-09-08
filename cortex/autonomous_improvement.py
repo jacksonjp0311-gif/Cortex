@@ -683,6 +683,54 @@ def _policy_scope_errors(policy: Mapping[str, Any], proposal: Mapping[str, Any])
     return errors
 
 
+def execute_policy_promotion_membrane(
+    root: str | Path,
+    *,
+    policy: Mapping[str, Any],
+    proposal: Mapping[str, Any],
+    source_head: str,
+    canary_contract: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Canonical authenticated mutation membrane shared by improvement paths.
+
+    Eligibility evidence is established by the caller, but mutation semantics are
+    centralized here: policy scope, source freshness, isolated canary, exact
+    proposal application, and rollback on a failed canary.  The membrane never
+    derives authority from candidate quality.
+    """
+    errors = _policy_scope_errors(policy, proposal)
+    if policy.get("allow_auto_promotion") is not True:
+        errors.append("auto_promotion_not_delegated")
+    if repository_head(root) != source_head:
+        errors.append("source_head_changed")
+    if not policy.get("canary_steps"):
+        errors.append("canary_contract_missing")
+    if errors:
+        raise PermissionError("promotion held: " + ",".join(sorted(set(errors))))
+
+    contract = dict(canary_contract or default_verification_contract(
+        root, list(proposal.get("targets") or ())
+    ))
+    contract["policy_id"] = str(policy.get("policy_id") or "")
+    contract["steps"] = json.loads(_canonical(policy.get("canary_steps") or ()))
+    contract["contract_hash"] = _sha(
+        {key: value for key, value in contract.items() if key != "contract_hash"}
+    )
+    canary = verify_patch_in_isolated_worktree(root, proposal, contract)
+    rolled_back = canary.get("status") != "verified"
+    application = None if rolled_back else apply_approved_patch(root, proposal)
+    return {
+        "proposal_hash": proposal.get("proposal_hash"),
+        "source_head": source_head,
+        "canary_contract_hash": contract["contract_hash"],
+        "canary": canary,
+        "application": application,
+        "rolled_back": rolled_back,
+        "authority_derived_from_measurement": False,
+        **_closed_authority(),
+    }
+
+
 def promote_tournament_winner(
     store: Any,
     repo: str,
@@ -744,18 +792,16 @@ def promote_tournament_winner(
     if errors:
         raise PermissionError("promotion held: " + ",".join(sorted(set(errors))))
 
-    canary_contract = default_verification_contract(
-        root, list(proposal.get("targets") or ())
+    membrane = execute_policy_promotion_membrane(
+        root,
+        policy=policy,
+        proposal=proposal,
+        source_head=str(canonical_tournament.get("source_head") or ""),
     )
-    canary_contract["policy_id"] = str(policy.get("policy_id") or "")
-    canary_contract["steps"] = json.loads(_canonical(policy.get("canary_steps") or ()))
-    canary_contract["contract_hash"] = _sha(
-        {key: value for key, value in canary_contract.items() if key != "contract_hash"}
-    )
-    canary = verify_patch_in_isolated_worktree(root, proposal, canary_contract)
+    canary = membrane["canary"]
     canary_results = list(canary.get("steps") or ())
-    rolled_back = canary.get("status") != "verified"
-    application = None if rolled_back else apply_approved_patch(root, proposal)
+    rolled_back = membrane["rolled_back"]
+    application = membrane["application"]
     status = "promoted_canary_pass" if not rolled_back else "rolled_back_canary_failed"
     session = _session(store, repo, f"policy promotion {proposal.get('proposal_hash')}")
     receipt = store.append_symbiotic_receipt(
@@ -865,7 +911,7 @@ __all__ = [
     "PERMANENTLY_PROTECTED_PREFIXES",
     "issue_autonomy_policy",
     "collect_storm_patch_candidates",
-    "promote_tournament_winner",
+    "execute_policy_promotion_membrane", "promote_tournament_winner",
     "record_improvement_episode",
     "resolve_canonical_storm_result",
     "revoke_autonomy_policy",

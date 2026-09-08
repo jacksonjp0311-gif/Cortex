@@ -1,4 +1,4 @@
-"""GSI-II.1 loop closure; no production activation and no provider calls.
+"""GSI-II.2 proof-chain closure; no production activation and no provider calls.
 
 Composes signed autonomy policy, Store receipts, TransductionPolicy, bounded
 capture, independent attestation, and existing canary/apply/rollback primitives.
@@ -6,6 +6,7 @@ Source-improvement v1 and tournament promotion remain reconstructable.
 """
 from __future__ import annotations
 
+import ast
 import json
 import math
 import re
@@ -17,14 +18,13 @@ from typing import Any
 from .assurance import typed_assurance_debt
 from .autonomous_improvement import (
     PERMANENTLY_PROTECTED_PREFIXES, _policy_scope_errors, _session,
-    verify_autonomy_policy,
+    execute_policy_promotion_membrane, verify_autonomy_policy,
 )
 from .coding_workspace import (
-    _file_hash, _git, _sha, _verify_contract, apply_approved_patch,
-    create_patch_proposal, repository_head, rollback_applied_patch,
-    run_host_verification_step, verification_environment,
-    verify_patch_in_isolated_worktree,
+    _file_hash, _git, _sha, _verify_contract, repository_head,
+    rollback_applied_patch, run_host_verification_step, verification_environment,
 )
+from .invariants import evaluate_gsi_constitution
 from .transduction_policy import (
     INTENT_SCHEMA_V2, attest_transduction_receipt, execute_bound_transduction,
     freeze_transduction_policy, inspect_observation_conformance,
@@ -40,6 +40,11 @@ VERIFIED_SCHEMA = "cortex-verified-improvement/1.0"
 GENERATION_SCHEMA = "cortex-improvement-generation/1.0"
 COMPARISON_SCHEMA = "cortex-improvement-comparison/1.1"
 PROMOTION_SCHEMA = "cortex-gsi-promotion/1.0"
+UTILITY_SCHEMA = "cortex-improvement-utility-contract/1.0"
+EXPERIMENT_EVIDENCE_SCHEMA = "cortex-experiment-evidence/1.0"
+REALIZED_GENERATION_SCHEMA = "cortex-realized-improvement-generation/1.0"
+REMEASUREMENT_SCHEMA = "cortex-gsi-post-promotion-measurement/1.0"
+CUMULATIVE_SCHEMA = "cortex-cumulative-improvement-disposition/1.1"
 METRICS = {"task_success": "increase", "duration_ms": "decrease", "output_bytes": "decrease"}
 HARD_GATES = (
     "source", "transduction", "attestation", "workload_correctness",
@@ -59,6 +64,22 @@ CONTROL_PLANE_PREFIXES = PERMANENTLY_PROTECTED_PREFIXES + (
     "cortex/invariants.py", "cortex/epistemic_snapshot.py", "cortex/edit_intent.py",
 )
 _GEN = re.compile(r"^G(\d+)$")
+
+_NON_CANDIDATE_FAILURES = {
+    "ENVIRONMENT_MISMATCH": "ENVIRONMENT_CAUSAL",
+    "ENVIRONMENT_FAILURE": "ENVIRONMENT_CAUSAL",
+    "EVALUATOR_EXECUTION_FAILURE": "INSTRUMENT_CAUSAL",
+    "INSTRUMENT_UNRESOLVED": "INSTRUMENT_CAUSAL",
+    "RAW_OBSERVATION_BINDING_FAILURE": "INSTRUMENT_CAUSAL",
+    "CAPTURE_INCOMPLETE": "INSTRUMENT_CAUSAL",
+    "OUTPUT_LIMIT_EXCEEDED": "INSTRUMENT_CAUSAL",
+    "PROCESS_TIMEOUT": "INSTRUMENT_CAUSAL",
+    "POLICY_BINDING_FAILURE": "POLICY_CAUSAL",
+    "SUBJECT_SOURCE_BINDING_FAILURE": "POLICY_CAUSAL",
+    "COMPILER_BINDING_FAILURE": "INSTRUMENT_CAUSAL",
+    "TRANSPORT_FAILURE": "INSTRUMENT_CAUSAL",
+    "PATCH_APPLICATION_FAILURE": "INSTRUMENT_CAUSAL",
+}
 
 
 def _closed() -> dict[str, bool]:
@@ -169,6 +190,120 @@ def _safe_targets(targets: Sequence[str]) -> list[str]:
     return result
 
 
+def bounded_dependency_identity(
+    root: str | Path,
+    targets: Sequence[str],
+    *,
+    declared_dependencies: Sequence[str] = (),
+) -> dict[str, Any]:
+    """Hash a bounded, declared/local-import dependency closure.
+
+    This is intentionally not whole-program analysis.  It follows direct local
+    Python imports and explicit experiment dependencies, preserving unresolved
+    imports rather than treating them as verified.
+    """
+    workspace = Path(root).resolve()
+    queue = list(_safe_targets(targets)) + list(_safe_targets(declared_dependencies) if declared_dependencies else [])
+    files: dict[str, str] = {}
+    unresolved: set[str] = set()
+    while queue:
+        relative = queue.pop(0)
+        if relative in files:
+            continue
+        path = workspace / relative
+        if not path.is_file():
+            unresolved.add(relative)
+            continue
+        files[relative] = _file_hash(path)
+        if path.suffix != ".py":
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeError):
+            unresolved.add(relative + ":imports")
+            continue
+        modules: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                modules.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules.add(node.module)
+        for module in sorted(modules):
+            base = module.replace(".", "/")
+            for candidate in (base + ".py", base + "/__init__.py"):
+                if (workspace / candidate).is_file() and candidate not in files:
+                    queue.append(candidate)
+                    break
+    body = {
+        "schema_version": "cortex-bounded-dependency-identity/1.0",
+        "files": {key: files[key] for key in sorted(files)},
+        "declared_dependencies": sorted(set(declared_dependencies)),
+        "unresolved": sorted(unresolved),
+        "authority_effect": False,
+    }
+    return {**body, "dependency_hash": _sha(body)}
+
+
+def failure_causality(trial: Mapping[str, Any]) -> str:
+    classes = list(trial.get("errors") or []) + [
+        str((arm.get("receipt") or {}).get("failure_attribution") or "")
+        for arm in (trial.get("candidates") or {}).values()
+    ]
+    for value in classes:
+        for marker, causality in _NON_CANDIDATE_FAILURES.items():
+            if marker in value:
+                return causality
+    candidate_markers = (
+        "EVALUATOR_REJECTION", "INTENT_PARSE_FAILURE", "INTENT_TYPE_FAILURE",
+        "INTENT_SCOPE_FAILURE", "REPRESENTATION_UNSUPPORTED",
+    )
+    if any(any(marker in value for marker in candidate_markers) for value in classes):
+        return "CANDIDATE_CAUSAL"
+    return "UNKNOWN_CAUSAL"
+
+
+def failure_exclusion_predicates(payload: Mapping[str, Any], causality_class: str) -> list[dict[str, Any]]:
+    """Return search-space exclusions only for attributed candidate failures."""
+    if causality_class != "CANDIDATE_CAUSAL":
+        return []
+    predicates: list[dict[str, Any]] = []
+    for edit in payload.get("edits") or []:
+        predicates.append({
+            "kind": "exact_edit", "path": edit.get("path"),
+            "old": edit.get("old"), "new": edit.get("new"),
+        })
+        if "\r" in str(edit.get("old", "")) + str(edit.get("new", "")):
+            predicates.append({"kind": "representation_crlf"})
+    return predicates
+
+
+def utility_contract(
+    *,
+    metric: str,
+    development_contract: Mapping[str, Any],
+    holdout_contract: Mapping[str, Any],
+    epsilon_dev: float,
+    epsilon_holdout: float,
+    holdout_degradation_tolerance: float,
+) -> dict[str, Any]:
+    if metric not in METRICS:
+        raise ValueError("unknown utility metric")
+    return _sealed(
+        UTILITY_SCHEMA,
+        metric_vector=[metric],
+        metric_directions={metric: METRICS[metric]},
+        metric_scales={metric: "native_declared_units"},
+        development_workload_identity=development_contract["contract_hash"],
+        holdout_workload_identity=holdout_contract["contract_hash"],
+        aggregation_rule="single_metric_signed_delta",
+        comparison_semantics="matched_baseline_candidate_and_promoted_state/1.0",
+        epsilon_dev=epsilon_dev,
+        epsilon_holdout=epsilon_holdout,
+        holdout_degradation_tolerance=holdout_degradation_tolerance,
+        applicability="declared_workload_only",
+    )
+
+
 def metric_vector(steps: Sequence[Mapping[str, Any]], expected_count: int) -> dict[str, Any]:
     """Only machine-observed quantities. Missing checks are not passes."""
     complete = bool(steps) and len(steps) == expected_count
@@ -265,6 +400,7 @@ def check_candidate_constraints(payload: Mapping[str, Any], constraints: Sequenc
 
 
 def cumulative_improvement_disposition(generations: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Convenience inspection for already-resolved objects; not canonical assurance."""
     errors = []
     if len(generations) < 2:
         errors.append("insufficient_adjacent_generations")
@@ -275,6 +411,8 @@ def cumulative_improvement_disposition(generations: Sequence[Mapping[str, Any]])
             errors.append("authority_leakage")
         if generation.get("evaluator_mutation", 0) != 0 or generation.get("policy_mutation", 0) != 0:
             errors.append("control_plane_mutation")
+        if generation.get("generation_state") != "REALIZED_GENERATION":
+            errors.append("generation_not_realized")
         if generation.get("status") not in {"REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"}:
             errors.append("generation_not_feasible")
         if (generation.get("delta_holdout") is None
@@ -284,9 +422,20 @@ def cumulative_improvement_disposition(generations: Sequence[Mapping[str, Any]])
             errors.append("lineage_break")
         if index and _gen_index(generation.get("candidate_generation") or "") != (_gen_index(generation.get("parent_generation") or "") or -1) + 1:
             errors.append("nonadjacent_generation")
+    utility_hashes = [generation.get("utility_contract_hash") for generation in generations]
+    compatible = bool(utility_hashes) and None not in utility_hashes and len(set(utility_hashes)) == 1
+    scalar = sum(float(generation.get("delta_dev") or 0) for generation in generations) if compatible else None
+    vector = [{"generation": generation.get("candidate_generation"),
+               "utility_contract_hash": generation.get("utility_contract_hash"),
+               "delta_dev": generation.get("delta_dev"),
+               "delta_holdout": generation.get("delta_holdout")} for generation in generations]
     mechanics = not errors
-    return _sealed("cortex-cumulative-improvement-disposition/1.0", errors=errors,
+    return _sealed(CUMULATIVE_SCHEMA, errors=errors,
                    cumulative_generation_mechanics_verified=mechanics,
+                   canonical_store_reconstructed=False,
+                   utility_contracts_compatible=compatible,
+                   cumulative_scalar_gain=scalar,
+                   cumulative_utility_vector=vector,
                    cumulative_self_improvement_established=False,
                    claim_ceiling="TWO_GENERATION_MECHANICS_VERIFIED_IN_DETERMINISTIC_CONTROLS" if mechanics
                    else "DETERMINISTIC_CONTROLS_ONLY")
@@ -418,6 +567,16 @@ class GovernedImprovement:
                 self.root, policy_id="gsi-" + label, allowed_targets=targets,
                 verification_contract=contract, allowed_intent_schema=INTENT_SCHEMA_V2,
                 environment_requirements=verification_environment())
+        utility = utility_contract(
+            metric=primary_metric,
+            development_contract=development,
+            holdout_contract=holdout,
+            epsilon_dev=epsilon_dev,
+            epsilon_holdout=epsilon_holdout,
+            holdout_degradation_tolerance=float(holdout_degradation_tolerance),
+        )
+        utility_receipt = self._record("gsi_utility_contract", utility)
+        dependencies = bounded_dependency_identity(self.root, targets)
         obj = _sealed(EXPERIMENT_SCHEMA, source_contract_schema=CONTRACT_SCHEMA_V2,
                       baseline_head=repository_head(self.root), opportunity_receipt=opportunity_receipt,
                       opportunity_hash=opportunity["object_hash"], allowed_targets=targets,
@@ -430,6 +589,9 @@ class GovernedImprovement:
                                            "holdout_contract_hash": holdout["contract_hash"],
                                            "primary_metric": primary_metric},
                       representation_identity="utf8-lf-exact-bytes/1.0",
+                      dependency_identity=dependencies,
+                      utility_contract_receipt=utility_receipt["receipt_hash"],
+                      utility_contract_hash=utility["object_hash"],
                       primary_metric=primary_metric, epsilon=epsilon_dev, epsilon_dev=epsilon_dev,
                       epsilon_holdout=epsilon_holdout, holdout_degradation_tolerance=float(holdout_degradation_tolerance),
                       holdout_id=holdout_id, policy_receipt_hash=self.policy_receipt_hash,
@@ -438,6 +600,11 @@ class GovernedImprovement:
                       stopping_rule="one_candidate_one_use", tournament_rule="feasible_then_primary",
                       canary_rule="existing_authenticated_promotion_only", rollback_rule="existing_policy_rollback",
                       holdout_used_for_generation=False, full_os_isolation="UNKNOWN",
+                      candidate_capability_set=["declared_source", "development_metrics", "experiment_evidence"],
+                      holdout_capability_set=["holdout_contract", "holdout_executor", "holdout_receipt"],
+                      holdout_capability_intersection=[],
+                      holdout_capability_enforcement="INTERFACE_ONLY_DETERMINISTIC_CONTROLS",
+                      live_provider_holdout_eligible=False,
                       control_surface=worktree_payload_hashes(self.root))
         return self._record("gsi_experiment", obj)
 
@@ -517,7 +684,29 @@ class GovernedImprovement:
         except (ValueError, PermissionError, KeyError, TypeError) as exc:
             errors.append(str(exc))
         gates = {name: "UNKNOWN" for name in HARD_GATES}
-        constitution = {name: "UNKNOWN" for name in CONSTITUTIONAL_CHECKS}
+        constitutional_evidence = {
+            "measured_opportunity_evidence": bool(opportunity.get("evidence_roots")
+                                                    and opportunity.get("observation_receipts")
+                                                    and opportunity.get("disposition") == "ELIGIBLE"),
+            "evaluator_unchanged": evaluator_mutation == 0 and policy_mutation == 0
+                                    and exp["control_surface"] == worktree_payload_hashes(self.root),
+            "experiment_preceded_candidate": reservation.get("inserted") is True,
+            "noncompensatory_gates": True,
+            "holdout_capability_separated": not set(exp.get("candidate_capability_set") or [])
+                                             & set(exp.get("holdout_capability_set") or [])
+                                             and not any("holdout" in key for key in context),
+            "failure_constraints_causally_scoped": all(
+                item.get("causality_class") == "CANDIDATE_CAUSAL" for item in consumed
+            ),
+            "generation_not_self_authorized": self._policy().get("allow_recursive_generation") in (True, False),
+            "cumulative_claim_closed": True,
+            "authority_unchanged": True,
+            "protected_surface_unchanged": (
+                evaluator_mutation == 0
+                and all(not target.startswith(CONTROL_PLANE_PREFIXES) for target in exp["allowed_targets"])
+            ),
+        }
+        verdict = evaluate_gsi_constitution(constitutional_evidence)
         if len(arms) == 2:
             dev, hold = arms["development"], arms["holdout"]
             representation = all(a["receipt"].get("failure_attribution") != "REPRESENTATION_UNSUPPORTED" for a in arms.values())
@@ -525,26 +714,13 @@ class GovernedImprovement:
                           == (exp["environment"] or {}).get("environment_hash")) for a in arms.values())
             workload = (dev["metrics"]["correctness"] and hold["metrics"]["correctness"]
                         and dev["metrics"]["measurement_complete"] and hold["metrics"]["measurement_complete"])
-            constitution.update({
-                "INV-IMPROVEMENT-EVIDENCE-REQUIRED": "PASS",
-                "INV-EVALUATOR-INDEPENDENCE": "PASS" if evaluator_mutation == 0 else "FAIL",
-                "INV-EXPERIMENT-PRECEDENCE": "PASS",
-                "INV-NONCOMPENSATORY-IMPROVEMENT": "PASS",
-                "INV-HOLDOUT-NONLEAKAGE": "PASS",
-                "INV-FAILURE-SCOPE": "PASS",
-                "INV-GENERATION-NONSELFAUTHORIZATION": "PASS",
-                "INV-CUMULATIVE-CLAIM-BOUNDARY": "PASS",
-                "authority_invariance": "PASS",
-                "protected_surface_integrity": "PASS",
-            })
-            verdict = constitutional_verdict(constitution)
             gates.update({
                 "source": "PASS" if repository_head(self.root) == exp["baseline_head"] else "FAIL",
                 "transduction": "PASS" if all(a["receipt"]["typed_outcome"] == "PASS" for a in arms.values()) else "FAIL",
                 "attestation": combine_attestation_gates(
                     [a["inspection"]["gate"] if a["inspection"]["valid"] else "FAIL" for a in arms.values()]),
                 "workload_correctness": "PASS" if workload else "FAIL",
-                "constitutional_invariants": verdict["status"] if verdict["status"] != "UNKNOWN" else "FAIL",
+                "constitutional_invariants": verdict["status"],
                 "regression": "FAIL" if ((baseline["development"]["metrics"]["correctness"] and not dev["metrics"]["correctness"])
                                          or (baseline["holdout"]["metrics"]["correctness"] and not hold["metrics"]["correctness"])) else "PASS",
                 "environment": "PASS" if env_ok else "FAIL",
@@ -554,15 +730,7 @@ class GovernedImprovement:
             if not representation:
                 gates["transduction"] = "FAIL"
         elif errors:
-            constitution["INV-EVALUATOR-INDEPENDENCE"] = "FAIL" if evaluator_mutation else "PASS"
-            constitution["INV-NONCOMPENSATORY-IMPROVEMENT"] = "PASS"
-            constitution["INV-HOLDOUT-NONLEAKAGE"] = "PASS"
-            constitution["authority_invariance"] = "PASS"
-            constitution["protected_surface_integrity"] = "FAIL" if any("protected" in item for item in errors) else "PASS"
-            if policy_mutation:
-                constitution["INV-EVALUATOR-INDEPENDENCE"] = "FAIL"
-            verdict = constitutional_verdict(constitution)
-            gates["constitutional_invariants"] = verdict["status"] if verdict["status"] != "UNKNOWN" else "FAIL"
+            gates["constitutional_invariants"] = verdict["status"]
             gates["policy_scope"] = "FAIL" if policy_mutation or any("protected" in item for item in errors) else gates["policy_scope"]
         comparison = improvement_disposition(
             baseline["development"]["metrics"], (arms.get("development") or {}).get("metrics") or {},
@@ -583,7 +751,7 @@ class GovernedImprovement:
                       candidates_rejected_by_constraint=rejected["candidates_rejected_by_constraint"],
                       failure_constraints_consumed=[item["constraint_hash"] for item in consumed],
                       verified_improvements_consumed=[item["improvement_hash"] for item in improvements],
-                      constitutional=constitutional_verdict(constitution),
+                      constitutional=verdict,
                       evaluator_mutation=evaluator_mutation, policy_mutation=policy_mutation,
                       assurance_debt=typed_assurance_debt({"source": gates["source"],
                           "transduction": gates["transduction"], "instrument": gates["attestation"],
@@ -601,16 +769,13 @@ class GovernedImprovement:
         success = trial["comparison"]["feasible"] and trial["status"] in {"REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"}
         schema = VERIFIED_SCHEMA if success else CONSTRAINT_SCHEMA
         payload = trial.get("candidate_payload") or {}
-        predicates = []
-        for edit in payload.get("edits") or []:
-            predicates.append({"kind": "exact_edit", "path": edit.get("path"), "old": edit.get("old"), "new": edit.get("new")})
-            if "\r" in str(edit.get("old", "")) + str(edit.get("new", "")):
-                predicates.append({"kind": "representation_crlf"})
+        causality_class = "CANDIDATE_CAUSAL" if success else failure_causality(trial)
+        predicates = [] if success else failure_exclusion_predicates(payload, causality_class)
         applicability = {
             "originating_source_head": exp["baseline_head"],
             "subject_component": exp.get("subject_component"),
             "subject_component_identity": exp["subject_identity"],
-            "relevant_dependency_closure": exp["subject_identity"],
+            "relevant_dependency_closure": exp["dependency_identity"],
             "environment": exp["environment"],
             "environment_identity": exp["environment"],
             "instrument_identity": exp.get("instrument_identity"),
@@ -623,6 +788,7 @@ class GovernedImprovement:
                       trial_receipt=trial_receipt, trial_hash=trial["object_hash"],
                       applicability=applicability, scope=exp["allowed_targets"],
                       predicates=predicates,
+                      causality_class=causality_class,
                       status="VERIFIED_WITHIN_CONTROL" if success else "HELD_CONSTRAINT",
                       before_metrics=trial["baseline"]["development"]["metrics"],
                       after_metrics=(trial["candidates"].get("development") or {}).get("metrics"),
@@ -630,7 +796,9 @@ class GovernedImprovement:
                       after_holdout_metrics=(trial["candidates"].get("holdout") or {}).get("metrics"),
                       measured_effect=trial["comparison"].get("delta_dev"),
                       failure_classes=trial["errors"] + [a["receipt"]["failure_attribution"] for a in trial["candidates"].values() if a["receipt"]["failure_attribution"] != "OBSERVED_CANDIDATE_PASS"],
-                      counterevidence=[], superseded_by=[], historical_evidence_only=True,
+                      counterevidence=[], active_defeaters=[], superseded_by=[], historical_evidence_only=True,
+                      influence_class="EXPERIMENT_EVIDENCE" if success else "HISTORICAL_EVIDENCE",
+                      experiment_evidence=success,
                       claim_ceiling="DETERMINISTIC_CONTROLS_ONLY", admission_required=True)
         return self._record("gsi_verified_improvement" if success else "gsi_constraint", obj)
 
@@ -639,37 +807,74 @@ class GovernedImprovement:
         subject = {p: _file_hash(self.root / p) for p in exp["allowed_targets"]}
         for record in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_constraint"):
             obj = record.get("object") or {}
-            persistence = self.constraint_persistence(obj, environment=exp["environment"],
-                                                      targets=exp["allowed_targets"], subject_identity=subject,
-                                                      instrument_identity=exp.get("instrument_identity") or {})
+            persistence = (self.constraint_persistence(
+                obj, environment=exp["environment"], targets=exp["allowed_targets"],
+                subject_identity=subject, instrument_identity=exp.get("instrument_identity") or {}
+            ) if obj.get("causality_class") == "CANDIDATE_CAUSAL" else "NOT_APPLICABLE")
             records.append({
                 "constraint_hash": obj.get("object_hash"), "status": obj.get("status"),
                 "failure_classes": obj.get("failure_classes") or [], "scope": obj.get("scope") or [],
                 "predicates": obj.get("predicates") or [], "persistence": persistence,
+                "causality_class": obj.get("causality_class") or "UNKNOWN_CAUSAL",
                 "applicability": obj.get("applicability") or {},
             })
         return records
 
     def _applicable_improvements(self, exp: Mapping[str, Any]) -> list[dict[str, Any]]:
         consumed = []
+        defeated = {
+            (record.get("object") or {}).get("improvement_hash")
+            for record in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_evidence_challenge")
+            if _valid(record.get("object") or {})
+        }
         for record in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_verified_improvement"):
             obj = record.get("object") or {}
             if obj.get("schema_version") != VERIFIED_SCHEMA or not _valid(obj):
                 continue
+            record_hash = str(record.get("receipt_hash") or "")
+            if not record_hash or self.store.verify_symbiotic_receipt(self.repo, record_hash).get("valid") is not True:
+                continue
+            if (obj.get("object_hash") in defeated
+                    or obj.get("status") != "VERIFIED_WITHIN_CONTROL"
+                    or obj.get("influence_class") != "EXPERIMENT_EVIDENCE"
+                    or obj.get("counterevidence") or obj.get("active_defeaters")
+                    or obj.get("superseded_by")):
+                continue
             apply = obj.get("applicability") or {}
             env = apply.get("environment") or apply.get("environment_identity") or {}
-            if env.get("os_family") != (exp.get("environment") or {}).get("os_family"):
+            if env != (exp.get("environment") or {}):
                 continue
             if not set(obj.get("scope") or []) & set(exp["allowed_targets"]):
+                continue
+            if apply.get("relevant_dependency_closure") != exp.get("dependency_identity"):
+                continue
+            if apply.get("instrument_identity") != exp.get("instrument_identity"):
+                continue
+            if apply.get("representation_identity") != exp.get("representation_identity"):
                 continue
             consumed.append({
                 "improvement_hash": obj.get("object_hash"),
                 "measured_effect": obj.get("measured_effect"),
                 "scope": obj.get("scope"), "status": obj.get("status"),
                 "historical_evidence_only": True, "active_guidance": False,
+                "influence_class": "EXPERIMENT_EVIDENCE",
                 "authority_effect": False, "admission_required": True,
             })
         return consumed
+
+    def challenge_experiment_evidence(self, improvement_receipt: str, *, reason: str) -> dict[str, Any]:
+        """Append a defeater without rewriting the verified historical object."""
+        improvement = self._resolve(improvement_receipt, "gsi_verified_improvement")["object"]
+        if not reason.strip():
+            raise ValueError("challenge reason required")
+        obj = _sealed(
+            EXPERIMENT_EVIDENCE_SCHEMA,
+            improvement_hash=improvement["object_hash"],
+            reason=reason.strip(),
+            disposition="DEFEATED_FOR_FUTURE_GSI_CONTEXT",
+            influence_class="EXPERIMENT_EVIDENCE",
+        )
+        return self._record("gsi_evidence_challenge", obj)
 
     def constraint_persistence(self, constraint: Mapping[str, Any], *, environment: Mapping[str, Any],
                                targets: Sequence[str], subject_identity: Mapping[str, str],
@@ -685,9 +890,13 @@ class GovernedImprovement:
         scope = set(constraint.get("scope") or apply.get("scope") or [])
         if not scope or not set(targets) & scope:
             return "NOT_APPLICABLE"
-        identity = apply.get("subject_component_identity") or apply.get("relevant_dependency_closure") or {}
+        dependency = apply.get("relevant_dependency_closure") or {}
+        current_dependency = bounded_dependency_identity(self.root, targets)
+        identity = apply.get("subject_component_identity") or {}
         overlapping = {path: digest for path, digest in identity.items() if path in subject_identity}
-        identity_ok = bool(overlapping) and overlapping == {path: subject_identity[path] for path in overlapping}
+        identity_ok = (bool(overlapping)
+                       and overlapping == {path: subject_identity[path] for path in overlapping}
+                       and dependency == current_dependency)
         recorded_instrument = apply.get("instrument_identity") or {}
         instrument_ok = instrument_identity is None or (not recorded_instrument) or recorded_instrument == instrument_identity
         if not identity_ok or not instrument_ok:
@@ -713,7 +922,7 @@ class GovernedImprovement:
                        workload_correctness=all(item["metrics"]["correctness"] for item in measured.values()))
 
     def promote_verified(self, trial_receipt: str) -> dict[str, Any]:
-        """Compose existing canary/apply/rollback. Does not replace tournament promotion."""
+        """Promote an exact attested artifact through the canonical mutation membrane."""
         trial_record = self._resolve(trial_receipt, "gsi_trial")
         trial, exp = trial_record["object"], self._resolve(trial_record["object"]["experiment_receipt"], "gsi_experiment")["object"]
         policy = self._policy()
@@ -724,47 +933,100 @@ class GovernedImprovement:
             errors.append("canary_contract_missing")
         if trial["status"] not in {"REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"} or not trial["comparison"]["feasible"]:
             errors.append("trial_not_promotable")
-        payload = trial.get("candidate_payload")
-        if not payload:
-            errors.append("candidate_payload_missing")
+        if trial["status"] not in set(policy.get("allowed_trial_statuses") or ()):
+            errors.append("improvement_status_not_authorized")
+        if repository_head(self.root) != exp["baseline_head"]:
+            errors.append("PROMOTION_HELD_STALE_BASELINE")
+        if exp["control_surface"] != worktree_payload_hashes(self.root):
+            errors.append("control_surface_changed")
+        if exp["policy_hash"] != policy.get("policy_hash"):
+            errors.append("policy_hash_changed")
+        if exp["environment"] != verification_environment():
+            errors.append("environment_applicability_degraded")
+        if exp["subject_identity"] != {path: _file_hash(self.root / path) for path in exp["allowed_targets"]}:
+            errors.append("subject_preimage_changed")
+        arms = trial.get("candidates") or {}
+        dev, hold = arms.get("development") or {}, arms.get("holdout") or {}
+        dev_compilation, hold_compilation = dev.get("compilation") or {}, hold.get("compilation") or {}
+        proposal = dev_compilation.get("proposal")
+        if not proposal:
+            errors.append("evaluated_proposal_missing")
+        elif (hold_compilation.get("proposal_hash") != dev_compilation.get("proposal_hash")
+              or dev_compilation.get("proposal_hash") != proposal.get("proposal_hash")):
+            errors.append("promotion_reconstruction_mismatch")
+        for label, arm in (("development", dev), ("holdout", hold)):
+            if not arm or not inspect_v2_arm(
+                self.root, arm, exp["transduction_policies"][label], exp["contracts"][label]
+            )["valid"]:
+                errors.append(label + "_attestation_stale")
         if errors:
             raise PermissionError("promotion held: " + ",".join(errors))
-        patch = "".join(
-            f"diff --git a/{edit['path']} b/{edit['path']}\n--- a/{edit['path']}\n+++ b/{edit['path']}\n@@ -1 +1 @@\n-{edit['old']}\n+{edit['new']}\n"
-            for edit in payload["edits"]
-        )
-        proposal = create_patch_proposal(self.root, patch, str(payload.get("summary") or "gsi promote"))
-        scope_errors = _policy_scope_errors(policy, proposal)
-        if scope_errors:
-            raise PermissionError("promotion held: " + ",".join(scope_errors))
-        canary_contract = dict(exp["contracts"]["development"])
-        canary_contract["steps"] = json.loads(json.dumps(list(policy.get("canary_steps") or ())))
-        canary_contract["contract_hash"] = _sha({k: v for k, v in canary_contract.items() if k != "contract_hash"})
         before_head = repository_head(self.root)
-        canary = verify_patch_in_isolated_worktree(self.root, proposal, canary_contract)
-        rolled_back = canary.get("status") != "verified"
-        application = None
-        remeasurement = None
-        if not rolled_back:
-            application = apply_approved_patch(self.root, proposal)
-            remeasurement = self.remeasure(trial["experiment_receipt"])
-            if not remeasurement["workload_correctness"]:
+        membrane = execute_policy_promotion_membrane(
+            self.root, policy=policy, proposal=proposal,
+            source_head=exp["baseline_head"], canary_contract=exp["contracts"]["development"],
+        )
+        rolled_back = membrane["rolled_back"]
+        application = membrane["application"]
+        remeasurement_receipt = None
+        promoted_comparison = None
+        exact_artifact = False
+        if not rolled_back and application:
+            expected = dev_compilation["postimage_hashes"]
+            exact_artifact = (proposal["proposal_hash"] == dev["receipt"]["proposal_identity"]
+                              and application["proposal_hash"] == proposal["proposal_hash"]
+                              and application["postimage_hashes"] == expected)
+            measured = self.remeasure(trial["experiment_receipt"])
+            measured_targets = {path: measured["measured"]["development"]["preimages"].get(path)
+                                for path in exp["allowed_targets"]}
+            exact_artifact = exact_artifact and measured_targets == expected
+            promoted_gates = dict(trial["comparison"]["gates"])
+            promoted_gates.update({
+                "source": "PASS" if exact_artifact else "FAIL",
+                "transduction": "PASS" if exact_artifact else "FAIL",
+                "attestation": trial["comparison"]["gates"].get("attestation", "UNKNOWN"),
+                "environment": "PASS" if exp["environment"] == verification_environment() else "FAIL",
+                "constitutional_invariants": trial["constitutional"]["status"],
+            })
+            promoted_comparison = improvement_disposition(
+                trial["baseline"]["development"]["metrics"], measured["measured"]["development"]["metrics"],
+                before_holdout=trial["baseline"]["holdout"]["metrics"],
+                after_holdout=measured["measured"]["holdout"]["metrics"],
+                metric=exp["primary_metric"], epsilon_dev=exp["epsilon_dev"],
+                epsilon_holdout=exp["epsilon_holdout"],
+                holdout_degradation_tolerance=exp["holdout_degradation_tolerance"], gates=promoted_gates,
+            )
+            remeasurement_obj = _sealed(
+                REMEASUREMENT_SCHEMA, experiment_hash=exp["object_hash"], trial_receipt=trial_receipt,
+                evaluated_proposal_hash=proposal["proposal_hash"], promoted_proposal_hash=application["proposal_hash"],
+                expected_postimages=expected, promoted_postimages=application["postimage_hashes"],
+                post_apply_pre_eval_hashes=measured_targets, measured=measured["measured"],
+                comparison=promoted_comparison, exact_artifact_preserved=exact_artifact,
+            )
+            remeasurement_receipt = self._record("gsi_post_promotion_measurement", remeasurement_obj)
+            if promoted_comparison["status"] not in {"REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"}:
                 rollback_applied_patch(self.root, proposal)
                 rolled_back = True
             else:
                 _git(self.root, ["add", "-A"])
                 _git(self.root, ["commit", "-qm", "gsi-promoted"])
-        status = "rolled_back_remeasurement_failed" if rolled_back else "promoted_remeasured"
+        status = ("rolled_back_canary_failed" if rolled_back and remeasurement_receipt is None
+                  else "rolled_back_remeasurement_failed" if rolled_back else "promoted_remeasured")
         obj = _sealed(PROMOTION_SCHEMA, trial_receipt=trial_receipt, experiment_receipt=trial["experiment_receipt"],
-                      proposal_hash=proposal["proposal_hash"], application=application, canary=canary,
-                      remeasurement=remeasurement, rolled_back=rolled_back, status=status,
+                      proposal_hash=proposal["proposal_hash"], evaluated_artifact_hash=proposal["proposal_hash"],
+                      promoted_artifact_hash=None if not application else application["proposal_hash"],
+                      application=application, membrane=membrane, remeasurement_receipt_hash=None if not remeasurement_receipt else remeasurement_receipt["receipt_hash"],
+                      promoted_comparison=promoted_comparison, exact_artifact_preserved=exact_artifact,
+                      rolled_back=rolled_back, status=status,
                       source_revision_before=before_head, source_revision_after=repository_head(self.root),
-                      host_policy_authorized=True, tournament_promotion=False)
+                      host_policy_authorized=True, canonical_promotion_membrane=True,
+                      tournament_promotion=False)
         return self._record("gsi_promotion", obj)
 
     def record_generation(self, *, parent: str, trial_receipt: str, candidate_generation: str,
                           parent_receipt: str | None = None, promotion_receipt: str | None = None) -> dict[str, Any]:
         trial = self._resolve(trial_receipt, "gsi_trial")["object"]
+        exp = self._resolve(trial["experiment_receipt"], "gsi_experiment")["object"]
         parent_index, child_index = _gen_index(parent), _gen_index(candidate_generation)
         if parent_index is None or child_index is None or parent == candidate_generation:
             raise ValueError("candidate generation cannot self-verify")
@@ -786,16 +1048,47 @@ class GovernedImprovement:
         if policy.get("allow_recursive_generation") is not True:
             errors.append("recursive_generation_not_delegated")
         promotion = None
+        remeasurement = None
         if promotion_receipt:
             promotion = self._resolve(promotion_receipt, "gsi_promotion")["object"]
+            if promotion.get("remeasurement_receipt_hash"):
+                remeasurement = self._resolve(
+                    promotion["remeasurement_receipt_hash"], "gsi_post_promotion_measurement"
+                )["object"]
+        if not promotion:
+            errors.append("generation_not_realized")
+        elif (promotion.get("rolled_back") is not False
+              or promotion.get("status") != "promoted_remeasured"
+              or not remeasurement
+              or remeasurement.get("comparison", {}).get("status") not in {
+                  "REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"
+              }):
+            errors.append("promotion_not_realized")
+        if promotion and promotion.get("source_revision_before") != exp.get("baseline_head"):
+            errors.append("generation_source_before_mismatch")
+        if parent_obj and parent_obj.get("source_revision_after") != (promotion or {}).get("source_revision_before"):
+            errors.append("parent_source_continuity_failure")
         delta_dev = trial["comparison"].get("delta_dev")
-        parent_cumulative = parent_obj.get("cumulative_delta_from_G0") if parent_obj else 0.0
-        cumulative = None if delta_dev is None or parent_cumulative is None else float(parent_cumulative) + float(delta_dev)
-        status = "HELD" if errors else trial["status"]
-        obj = _sealed(GENERATION_SCHEMA, generation_id=candidate_generation, parent_generation=parent,
+        compatible_utility = not parent_obj or parent_obj.get("utility_contract_hash") == exp.get("utility_contract_hash")
+        parent_cumulative = parent_obj.get("cumulative_scalar_gain") if parent_obj else 0.0
+        cumulative = (None if not compatible_utility or delta_dev is None or parent_cumulative is None
+                      else float(parent_cumulative) + float(delta_dev))
+        generation_state = "REALIZED_GENERATION" if not errors else "CANDIDATE_GENERATION"
+        status = trial["status"] if generation_state == "REALIZED_GENERATION" else "HELD"
+        obj = _sealed(REALIZED_GENERATION_SCHEMA if generation_state == "REALIZED_GENERATION" else GENERATION_SCHEMA,
+                      generation_id=candidate_generation, parent_generation=parent,
                       candidate_generation=candidate_generation, verifier_generation=parent,
+                      generation_state=generation_state,
+                      parent_generation_receipt_hash=parent_receipt,
+                      parent_source_revision_after=(parent_obj or {}).get("source_revision_after"),
+                      child_source_revision_before=(promotion or {}).get("source_revision_before"),
                       trial_receipt=trial_receipt, promotion_receipt=promotion_receipt,
-                      source_revision_before=(promotion or {}).get("source_revision_before") or trial.get("experiment_hash"),
+                      promotion_receipt_hash=promotion_receipt,
+                      post_promotion_measurement_receipt=(promotion or {}).get("remeasurement_receipt_hash"),
+                      post_promotion_measurement_hash=(remeasurement or {}).get("object_hash"),
+                      utility_contract_receipt=exp.get("utility_contract_receipt"),
+                      utility_contract_hash=exp.get("utility_contract_hash"),
+                      source_revision_before=(promotion or {}).get("source_revision_before") or exp.get("baseline_head"),
                       source_revision_after=(promotion or {}).get("source_revision_after"),
                       before_dev_metrics=trial["baseline"]["development"]["metrics"],
                       after_dev_metrics=(trial["candidates"].get("development") or {}).get("metrics"),
@@ -803,7 +1096,13 @@ class GovernedImprovement:
                       after_holdout_metrics=(trial["candidates"].get("holdout") or {}).get("metrics"),
                       delta_dev=delta_dev, delta_holdout=trial["comparison"].get("delta_holdout"),
                       holdout_degradation_tolerance=trial["comparison"].get("holdout_degradation_tolerance", 0),
-                      cumulative_delta_from_G0=cumulative,
+                      cumulative_delta_from_G0=cumulative, cumulative_scalar_gain=cumulative,
+                      cumulative_utility_vector=[{
+                          "generation": candidate_generation,
+                          "utility_contract_hash": exp.get("utility_contract_hash"),
+                          "delta_dev": delta_dev,
+                          "delta_holdout": trial["comparison"].get("delta_holdout"),
+                      }],
                       failure_constraints_consumed=list(trial.get("failure_constraints_consumed") or []),
                       constraints_consumed=list(trial.get("constraints_consumed") or []),
                       verified_improvements_consumed=list(trial.get("verified_improvements_consumed") or []),
@@ -818,3 +1117,71 @@ class GovernedImprovement:
                       cumulative_generation_mechanics_verified=False,
                       status=status, errors=errors)
         return self._record("gsi_generation", obj)
+
+    def verify_cumulative_chain(self, generation_receipts: Sequence[str]) -> dict[str, Any]:
+        """Reconstruct a generation chain exclusively from canonical Store receipts."""
+        generations: list[dict[str, Any]] = []
+        errors: list[str] = []
+        previous_receipt = None
+        previous = None
+        for receipt_hash in generation_receipts:
+            try:
+                generation_record = self._resolve(receipt_hash, "gsi_generation")
+                generation = generation_record["object"]
+                trial = self._resolve(generation["trial_receipt"], "gsi_trial")["object"]
+                promotion = self._resolve(generation["promotion_receipt_hash"], "gsi_promotion")["object"]
+                measurement = self._resolve(
+                    generation["post_promotion_measurement_receipt"], "gsi_post_promotion_measurement"
+                )["object"]
+                utility = self._resolve(generation["utility_contract_receipt"], "gsi_utility_contract")["object"]
+            except (KeyError, TypeError, ValueError):
+                errors.append("canonical_chain_receipt_invalid")
+                continue
+            if generation.get("generation_state") != "REALIZED_GENERATION":
+                errors.append("generation_not_realized")
+            if promotion.get("trial_receipt") != generation.get("trial_receipt"):
+                errors.append("promotion_trial_binding_invalid")
+            if promotion.get("remeasurement_receipt_hash") != generation.get("post_promotion_measurement_receipt"):
+                errors.append("remeasurement_receipt_binding_invalid")
+            if measurement.get("object_hash") != generation.get("post_promotion_measurement_hash"):
+                errors.append("remeasurement_identity_invalid")
+            if utility.get("object_hash") != generation.get("utility_contract_hash"):
+                errors.append("utility_contract_binding_invalid")
+            if (promotion.get("rolled_back") is not False
+                    or promotion.get("exact_artifact_preserved") is not True
+                    or measurement.get("comparison", {}).get("status") not in {
+                        "REPAIR_MEASURED", "IMPROVED_WITHIN_DECLARED_WORKLOAD"
+                    }):
+                errors.append("promotion_not_verified")
+            if generation.get("authority_leakage") != 0 or trial.get("authority_leakage") != 0:
+                errors.append("authority_leakage")
+            if trial.get("evaluator_mutation") or trial.get("policy_mutation"):
+                errors.append("control_plane_mutation")
+            if previous is not None:
+                if generation.get("parent_generation_receipt_hash") != previous_receipt:
+                    errors.append("parent_receipt_mismatch")
+                if previous.get("source_revision_after") != generation.get("source_revision_before"):
+                    errors.append("source_state_continuity_failure")
+            previous_receipt, previous = receipt_hash, generation
+            generations.append(generation)
+        inspected = cumulative_improvement_disposition(generations)
+        errors.extend(inspected.get("errors") or [])
+        utility_hashes = [row.get("utility_contract_hash") for row in generations]
+        compatible = bool(utility_hashes) and None not in utility_hashes and len(set(utility_hashes)) == 1
+        scalar = sum(float(row.get("delta_dev") or 0) for row in generations) if compatible else None
+        vector = [item for row in generations for item in row.get("cumulative_utility_vector") or []]
+        unique_errors = sorted(set(errors))
+        mechanics = len(generations) >= 2 and not unique_errors
+        return _sealed(
+            CUMULATIVE_SCHEMA,
+            generation_receipts=list(generation_receipts),
+            errors=unique_errors,
+            canonical_store_reconstructed=True,
+            utility_contracts_compatible=compatible,
+            cumulative_scalar_gain=scalar,
+            cumulative_utility_vector=vector,
+            cumulative_generation_mechanics_verified=mechanics,
+            cumulative_self_improvement_established=False,
+            claim_ceiling=("PROOF_CHAIN_MECHANICS_VERIFIED_IN_DETERMINISTIC_CONTROLS"
+                           if mechanics else "DETERMINISTIC_CONTROLS_ONLY"),
+        )

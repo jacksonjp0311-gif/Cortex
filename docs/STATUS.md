@@ -2,18 +2,19 @@
 
 Canonical current status · reviewed September 7, 2026 · product **10.0.0a39**.
 Runtime revision anchor: `89779803ef48f94816172929bd08be86dc148e8a`.
-Public HEAD at this review: `3863ad5490e5a13e2a721e2aee14472fcead25a1`
-("Add GSI-II cumulative governed self-improvement coordinator").
+Public HEAD at GSI-II.2 implementation start: `8e05bd171b2ac5f3c73d9534298be7f6c2c2a753`
+("Close GSI-II cumulative loop mechanics").
+That revision's exact-head matrix completed success:
+[CI run 34164000790](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34164000790).
 Initial review baseline: `ad29b81a2b961294368fa795998fefd1134a4b5b`.
 The anchor is the reviewed baseline, not a self-referential claim that this document
 contains its own final commit. Use `git rev-parse HEAD` for checkout identity and
 [knowledge map](CORTEX_KNOWLEDGE_MAP.json) for version/content drift checks.
-Exact-head CI for `3863ad5` must be re-checked; do not treat an in-progress
-matrix as passed.
+Exact-head CI for the GSI-II.2 revision must be re-checked after push; do not treat a queued or in-progress matrix as passed.
 
 ## Current gate
 
-**CURRENT: Two-generation governed self-improvement mechanics verified in deterministic controls. NEXT: live provider GSI trial and GSO-III remain unauthorized.**
+**CURRENT: GSI-II.2 proof-chain mechanics verified in deterministic controls; exact-head CI pending. NEXT: live provider GSI trial and GSO-III remain unauthorized.**
 
 ### Platform health and substrate at b0106c7
 
@@ -62,6 +63,15 @@ verify mechanics only. `cumulative_self_improvement_established` remains false.
 No live provider trial was run.
 See [GSI-II](research/GSI_II_CUMULATIVE_GOVERNED_SELF_IMPROVEMENT_2026-09-07.md)
 and [GSI-II.1](research/GSI_II1_CUMULATIVE_LOOP_CLOSURE_2026-09-07.md).
+
+GSI-II.2 reconstructs constitutional gates from evidence, shares one authenticated
+promotion membrane with alpha.8, promotes the exact attested proposal, reapplies
+the full frozen improvement disposition after live application, types bounded
+experiment-evidence influence, limits exclusion predicates to candidate-causal
+failures, and reconstructs realized-generation chains from canonical Store
+receipts. Incommensurable utilities remain a vector. Holdout capability
+separation is interface-only and live-provider eligibility remains false. See
+[GSI-II.2](research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md).
 
 No live retention-utility or model-turnover heredity experiment was run.
 [GSO-III](research/GSO_III_RETENTION_UTILITY_PREREG.md) is preregistered only.
