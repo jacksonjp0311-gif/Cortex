@@ -1,7 +1,7 @@
 {
   "schema_version": "cortex-claim-registry/1.0",
-  "source_commit": "b0106c762b5784a33259141b9c1e5de35de17dce",
-  "source_commit_semantics": "CI-verified product HEAD before this substrate commit; not self-referential",
+  "source_commit": "e162f53095a244991e96e566abdd7d87406120c2",
+  "source_commit_semantics": "CI-verified product HEAD before this II.5 successor; claim entries retain their evidence revisions",
   "product_version": "10.0.0a39",
   "authority_effect": false,
   "claims": [
@@ -259,6 +259,31 @@
       "assumptions": ["exact-head CI is not yet available for the local II.4 revision"],
       "active_defeaters": [],
       "source_revision": "9880f6e077573f7fa13df56ce9828a38223df45d",
+      "supersedes": [], "superseded_by": [], "authority_effect": false
+    },
+    {
+      "claim_id": "gsi.execution_membrane",
+      "subject": "GSI-II.5 execution membrane and causal cross-binding",
+      "scope": "21 focused deterministic zero-provider controls; local checkout",
+      "status": "PRELIMINARY",
+      "evidence": [
+        {"path": "cortex/causal_treatment.py", "currency": "current"},
+        {"path": "cortex/self_improvement.py", "currency": "current"},
+        {"path": "tests/test_gsi_ii5.py", "currency": "current"},
+        {"path": "docs/research/GSI_II5_EXECUTION_MEMBRANE_2026-09-08.md", "currency": "current"}
+      ],
+      "counterevidence": [],
+      "dependencies": ["gsi.causal_treatment_delivery"],
+      "applicability": {"provider_calls": 0, "production_effect": false, "live_execution_authorized": false},
+      "assurance_debt": {
+        "source": "PASS", "transduction": "PASS", "environment": "HELD",
+        "instrument": "PASS", "experiment": "PASS", "causal": "HELD",
+        "applicability": "HELD", "replication": "NOT_TESTED"
+      },
+      "required_dimensions": ["source", "transduction", "instrument", "experiment"],
+      "assumptions": ["exact-head CI is pending for the II.5 successor revision"],
+      "active_defeaters": [],
+      "source_revision": "e162f53095a244991e96e566abdd7d87406120c2",
       "supersedes": [], "superseded_by": [], "authority_effect": false
     },
     {

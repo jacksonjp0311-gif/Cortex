@@ -1,21 +1,21 @@
 # Current Cortex status
 
 Canonical current status · reviewed September 8, 2026 · product **10.0.0a39**.
-Runtime revision anchor: `9880f6e077573f7fa13df56ce9828a38223df45d`.
-Public product-source HEAD at this phase start: `9880f6e077573f7fa13df56ce9828a38223df45d`
-("Close GSI-II.3 empirical measurement readiness"). Its exact-head matrix is
-[CI run 34191811644](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34191811644)
+Runtime revision anchor: `e162f53095a244991e96e566abdd7d87406120c2`.
+Public product-source HEAD at this phase start: `e162f53095a244991e96e566abdd7d87406120c2`
+("Close GSI-II.4 causal treatment execution lock"). Its exact-head matrix is
+[CI run 34220683474](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34220683474)
 and completed successfully across the declared Ubuntu/Windows Python matrix.
 Initial review baseline: `ad29b81a2b961294368fa795998fefd1134a4b5b`.
 The anchor is the reviewed baseline, not a self-referential claim that this document
 contains its own final commit. Use `git rev-parse HEAD` for checkout identity and
 [knowledge map](CORTEX_KNOWLEDGE_MAP.json) for version/content drift checks.
-That result does not transfer to the local II.4 successor; the successor requires
+That result does not transfer to the local II.5 successor; the successor requires
 its own exact-head run after push.
 
 ## Current gate
 
-**CURRENT: GSI-II.4 causal-treatment delivery and execution-lock mechanics pass 47 local deterministic controls; exact-head CI is not yet available. NEXT: GSI-III same-model history experiment remains unauthorized.**
+**CURRENT: GSI-II.5 execution membrane and causal cross-binding mechanics pass 21 focused local controls; exact-head CI is pending for this successor. NEXT: GSI-III same-model history experiment remains unauthorized.**
 
 ### Platform health and substrate at b0106c7
 
@@ -92,6 +92,15 @@ and a non-authorizing execution lock. The historical `run()` path remains
 reconstructable. Forty-seven focused controls pass locally; no provider call or
 treatment result exists. See [GSI-II.4](research/GSI_II4_CAUSAL_TREATMENT_INTEGRATION_2026-09-08.md)
 and the [execution draft](research/GSI_III_EXECUTION_PREREGISTRATION_2026-09-08.md).
+
+GSI-II.5 makes the execution lock mandatory for the empirical path, validates
+readiness by exact schema, resolves lock hashes to canonical Store objects,
+requires one A/B/C assignment per task, binds assignment/treatment/context/
+candidate/trial identities, requires non-empty B/C history with a passing sham
+match, and enforces candidate/call/token/wall-clock budgets. Explicit hidden
+fixture digests contribute to semantic holdout identity. Twenty-one focused
+zero-provider controls pass locally; no live treatment was run. See
+[GSI-II.5](research/GSI_II5_EXECUTION_MEMBRANE_2026-09-08.md).
 
 No live retention-utility or model-turnover heredity experiment was run.
 [GSO-III](research/GSO_III_RETENTION_UTILITY_PREREG.md) is preregistered only.

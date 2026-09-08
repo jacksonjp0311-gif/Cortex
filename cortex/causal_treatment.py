@@ -17,6 +17,8 @@ EXECUTION_CONTRACT_SCHEMA = "cortex-gsi-execution-contract/1.0"
 MODEL_RUNTIME_SCHEMA = "cortex-gsi-model-runtime-identity/1.0"
 RANDOMIZATION_SCHEMA = "cortex-gsi-randomization-plan/1.0"
 TASK_SCHEMA = "cortex-gsi-task/1.0"
+TASK_SET_SCHEMA = "cortex-gsi-task-set/1.0"
+ASSIGNMENT_SCHEMA = "cortex-gsi-assignment/1.0"
 COMMON_BASELINE_SCHEMA = "cortex-gsi-common-baseline/1.0"
 SHAM_MATCH_SCHEMA = "cortex-gsi-sham-match/1.0"
 CONTEXT_DIFFERENCE_SCHEMA = "cortex-gsi-context-difference/1.0"
@@ -81,7 +83,21 @@ def semantic_holdout_identity(contract: Mapping[str, Any]) -> dict[str, Any]:
     for step in contract.get("steps") or []:
         steps.append({key: value for key, value in step.items()
                       if key not in {"id", "title", "label", "display_name", "description"}})
-    semantic = {"targets": sorted(contract.get("targets") or []), "steps": steps}
+    declared = contract.get("fixture_digests") or contract.get("external_data_digests") or {}
+    if isinstance(declared, Mapping):
+        fixture_digests = {
+            str(path): (value.hex() if isinstance(value, bytes) else
+                        value if isinstance(value, str) and len(value) == 64 else _sha(value))
+            for path, value in sorted(declared.items(), key=lambda item: str(item[0]))
+        }
+    else:
+        fixture_digests = [
+            value.hex() if isinstance(value, bytes) else
+            value if isinstance(value, str) and len(value) == 64 else _sha(value)
+            for value in declared
+        ]
+    semantic = {"targets": sorted(contract.get("targets") or []), "steps": steps,
+                "fixture_digests": fixture_digests}
     return sealed(HOLDOUT_SEMANTIC_SCHEMA, semantic=semantic,
                   raw_semantic_hash=_sha(semantic), cosmetic_metadata_excluded=True)
 
@@ -95,6 +111,22 @@ def task_identity(*, task_family: str, source_baseline: str, mutation_scope: Seq
                   diagnosis_contract=diagnosis_contract, evaluation_family=evaluation_family,
                   inclusion_criteria=list(inclusion_criteria), source=source,
                   exposed_to_tuning=bool(exposed_to_tuning))
+
+
+def task_set(tasks: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    if not tasks or any(not valid(task, TASK_SCHEMA) for task in tasks):
+        raise ValueError("task set requires canonical task objects")
+    return sealed(TASK_SET_SCHEMA, task_hashes=[task["object_hash"] for task in tasks],
+                  task_count=len(tasks), confirmatory=True)
+
+
+def assignment(*, randomization_plan_hash: str, task_hash: str, arm: str,
+               assignment_index: int = 0) -> dict[str, Any]:
+    if not randomization_plan_hash or not task_hash or arm not in {"A", "B", "C"}:
+        raise ValueError("canonical A/B/C assignment required")
+    return sealed(ASSIGNMENT_SCHEMA, randomization_plan_hash=randomization_plan_hash,
+                  task_hash=task_hash, arm=arm, assignment_index=int(assignment_index),
+                  frozen_before_provider_call=True, provider_calls_at_assignment=0)
 
 
 def analysis_plan(*, primary_endpoint: str, secondary_endpoints: Sequence[str],
@@ -146,6 +178,23 @@ def randomization_plan(*, task_hashes: Sequence[str], arms: Sequence[str], algor
                   frozen_before_first_provider_call=True, provider_calls_at_freeze=0)
 
 
+def validate_randomization_plan(plan: Mapping[str, Any], task_hashes: Sequence[str], *,
+                                confirmatory: bool = True) -> bool:
+    if not valid(plan, RANDOMIZATION_SCHEMA):
+        return False
+    expected = set(task_hashes)
+    if set(plan.get("task_hashes") or []) != expected:
+        return False
+    rows = plan.get("assignment_order") or []
+    if not confirmatory:
+        return True
+    pairs = {(row.get("task_hash"), row.get("arm")) for row in rows}
+    return len(rows) == len(expected) * 3 and all(
+        {row.get("arm") for row in rows if row.get("task_hash") == task} == {"A", "B", "C"}
+        for task in expected
+    ) and len(pairs) == len(rows)
+
+
 def execution_contract(*, source_revision: str, task_set_hash: str, utility_family_hash: str,
                        model_runtime_hash: str, candidate_budget: int, provider_call_budget: int,
                        token_budget: int, wall_clock_budget_seconds: int,
@@ -193,12 +242,15 @@ def sham_match(applicable: Sequence[Mapping[str, Any]], sham: Sequence[Mapping[s
     all_inapplicable = all(item.get("applicability_disposition") == "INAPPLICABLE" for item in sham)
     all_applicable = all(item.get("applicability_disposition") == "APPLICABLE" for item in applicable)
     within = all(diffs[key] <= int(tolerances.get(key, 0)) for key in diffs)
+    type_shape_equal = (c_shape["evidence_types"] == b_shape["evidence_types"]
+                        and c_shape["schemas"] == b_shape["schemas"])
     return sealed(SHAM_MATCH_SCHEMA, c_history_hashes=[i.get("object_hash") for i in applicable],
                   b_history_hashes=[i.get("object_hash") for i in sham],
                   c_shape=c_shape, b_shape=b_shape, differences=diffs,
                   tolerances=dict(tolerances), ordering_policy="canonical_receipt_hash",
                   all_b_inapplicable=all_inapplicable, all_c_applicable=all_applicable,
-                  disposition="PASS" if within and all_inapplicable and all_applicable else "HELD")
+                  type_shape_equal=type_shape_equal,
+                  disposition="PASS" if within and type_shape_equal and all_inapplicable and all_applicable else "HELD")
 
 
 def candidate_context(*, experiment_receipt: str, treatment_receipt: str,
@@ -239,10 +291,20 @@ def contamination_report(checks: Mapping[str, bool | None]) -> dict[str, Any]:
 def execution_readiness(*, components: Mapping[str, Mapping[str, Any]],
                         implementation_ci: str, protocol_status: str,
                         provider_calls: int, live_authorized: bool) -> dict[str, Any]:
-    required = ("execution_contract", "task_set", "model_runtime", "randomization",
-                "analysis_plan", "common_baseline", "treatments", "sham_match")
+    expected_schemas = {
+        "execution_contract": EXECUTION_CONTRACT_SCHEMA,
+        "task_set": TASK_SET_SCHEMA,
+        "model_runtime": MODEL_RUNTIME_SCHEMA,
+        "randomization": RANDOMIZATION_SCHEMA,
+        "analysis_plan": ANALYSIS_PLAN_SCHEMA,
+        "common_baseline": COMMON_BASELINE_SCHEMA,
+        "treatments": TREATMENT_SCHEMA_V11,
+        "sham_match": SHAM_MATCH_SCHEMA,
+    }
+    required = tuple(expected_schemas)
     missing = [key for key in required if key not in components]
-    invalid = [key for key in required if key in components and not valid(components[key])]
+    invalid = [key for key in required if key in components
+               and not valid(components[key], expected_schemas[key])]
     checks = {"implementation_ci_known": implementation_ci in {"PASS", "FAIL"},
               "implementation_ci_pass": implementation_ci == "PASS",
               "protocol_frozen": protocol_status == "PROTOCOL_FROZEN",
@@ -256,8 +318,8 @@ def execution_readiness(*, components: Mapping[str, Mapping[str, Any]],
                   technical_readiness_distinct_from_authorization=True)
 
 
-def execution_lock(*, protocol_hash: str, component_hashes: Mapping[str, str],
-                   readiness: Mapping[str, Any]) -> dict[str, Any]:
+def execution_lock(*, protocol_hash: str, component_hashes: Mapping[str, Any],
+                   readiness: Mapping[str, Any], readiness_receipt: str | None = None) -> dict[str, Any]:
     if readiness.get("empirical_readiness") != "READY" or not valid(readiness, READINESS_SCHEMA):
         raise ValueError("execution readiness not READY")
     required = {"execution_contract", "task_set", "utility_family", "model_runtime",
@@ -266,5 +328,25 @@ def execution_lock(*, protocol_hash: str, component_hashes: Mapping[str, str],
         raise ValueError("execution lock component set incomplete")
     return sealed(EXECUTION_LOCK_SCHEMA, protocol_preregistration_hash=protocol_hash,
                   component_hashes=dict(component_hashes), readiness_hash=readiness["object_hash"],
+                  readiness_receipt=readiness_receipt,
                   locked_before_provider_call=True, provider_calls_at_lock=0,
                   live_execution_authorized=False)
+
+
+def verify_execution_lock(lock: Mapping[str, Any], components: Mapping[str, Mapping[str, Any]],
+                         *, expected_readiness: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    required = {"execution_contract", "task_set", "utility_family", "model_runtime",
+                "randomization", "analysis_plan", "common_baseline", "treatments", "sham_matches"}
+    if not valid(lock, EXECUTION_LOCK_SCHEMA) or set(lock.get("component_hashes") or {}) != required:
+        return {"valid": False, "failures": ["LOCK_SCHEMA_OR_COMPONENT_SET"]}
+    failures = []
+    if expected_readiness is not None and lock.get("readiness_hash") != expected_readiness.get("object_hash"):
+        failures.append("READINESS_HASH_MISMATCH")
+    for name in required - {"utility_family"}:
+        component = components.get(name)
+        if not component or component.get("object_hash") != lock["component_hashes"].get(name):
+            failures.append(f"{name.upper()}_HASH_MISMATCH")
+    execution = components.get("execution_contract") or {}
+    if execution.get("utility_family_hash") != lock["component_hashes"].get("utility_family"):
+        failures.append("UTILITY_FAMILY_HASH_MISMATCH")
+    return {"valid": not failures, "failures": failures}

@@ -25,7 +25,7 @@ operational authority.** Do not infer permission from a packet or a passing test
 | Native model/provider runtime | [Provider fabric](v10/PROVIDER_FABRIC.md), [chat](v10/CORTEX_CHAT.md) | native_agent.py, provider_fabric.py |
 | Authority | [Authority map](SYSTEM_MAP.md#authority), [topology law](intelligence/TOPOLOGY_LAW.md) | native_agent.py, autonomous_improvement.py |
 | GSO | [Current report](research/GOVERNED_SELF_ORGANIZATION.md), [GSO-IIb](research/GSO_IIB_METABOLIC_ASSEMBLY_2026-09-07.md), STATUS | shadow_organization.py, assembly.py; production priors unused |
-| GSI | [GSI-II.4](research/GSI_II4_CAUSAL_TREATMENT_INTEGRATION_2026-09-08.md), [execution draft](research/GSI_III_EXECUTION_PREREGISTRATION_2026-09-08.md), STATUS | causal_treatment.py + self_improvement.py; canonical promotion membrane in autonomous_improvement.py; source-improvement v1 preserved |
+| GSI | [GSI-II.5](research/GSI_II5_EXECUTION_MEMBRANE_2026-09-08.md), [execution draft](research/GSI_III_EXECUTION_PREREGISTRATION_2026-09-08.md), STATUS | causal_treatment.py + self_improvement.py; canonical promotion membrane in autonomous_improvement.py; source-improvement v1 preserved |
 | Claims | [Claim registry](CORTEX_CLAIM_REGISTRY.json) → STATUS → EVIDENCE → exact artifact + domain verifier | never prose alone |
 | Documentation | Knowledge map → [migration](DOCUMENTATION_MIGRATION.md) → docs checker | scripts/docs_check.py |
 

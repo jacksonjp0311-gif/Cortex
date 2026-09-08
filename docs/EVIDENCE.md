@@ -33,6 +33,7 @@ used **zero calls** and unchanged tests. It is not a new live 8/8 result.
 [GSI-II.2](research/GSI_II2_PROOF_CHAIN_CLOSURE_2026-09-07.md) ·
 [GSI-II.3](research/GSI_II3_EMPIRICAL_READINESS_2026-09-08.md) ·
 [GSI-II.4](research/GSI_II4_CAUSAL_TREATMENT_INTEGRATION_2026-09-08.md) ·
+[GSI-II.5](research/GSI_II5_EXECUTION_MEMBRANE_2026-09-08.md) ·
 [GSI-III execution draft](research/GSI_III_EXECUTION_PREREGISTRATION_2026-09-08.md) ·
 [GSI-III prereg](research/GSI_III_HISTORY_UTILITY_PREREG_2026-09-08.md) ·
 [Claim registry](CORTEX_CLAIM_REGISTRY.json) ·

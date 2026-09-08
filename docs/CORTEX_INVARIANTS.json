@@ -640,6 +640,58 @@
       "violation_types": ["readiness_as_authority"],
       "recovery_constraints": ["HARD_FAIL"],
       "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-EXECUTION-LOCK-MANDATORY",
+      "name": "Empirical execution requires a canonical lock",
+      "statement": "Confirmatory empirical execution cannot proceed without a valid lock bound to its canonical components.",
+      "formal_expression": "RunEmpirical -> Valid(ExecutionLock)",
+      "scope": "GSI-II.5 confirmatory path",
+      "implementation_refs": ["cortex/causal_treatment.py", "cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii5.py"],
+      "claim_dependencies": ["gsi.execution_membrane"],
+      "violation_types": ["missing_execution_lock", "lock_component_mismatch"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-READINESS-SCHEMA-SPECIFIC",
+      "name": "Readiness is schema-specific",
+      "statement": "Only the declared schema may satisfy each empirical execution component slot.",
+      "formal_expression": "Ready(component) -> Schema(component)=DeclaredSchema(slot)",
+      "scope": "GSI-II.5 execution readiness",
+      "implementation_refs": ["cortex/causal_treatment.py"],
+      "test_refs": ["tests/test_gsi_ii5.py"],
+      "claim_dependencies": ["gsi.execution_membrane"],
+      "violation_types": ["generic_sealed_component"],
+      "recovery_constraints": ["FAIL"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-ASSIGNMENT-TREATMENT-BINDING",
+      "name": "Assignment binds treatment",
+      "statement": "A canonical task assignment and treatment analysis arm must agree before empirical execution.",
+      "formal_expression": "Assignment.arm = Treatment.analysis_arm AND Assignment.task = CurrentTask",
+      "scope": "GSI-II.5 confirmatory path",
+      "implementation_refs": ["cortex/causal_treatment.py", "cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii5.py"],
+      "claim_dependencies": ["gsi.execution_membrane"],
+      "violation_types": ["assignment_treatment_mismatch"],
+      "recovery_constraints": ["HOLD"],
+      "authority_effect": false
+    },
+    {
+      "invariant_id": "INV-EXECUTION-BUDGET-MEMBRANE",
+      "name": "Frozen execution budgets are hard bounds",
+      "statement": "Candidate, provider-call, token and wall-clock budgets are evaluated against the frozen contract.",
+      "formal_expression": "ObservedCost <= FrozenBudget",
+      "scope": "GSI-II.5 search episodes",
+      "implementation_refs": ["cortex/self_improvement.py"],
+      "test_refs": ["tests/test_gsi_ii5.py"],
+      "claim_dependencies": ["gsi.execution_membrane"],
+      "violation_types": ["budget_overrun"],
+      "recovery_constraints": ["HELD"],
+      "authority_effect": false
     }
   ]
 }

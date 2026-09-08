@@ -8,6 +8,8 @@ import pytest
 from cortex.causal_treatment import (
     ANALYSIS_PLAN_SCHEMA,
     CANDIDATE_CONTEXT_SCHEMA,
+    TASK_SET_SCHEMA,
+    TREATMENT_SCHEMA_V11,
     EXECUTION_CONTRACT_SCHEMA,
     EXECUTION_LOCK_SCHEMA,
     HOLDOUT_SEMANTIC_SCHEMA,
@@ -17,6 +19,7 @@ from cortex.causal_treatment import (
     TASK_SCHEMA,
     analysis_plan,
     arm_isolation,
+    assignment,
     candidate_context,
     common_baseline,
     contamination_report,
@@ -29,6 +32,7 @@ from cortex.causal_treatment import (
     sealed,
     semantic_holdout_identity,
     sham_match,
+    task_set,
     task_identity,
     valid,
 )
@@ -107,6 +111,133 @@ def exec_contract():
         randomization_scheme="sha256-blocked",
         analysis_plan_hash=plan()["object_hash"],
         claim_ceiling="DETERMINISTIC_CONTROLS_ONLY",
+    )
+
+
+def readiness_components():
+    task_obj = task_identity(
+        task_family="ranking",
+        source_baseline="h" * 40,
+        mutation_scope=["app/value.txt"],
+        objective="improve fixture",
+        diagnosis_contract="d" * 64,
+        evaluation_family="u" * 64,
+        inclusion_criteria=["fresh"],
+        source="authored",
+        exposed_to_tuning=False,
+    )
+    taskset = task_set([task_obj])
+    randomization = randomization_plan(
+        task_hashes=[task_obj["object_hash"]],
+        arms=["A", "B", "C"],
+        algorithm="sha256",
+        seed_commitment="z" * 64,
+        assignment_order=[
+            {"task_hash": task_obj["object_hash"], "arm": arm} for arm in ("A", "B", "C")
+        ],
+        execution_contract_hash=exec_contract()["object_hash"],
+    )
+    treatment = sealed(
+        TREATMENT_SCHEMA_V11,
+        arm="A",
+        analysis_arm="A",
+        history_objects=[],
+        positive_history=[],
+        failure_history=[],
+        history_frozen=True,
+    )
+    return {
+        "execution_contract": exec_contract(),
+        "task_set": taskset,
+        "model_runtime": runtime(),
+        "randomization": randomization,
+        "analysis_plan": plan(),
+        "common_baseline": common_baseline(
+            source_revision="h",
+            task_hash="t",
+            utility_family_hash="u",
+            evaluator_identity={},
+            authority_state_hash="a",
+            model_runtime_hash=runtime()["object_hash"],
+            neutral_context_hash="n",
+        ),
+        "treatments": treatment,
+        "sham_match": sham_match([], [], {"count": 0}),
+    }
+
+
+def build_empirical_bundle(host, experiment, treatment, execution):
+    task_obj = task_identity(
+        task_family="ranking",
+        source_baseline=experiment["object"]["baseline_head"],
+        mutation_scope=["app/value.txt"],
+        objective="improve fixture",
+        diagnosis_contract="d" * 64,
+        evaluation_family="u" * 64,
+        inclusion_criteria=["fresh"],
+        source="authored",
+        exposed_to_tuning=False,
+    )
+    taskset = host.record_empirical_component("gsi_task_set", task_set([task_obj]))
+    randomization_obj = randomization_plan(
+        task_hashes=[task_obj["object_hash"]],
+        arms=["A", "B", "C"],
+        algorithm="sha256",
+        seed_commitment="z" * 64,
+        assignment_order=[
+            {"task_hash": task_obj["object_hash"], "arm": arm} for arm in ("A", "B", "C")
+        ],
+        execution_contract_hash=execution["object"]["object_hash"],
+    )
+    randomization = host.record_empirical_component("gsi_randomization", randomization_obj)
+    model_runtime = host.record_empirical_component("gsi_model_runtime", runtime())
+    analysis = host.record_empirical_component("gsi_analysis_plan", plan())
+    baseline = host.record_empirical_component(
+        "gsi_common_baseline",
+        common_baseline(
+            source_revision=experiment["object"]["baseline_head"],
+            task_hash=task_obj["object_hash"],
+            utility_family_hash=experiment["object"]["utility_family_hash"],
+            evaluator_identity={},
+            authority_state_hash=experiment["object"]["authority_state_hash"],
+            model_runtime_hash=model_runtime["object"]["object_hash"],
+            neutral_context_hash="n",
+        ),
+    )
+    sham = host.record_empirical_component("gsi_sham_match", sham_match([], [], {"count": 0}))
+    components = {
+        "execution_contract": (execution["receipt_hash"], "gsi_execution_contract"),
+        "task_set": (taskset["receipt_hash"], "gsi_task_set"),
+        "model_runtime": (model_runtime["receipt_hash"], "gsi_model_runtime"),
+        "randomization": (randomization["receipt_hash"], "gsi_randomization"),
+        "analysis_plan": (analysis["receipt_hash"], "gsi_analysis_plan"),
+        "common_baseline": (baseline["receipt_hash"], "gsi_common_baseline"),
+        "treatments": (treatment["receipt_hash"], "gsi_empirical_treatment"),
+        "sham_match": (sham["receipt_hash"], "gsi_sham_match"),
+    }
+    readiness = host.verify_gsi_iii_readiness(
+        component_receipts=components,
+        implementation_ci="PASS",
+        protocol_status="PROTOCOL_FROZEN",
+        provider_calls=0,
+        live_authorized=False,
+    )
+    lock = host.freeze_execution_lock(
+        protocol_hash="p" * 64,
+        component_receipts=components,
+        readiness_receipt=readiness["receipt_hash"],
+    )
+    assignment_obj = assignment(
+        randomization_plan_hash=randomization["object"]["object_hash"],
+        task_hash=task_obj["object_hash"],
+        arm=treatment["object"]["analysis_arm"],
+    )
+    assignment_receipt = host.record_empirical_component("gsi_assignment", assignment_obj)
+    return (
+        experiment["receipt_hash"],
+        treatment["receipt_hash"],
+        lock["receipt_hash"],
+        assignment_receipt["receipt_hash"],
     )
 
 
@@ -394,19 +525,7 @@ def test_unknown_contamination_is_held_not_passed():
 
 
 def test_readiness_separates_technical_state_from_live_authority():
-    components = {
-        name: sealed("x/1.0", name=name)
-        for name in (
-            "execution_contract",
-            "task_set",
-            "model_runtime",
-            "randomization",
-            "analysis_plan",
-            "common_baseline",
-            "treatments",
-            "sham_match",
-        )
-    }
+    components = readiness_components()
     ready = execution_readiness(
         components=components,
         implementation_ci="PASS",
@@ -429,19 +548,7 @@ def test_readiness_separates_technical_state_from_live_authority():
     ],
 )
 def test_readiness_fails_closed(ci, protocol, calls, expected):
-    components = {
-        name: sealed("x/1.0", name=name)
-        for name in (
-            "execution_contract",
-            "task_set",
-            "model_runtime",
-            "randomization",
-            "analysis_plan",
-            "common_baseline",
-            "treatments",
-            "sham_match",
-        )
-    }
+    components = readiness_components()
     result = execution_readiness(
         components=components,
         implementation_ci=ci,
@@ -454,19 +561,7 @@ def test_readiness_fails_closed(ci, protocol, calls, expected):
 
 def test_execution_lock_never_authorizes_live_execution():
     ready = execution_readiness(
-        components={
-            name: sealed("x/1", name=name)
-            for name in (
-                "execution_contract",
-                "task_set",
-                "model_runtime",
-                "randomization",
-                "analysis_plan",
-                "common_baseline",
-                "treatments",
-                "sham_match",
-            )
-        },
+        components=readiness_components(),
         implementation_ci="PASS",
         protocol_status="PROTOCOL_FROZEN",
         provider_calls=0,
@@ -481,8 +576,8 @@ def test_execution_lock_never_authorizes_live_execution():
         "randomization": "r",
         "analysis_plan": "a",
         "common_baseline": "b",
-        "treatments": ["A", "B", "C"],
-        "sham_matches": ["s"],
+        "treatments": "c",
+        "sham_matches": "s",
     }
     obj = execution_lock(protocol_hash="p", component_hashes=components, readiness=ready)
     assert valid(obj, EXECUTION_LOCK_SCHEMA)
@@ -533,9 +628,8 @@ def test_empirical_run_binds_treatment_context_and_candidate(proof_host):
             "constraints": 0,
         },
     )
-    trial = proof_host.run_empirical(
-        experiment["receipt_hash"], treatment["receipt_hash"], execution["receipt_hash"], payload
-    )
+    bundle = build_empirical_bundle(proof_host, experiment, treatment, execution)
+    trial = proof_host.run_empirical(*bundle, payload)
     assert trial["object"]["treatment_receipt"] == treatment["receipt_hash"]
     context_receipt = trial["object"]["candidate_context_receipt"]
     context = proof_host._resolve(context_receipt, "gsi_candidate_context")["object"]
@@ -576,17 +670,17 @@ def test_search_episode_does_not_trust_fake_generation_hash(proof_host):
             "constraints": 0,
         },
     )
-    trial = proof_host.run_empirical(
-        experiment["receipt_hash"], treatment["receipt_hash"], execution["receipt_hash"], payload
-    )
+    bundle = build_empirical_bundle(proof_host, experiment, treatment, execution)
+    trial = proof_host.run_empirical(*bundle, payload)
     episode = proof_host.record_empirical_search_episode(
         experiment_receipt=experiment["receipt_hash"],
         treatment_receipt=treatment["receipt_hash"],
         execution_contract_receipt=execution["receipt_hash"],
+        assignment_receipt=bundle[3],
         candidate_context_receipt=trial["object"]["candidate_context_receipt"],
         trial_receipt=trial["receipt_hash"],
-        task_hash="task",
-        randomization_assignment={"arm": "opaque"},
+        task_hash=proof_host._resolve(bundle[3], "gsi_assignment")["object"]["task_hash"],
+        randomization_assignment={},
         candidate_receipts=[],
         rejected_candidates=[],
         candidate_evaluations=1,

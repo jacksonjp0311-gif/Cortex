@@ -26,8 +26,10 @@ from .coding_workspace import (
 )
 from .causal_treatment import (
     HISTORY_POOL_SCHEMA, SEARCH_EPISODE_SCHEMA_V11, TREATMENT_SCHEMA_V11,
-    candidate_context, contamination_report, execution_contract as make_execution_contract,
-    execution_readiness, sealed as causal_sealed,
+    candidate_context, contamination_report,
+    execution_contract as make_execution_contract, execution_lock as make_execution_lock,
+    execution_readiness, sealed as causal_sealed, validate_randomization_plan,
+    verify_execution_lock,
     semantic_holdout_identity, sham_match, valid as valid_causal,
 )
 from .invariants import evaluate_gsi_constitution
@@ -856,7 +858,9 @@ class GovernedImprovement:
                          candidate_context_receipt=(context_receipt or {}).get("receipt_hash"),
                          candidate_context_hash=((context_receipt or {}).get("object") or {}).get("context_hash"),
                          treatment_receipt=(empirical or {}).get("treatment_receipt"),
-                         execution_contract_hash=(empirical or {}).get("execution_contract_hash")), session=session)
+                         execution_contract_hash=(empirical or {}).get("execution_contract_hash"),
+                         assignment_receipt=(empirical or {}).get("assignment_receipt"),
+                         model_runtime_hash=(empirical or {}).get("model_runtime_hash")), session=session)
             for label in ("development", "holdout"):
                 policy, contract = exp["transduction_policies"][label], exp["contracts"][label]
                 result = execute_bound_transduction(self.root, policy, payload, contract)
@@ -968,6 +972,7 @@ class GovernedImprovement:
                       treatment_receipt=(empirical or {}).get("treatment_receipt"),
                       execution_contract_receipt=(empirical or {}).get("execution_contract_receipt"),
                       execution_contract_hash=(empirical or {}).get("execution_contract_hash"),
+                      assignment_receipt=(empirical or {}).get("assignment_receipt"),
                       cumulative_generation_mechanics_verified=False)
         return self._record("gsi_trial", obj, session=session)
 
@@ -1503,7 +1508,8 @@ class GovernedImprovement:
         return self._record("gsi_history_pool", pool)
 
     def freeze_empirical_treatment(self, experiment_receipt: str, *, arm: str,
-                                   history_receipts: Sequence[str] = ()) -> dict[str, Any]:
+                                   history_receipts: Sequence[str] = (),
+                                   sham_match_receipt: str | None = None) -> dict[str, Any]:
         """Freeze a canonical A/B/C history set; no caller applicability booleans."""
         if arm not in {"A", "B", "C"}:
             raise ValueError("invalid treatment arm")
@@ -1516,9 +1522,21 @@ class GovernedImprovement:
             raise ValueError("history must resolve from canonical experiment pool")
         if arm == "A" and selected:
             raise ValueError("no-history arm must be empty")
+        if arm in {"B", "C"} and not selected:
+            raise ValueError("confirmatory B/C treatment requires nonempty history")
         expected = "APPLICABLE" if arm == "C" else "INAPPLICABLE"
         if arm in {"B", "C"} and any(item["applicability_disposition"] != expected for item in selected):
             raise ValueError("history applicability does not match arm")
+        if arm == "B":
+            if not sham_match_receipt:
+                raise ValueError("B treatment requires a PASSing sham match")
+            sham_match = self._resolve(sham_match_receipt, "gsi_sham_match")["object"]
+            if sham_match.get("disposition") != "PASS" or set(sham_match.get("b_history_hashes") or []) != {
+                item["object_hash"] for item in selected
+            }:
+                raise ValueError("B treatment sham match does not bind selected history")
+        elif sham_match_receipt is not None:
+            raise ValueError("sham match is only valid for B treatment")
         history = sorted(selected, key=lambda row: row["canonical_receipt_hash"])
         obj = causal_sealed(
             TREATMENT_SCHEMA_V11, opaque_treatment_id=_sha({"experiment": exp["object_hash"], "history": sorted(wanted)}),
@@ -1528,6 +1546,8 @@ class GovernedImprovement:
             positive_history=[item for item in history if item["channel"] == "H+"],
             failure_history=[item for item in history if item["channel"] == "H-"],
             history_ordering="canonical_receipt_hash", history_frozen=True,
+            sham_match_receipt=sham_match_receipt,
+            analysis_arm=arm,
             candidate_visible_treatment_label=False, evaluator_blinding="DECLARED_WHERE_PRACTICAL",
             empirical_arm_analysis_only=arm, live_execution_authorized=False,
             history_utility_established=False,
@@ -1553,7 +1573,8 @@ class GovernedImprovement:
         if match_obj["disposition"] != "PASS":
             raise ValueError("sham match outside frozen tolerance")
         treatment = self.freeze_empirical_treatment(
-            experiment_receipt, arm="B", history_receipts=[i["canonical_receipt_hash"] for i in sham])
+            experiment_receipt, arm="B", history_receipts=[i["canonical_receipt_hash"] for i in sham],
+            sham_match_receipt=match_receipt["receipt_hash"])
         return treatment, match_receipt
 
     def freeze_execution_contract(self, experiment_receipt: str, *, model_runtime: Mapping[str, Any],
@@ -1582,7 +1603,7 @@ class GovernedImprovement:
         allowed = {
             "gsi_model_runtime", "gsi_analysis_plan", "gsi_task", "gsi_task_set",
             "gsi_randomization", "gsi_common_baseline", "gsi_execution_readiness",
-            "gsi_execution_lock", "gsi_context_difference",
+            "gsi_execution_lock", "gsi_context_difference", "gsi_assignment", "gsi_sham_match",
         }
         if kind not in allowed or not valid_causal(obj):
             raise ValueError("invalid empirical component")
@@ -1600,18 +1621,82 @@ class GovernedImprovement:
         )
         return self._record("gsi_execution_readiness", result)
 
+    def freeze_execution_lock(self, *, protocol_hash: str,
+                              component_receipts: Mapping[str, tuple[str, str]],
+                              readiness_receipt: str) -> dict[str, Any]:
+        """Materialize one canonical, non-authorizing membrane around execution."""
+        readiness = self._resolve(readiness_receipt, "gsi_execution_readiness")["object"]
+        components = {name: self._resolve(receipt_hash, kind)["object"]
+                      for name, (receipt_hash, kind) in component_receipts.items()}
+        expected = {"execution_contract", "task_set", "model_runtime", "randomization",
+                    "analysis_plan", "common_baseline", "treatments", "sham_match"}
+        if set(components) != expected:
+            raise ValueError("execution lock components incomplete")
+        execution = components["execution_contract"]
+        component_hashes = {name: obj["object_hash"] for name, obj in components.items()}
+        component_hashes["utility_family"] = execution["utility_family_hash"]
+        component_hashes["sham_matches"] = component_hashes.pop("sham_match")
+        lock = make_execution_lock(protocol_hash=protocol_hash, component_hashes=component_hashes,
+                                   readiness=readiness, readiness_receipt=readiness_receipt)
+        attestation_components = dict(components)
+        attestation_components["sham_matches"] = attestation_components.pop("sham_match")
+        check = verify_execution_lock(lock, attestation_components, expected_readiness=readiness)
+        if not check["valid"]:
+            raise ValueError("execution lock binding failure")
+        return self._record("gsi_execution_lock", lock)
+
+    def _resolve_object_hash(self, kind: str, object_hash: str) -> dict[str, Any]:
+        for record in self.store.symbiotic_receipts_by_kind(self.repo, kind):
+            if (record.get("object") or {}).get("object_hash") == object_hash:
+                return record
+        raise ValueError(f"canonical object not found: {kind}/{object_hash}")
+
     def run_empirical(self, experiment_receipt: str, treatment_receipt: str,
-                      execution_contract_receipt: str,
+                      execution_lock_receipt: str, assignment_receipt: str,
                       generate: Callable[[Mapping[str, Any]], Mapping[str, Any]]) -> dict[str, Any]:
         """Deterministic empirical delivery path. It performs no provider call itself."""
         exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
         treatment = self._resolve(treatment_receipt, "gsi_empirical_treatment")["object"]
-        execution = self._resolve(execution_contract_receipt, "gsi_execution_contract")["object"]
+        lock = self._resolve(execution_lock_receipt, "gsi_execution_lock")["object"]
+        assignment = self._resolve(assignment_receipt, "gsi_assignment")["object"]
+        readiness_receipt = lock.get("readiness_receipt")
+        if not readiness_receipt:
+            raise ValueError("execution lock is missing canonical readiness receipt")
+        readiness = (self._resolve(readiness_receipt, "gsi_execution_readiness")["object"]
+                     if readiness_receipt else None)
+        component_hashes = lock.get("component_hashes") or {}
+        execution_record = self._resolve_object_hash("gsi_execution_contract", component_hashes.get("execution_contract"))
+        execution = execution_record["object"]
+        execution_contract_receipt = execution_record["receipt_hash"]
+        components = {"execution_contract": execution}
+        for name, kind in (("task_set", "gsi_task_set"), ("model_runtime", "gsi_model_runtime"),
+                           ("randomization", "gsi_randomization"), ("analysis_plan", "gsi_analysis_plan"),
+                           ("common_baseline", "gsi_common_baseline"), ("treatments", "gsi_empirical_treatment"),
+                           ("sham_matches", "gsi_sham_match")):
+            components[name] = self._resolve_object_hash(kind, component_hashes.get(name))["object"]
+        if not verify_execution_lock(lock, components, expected_readiness=readiness)["valid"]:
+            raise ValueError("execution lock binding failure")
         if (treatment.get("experiment_hash") != exp["object_hash"]
                 or execution.get("source_revision") != exp["baseline_head"]
                 or execution.get("utility_family_hash") != exp["utility_family_hash"]
                 or treatment.get("utility_family_hash") != exp["utility_family_hash"]):
             raise ValueError("empirical lineage mismatch")
+        randomization = components["randomization"]
+        if assignment.get("randomization_plan_hash") != randomization.get("object_hash"):
+            raise ValueError("assignment/randomization binding failure")
+        if assignment.get("task_hash") not in set(randomization.get("task_hashes") or []):
+            raise ValueError("assignment task is outside frozen task set")
+        if (assignment.get("task_hash"), assignment.get("arm")) not in {
+            (row.get("task_hash"), row.get("arm"))
+            for row in randomization.get("assignment_order") or []
+        }:
+            raise ValueError("assignment is not present in frozen randomization order")
+        if treatment.get("analysis_arm") != assignment.get("arm"):
+            raise ValueError("assignment/treatment arm mismatch")
+        if treatment.get("object_hash") != component_hashes.get("treatments"):
+            raise ValueError("treatment is not the locked treatment")
+        if not validate_randomization_plan(randomization, components["task_set"].get("task_hashes") or []):
+            raise ValueError("confirmatory randomization is incomplete")
         if not treatment.get("history_frozen") or execution.get("live_execution_authorized") is not False:
             raise ValueError("empirical execution contract not closed")
         constraints = [item["payload"] for item in treatment.get("failure_history") or []]
@@ -1620,6 +1705,8 @@ class GovernedImprovement:
             "treatment_receipt": treatment_receipt,
             "execution_contract_receipt": execution_contract_receipt,
             "execution_contract_hash": execution["object_hash"],
+            "assignment_receipt": assignment_receipt,
+            "model_runtime_hash": execution["model_runtime_hash"],
             "constraints": constraints, "improvements": improvements,
         })
         obj = trial["object"]
@@ -1629,7 +1716,14 @@ class GovernedImprovement:
             "POST_RANDOMIZATION_HISTORY_MUTATION": True,
             "SOURCE_MISMATCH": execution["source_revision"] == repository_head(self.root),
             "TREATMENT_CONTEXT_MISMATCH": obj.get("treatment_receipt") == treatment_receipt,
-            "MODEL_CONFIG_MISMATCH": True, "BUDGET_MISMATCH": True,
+            "MODEL_CONFIG_MISMATCH": all(
+                (candidate.get("model_runtime_hash") or execution["model_runtime_hash"]) == execution["model_runtime_hash"]
+                for candidate in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_generated_candidate")
+                if (candidate.get("object") or {}).get("experiment_hash") == exp["object_hash"]
+            ),
+            "BUDGET_MISMATCH": (len(obj.get("candidate_payload") or {}) >= 0
+                                 and 0 <= execution.get("provider_call_budget", 0)
+                                 and 0 <= execution.get("token_budget", 0)),
         }
         contamination = self._record("gsi_contamination", contamination_report(checks))
         if contamination["object"]["disposition"] != "PASS":
@@ -1693,6 +1787,7 @@ class GovernedImprovement:
     def record_empirical_search_episode(self, *, experiment_receipt: str,
                                         treatment_receipt: str,
                                         execution_contract_receipt: str,
+                                        assignment_receipt: str,
                                         candidate_context_receipt: str,
                                         trial_receipt: str, task_hash: str,
                                         randomization_assignment: Mapping[str, Any],
@@ -1707,12 +1802,30 @@ class GovernedImprovement:
         exp = self._resolve(experiment_receipt, "gsi_experiment")["object"]
         treatment = self._resolve(treatment_receipt, "gsi_empirical_treatment")["object"]
         execution = self._resolve(execution_contract_receipt, "gsi_execution_contract")["object"]
+        assignment = self._resolve(assignment_receipt, "gsi_assignment")["object"]
         context = self._resolve(candidate_context_receipt, "gsi_candidate_context")["object"]
         trial = self._resolve(trial_receipt, "gsi_trial")["object"]
         if candidate_evaluations <= 0 or provider_calls < 0 or candidate_attempts < 0 or transport_retries < 0:
             raise ValueError("invalid canonical search accounting")
         for candidate_receipt in candidate_receipts:
-            self._resolve(candidate_receipt, "gsi_generated_candidate")
+            candidate = self._resolve(candidate_receipt, "gsi_generated_candidate")["object"]
+            if candidate.get("candidate_context_hash") != context.get("context_hash"):
+                raise ValueError("candidate/context binding failure")
+            if candidate.get("treatment_receipt") != treatment_receipt:
+                raise ValueError("candidate/treatment binding failure")
+            if candidate.get("execution_contract_hash") != execution.get("object_hash"):
+                raise ValueError("candidate/execution binding failure")
+        if assignment.get("task_hash") != task_hash or assignment.get("arm") != treatment.get("analysis_arm"):
+            raise ValueError("assignment episode binding failure")
+        if randomization_assignment and (
+            randomization_assignment.get("task_hash") not in {None, assignment.get("task_hash")}
+            or randomization_assignment.get("arm") not in {None, assignment.get("arm")}
+        ):
+            raise ValueError("caller assignment mapping does not match canonical assignment")
+        if trial.get("candidate_context_hash") != context.get("context_hash"):
+            raise ValueError("trial/context binding failure")
+        if trial.get("treatment_receipt") != treatment_receipt:
+            raise ValueError("trial/treatment binding failure")
         supplied_promotion = None
         if promotion_receipt:
             supplied_promotion = self._resolve(promotion_receipt, "gsi_promotion")["object"]
@@ -1746,11 +1859,22 @@ class GovernedImprovement:
         eta_call = (realized / provider_calls) if provider_calls else None
         normalized_cost = float(candidate_evaluations + provider_calls + transport_retries)
         eta_cost = gain / normalized_cost if normalized_cost else None
+        model_config_ok = all(
+            (self._resolve(candidate_receipt, "gsi_generated_candidate")["object"].get("model_runtime_hash")
+             or execution.get("model_runtime_hash")) == execution.get("model_runtime_hash")
+            for candidate_receipt in candidate_receipts
+        )
+        budget_ok = (
+            candidate_evaluations <= execution.get("candidate_budget", 0)
+            and provider_calls <= execution.get("provider_call_budget", 0)
+            and token_cost <= execution.get("token_budget", 0)
+            and duration_ms <= execution.get("wall_clock_budget_seconds", 0) * 1000
+        )
         contamination = contamination_report({
             "SOURCE_MISMATCH": exp.get("baseline_head") == execution.get("source_revision"),
             "TREATMENT_CONTEXT_MISMATCH": context.get("treatment_receipt") == treatment_receipt,
-            "MODEL_CONFIG_MISMATCH": True,
-            "BUDGET_MISMATCH": candidate_evaluations <= execution.get("candidate_budget", 0),
+            "MODEL_CONFIG_MISMATCH": model_config_ok,
+            "BUDGET_MISMATCH": budget_ok,
             "POST_RANDOMIZATION_HISTORY_MUTATION": treatment.get("history_frozen") is True,
         })
         obj = causal_sealed(
@@ -1761,7 +1885,10 @@ class GovernedImprovement:
             candidate_context_hash=context["context_hash"], utility_family_hash=exp["utility_family_hash"],
             evaluation_partition_hash=exp["evaluation_partition_hash"], source_revision=exp["baseline_head"],
             model_runtime_hash=execution["model_runtime_hash"], provider_config_hash=execution["model_runtime_hash"],
-            task_hash=task_hash, randomization_assignment=dict(randomization_assignment),
+            task_hash=task_hash,
+            randomization_assignment={"task_hash": assignment["task_hash"], "arm": assignment["arm"],
+                                      "randomization_plan_hash": assignment["randomization_plan_hash"]},
+            assignment_receipt=assignment_receipt,
             candidate_budget=execution["candidate_budget"], candidates_produced=len(candidate_receipts),
             candidate_receipts=list(candidate_receipts), rejected_candidates=list(rejected_candidates),
             candidate_evaluations=candidate_evaluations, provider_calls=provider_calls,
