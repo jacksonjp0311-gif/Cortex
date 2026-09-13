@@ -6,6 +6,7 @@ provider, mutate source, admit memory, or grant authority.
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -48,6 +49,25 @@ def valid(obj: Mapping[str, Any], schema: str | None = None) -> bool:
     return bool((schema is None or obj.get("schema_version") == schema)
                 and obj.get("object_hash") == _sha({k: v for k, v in obj.items() if k != "object_hash"})
                 and all(obj.get(key) is False for key in _CLOSED))
+
+
+def candidate_runtime_matches(candidates: Sequence[Mapping[str, Any]], expected: str) -> bool:
+    """Require explicit runtime evidence on every candidate; absence is not a match."""
+    return bool(expected and candidates) and all(
+        candidate.get("model_runtime_hash") == expected for candidate in candidates
+    )
+
+
+def valid_execution_usage(*, candidate_evaluations: int, provider_calls: int,
+                          transport_retries: int, candidate_attempts: int,
+                          token_cost: int, duration_ms: float) -> bool:
+    """Validate measured usage domains before computing rates or budget gates."""
+    counts = (candidate_evaluations, provider_calls, transport_retries,
+              candidate_attempts, token_cost)
+    return (all(type(value) is int and value >= 0 for value in counts)
+            and candidate_evaluations > 0
+            and type(duration_ms) in (int, float)
+            and math.isfinite(duration_ms) and duration_ms >= 0)
 
 
 def canonical_bytes(value: Any) -> bytes:

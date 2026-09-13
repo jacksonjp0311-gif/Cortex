@@ -15,6 +15,20 @@ its own exact-head run after push.
 
 ## Current gate
 
+Local II.6 engineering is in progress: explicit candidate-runtime evidence,
+collision-resistant session opens, and strict search-usage domains. See the
+[II.6 work record](research/GSI_II6_RUNTIME_EVIDENCE_2026-09-13.md).
+Candidate-slot reservations now precede empirical callback dispatch and are
+atomically bounded in Store. Call/token reservations and per-call outcome
+reconstruction now exist as accounting APIs. Live adapter integration,
+independent measurement of provider usage and live isolation remain outstanding;
+this working-tree change has not been qualified by remote CI.
+
+The committed II.5 implementation at `8b92b1f092e90f3400f6ca4cd7a228c8da6a07fc`
+passed all six declared matrix jobs in
+[run 34237688412](https://github.com/jacksonjp0311-gif/Cortex/actions/runs/34237688412).
+The pending statement below records the original phase status.
+
 **CURRENT: GSI-II.5 execution membrane and causal cross-binding mechanics pass 21 focused local controls; exact-head CI is pending for this successor. NEXT: GSI-III same-model history experiment remains unauthorized.**
 
 ### Platform health and substrate at b0106c7

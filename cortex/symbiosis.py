@@ -16,6 +16,7 @@ import hashlib
 import json
 import math
 import time
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -1119,6 +1120,9 @@ def open_symbiotic_session(
             "repository_id": repository_id,
             "task": task,
             "t": round(time.time(), 3),
+            # Separate invocations can share a clock tick and task. Receipt
+            # replay retains its stored session identity; new opens must not.
+            "invocation_nonce": uuid.uuid4().hex,
         }
     )[:20]
 

@@ -3560,6 +3560,65 @@ class Store:
                 decoded.update({"inserted": False, "duplicate": True, "chain_valid": True})
                 return decoded
 
+            if kind == "gsi_call_reservation":
+                obj = body.get("object") or {}
+                execution_hash = obj.get("execution_contract_receipt")
+                parent_hash = obj.get("dispatch_reservation_receipt")
+                execution = self.symbiotic_receipt(execution_hash, repo=repo)
+                parent = self.symbiotic_receipt(parent_hash, repo=repo)
+                if (not execution or execution.get("kind") != "gsi_execution_contract"
+                        or not parent or parent.get("kind") != "gsi_dispatch_reservation"
+                        or parent["object"].get("execution_contract_receipt") != execution_hash
+                        or not self.verify_symbiotic_receipt(repo, execution_hash)["valid"]
+                        or not self.verify_symbiotic_receipt(repo, parent_hash)["valid"]):
+                    raise ValueError("call reservation lineage invalid")
+                tokens = obj.get("reserved_tokens")
+                attempt = obj.get("attempt_id")
+                if type(tokens) is not int or tokens <= 0 or not isinstance(attempt, str) or not attempt:
+                    raise ValueError("bounded call reservation required")
+                rows = conn.execute(
+                    "SELECT receipt_json FROM symbiotic_circulation_receipts WHERE repository_id=? AND kind=?",
+                    (repository_id, kind),
+                ).fetchall()
+                prior = [json.loads(row["receipt_json"])["object"] for row in rows]
+                prior = [item for item in prior if item.get("execution_contract_receipt") == execution_hash]
+                if any(item.get("attempt_id") == attempt for item in prior):
+                    raise ValueError("call attempt already reserved")
+                contract = execution["object"]
+                if (len(prior) >= contract.get("provider_call_budget", 0)
+                        or sum(item["reserved_tokens"] for item in prior) + tokens > contract.get("token_budget", 0)):
+                    raise ValueError("frozen call or token budget exhausted")
+
+            if kind == "gsi_dispatch_reservation":
+                reservation = body.get("object") or {}
+                if (reservation.get("schema_version") != "cortex-gsi-dispatch-reservation/1.0"
+                        or type(reservation.get("candidate_units")) is not int
+                        or reservation["candidate_units"] != 1):
+                    raise ValueError("dispatch reservation requires exactly one candidate unit")
+                execution_hash = reservation.get("execution_contract_receipt")
+                assignment_hash = reservation.get("assignment_receipt")
+                execution_record = self.symbiotic_receipt(execution_hash, repo=repo)
+                assignment_record = self.symbiotic_receipt(assignment_hash, repo=repo)
+                if (not execution_record or execution_record.get("kind") != "gsi_execution_contract"
+                        or not assignment_record or assignment_record.get("kind") != "gsi_assignment"
+                        or not self.verify_symbiotic_receipt(repo, execution_hash)["valid"]
+                        or not self.verify_symbiotic_receipt(repo, assignment_hash)["valid"]):
+                    raise ValueError("dispatch reservation requires canonical execution and assignment")
+                limit = execution_record["object"].get("candidate_budget")
+                if type(limit) is not int or limit <= 0:
+                    raise ValueError("invalid frozen candidate budget")
+                rows = conn.execute(
+                    """SELECT receipt_json FROM symbiotic_circulation_receipts
+                       WHERE repository_id=? AND kind='gsi_dispatch_reservation'""",
+                    (repository_id,),
+                ).fetchall()
+                previous = [json.loads(row["receipt_json"])["object"] for row in rows]
+                if any(item.get("assignment_receipt") == assignment_hash for item in previous):
+                    raise ValueError("assignment dispatch already reserved")
+                if sum(item.get("execution_contract_receipt") == execution_hash
+                       for item in previous) >= limit:
+                    raise ValueError("frozen candidate budget exhausted")
+
             tip = conn.execute(
                 """SELECT * FROM symbiotic_circulation_chain_tips
                    WHERE repository_id=? AND session_id=?""",

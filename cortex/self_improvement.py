@@ -26,7 +26,7 @@ from .coding_workspace import (
 )
 from .causal_treatment import (
     HISTORY_POOL_SCHEMA, SEARCH_EPISODE_SCHEMA_V11, TREATMENT_SCHEMA_V11,
-    candidate_context, contamination_report,
+    candidate_context, candidate_runtime_matches, contamination_report, valid_execution_usage,
     execution_contract as make_execution_contract, execution_lock as make_execution_lock,
     execution_readiness, sealed as causal_sealed, validate_randomization_plan,
     verify_execution_lock,
@@ -603,6 +603,62 @@ class GovernedImprovement:
             raise ValueError("missing or invalid canonical " + kind)
         return record
 
+    def reserve_measured_call(self, dispatch_receipt: str, *, attempt_id: str,
+                              reserved_tokens: int) -> dict[str, Any]:
+        """Reserve accounting capacity only; this does not authorize a provider."""
+        parent = self._resolve(dispatch_receipt, "gsi_dispatch_reservation")
+        return self._record("gsi_call_reservation", _sealed(
+            "cortex-gsi-call-reservation/1.0",
+            dispatch_reservation_receipt=dispatch_receipt,
+            execution_contract_receipt=parent["object"]["execution_contract_receipt"],
+            attempt_id=attempt_id, reserved_tokens=reserved_tokens,
+        ))
+
+    def record_call_outcome(self, reservation_receipt: str, *, status: str,
+                            token_usage: int | None, duration_ms: float) -> dict[str, Any]:
+        reservation = self._resolve(reservation_receipt, "gsi_call_reservation")
+        if status not in {"COMPLETED", "FAILED", "TIMEOUT"}:
+            raise ValueError("invalid call outcome")
+        if ((token_usage is not None and (type(token_usage) is not int or token_usage < 0))
+                or type(duration_ms) not in (int, float)
+                or not math.isfinite(duration_ms) or duration_ms < 0):
+            raise ValueError("invalid call usage")
+        # One immutable outcome per reservation, guarded by the ledger's
+        # existing session/turn/kind uniqueness constraint.
+        return self._record("gsi_call_outcome", _sealed(
+            "cortex-gsi-call-outcome/1.0", reservation_receipt=reservation_receipt,
+            status=status, token_usage=token_usage, duration_ms=duration_ms,
+        ), session=reservation)
+
+    def reconstruct_call_usage(self, execution_receipt: str) -> dict[str, Any]:
+        execution = self._resolve(execution_receipt, "gsi_execution_contract")["object"]
+        reservations = [self._resolve(r["receipt_hash"], "gsi_call_reservation")
+                        for r in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_call_reservation")
+                        if r["object"].get("execution_contract_receipt") == execution_receipt]
+        outcomes = {}
+        for record in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_call_outcome"):
+            outcome = self._resolve(record["receipt_hash"], "gsi_call_outcome")["object"]
+            key = outcome["reservation_receipt"]
+            if key in outcomes:
+                raise ValueError("conflicting call outcomes")
+            outcomes[key] = outcome
+        selected = [outcomes.get(r["receipt_hash"]) for r in reservations]
+        complete = bool(reservations) and all(o is not None and o["token_usage"] is not None for o in selected)
+        tokens = sum(o["token_usage"] for o in selected) if complete else None
+        duration = sum(o["duration_ms"] for o in selected if o is not None)
+        within = (complete and len(reservations) <= execution["provider_call_budget"]
+                  and tokens <= execution["token_budget"]
+                  and duration <= execution["wall_clock_budget_seconds"] * 1000
+                  and all(o["token_usage"] <= r["object"]["reserved_tokens"]
+                          for r, o in zip(reservations, selected)))
+        return _sealed("cortex-gsi-call-accounting/1.0",
+                       execution_contract_receipt=execution_receipt,
+                       reservation_receipts=[r["receipt_hash"] for r in reservations],
+                       reserved_calls=len(reservations),
+                       recorded_outcomes=sum(o is not None for o in selected),
+                       token_usage=tokens, observed_duration_ms=duration,
+                       disposition="PASS" if within else "HELD")
+
     def _scope(self, targets: Sequence[str]) -> list[str]:
         targets = _safe_targets(targets)
         errors = _policy_scope_errors(self._policy(), {"targets": targets, "patch": ""})
@@ -860,6 +916,7 @@ class GovernedImprovement:
                          treatment_receipt=(empirical or {}).get("treatment_receipt"),
                          execution_contract_hash=(empirical or {}).get("execution_contract_hash"),
                          assignment_receipt=(empirical or {}).get("assignment_receipt"),
+                         dispatch_reservation_receipt=(empirical or {}).get("dispatch_reservation_receipt"),
                          model_runtime_hash=(empirical or {}).get("model_runtime_hash")), session=session)
             for label in ("development", "holdout"):
                 policy, contract = exp["transduction_policies"][label], exp["contracts"][label]
@@ -1701,7 +1758,17 @@ class GovernedImprovement:
             raise ValueError("empirical execution contract not closed")
         constraints = [item["payload"] for item in treatment.get("failure_history") or []]
         improvements = [item["payload"] for item in treatment.get("positive_history") or []]
+        # Atomic append reserves capacity before callback dispatch. Crashes do
+        # not silently refund it. Live provider dispatch remains unavailable.
+        reservation = self._record("gsi_dispatch_reservation", _sealed(
+            "cortex-gsi-dispatch-reservation/1.0",
+            execution_contract_receipt=execution_contract_receipt,
+            assignment_receipt=assignment_receipt,
+            execution_lock_receipt=execution_lock_receipt,
+            experiment_receipt=experiment_receipt, candidate_units=1,
+        ))
         trial = self._run(experiment_receipt, generate, empirical={
+            "dispatch_reservation_receipt": reservation["receipt_hash"],
             "treatment_receipt": treatment_receipt,
             "execution_contract_receipt": execution_contract_receipt,
             "execution_contract_hash": execution["object_hash"],
@@ -1716,11 +1783,11 @@ class GovernedImprovement:
             "POST_RANDOMIZATION_HISTORY_MUTATION": True,
             "SOURCE_MISMATCH": execution["source_revision"] == repository_head(self.root),
             "TREATMENT_CONTEXT_MISMATCH": obj.get("treatment_receipt") == treatment_receipt,
-            "MODEL_CONFIG_MISMATCH": all(
-                (candidate.get("model_runtime_hash") or execution["model_runtime_hash"]) == execution["model_runtime_hash"]
+            "MODEL_CONFIG_MISMATCH": candidate_runtime_matches([
+                candidate["object"]
                 for candidate in self.store.symbiotic_receipts_by_kind(self.repo, "gsi_generated_candidate")
                 if (candidate.get("object") or {}).get("experiment_hash") == exp["object_hash"]
-            ),
+            ], execution["model_runtime_hash"]),
             "BUDGET_MISMATCH": (len(obj.get("candidate_payload") or {}) >= 0
                                  and 0 <= execution.get("provider_call_budget", 0)
                                  and 0 <= execution.get("token_budget", 0)),
@@ -1805,7 +1872,10 @@ class GovernedImprovement:
         assignment = self._resolve(assignment_receipt, "gsi_assignment")["object"]
         context = self._resolve(candidate_context_receipt, "gsi_candidate_context")["object"]
         trial = self._resolve(trial_receipt, "gsi_trial")["object"]
-        if candidate_evaluations <= 0 or provider_calls < 0 or candidate_attempts < 0 or transport_retries < 0:
+        if not valid_execution_usage(
+                candidate_evaluations=candidate_evaluations, provider_calls=provider_calls,
+                transport_retries=transport_retries, candidate_attempts=candidate_attempts,
+                token_cost=token_cost, duration_ms=duration_ms):
             raise ValueError("invalid canonical search accounting")
         for candidate_receipt in candidate_receipts:
             candidate = self._resolve(candidate_receipt, "gsi_generated_candidate")["object"]
@@ -1859,11 +1929,10 @@ class GovernedImprovement:
         eta_call = (realized / provider_calls) if provider_calls else None
         normalized_cost = float(candidate_evaluations + provider_calls + transport_retries)
         eta_cost = gain / normalized_cost if normalized_cost else None
-        model_config_ok = all(
-            (self._resolve(candidate_receipt, "gsi_generated_candidate")["object"].get("model_runtime_hash")
-             or execution.get("model_runtime_hash")) == execution.get("model_runtime_hash")
+        model_config_ok = candidate_runtime_matches([
+            self._resolve(candidate_receipt, "gsi_generated_candidate")["object"]
             for candidate_receipt in candidate_receipts
-        )
+        ], execution.get("model_runtime_hash"))
         budget_ok = (
             candidate_evaluations <= execution.get("candidate_budget", 0)
             and provider_calls <= execution.get("provider_call_budget", 0)

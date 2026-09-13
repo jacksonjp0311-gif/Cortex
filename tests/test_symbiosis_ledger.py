@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from cortex.bootstrap import bootstrap_repository
@@ -38,6 +39,15 @@ class SymbiosisLedgerTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.store.close()
         self.temporary.cleanup()
+
+    def test_distinct_sessions_under_frozen_clock(self) -> None:
+        with patch("cortex.symbiosis.time.time", return_value=1800000000.0):
+            first = open_symbiotic_session(self.store, self.repo, task="same task")
+            second = open_symbiotic_session(self.store, self.repo, task="same task")
+        self.assertNotEqual(first["session_id"], second["session_id"])
+        for session in (first, second):
+            self.assertTrue(self.store.verify_symbiotic_session(
+                self.repo, session["session_id"])["valid"])
 
     def test_open_appends_exactly_once_chain(self) -> None:
         session = open_symbiotic_session(
